@@ -97,6 +97,19 @@ export const ADULT_STAGE_BADGES: Badge[] = [
   { id: 'adult_490', name: 'Credit Card', description: 'Credit card balance: nope.', imagePath: '/lovable-uploads/2f5c34ad-8ee4-437d-8d5c-a604342cb611.png', unlockStars: 490 },
 ];
 
+export const ON_THE_RISE_STAGE_BADGES: Badge[] = [
+  { id: 'ontherise_500', name: 'Promotion', description: 'First promotion! Title\'s longer; meetings too.', imagePath: '/lovable-uploads/a18af15c-0513-48bf-8cc1-36934bdf18a4.png', unlockStars: 500 },
+  { id: 'ontherise_510', name: 'Compass', description: 'Found a career direction that feels right.', imagePath: '/lovable-uploads/cf20bfed-2630-4ef8-b559-9c0d74b2f50d.png', unlockStars: 510 },
+  { id: 'ontherise_520', name: 'Portfolio', description: 'Your work finally looks like you.', imagePath: '/lovable-uploads/8eb0b8df-4352-4e5c-9d70-a195aa74dbc4.png', unlockStars: 520 },
+  { id: 'ontherise_530', name: 'Wardrobe', description: 'Signature style unlocked.', imagePath: '/lovable-uploads/e1fdc189-0e84-45b3-ac33-01a11a3f4f01.png', unlockStars: 530 },
+  { id: 'ontherise_540', name: 'Palate', description: 'Taste upgraded—food, music, everything.', imagePath: '/lovable-uploads/9b069300-3c2a-48ce-90c5-55a898aef9b9.png', unlockStars: 540 },
+  { id: 'ontherise_550', name: 'Date Night', description: 'Left on read? Not tonight.', imagePath: '/lovable-uploads/490612e3-5e31-44de-9702-2b211c6c7132.png', unlockStars: 550 },
+  { id: 'ontherise_560', name: 'Duo', description: 'Found your person to high-five wins with.', imagePath: '/lovable-uploads/0bdb018c-d948-4714-954e-f5b2fc8689c5.png', unlockStars: 560 },
+  { id: 'ontherise_570', name: 'Mentor', description: 'Helping others level up.', imagePath: '/lovable-uploads/bd66e4f3-2004-41a6-99e8-3a2f7440e2df.png', unlockStars: 570 },
+  { id: 'ontherise_580', name: 'Raise', description: 'Paycheck up. Confidence too.', imagePath: '/lovable-uploads/71c3b5b5-9781-4042-b774-82bdf23af465.png', unlockStars: 580 },
+  { id: 'ontherise_590', name: 'Lanyard', description: 'Conference conquered; contacts gained.', imagePath: '/lovable-uploads/205da4e2-4de0-4832-9e5a-c29e3ea95695.png', unlockStars: 590 },
+];
+
 export const PLACEHOLDER_BADGES: Badge[] = [
   { id: 'stars_10', name: 'First Steps', description: 'Earned your first 10 stars!', imagePath: '/placeholder-badge.png', unlockStars: 10 },
   { id: 'stars_20', name: 'Building Momentum', description: 'Reached 20 stars!', imagePath: '/placeholder-badge.png', unlockStars: 20 },
