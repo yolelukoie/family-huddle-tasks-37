@@ -41,18 +41,18 @@ export function DraggableBadgeDisplay({
   
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Default scattered positions for initial badge placement
+  // Default scattered positions for initial badge placement (matching original positions)
   const defaultPositions = [
-    { x: 15, y: 32 },    // top-left
-    { x: 85, y: 16 },    // top-right  
-    { x: 5, y: 96 },     // left-mid
-    { x: 95, y: 80 },    // right-mid
-    { x: 20, y: 160 },   // left-lower
-    { x: 80, y: 144 },   // right-lower
-    { x: 10, y: 224 },   // bottom-left
-    { x: 90, y: 240 },   // bottom-right
-    { x: 45, y: 8 },     // top-center
-    { x: 55, y: 280 },   // bottom-center
+    { x: -24, y: 16 },    // top-left (outside container)
+    { x: 136, y: 8 },     // top-right (outside container)
+    { x: -32, y: 48 },    // left-mid (outside container)
+    { x: 144, y: 40 },    // right-mid (outside container)
+    { x: -24, y: 80 },    // left-lower (outside container)
+    { x: 136, y: 72 },    // right-lower (outside container)
+    { x: -32, y: 112 },   // bottom-left (outside container)
+    { x: 144, y: 120 },   // bottom-right (outside container)
+    { x: 72, y: -16 },    // top-center (outside container)
+    { x: 88, y: 144 },    // bottom-center (outside container)
   ];
 
   // Load saved positions from localStorage on mount
@@ -115,9 +115,9 @@ export function DraggableBadgeDisplay({
     const deltaX = e.clientX - dragState.startX;
     const deltaY = e.clientY - dragState.startY;
     
-    // Calculate new position relative to container
-    const newX = Math.max(0, Math.min(containerBounds.width - 48, dragState.initialX + deltaX));
-    const newY = Math.max(0, Math.min(containerBounds.height - 48, dragState.initialY + deltaY));
+    // Calculate new position relative to container (allow badges to go outside for scattered effect)
+    const newX = dragState.initialX + deltaX;
+    const newY = dragState.initialY + deltaY;
 
     setBadgePositions(prev => {
       const updated = prev.filter(p => p.id !== dragState.badgeId);

@@ -91,8 +91,8 @@ export function MemberProfileModal({ open, onOpenChange, member, memberProfile, 
                       badges={unlockedBadges} 
                       familyId={familyId} 
                       userId={member.userId}
-                      containerBounds={{ width: 280, height: 280 }}
-                      className="-translate-x-20 -translate-y-20"
+                      containerBounds={{ width: 128, height: 128 }}
+                      className="absolute inset-0"
                     />
                   )}
                 </div>

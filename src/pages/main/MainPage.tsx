@@ -180,7 +180,8 @@ export default function MainPage() {
                     badges={unlockedBadges} 
                     familyId={activeFamilyId!} 
                     userId={user!.id}
-                    containerBounds={{ width: 320, height: 320 }}
+                    containerBounds={{ width: 160, height: 160 }}
+                    className="absolute inset-0"
                   />
                 )}
               </div>
