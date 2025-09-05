@@ -16,6 +16,7 @@ interface AuthContextType {
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<{ error: any }>;
   createUser: (userData: Omit<User, 'id' | 'age' | 'profileComplete'>) => User;
   updateUser: (updates: Partial<User>) => void;
   logout: () => void;
@@ -145,6 +146,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setSession(null);
   }, []);
 
+  const resetPassword = useCallback(async (email: string) => {
+    const redirectUrl = `${window.location.origin}/auth`;
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: redirectUrl,
+    });
+    return { error };
+  }, []);
+
   const createUser = useCallback((userData: Omit<User, 'id' | 'age' | 'profileComplete'>): User => {
     if (!session?.user) throw new Error('Must be signed in to create user');
     
@@ -208,6 +217,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signUp,
       signIn,
       signOut,
+      resetPassword,
       createUser,
       updateUser,
       logout,
