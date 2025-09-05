@@ -27,7 +27,8 @@ export default function MainPage() {
     activeFamilyId,
     getTotalStars,
     resetCharacterProgress,
-    addStars
+    addStars,
+    families
   } = useApp();
   const {
     unlockedBadges,
@@ -103,7 +104,7 @@ export default function MainPage() {
       setPreviousStars(0);
     }
   };
-  const currentFamily = activeFamilyId ? storage.getFamilies().find(f => f.id === activeFamilyId) : null;
+  const currentFamily = activeFamilyId ? families.find(f => f.id === activeFamilyId) : null;
 
   return <div className="min-h-screen bg-background">
       <NavigationHeader title={currentFamily?.name || "Family Stars"} showBackButton={false} />
