@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { useUser } from '@clerk/clerk-react';
+import { supabase } from '@/integrations/supabase/client';
+import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import type { User } from '@/lib/types';
 import { generateId, calculateAge } from '@/lib/utils';
 
@@ -12,6 +13,9 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   
+  signUp: (email: string, password: string) => Promise<{ error: any }>;
+  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signOut: () => Promise<void>;
   createUser: (userData: Omit<User, 'id' | 'age' | 'profileComplete'>) => User;
   updateUser: (updates: Partial<User>) => void;
   logout: () => void;
@@ -21,67 +25,82 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const { user: clerkUser, isLoaded } = useUser();
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Single source of truth for session management
+  // Initialize session management
   const initializeSession = useCallback(() => {
     try {
       let currentSessionId = localStorage.getItem(SESSION_KEY);
       
       if (!currentSessionId) {
-        // Create new session
         currentSessionId = generateId();
         localStorage.setItem(SESSION_KEY, currentSessionId);
       }
       
       setSessionId(currentSessionId);
-      
-      // Load user based on Clerk user ID if authenticated
-      if (clerkUser) {
-        const userKey = `${USER_KEY}_${clerkUser.id}`;
-        const storedUser = localStorage.getItem(userKey);
-        if (storedUser) {
-          setUser(JSON.parse(storedUser));
-        } else {
-          // Try to migrate from global user key
-          const globalUser = localStorage.getItem(USER_KEY);
-          if (globalUser) {
-            const parsedUser = JSON.parse(globalUser);
-            // Save to Clerk-specific key
-            localStorage.setItem(userKey, globalUser);
-            setUser(parsedUser);
-            // Clean up global key
-            localStorage.removeItem(USER_KEY);
-          }
-        }
-      } else {
-        setUser(null);
-      }
     } catch (error) {
       console.error('Session initialization error:', error);
-      // Clear corrupted session
       clearAuth();
-    } finally {
-      setIsLoading(false);
     }
-  }, [clerkUser]);
+  }, []);
 
-  // Initialize when Clerk is loaded
-  useEffect(() => {
-    if (isLoaded) {
-      initializeSession();
+  // Load user data from localStorage based on Supabase user ID
+  const loadUserData = useCallback((supabaseUser: SupabaseUser | null) => {
+    if (supabaseUser) {
+      const userKey = `${USER_KEY}_${supabaseUser.id}`;
+      const storedUser = localStorage.getItem(userKey);
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      } else {
+        // Try to migrate from global user key
+        const globalUser = localStorage.getItem(USER_KEY);
+        if (globalUser) {
+          const parsedUser = JSON.parse(globalUser);
+          localStorage.setItem(userKey, globalUser);
+          setUser(parsedUser);
+          localStorage.removeItem(USER_KEY);
+        }
+      }
+    } else {
+      setUser(null);
     }
-  }, [isLoaded, initializeSession]);
+  }, []);
+
+  // Initialize auth state
+  useEffect(() => {
+    initializeSession();
+
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        
+        // Defer user data loading to prevent deadlock
+        setTimeout(() => {
+          loadUserData(session?.user ?? null);
+          setIsLoading(false);
+        }, 0);
+      }
+    );
+
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      loadUserData(session?.user ?? null);
+      setIsLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [initializeSession, loadUserData]);
 
   // Cross-tab synchronization
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === SESSION_KEY) {
         if (e.newValue !== sessionId) {
-          // Session changed in another tab
           const shouldUpdate = window.confirm(
             'Your session has changed in another tab. Do you want to update to the new session?'
           );
@@ -97,42 +116,70 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [sessionId]);
 
+  const signUp = useCallback(async (email: string, password: string) => {
+    const redirectUrl = `${window.location.origin}/`;
+    
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: redirectUrl
+      }
+    });
+    
+    return { error };
+  }, []);
+
+  const signIn = useCallback(async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+    
+    return { error };
+  }, []);
+
+  const signOut = useCallback(async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    setSession(null);
+  }, []);
+
   const createUser = useCallback((userData: Omit<User, 'id' | 'age' | 'profileComplete'>): User => {
-    if (!clerkUser) throw new Error('Must be signed in with Clerk to create user');
+    if (!session?.user) throw new Error('Must be signed in to create user');
     
     const newUser: User = {
       ...userData,
-      id: clerkUser.id, // Use Clerk user ID
+      id: session.user.id,
       age: calculateAge(userData.dateOfBirth),
       profileComplete: true,
     };
     
-    const userKey = `${USER_KEY}_${clerkUser.id}`;
+    const userKey = `${USER_KEY}_${session.user.id}`;
     localStorage.setItem(userKey, JSON.stringify(newUser));
     setUser(newUser);
     return newUser;
-  }, [clerkUser]);
+  }, [session]);
 
   const updateUser = useCallback((updates: Partial<User>) => {
-    if (!user || !clerkUser) return;
+    if (!user || !session?.user) return;
     
     const updatedUser = { ...user, ...updates };
-    const userKey = `${USER_KEY}_${clerkUser.id}`;
+    const userKey = `${USER_KEY}_${session.user.id}`;
     localStorage.setItem(userKey, JSON.stringify(updatedUser));
     setUser(updatedUser);
-  }, [user, clerkUser]);
+  }, [user, session]);
 
   const logout = useCallback(() => {
-    if (clerkUser) {
-      const userKey = `${USER_KEY}_${clerkUser.id}`;
+    if (session?.user) {
+      const userKey = `${USER_KEY}_${session.user.id}`;
       localStorage.removeItem(userKey);
     }
-    localStorage.removeItem(USER_KEY); // Clean up any legacy keys
+    localStorage.removeItem(USER_KEY);
     setUser(null);
-  }, [clerkUser]);
+  }, [session]);
 
   const clearAuth = useCallback(() => {
-    // Clear all auth/session storage
     const keysToRemove = [];
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
@@ -144,9 +191,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     keysToRemove.forEach(key => localStorage.removeItem(key));
     
     setUser(null);
+    setSession(null);
     setSessionId(null);
     
-    // Create new session
     const newSessionId = generateId();
     localStorage.setItem(SESSION_KEY, newSessionId);
     setSessionId(newSessionId);
@@ -156,8 +203,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthContext.Provider value={{
       user,
       sessionId,
-      isAuthenticated: !!user && !!clerkUser,
-      isLoading: !isLoaded || isLoading,
+      isAuthenticated: !!user && !!session,
+      isLoading,
+      signUp,
+      signIn,
+      signOut,
       createUser,
       updateUser,
       logout,

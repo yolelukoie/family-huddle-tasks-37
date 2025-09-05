@@ -6,7 +6,7 @@ import { CelebrationsProvider } from '@/contexts/CelebrationsContext';
 import { ROUTES } from '@/lib/constants';
 
 export function AppLayout() {
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const { isLoading } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
@@ -14,15 +14,14 @@ export function AppLayout() {
   useEffect(() => {
     if (authLoading || isLoading) return;
 
-    const hasStoredUser = !!localStorage.getItem('app_current_user');
+    // If not authenticated, redirect to auth page
+    if (!isAuthenticated) {
+      navigate('/auth', { replace: true });
+      return;
+    }
 
-    // If not authenticated
-    if (!user) {
-      // If there's a stored user, wait for auth hydration
-      if (hasStoredUser) {
-        return;
-      }
-      // Otherwise, navigate to onboarding
+    // If authenticated but no user profile, redirect to onboarding
+    if (isAuthenticated && !user) {
       if (location.pathname !== ROUTES.onboarding) {
         navigate(ROUTES.onboarding, { replace: true });
       }
@@ -30,7 +29,7 @@ export function AppLayout() {
     }
 
     // If user exists but hasn't completed full setup, redirect to onboarding
-    if (!user.profileComplete || !user.activeFamilyId) {
+    if (user && (!user.profileComplete || !user.activeFamilyId)) {
       if (location.pathname !== ROUTES.onboarding) {
         navigate(ROUTES.onboarding, { replace: true });
       }
@@ -38,10 +37,10 @@ export function AppLayout() {
     }
 
     // If fully set up user is on onboarding page, redirect to main
-    if (user.profileComplete && user.activeFamilyId && location.pathname === ROUTES.onboarding) {
+    if (user?.profileComplete && user.activeFamilyId && location.pathname === ROUTES.onboarding) {
       navigate(ROUTES.main, { replace: true });
     }
-  }, [user, authLoading, isLoading, navigate, location.pathname]);
+  }, [user, isAuthenticated, authLoading, isLoading, navigate, location.pathname]);
 
   if (authLoading || isLoading) {
     return (
