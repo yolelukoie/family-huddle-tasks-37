@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
-import { useAuth } from './useAuth';
-import { useApp } from './useApp';
+import { useAuth } from '@/hooks/useAuth';
+import { useApp } from '@/hooks/useApp';
 import { storage } from '@/lib/storage';
 import { Goal } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
