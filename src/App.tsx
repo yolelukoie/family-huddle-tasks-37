@@ -6,6 +6,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { AppProvider } from "@/hooks/useApp";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthPage } from "@/pages/auth/AuthPage";
+import { ResetPasswordPage } from "@/pages/auth/ResetPasswordPage";
 import { DevStatus } from "@/components/dev/DevStatus";
 import { ROUTES } from "@/lib/constants";
 import MainPage from "./pages/main/MainPage";
@@ -24,6 +25,7 @@ const App = () => (
       <AuthProvider>
         <Routes>
           <Route path="/auth" element={<AuthPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/" element={
             <AppProvider>
               <AppLayout />
