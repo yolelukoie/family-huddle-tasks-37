@@ -121,6 +121,18 @@ export const ADULT_STAGE_BADGES: Badge[] = [
   { id: 'adult_690', name: 'Laptop', description: 'Emails never end.', imagePath: '/lovable-uploads/e767c617-c3fc-4b7f-81b3-645cda474871.png', unlockStars: 690 },
 ];
 
+export const MATURE_ADULT_STAGE_BADGES: Badge[] = [
+  { id: 'mature_adult_couch', name: 'Couch', description: 'Netflix marathon champion.', imagePath: '/lovable-uploads/c30889e1-e45f-400a-a03e-5ad09eabe7ca.png', unlockStars: 710 },
+  { id: 'mature_adult_dumbbell', name: 'Gym Dumbbell', description: 'Signed up… went twice.', imagePath: '/lovable-uploads/56aca36c-3e9f-4c17-9f0e-88fc2f36a0ac.png', unlockStars: 720 },
+  { id: 'mature_adult_camera', name: 'Camera', description: 'Vacation photos: 1000, good ones: 3.', imagePath: '/lovable-uploads/7c436b25-2776-479f-82e5-dafd0f0da6a0.png', unlockStars: 730 },
+  { id: 'mature_adult_money_bag', name: 'Money Bag', description: 'Finally some savings!', imagePath: '/lovable-uploads/2c5340fc-121a-48e9-bc55-c60bcda849cf.png', unlockStars: 740 },
+  { id: 'mature_adult_balloon', name: 'Balloon', description: 'Threw a party, neighbors complained.', imagePath: '/lovable-uploads/9740a3d8-1664-457b-80a2-0e9caad66358.png', unlockStars: 750 },
+  { id: 'mature_adult_wine_glass', name: 'Wine Glass', description: 'Wine tasting: totally professional.', imagePath: '/lovable-uploads/e4377652-99b4-4ddc-834e-3d873e8d2b27.png', unlockStars: 760 },
+  { id: 'mature_adult_toolbox', name: 'Toolbox', description: 'Fixed one thing, broke two.', imagePath: '/lovable-uploads/3362f7c3-7a5f-4a77-bc7a-4aaba94948f0.png', unlockStars: 770 },
+  { id: 'mature_adult_graduation_cap', name: 'Graduation Cap', description: 'Finally finished that degree.', imagePath: '/lovable-uploads/115741fb-ad8e-4c19-9918-d5225f01c19c.png', unlockStars: 780 },
+  { id: 'mature_adult_globe', name: 'Globe', description: 'Traveled the world (or at least 2 cities).', imagePath: '/lovable-uploads/94c2e039-882b-4890-9173-1e7555ed04c0.png', unlockStars: 790 },
+];
+
 export const PLACEHOLDER_BADGES: Badge[] = [
   { id: 'stars_10', name: 'First Steps', description: 'Earned your first 10 stars!', imagePath: '/placeholder-badge.png', unlockStars: 10 },
   { id: 'stars_20', name: 'Building Momentum', description: 'Reached 20 stars!', imagePath: '/placeholder-badge.png', unlockStars: 20 },
