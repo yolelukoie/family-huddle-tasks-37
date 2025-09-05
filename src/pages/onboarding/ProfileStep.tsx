@@ -11,7 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 const profileSchema = z.object({
   displayName: z.string().min(2, 'Name must be at least 2 characters'),
   dateOfBirth: z.string().min(1, 'Date of birth is required'),
-  gender: z.enum(['male', 'female'], {
+  gender: z.enum(['male', 'female', 'other'], {
     required_error: 'Please select your gender',
   }),
 });
@@ -92,6 +92,7 @@ export function ProfileStep({ onComplete }: ProfileStepProps) {
                     <SelectContent>
                       <SelectItem value="male">Male</SelectItem>
                       <SelectItem value="female">Female</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

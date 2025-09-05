@@ -2,7 +2,7 @@ export interface User {
   id: string;
   displayName: string;
   dateOfBirth: string;
-  gender: 'male' | 'female';
+  gender: 'male' | 'female' | 'other';
   age: number;
   profileComplete: boolean;
   activeFamilyId?: string;

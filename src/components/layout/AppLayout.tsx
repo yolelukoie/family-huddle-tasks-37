@@ -29,7 +29,18 @@ export function AppLayout() {
       return;
     }
 
-    // Don't redirect authenticated users from onboarding - let OnboardingPage handle its own completion logic
+    // If user exists but hasn't completed full setup, redirect to onboarding
+    if (!user.profileComplete || !user.activeFamilyId) {
+      if (location.pathname !== ROUTES.onboarding) {
+        navigate(ROUTES.onboarding, { replace: true });
+      }
+      return;
+    }
+
+    // If fully set up user is on onboarding page, redirect to main
+    if (user.profileComplete && user.activeFamilyId && location.pathname === ROUTES.onboarding) {
+      navigate(ROUTES.main, { replace: true });
+    }
   }, [user, authLoading, isLoading, navigate, location.pathname]);
 
   if (authLoading || isLoading) {

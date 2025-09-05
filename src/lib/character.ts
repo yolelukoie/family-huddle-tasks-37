@@ -43,7 +43,9 @@ export function getStageProgress(totalStars: number): { current: number; target:
   };
 }
 
-export function getCharacterImagePath(gender: 'male' | 'female', stage: number): string {
+export function getCharacterImagePath(gender: 'male' | 'female' | 'other', stage: number): string {
+  // For 'other', default to female images
+  const effectiveGender = gender === 'other' ? 'female' : gender;
   // Mapping of female stages to uploaded images
   const femaleStageImages: Record<number, string> = {
     0: '/lovable-uploads/ff060815-4aa7-402c-a2b9-343c1e7a4bf1.png',
@@ -68,16 +70,16 @@ export function getCharacterImagePath(gender: 'male' | 'female', stage: number):
     800: '/male-character-800.png'
   };
 
-  if (gender === 'female' && femaleStageImages[stage]) {
+  if (effectiveGender === 'female' && femaleStageImages[stage]) {
     return femaleStageImages[stage];
   }
 
-  if (gender === 'male' && maleStageImages[stage]) {
+  if (effectiveGender === 'male' && maleStageImages[stage]) {
     return maleStageImages[stage];
   }
 
   // Fallback to placeholder for missing images
-  return `/character-placeholder-${gender}-${stage}.png`;
+  return `/character-placeholder-${effectiveGender}-${stage}.png`;
 }
 
 export function getStageName(stage: number): string {
