@@ -112,20 +112,6 @@ export default function GoalsPage() {
             </CardContent>
           </Card>
         )}
-
-        {/* Create Goal Button */}
-        {!activeGoal && (
-          <div className="text-center">
-            <Button 
-              onClick={() => setShowCreateGoal(true)}
-              className="bg-family-warm hover:bg-family-warm/90"
-              size="lg"
-            >
-              <Plus className="h-5 w-5 mr-2" />
-              Create Goal
-            </Button>
-          </div>
-        )}
       </div>
 
       <CreateGoalModal 

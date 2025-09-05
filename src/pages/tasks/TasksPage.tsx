@@ -199,6 +199,7 @@ export default function TasksPage() {
       <AssignTaskModal 
         open={showAssignTask}
         onOpenChange={setShowAssignTask}
+        onTaskAssigned={handleTaskAdded}
       />
 
       {/* Unified Celebrations */}

@@ -27,9 +27,10 @@ type AssignTaskForm = z.infer<typeof assignTaskSchema>;
 interface AssignTaskModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onTaskAssigned?: () => void;
 }
 
-export function AssignTaskModal({ open, onOpenChange }: AssignTaskModalProps) {
+export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTaskModalProps) {
   const { user } = useAuth();
   const { activeFamilyId, getFamilyMembers } = useApp();
   const { toast } = useToast();
@@ -72,6 +73,11 @@ export function AssignTaskModal({ open, onOpenChange }: AssignTaskModalProps) {
 
     form.reset();
     onOpenChange(false);
+    
+    // Trigger refresh in parent component
+    if (onTaskAssigned) {
+      onTaskAssigned();
+    }
   };
 
   return (
