@@ -23,7 +23,7 @@ export function AppLayout() {
 
     // Authenticated users go to main
     if (location.pathname === ROUTES.onboarding) {
-      navigate(ROUTES.main, { replace: true });
+      navigate('/', { replace: true });
     }
   }, [user, authLoading, isLoading, navigate, location.pathname]);
 
