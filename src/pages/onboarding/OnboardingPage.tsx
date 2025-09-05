@@ -1,14 +1,19 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ProfileStep } from './ProfileStep';
 import { FamilyStep } from './FamilyStep';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function OnboardingPage() {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const [currentStep, setCurrentStep] = useState<'profile' | 'family'>(
     user?.profileComplete ? 'family' : 'profile'
   );
 
+  useEffect(() => {
+    if (!isLoading && user?.profileComplete) {
+      setCurrentStep('family');
+    }
+  }, [isLoading, user]);
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="max-w-md w-full space-y-6">

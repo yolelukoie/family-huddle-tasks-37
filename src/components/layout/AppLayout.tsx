@@ -6,28 +6,26 @@ import { ROUTES } from '@/lib/constants';
 
 export function AppLayout() {
   const { user, isLoading: authLoading } = useAuth();
-  const { userFamilies, isLoading } = useApp();
+  const { isLoading } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    if (isLoading) return;
+    if (authLoading || isLoading) return;
 
-    // Single source of truth for routing decisions
-    const userHasFamilies = user && userFamilies.some(uf => uf.userId === user.id);
-    
-    // If on onboarding path, always allow it
-    if (location.pathname === ROUTES.onboarding) {
+    // If not authenticated, show onboarding
+    if (!user) {
+      if (location.pathname !== ROUTES.onboarding) {
+        navigate(ROUTES.onboarding, { replace: true });
+      }
       return;
     }
 
-    // Route based on family status
-    if (!userHasFamilies) {
-      navigate(ROUTES.onboarding, { replace: true });
-    } else if (location.pathname === ROUTES.onboarding) {
+    // Authenticated users go to main
+    if (location.pathname === ROUTES.onboarding) {
       navigate(ROUTES.main, { replace: true });
     }
-  }, [user, userFamilies, isLoading, navigate, location.pathname]);
+  }, [user, authLoading, isLoading, navigate, location.pathname]);
 
   if (authLoading || isLoading) {
     return (
