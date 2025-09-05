@@ -104,8 +104,10 @@ export default function MainPage() {
       setPreviousStars(0);
     }
   };
+  const currentFamily = activeFamilyId ? storage.getFamilies().find(f => f.id === activeFamilyId) : null;
+
   return <div className="min-h-screen bg-background">
-      <NavigationHeader title="Family Stars" showBackButton={false} />
+      <NavigationHeader title={currentFamily?.name || "Family Stars"} showBackButton={false} />
       
       <div className="max-w-4xl mx-auto p-4 space-y-6">
         {/* Greeting */}
@@ -118,7 +120,7 @@ export default function MainPage() {
         {/* Character Block */}
         <Card className="bg-gradient-to-br from-family-warm/10 to-family-celebration/10">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-center">
+            <CardTitle className="flex items-center justify-center gap-2">
               <Star className="h-5 w-5 text-family-star" />
               {stageName}
             </CardTitle>

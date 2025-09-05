@@ -215,7 +215,17 @@ export default function FamilyPage() {
                           <span className="sm:hidden">Members</span>
                         </Button>
                       </DialogTrigger>
-...
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Family Members</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between p-2 border rounded">
+                            <span>{user.displayName}</span>
+                            <Badge variant="secondary">You</Badge>
+                          </div>
+                        </div>
+                      </DialogContent>
                     </Dialog>
 
                     {family.createdBy === user.id && (
@@ -226,7 +236,39 @@ export default function FamilyPage() {
                             <span className="sm:hidden">Edit</span>
                           </Button>
                         </DialogTrigger>
-...
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Edit Family Name</DialogTitle>
+                          </DialogHeader>
+                          <form onSubmit={handleUpdateFamilyName} className="space-y-4">
+                            <div>
+                              <Label htmlFor="familyName">Family Name</Label>
+                              <Input
+                                id="familyName"
+                                value={editingFamilyId === family.id ? editingFamilyName : family.name}
+                                onChange={(e) => {
+                                  setEditingFamilyId(family.id);
+                                  setEditingFamilyName(e.target.value);
+                                }}
+                                placeholder="Enter family name"
+                                required
+                              />
+                            </div>
+                            <div className="flex gap-2">
+                              <Button type="submit" className="flex-1">Update</Button>
+                              <Button 
+                                type="button" 
+                                variant="outline" 
+                                onClick={() => {
+                                  setEditingFamilyId(null);
+                                  setEditingFamilyName('');
+                                }}
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          </form>
+                        </DialogContent>
                       </Dialog>
                     )}
 
