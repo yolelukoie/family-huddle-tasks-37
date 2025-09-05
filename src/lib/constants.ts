@@ -80,7 +80,7 @@ export const TEENAGER_STAGE_BADGES: Badge[] = [
   { id: 'teen_340', name: 'Bike', description: 'Faster than the bus, cooler too.', imagePath: '/lovable-uploads/adc6b6fc-7cd2-41a8-9939-3d24d1f3673f.png', unlockStars: 340 },
 ];
 
-export const ADULT_STAGE_BADGES: Badge[] = [
+export const YOUNG_ADULT_STAGE_BADGES: Badge[] = [
   { id: 'adult_360', name: 'Serving Tray', description: 'Carried 5 cups, spilled 4.', imagePath: '/lovable-uploads/72996e2e-5de5-419d-b5fd-77c2d00474bc.png', unlockStars: 360 },
   { id: 'adult_370', name: 'Coffee Mug', description: 'Survival fuel unlocked.', imagePath: '/lovable-uploads/32cc6920-8bfb-4f76-bdaa-f96013b3bd9e.png', unlockStars: 370 },
   { id: 'adult_380', name: 'Wall Clock', description: 'Discovered Mondays are eternal.', imagePath: '/lovable-uploads/986ad6f0-4ddf-4078-ab5b-1e065879241b.png', unlockStars: 380 },
@@ -107,6 +107,18 @@ export const ON_THE_RISE_STAGE_BADGES: Badge[] = [
   { id: 'ontherise_570', name: 'Mentor', description: 'Helping others level up.', imagePath: '/lovable-uploads/bd66e4f3-2004-41a6-99e8-3a2f7440e2df.png', unlockStars: 570 },
   { id: 'ontherise_580', name: 'Raise', description: 'Paycheck up. Confidence too.', imagePath: '/lovable-uploads/71c3b5b5-9781-4042-b774-82bdf23af465.png', unlockStars: 580 },
   { id: 'ontherise_590', name: 'Lanyard', description: 'Conference conquered; contacts gained.', imagePath: '/lovable-uploads/205da4e2-4de0-4832-9e5a-c29e3ea95695.png', unlockStars: 590 },
+];
+
+export const ADULT_STAGE_BADGES: Badge[] = [
+  { id: 'adult_610', name: 'Car Key', description: 'Freedom on four wheels!', imagePath: '/lovable-uploads/84a3af57-d78a-4849-b96c-420957685334.png', unlockStars: 610 },
+  { id: 'adult_620', name: 'House', description: 'Rented, but feels like mine.', imagePath: '/lovable-uploads/f28b64ba-1e9d-47a4-9ae4-c7f5816fdda9.png', unlockStars: 620 },
+  { id: 'adult_630', name: 'Baby Stroller', description: 'Life: upgraded with mini-me.', imagePath: '/lovable-uploads/e6af9500-8f81-4d6a-88eb-fc730add506b.png', unlockStars: 630 },
+  { id: 'adult_640', name: 'Bills', description: 'Electricity bill = horror story.', imagePath: '/lovable-uploads/1e70494b-88c3-4ee7-8c4f-8e11e658a16c.png', unlockStars: 640 },
+  { id: 'adult_650', name: 'Plant', description: 'House plant survived a whole week!', imagePath: '/lovable-uploads/d9073a03-941c-4b6c-942f-463e9fb8f69d.png', unlockStars: 650 },
+  { id: 'adult_660', name: 'Ring', description: 'Love, commitment… and dishes.', imagePath: '/lovable-uploads/8e6b2921-90a1-4b46-8711-0a450256a4fc.png', unlockStars: 660 },
+  { id: 'adult_670', name: 'Book', description: 'Self-help library: growing fast.', imagePath: '/lovable-uploads/b3254e9a-a633-4e58-a09c-302816885ada.png', unlockStars: 670 },
+  { id: 'adult_680', name: 'Suitcase', description: 'Business trip = free hotel breakfast.', imagePath: '/lovable-uploads/0ee79d38-3065-4e43-adb5-60af0bbc85f8.png', unlockStars: 680 },
+  { id: 'adult_690', name: 'Laptop', description: 'Emails never end.', imagePath: '/lovable-uploads/e767c617-c3fc-4b7f-81b3-645cda474871.png', unlockStars: 690 },
 ];
 
 export const PLACEHOLDER_BADGES: Badge[] = [

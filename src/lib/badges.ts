@@ -1,4 +1,4 @@
-import { BABY_STAGE_BADGES, CHILD_STAGE_BADGES, TEENAGER_STAGE_BADGES, ADULT_STAGE_BADGES, ON_THE_RISE_STAGE_BADGES } from './constants';
+import { BABY_STAGE_BADGES, CHILD_STAGE_BADGES, TEENAGER_STAGE_BADGES, YOUNG_ADULT_STAGE_BADGES, ON_THE_RISE_STAGE_BADGES, ADULT_STAGE_BADGES } from './constants';
 import { storage } from './storage';
 import type { Badge } from './types';
 
@@ -12,6 +12,10 @@ export function getChildBadges(totalStars: number): Badge[] {
 
 export function getTeenagerBadges(totalStars: number): Badge[] {
   return TEENAGER_STAGE_BADGES.filter(badge => totalStars >= badge.unlockStars);
+}
+
+export function getYoungAdultBadges(totalStars: number): Badge[] {
+  return YOUNG_ADULT_STAGE_BADGES.filter(badge => totalStars >= badge.unlockStars);
 }
 
 export function getAdultBadges(totalStars: number): Badge[] {
@@ -30,11 +34,11 @@ export function getCurrentStageBadges(totalStars: number): Badge[] {
   } else if (totalStars < 350) {
     return getTeenagerBadges(totalStars);
   } else if (totalStars < 500) {
-    return getAdultBadges(totalStars);
+    return getYoungAdultBadges(totalStars);
   } else if (totalStars < 600) {
     return getOnTheRiseBadges(totalStars);
   } else {
-    return []; // Adult stage and beyond - no badges implemented yet
+    return getAdultBadges(totalStars);
   }
 }
 
@@ -72,5 +76,5 @@ export function isAdultStage(totalStars: number): boolean {
 }
 
 export function shouldShowBadges(totalStars: number): boolean {
-  return totalStars < 600; // Show badges for Baby, Child, Teenager, Young Adult, and On the Rise stages
+  return totalStars < 700; // Show badges for Baby, Child, Teenager, Young Adult, On the Rise, and Adult stages
 }
