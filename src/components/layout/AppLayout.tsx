@@ -5,9 +5,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { ROUTES } from '@/lib/constants';
 
 export function AppLayout() {
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const { userFamilies, isLoading } = useApp();
-  const { isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
