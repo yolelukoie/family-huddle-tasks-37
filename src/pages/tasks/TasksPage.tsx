@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useApp } from '@/hooks/useApp';
 import { useGoals } from '@/hooks/useGoals';
+import { useCelebrations } from '@/hooks/useCelebrations';
 import { storage } from '@/lib/storage';
 import { isToday, isFuture, formatDate } from '@/lib/utils';
 import { TaskHistoryModal } from '@/components/modals/TaskHistoryModal';
@@ -18,7 +19,8 @@ import { History, Plus, CheckCircle } from 'lucide-react';
 export default function TasksPage() {
   const { user } = useAuth();
   const { activeFamilyId, addStars } = useApp();
-  const { celebration: goalCelebration, updateGoalProgress, completeCelebration } = useGoals();
+  const { updateGoalProgress } = useGoals();
+  const { currentCelebration, completeCelebration } = useCelebrations();
   const [showHistory, setShowHistory] = useState(false);
   const [showAssignTask, setShowAssignTask] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -198,10 +200,11 @@ export default function TasksPage() {
         onOpenChange={setShowAssignTask}
       />
 
-      {goalCelebration && (
+      {/* Unified Goal Celebration */}
+      {currentCelebration && currentCelebration.item.type === 'goal' && (
         <GoalCelebration
-          goal={goalCelebration.goal}
-          show={goalCelebration.show}
+          goal={currentCelebration.item.goal}
+          show={currentCelebration.show}
           onComplete={completeCelebration}
         />
       )}

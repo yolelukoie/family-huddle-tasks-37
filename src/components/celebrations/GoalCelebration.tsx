@@ -73,22 +73,6 @@ export function GoalCelebration({ goal, show, onComplete }: GoalCelebrationProps
       {/* Goal Celebration Content */}
       <div className="relative bg-white rounded-2xl p-8 max-w-md w-full mx-4 text-center shadow-2xl animate-scale-in">
         <div className="space-y-6">
-          {/* Celebration Image */}
-          <div className="flex justify-center">
-            <img 
-              src="/lovable-uploads/b6443eff-d597-4803-bf89-3b70bf00fc21.png"
-              alt="Goal celebration"
-              className="w-48 h-auto object-contain"
-              onError={(e) => {
-                const target = e.currentTarget;
-                target.style.display = 'none';
-                const fallback = target.nextElementSibling as HTMLElement;
-                if (fallback) fallback.style.display = 'block';
-              }}
-            />
-            <div className="hidden text-6xl">🏆</div>
-          </div>
-
           {/* Celebration Text */}
           <div className="space-y-2">
             <h1 className="text-3xl font-bold text-gray-900">The goal is reached</h1>

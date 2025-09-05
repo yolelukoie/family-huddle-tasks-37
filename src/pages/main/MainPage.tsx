@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useApp } from '@/hooks/useApp';
 import { useBadges } from '@/hooks/useBadges';
 import { useGoals } from '@/hooks/useGoals';
+import { useCelebrations } from '@/hooks/useCelebrations';
 import { NavigationHeader } from '@/components/layout/NavigationHeader';
 import { BadgeDisplay } from '@/components/badges/BadgeDisplay';
 import { BadgeCelebration } from '@/components/badges/BadgeCelebration';
@@ -31,15 +32,13 @@ export default function MainPage() {
   const {
     unlockedBadges,
     showBadges,
-    celebration,
     checkForNewBadges,
     resetBadgeProgress
   } = useBadges();
   const {
-    celebration: goalCelebration,
-    updateGoalProgress,
-    completeCelebration
+    updateGoalProgress
   } = useGoals();
+  const { currentCelebration, completeCelebration } = useCelebrations();
   const navigate = useNavigate();
   const [showAssignTask, setShowAssignTask] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -224,10 +223,21 @@ export default function MainPage() {
 
       <AssignTaskModal open={showAssignTask} onOpenChange={setShowAssignTask} />
 
-      {/* Badge Celebration */}
-      {celebration && <BadgeCelebration badge={celebration.badge} show={celebration.show} />}
-
-      {/* Goal Celebration */}
-      {goalCelebration && <GoalCelebration goal={goalCelebration.goal} show={goalCelebration.show} onComplete={completeCelebration} />}
+      {/* Unified Celebrations */}
+      {currentCelebration && currentCelebration.item.type === 'badge' && (
+        <BadgeCelebration 
+          badge={currentCelebration.item.badge} 
+          show={currentCelebration.show} 
+          onComplete={completeCelebration}
+        />
+      )}
+      
+      {currentCelebration && currentCelebration.item.type === 'goal' && (
+        <GoalCelebration 
+          goal={currentCelebration.item.goal} 
+          show={currentCelebration.show} 
+          onComplete={completeCelebration}
+        />
+      )}
     </div>;
 }

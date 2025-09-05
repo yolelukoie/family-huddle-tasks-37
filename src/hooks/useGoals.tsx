@@ -1,19 +1,15 @@
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useApp } from '@/hooks/useApp';
+import { useCelebrations } from './useCelebrations';
 import { storage } from '@/lib/storage';
 import { Goal } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
-export interface GoalCelebration {
-  goal: Goal;
-  show: boolean;
-}
-
 export function useGoals() {
   const { user } = useAuth();
   const { activeFamilyId } = useApp();
-  const [celebration, setCelebration] = useState<GoalCelebration | null>(null);
+  const { addCelebration } = useCelebrations();
   const { toast } = useToast();
 
   const updateGoalProgress = useCallback((taskCategoryId: string, starValue: number) => {
@@ -44,25 +40,17 @@ export function useGoals() {
 
     // Show celebration if goal is completed
     if (isCompleted) {
-      setCelebration({
-        goal: { ...activeGoal, currentStars: newCurrentStars, completed: true },
-        show: true
-      });
+      const completedGoal = { ...activeGoal, currentStars: newCurrentStars, completed: true };
+      addCelebration({ type: 'goal', goal: completedGoal });
       
       toast({
         title: "Goal Achieved! 🎉",
         description: `You've reached your goal of ${activeGoal.targetStars} stars!`,
       });
     }
-  }, [user, activeFamilyId, toast]);
-
-  const completeCelebration = useCallback(() => {
-    setCelebration(null);
-  }, []);
+  }, [user, activeFamilyId, toast, addCelebration]);
 
   return {
-    celebration,
     updateGoalProgress,
-    completeCelebration,
   };
 }

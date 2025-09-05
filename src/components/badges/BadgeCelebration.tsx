@@ -1,11 +1,23 @@
+import { useEffect } from 'react';
 import { Badge } from '@/lib/types';
 
 interface BadgeCelebrationProps {
   badge: Badge;
   show: boolean;
+  onComplete?: () => void;
 }
 
-export function BadgeCelebration({ badge, show }: BadgeCelebrationProps) {
+export function BadgeCelebration({ badge, show, onComplete }: BadgeCelebrationProps) {
+  useEffect(() => {
+    if (show && onComplete) {
+      // Auto-complete after exactly 2 seconds
+      const timer = setTimeout(() => {
+        onComplete();
+      }, 2000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [show, onComplete]);
   if (!show) return null;
 
   return (
