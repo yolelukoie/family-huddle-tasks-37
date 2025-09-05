@@ -63,7 +63,7 @@ export default function MainPage() {
   // Get today's tasks
   const todaysTasks = storage.getTasks(activeFamilyId).filter(task => !task.completed && isToday(task.dueDate));
 
-  // Get active goal
+  // Get active goal (refetch to ensure fresh data)
   const activeGoal = storage.getGoals(activeFamilyId, user.id).find(g => !g.completed);
 
   // Get task categories for star breakdown
@@ -93,7 +93,7 @@ export default function MainPage() {
       updateGoalProgress(task.categoryId, task.starValue);
     }
 
-    // Refresh component
+    // Refresh component to show updated goal progress
     setRefreshKey(prev => prev + 1);
   };
   const handleResetCharacter = () => {

@@ -19,11 +19,11 @@ export function BadgeCelebration({ badge, show, onComplete }: BadgeCelebrationPr
         {Array.from({ length: 12 }).map((_, i) => (
           <div
             key={i}
-            className="absolute animate-bounce text-2xl"
+            className="absolute text-4xl"
             style={{
               left: `${Math.random() * 100}%`,
+              animation: `fallingStar ${3 + Math.random() * 2}s linear infinite`,
               animationDelay: `${Math.random() * 2}s`,
-              animationDuration: '3s',
             }}
           >
             ⭐
@@ -45,7 +45,7 @@ export function BadgeCelebration({ badge, show, onComplete }: BadgeCelebrationPr
               if (fallback) fallback.style.display = 'block';
             }}
           />
-          <div className="w-16 h-16 bg-family-celebration/20 rounded-full flex items-center justify-center text-3xl hidden">
+          <div className="w-16 h-16 bg-family-celebration/20 rounded-full flex items-center justify-center text-3xl" style={{ display: 'none' }}>
             🏆
           </div>
         </div>
