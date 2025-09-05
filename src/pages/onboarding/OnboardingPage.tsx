@@ -17,10 +17,14 @@ export default function OnboardingPage() {
     }
   }, [isLoading, user]);
 
-  // Prevent existing users from seeing onboarding
+  // Only redirect if user has completed both profile AND family setup
   useEffect(() => {
-    if (!isLoading && user) {
-      navigate(ROUTES.main, { replace: true });
+    if (!isLoading && user && user.profileComplete) {
+      // Check if user has a family - if so, they've completed onboarding
+      const hasFamily = localStorage.getItem(`app_user_families_${user.id}`);
+      if (hasFamily) {
+        navigate(ROUTES.main, { replace: true });
+      }
     }
   }, [isLoading, user, navigate]);
   return (
