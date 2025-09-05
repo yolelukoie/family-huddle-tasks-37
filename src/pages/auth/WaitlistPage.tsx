@@ -10,10 +10,10 @@ export function WaitlistPage() {
       <div className="max-w-4xl w-full">
         <div className="text-center mb-8">
           <h1 className="text-5xl font-bold bg-gradient-to-r from-primary via-primary to-primary-foreground bg-clip-text text-transparent mb-4">
-            Family Stars ⭐
+            TaskHuddle ⭐
           </h1>
           <p className="text-xl text-muted-foreground mb-6">
-            Transform chores into adventures. Build stronger family bonds through gamified task management.
+            Create families with relatives or friends, assign tasks to each other, and earn stars to level up your characters. Build real habits—and tighter bonds—through play.
           </p>
           <Badge variant="secondary" className="text-lg px-4 py-2">
             🚀 Coming Soon - Join the Waitlist!
@@ -56,7 +56,7 @@ export function WaitlistPage() {
           <CardHeader className="text-center">
             <CardTitle>Ready to Transform Your Family?</CardTitle>
             <CardDescription>
-              Be the first to experience the magic of Family Stars
+              Be the first to experience the magic of TaskHuddle
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -87,7 +87,7 @@ export function WaitlistPage() {
                 <div className="p-4 bg-muted/50 rounded-lg">
                   <h3 className="font-semibold text-primary mb-2">🎉 You're In!</h3>
                   <p className="text-sm text-muted-foreground">
-                    Thanks for joining our waitlist. We'll notify you as soon as Family Stars is ready!
+                    Thanks for joining our waitlist. We'll notify you as soon as TaskHuddle is ready!
                   </p>
                 </div>
                 <p className="text-xs text-muted-foreground">
