@@ -44,8 +44,29 @@ export default function MainPage() {
   const [showAssignTask, setShowAssignTask] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [previousStars, setPreviousStars] = useState(0);
-  if (!user || !activeFamilyId) {
-    return null;
+  // Handle loading and missing data states
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading user data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!activeFamilyId) {
+    // User exists but has no active family - redirect to onboarding to complete family setup
+    setTimeout(() => navigate(ROUTES.onboarding, { replace: true }), 0);
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Setting up your family...</p>
+        </div>
+      </div>
+    );
   }
   const totalStars = getTotalStars(activeFamilyId);
   const currentStage = getCurrentStage(totalStars);

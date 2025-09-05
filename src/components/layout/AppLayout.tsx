@@ -29,10 +29,7 @@ export function AppLayout() {
       return;
     }
 
-    // Authenticated users go to main
-    if (location.pathname === ROUTES.onboarding) {
-      navigate('/', { replace: true });
-    }
+    // Don't redirect authenticated users from onboarding - let OnboardingPage handle its own completion logic
   }, [user, authLoading, isLoading, navigate, location.pathname]);
 
   if (authLoading || isLoading) {

@@ -19,12 +19,9 @@ export default function OnboardingPage() {
 
   // Only redirect if user has completed both profile AND family setup
   useEffect(() => {
-    if (!isLoading && user && user.profileComplete) {
-      // Check if user has a family - if so, they've completed onboarding
-      const hasFamily = localStorage.getItem(`app_user_families_${user.id}`);
-      if (hasFamily) {
-        navigate(ROUTES.main, { replace: true });
-      }
+    if (!isLoading && user && user.profileComplete && user.activeFamilyId) {
+      // User has completed both profile and has an active family - they've completed onboarding
+      navigate(ROUTES.main, { replace: true });
     }
   }, [isLoading, user, navigate]);
   return (

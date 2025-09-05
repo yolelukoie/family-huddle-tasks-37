@@ -46,13 +46,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       
       setFamilies(storedFamilies);
       setUserFamilies(storedUserFamilies);
+
+      // If user has families but no active family set, set the first one as active
+      if (storedUserFamilies.length > 0 && !user.activeFamilyId) {
+        updateUser({ activeFamilyId: storedUserFamilies[0].familyId });
+      }
     } else {
       setFamilies([]);
       setUserFamilies([]);
     }
     
     setIsLoading(false);
-  }, [user, authLoading]);
+  }, [user, authLoading, updateUser]);
 
 
   const createFamily = (name: string): string => {
