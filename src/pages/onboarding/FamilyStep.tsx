@@ -9,6 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useApp } from '@/hooks/useApp';
+import { useAuth } from '@/hooks/useAuth';
 import { ROUTES } from '@/lib/constants';
 import { useToast } from '@/hooks/use-toast';
 
@@ -25,6 +26,7 @@ type JoinFamilyForm = z.infer<typeof joinFamilySchema>;
 
 export function FamilyStep() {
   const { createFamily, joinFamily } = useApp();
+  const { user, isLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<'create' | 'join'>('create');
@@ -38,6 +40,8 @@ export function FamilyStep() {
   });
 
   const onCreateFamily = (data: CreateFamilyForm) => {
+    if (!user || isLoading) return;
+    
     try {
       createFamily(data.familyName);
       navigate(ROUTES.main);
@@ -103,8 +107,12 @@ export function FamilyStep() {
                   )}
                 />
 
-                <Button type="submit" className="w-full bg-family-warm hover:bg-family-warm/90">
-                  Create Family
+                <Button 
+                  type="submit" 
+                  className="w-full bg-family-warm hover:bg-family-warm/90"
+                  disabled={!user || isLoading}
+                >
+                  {isLoading ? 'Loading...' : 'Create Family'}
                 </Button>
               </form>
             </Form>
@@ -132,8 +140,12 @@ export function FamilyStep() {
                   )}
                 />
 
-                <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
-                  Join Family
+                <Button 
+                  type="submit" 
+                  className="w-full bg-primary hover:bg-primary/90"
+                  disabled={!user || isLoading}
+                >
+                  {isLoading ? 'Loading...' : 'Join Family'}
                 </Button>
               </form>
             </Form>
