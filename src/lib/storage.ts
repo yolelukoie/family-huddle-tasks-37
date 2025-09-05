@@ -75,6 +75,23 @@ class LocalStorage {
     this.setItem('userFamilies', userFamilies);
   }
 
+  // Get all members of a specific family
+  getFamilyMembers(familyId: string): UserFamily[] {
+    const userFamilies = this.getUserFamilies();
+    return userFamilies.filter(uf => uf.familyId === familyId);
+  }
+
+  // Get user profile by user ID (from localStorage user data)
+  getUserProfile(userId: string): User | null {
+    // For now, we can only get the current user's profile
+    // In a real app, this would query a users table
+    const currentUser = this.getUser();
+    if (currentUser && currentUser.id === userId) {
+      return currentUser;
+    }
+    return null;
+  }
+
   updateUserFamily(userId: string, familyId: string, updates: Partial<UserFamily>): void {
     const userFamilies = this.getUserFamilies();
     const index = userFamilies.findIndex(uf => uf.userId === userId && uf.familyId === familyId);

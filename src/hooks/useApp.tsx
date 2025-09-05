@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import type { Family, UserFamily } from '@/lib/types';
+import type { Family, UserFamily, User } from '@/lib/types';
 import { storage } from '@/lib/storage';
 import { scopedStorage } from '@/lib/scopedStorage';
 import { generateId } from '@/lib/utils';
@@ -22,6 +22,7 @@ interface AppContextType {
   // Utility
   getUserFamily: (familyId: string) => UserFamily | null;
   getFamilyMembers: (familyId: string) => UserFamily[];
+  getUserProfile: (userId: string) => User | null;
   getTotalStars: (familyId: string) => number;
   addStars: (familyId: string, stars: number) => void;
   resetCharacterProgress: (familyId: string) => void;
@@ -295,6 +296,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     ));
   };
 
+  const getUserProfile = (userId: string): User | null => {
+    return storage.getUserProfile(userId);
+  };
+
   const seedFamilyDefaults = (familyId: string) => {
     if (!user) return;
     
@@ -342,6 +347,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       updateFamilyName,
       getUserFamily,
       getFamilyMembers,
+      getUserProfile,
       getTotalStars,
       addStars,
       resetCharacterProgress,

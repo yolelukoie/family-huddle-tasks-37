@@ -8,12 +8,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useAuth } from '@/hooks/useAuth';
 import { useApp } from '@/hooks/useApp';
 import { NavigationHeader } from '@/components/layout/NavigationHeader';
-import { Users, Share, Plus, Edit, Settings } from 'lucide-react';
+import { MemberProfileModal } from '@/components/modals/MemberProfileModal';
+import { Users, Share, Plus, Edit, Settings, Star } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { getCurrentStage, getStageName } from '@/lib/character';
 
 export default function FamilyPage() {
   const { user, updateUser } = useAuth();
-  const { activeFamilyId, userFamilies, families, setActiveFamilyId, createFamily, joinFamily, updateFamilyName } = useApp();
+  const { activeFamilyId, userFamilies, families, setActiveFamilyId, createFamily, joinFamily, updateFamilyName, getFamilyMembers, getUserProfile } = useApp();
   const { toast } = useToast();
   const [newDisplayName, setNewDisplayName] = useState(user?.displayName || '');
   const [showJoinFamily, setShowJoinFamily] = useState(false);
@@ -22,6 +24,8 @@ export default function FamilyPage() {
   const [newFamilyName, setNewFamilyName] = useState('');
   const [editingFamilyId, setEditingFamilyId] = useState<string | null>(null);
   const [editingFamilyName, setEditingFamilyName] = useState('');
+  const [selectedMember, setSelectedMember] = useState<any>(null);
+  const [showMemberProfile, setShowMemberProfile] = useState(false);
 
   if (!user) return null;
 
@@ -215,15 +219,49 @@ export default function FamilyPage() {
                           <span className="sm:hidden">Members</span>
                         </Button>
                       </DialogTrigger>
-                      <DialogContent>
+                      <DialogContent className="max-w-md">
                         <DialogHeader>
                           <DialogTitle>Family Members</DialogTitle>
                         </DialogHeader>
                         <div className="space-y-2">
-                          <div className="flex items-center justify-between p-2 border rounded">
-                            <span>{user.displayName}</span>
-                            <Badge variant="secondary">You</Badge>
-                          </div>
+                          {getFamilyMembers(family.id).map((member) => {
+                            const memberProfile = getUserProfile(member.userId);
+                            const isCurrentUser = member.userId === user.id;
+                            const currentStage = getCurrentStage(member.totalStars);
+                            const stageName = getStageName(currentStage);
+                            
+                            return (
+                              <div 
+                                key={member.userId}
+                                className={`flex items-center justify-between p-3 border rounded-lg transition-colors ${
+                                  !isCurrentUser ? 'cursor-pointer hover:bg-muted/50' : ''
+                                }`}
+                                onClick={() => {
+                                  if (!isCurrentUser) {
+                                    setSelectedMember({ member, memberProfile });
+                                    setShowMemberProfile(true);
+                                  }
+                                }}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className="flex flex-col">
+                                    <span className="font-medium">
+                                      {memberProfile?.displayName || 'Family Member'}
+                                    </span>
+                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                      <Star className="h-3 w-3" />
+                                      <span>{member.totalStars} stars</span>
+                                      <span>•</span>
+                                      <span>{stageName}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                                {isCurrentUser && (
+                                  <Badge variant="secondary">You</Badge>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       </DialogContent>
                     </Dialog>
@@ -358,6 +396,17 @@ export default function FamilyPage() {
           </Card>
         </div>
       </div>
+
+      {/* Member Profile Modal */}
+      {selectedMember && (
+        <MemberProfileModal
+          open={showMemberProfile}
+          onOpenChange={setShowMemberProfile}
+          member={selectedMember.member}
+          memberProfile={selectedMember.memberProfile}
+          familyId={activeFamilyId!}
+        />
+      )}
     </div>
   );
 }
