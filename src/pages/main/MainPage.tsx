@@ -161,9 +161,9 @@ export default function MainPage() {
               {stageName}
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent>
             {/* Character Image and Badges */}
-            <div className="flex justify-center">
+            <div className="flex justify-center mb-6">
               <div className="relative">
                 <img src={characterImagePath} alt={`${user.gender} character at ${stageName} stage`} className="w-40 h-40 object-contain" onError={e => {
                 // Fallback to emoji if image fails to load
@@ -188,7 +188,7 @@ export default function MainPage() {
             </div>
 
             {/* Progress Bar */}
-            <div className="space-y-2">
+            <div className="space-y-2 mb-4">
               <div className="flex justify-between text-sm">
                 <span>Progress to next stage</span>
                 <span>{stageProgress.current}/{stageProgress.target} stars</span>
@@ -197,7 +197,7 @@ export default function MainPage() {
             </div>
 
             {/* Category Breakdown */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-4">
               {categoryStars.map(({
               category,
               stars
