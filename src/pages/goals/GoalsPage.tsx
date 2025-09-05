@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,10 +15,34 @@ import { GoalHistoryModal } from '@/components/modals/GoalHistoryModal';
 export default function GoalsPage() {
   const { user } = useAuth();
   const { activeFamilyId } = useApp();
+  const navigate = useNavigate();
   const [showCreateGoal, setShowCreateGoal] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
 
-  if (!user || !activeFamilyId) return null;
+  // Handle loading and missing data states
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading user data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!activeFamilyId) {
+    // User exists but has no active family - redirect to onboarding to complete family setup
+    setTimeout(() => navigate('/onboarding', { replace: true }), 0);
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Setting up your family...</p>
+        </div>
+      </div>
+    );
+  }
 
   const goals = storage.getGoals(activeFamilyId, user.id);
   const activeGoal = goals.find(g => !g.completed);

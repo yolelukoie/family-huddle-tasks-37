@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -12,6 +12,7 @@ import { useApp } from '@/hooks/useApp';
 import { useAuth } from '@/hooks/useAuth';
 import { ROUTES } from '@/lib/constants';
 import { useToast } from '@/hooks/use-toast';
+import { storage } from '@/lib/storage';
 
 const createFamilySchema = z.object({
   familyName: z.string().min(2, 'Family name must be at least 2 characters'),
@@ -29,7 +30,15 @@ export function FamilyStep() {
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState<'create' | 'join'>('create');
+
+  // Check if user has existing families to determine default tab
+  const existingFamilies = user ? storage.getFamilies().filter(f => 
+    storage.getUserFamilies().some(uf => uf.userId === user.id && uf.familyId === f.id)
+  ) : [];
+  
+  const [activeTab, setActiveTab] = useState<'create' | 'join'>(
+    existingFamilies.length > 0 ? 'join' : 'create'
+  );
 
   const createForm = useForm<CreateFamilyForm>({
     resolver: zodResolver(createFamilySchema),
