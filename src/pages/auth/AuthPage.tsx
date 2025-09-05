@@ -94,35 +94,35 @@ export function AuthPage() {
           </Badge>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <CardHeader>
-              <Star className="h-8 w-8 text-primary mb-2" />
-              <CardTitle>Earn Stars</CardTitle>
-              <CardDescription>
-                Complete tasks and chores to earn stars and unlock rewards
-              </CardDescription>
-            </CardHeader>
+        <div className="grid md:grid-cols-3 gap-4 mb-6">
+          <Card className="p-4">
+            <div className="flex items-center gap-3">
+              <Star className="h-6 w-6 text-primary flex-shrink-0" />
+              <div>
+                <h3 className="font-semibold text-sm">Earn Stars</h3>
+                <p className="text-xs text-muted-foreground">Complete tasks and earn rewards</p>
+              </div>
+            </div>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <Users className="h-8 w-8 text-primary mb-2" />
-              <CardTitle>Family Teamwork</CardTitle>
-              <CardDescription>
-                Work together as a family to achieve shared goals and milestones
-              </CardDescription>
-            </CardHeader>
+          <Card className="p-4">
+            <div className="flex items-center gap-3">
+              <Users className="h-6 w-6 text-primary flex-shrink-0" />
+              <div>
+                <h3 className="font-semibold text-sm">Family Teamwork</h3>
+                <p className="text-xs text-muted-foreground">Achieve shared goals together</p>
+              </div>
+            </div>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <Trophy className="h-8 w-8 text-primary mb-2" />
-              <CardTitle>Level Up</CardTitle>
-              <CardDescription>
-                Watch your family character grow and evolve as you complete more tasks
-              </CardDescription>
-            </CardHeader>
+          <Card className="p-4">
+            <div className="flex items-center gap-3">
+              <Trophy className="h-6 w-6 text-primary flex-shrink-0" />
+              <div>
+                <h3 className="font-semibold text-sm">Level Up</h3>
+                <p className="text-xs text-muted-foreground">Watch your character grow</p>
+              </div>
+            </div>
           </Card>
         </div>
 
