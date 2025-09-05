@@ -1,9 +1,13 @@
 import { useState } from 'react';
 import { ProfileStep } from './ProfileStep';
 import { FamilyStep } from './FamilyStep';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function OnboardingPage() {
-  const [currentStep, setCurrentStep] = useState<'profile' | 'family'>('profile');
+  const { user } = useAuth();
+  const [currentStep, setCurrentStep] = useState<'profile' | 'family'>(
+    user?.profileComplete ? 'family' : 'profile'
+  );
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
