@@ -33,10 +33,12 @@ export function FamilyStep() {
 
   const createForm = useForm<CreateFamilyForm>({
     resolver: zodResolver(createFamilySchema),
+    defaultValues: { familyName: '' },
   });
 
   const joinForm = useForm<JoinFamilyForm>({
     resolver: zodResolver(joinFamilySchema),
+    defaultValues: { inviteCode: '' },
   });
 
   const onCreateFamily = (data: CreateFamilyForm) => {

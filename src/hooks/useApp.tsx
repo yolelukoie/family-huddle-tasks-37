@@ -58,11 +58,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const createFamily = (name: string): string => {
     if (!user) throw new Error('No user found');
 
-    // Check if family name already exists
-    const existingFamily = scopedStorage.findFamilyByName(name);
-    if (existingFamily) {
-      throw new Error('A family with this name already exists');
-    }
+    // Allow duplicate family names; uniqueness is ensured by ID and inviteCode
+    // (e.g., multiple families can be named the same)
 
     const family: Family = {
       id: generateId(),
