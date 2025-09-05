@@ -79,6 +79,24 @@ export const TEENAGER_STAGE_BADGES: Badge[] = [
   { id: 'teen_340', name: 'Bike', description: 'Faster than the bus, cooler too.', imagePath: '/lovable-uploads/adc6b6fc-7cd2-41a8-9939-3d24d1f3673f.png', unlockStars: 340 },
 ];
 
+export const ADULT_STAGE_BADGES: Badge[] = [
+  { id: 'adult_360', name: 'Serving Tray', description: 'Carried 5 cups, spilled 4.', imagePath: '/lovable-uploads/72996e2e-5de5-419d-b5fd-77c2d00474bc.png', unlockStars: 360 },
+  { id: 'adult_370', name: 'Coffee Mug', description: 'Survival fuel unlocked.', imagePath: '/lovable-uploads/32cc6920-8bfb-4f76-bdaa-f96013b3bd9e.png', unlockStars: 370 },
+  { id: 'adult_380', name: 'Wall Clock', description: 'Discovered Mondays are eternal.', imagePath: '/lovable-uploads/986ad6f0-4ddf-4078-ab5b-1e065879241b.png', unlockStars: 380 },
+  { id: 'adult_390', name: 'Work Uniform', description: 'First paycheck = instant shopping spree.', imagePath: '/lovable-uploads/95f30d91-0887-4db7-950c-99dde093c805.png', unlockStars: 390 },
+  { id: 'adult_400', name: 'Keyboard', description: 'Typing fast looks like hacking.', imagePath: '/lovable-uploads/ab55874b-4314-464f-be06-47fb87016cc7.png', unlockStars: 400 },
+  { id: 'adult_410', name: 'Phone', description: 'Customer: angry. Me: smiling.', imagePath: '/lovable-uploads/912bede5-3ef8-459b-add6-8adaee4acc57.png', unlockStars: 410 },
+  { id: 'adult_420', name: 'Work Shoes', description: 'Work shoes = torture devices.', imagePath: '/lovable-uploads/23be9de9-fb1f-49b0-8481-8d3b38919bc5.png', unlockStars: 420 },
+  { id: 'adult_430', name: 'Wallet', description: 'Savings? What savings?', imagePath: '/lovable-uploads/94430fc5-9664-41fd-9099-ffa94f95d67b.png', unlockStars: 430 },
+  { id: 'adult_440', name: 'Tie', description: 'Tied a tie after 50 YouTube tutorials.', imagePath: '/lovable-uploads/e299ad47-a622-4d21-92e6-1a62b8b44ccb.png', unlockStars: 440 },
+  { id: 'adult_450', name: 'Laptop', description: 'Ctrl+Z is my superpower.', imagePath: '/lovable-uploads/e2fd2477-68aa-423b-9ad2-e465091b0352.png', unlockStars: 450 },
+  { id: 'adult_460', name: 'Pizza Box', description: 'Midnight shift snack tradition.', imagePath: '/lovable-uploads/ae803100-f459-45af-99b8-f59d2605e7f5.png', unlockStars: 460 },
+  { id: 'adult_470', name: 'Coin', description: 'Learned what "taxes" mean (ouch).', imagePath: '/lovable-uploads/0bd291fd-7bf1-4bb1-a9cc-1973757bf757.png', unlockStars: 470 },
+  { id: 'adult_480', name: 'Alarm Clock', description: 'Alarm ignored = boss angry.', imagePath: '/lovable-uploads/69719e36-ebeb-468a-ae91-e8d5ee6cc929.png', unlockStars: 480 },
+  { id: 'adult_490', name: 'Credit Card', description: 'Credit card balance: nope.', imagePath: '/lovable-uploads/2f5c34ad-8ee4-437d-8d5c-a604342cb611.png', unlockStars: 490 },
+  { id: 'adult_500', name: 'Trophy', description: 'Survived the first year!', imagePath: '/lovable-uploads/c0a439f2-f35a-4ec3-a854-c2b54093690f.png', unlockStars: 500 },
+];
+
 export const PLACEHOLDER_BADGES: Badge[] = [
   { id: 'stars_10', name: 'First Steps', description: 'Earned your first 10 stars!', imagePath: '/placeholder-badge.png', unlockStars: 10 },
   { id: 'stars_20', name: 'Building Momentum', description: 'Reached 20 stars!', imagePath: '/placeholder-badge.png', unlockStars: 20 },
