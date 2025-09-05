@@ -10,7 +10,7 @@ import { useBadges } from '@/hooks/useBadges';
 import { useGoals } from '@/hooks/useGoals';
 import { useCelebrations } from '@/hooks/useCelebrations';
 import { NavigationHeader } from '@/components/layout/NavigationHeader';
-import { BadgeDisplay } from '@/components/badges/BadgeDisplay';
+import { DraggableBadgeDisplay } from '@/components/badges/DraggableBadgeDisplay';
 import { BadgeCelebration } from '@/components/badges/BadgeCelebration';
 import { GoalCelebration } from '@/components/celebrations/GoalCelebration';
 import { ROUTES } from '@/lib/constants';
@@ -174,8 +174,15 @@ export default function MainPage() {
               }} />
                 <span className="text-4xl hidden">👤</span>
                 
-                {/* Scattered Badges */}
-                {showBadges && <BadgeDisplay badges={unlockedBadges} scattered />}
+                {/* Draggable Badges */}
+                {showBadges && (
+                  <DraggableBadgeDisplay 
+                    badges={unlockedBadges} 
+                    familyId={activeFamilyId!} 
+                    userId={user!.id}
+                    containerBounds={{ width: 320, height: 320 }}
+                  />
+                )}
               </div>
             </div>
 

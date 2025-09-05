@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Star, Calendar } from 'lucide-react';
+import { DraggableBadgeDisplay } from '@/components/badges/DraggableBadgeDisplay';
+import { getCurrentStageBadges } from '@/lib/badges';
 import { getCurrentStage, getStageProgress, getCharacterImagePath, getStageName } from '@/lib/character';
 import { storage } from '@/lib/storage';
 import { isToday } from '@/lib/utils';
@@ -23,6 +25,7 @@ export function MemberProfileModal({ open, onOpenChange, member, memberProfile, 
   const stageProgress = getStageProgress(totalStars);
   const stageName = getStageName(currentStage);
   const characterImagePath = getCharacterImagePath(memberProfile?.gender || 'female', currentStage);
+  const unlockedBadges = getCurrentStageBadges(totalStars);
   
   // Get member's tasks (completed and today's active)
   const allTasks = storage.getTasks(familyId).filter(task => task.assignedTo === member.userId);
@@ -65,7 +68,7 @@ export function MemberProfileModal({ open, onOpenChange, member, memberProfile, 
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Character Image */}
+              {/* Character Image with Draggable Badges */}
               <div className="flex justify-center">
                 <div className="relative">
                   <img 
@@ -81,6 +84,17 @@ export function MemberProfileModal({ open, onOpenChange, member, memberProfile, 
                     }} 
                   />
                   <span className="text-3xl hidden">👤</span>
+                  
+                  {/* Draggable Badges */}
+                  {unlockedBadges.length > 0 && (
+                    <DraggableBadgeDisplay 
+                      badges={unlockedBadges} 
+                      familyId={familyId} 
+                      userId={member.userId}
+                      containerBounds={{ width: 280, height: 280 }}
+                      className="-translate-x-20 -translate-y-20"
+                    />
+                  )}
                 </div>
               </div>
 
