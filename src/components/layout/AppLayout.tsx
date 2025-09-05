@@ -14,8 +14,15 @@ export function AppLayout() {
   useEffect(() => {
     if (authLoading || isLoading) return;
 
-    // If not authenticated, show onboarding
+    const hasStoredUser = !!localStorage.getItem('app_current_user');
+
+    // If not authenticated
     if (!user) {
+      // If there's a stored user, wait for auth hydration
+      if (hasStoredUser) {
+        return;
+      }
+      // Otherwise, navigate to onboarding
       if (location.pathname !== ROUTES.onboarding) {
         navigate(ROUTES.onboarding, { replace: true });
       }
