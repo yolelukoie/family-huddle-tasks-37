@@ -54,7 +54,7 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
   };
 
   return (
-    <>
+    <div className="group">
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <CollapsibleTrigger asChild>
           <Button variant="ghost" className="w-full justify-between p-3 h-auto">
@@ -63,6 +63,26 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
               <span className="font-medium">{category.name}</span>
               <Badge variant="outline">{templates.length} templates</Badge>
             </div>
+            {!category.isDefault && !category.isHouseChores && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (confirm(`Delete "${category.name}" category? This will also delete all templates and tasks in this category.`)) {
+                    storage.deleteTaskCategory(category.id);
+                    onTaskAdded?.(); // Refresh parent
+                    toast({
+                      title: "Category deleted",
+                      description: `"${category.name}" and all its tasks have been deleted.`,
+                    });
+                  }
+                }}
+                className="h-6 w-6 p-0 text-destructive hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            )}
           </Button>
         </CollapsibleTrigger>
         
@@ -124,6 +144,6 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
         familyId={familyId}
         onTemplateCreated={() => onTaskAdded?.()}
       />
-    </>
+    </div>
   );
 }

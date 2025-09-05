@@ -96,6 +96,23 @@ class LocalStorage {
     this.setItem('taskCategories', categories);
   }
 
+  deleteTaskCategory(categoryId: string): void {
+    // Remove the category
+    const categories = this.getItem<TaskCategory[]>('taskCategories') || [];
+    const filteredCategories = categories.filter(c => c.id !== categoryId);
+    this.setItem('taskCategories', filteredCategories);
+
+    // Remove all task templates in this category
+    const templates = this.getItem<TaskTemplate[]>('taskTemplates') || [];
+    const filteredTemplates = templates.filter(t => t.categoryId !== categoryId);
+    this.setItem('taskTemplates', filteredTemplates);
+
+    // Remove all tasks in this category
+    const tasks = this.getItem<Task[]>('tasks') || [];
+    const filteredTasks = tasks.filter(t => t.categoryId !== categoryId);
+    this.setItem('tasks', filteredTasks);
+  }
+
   // Task templates
   getTaskTemplates(familyId: string, categoryId?: string): TaskTemplate[] {
     const allTemplates = this.getItem<TaskTemplate[]>('taskTemplates') || [];
