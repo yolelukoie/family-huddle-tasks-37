@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ProfileStep } from './ProfileStep';
 import { FamilyStep } from './FamilyStep';
 import { useAuth } from '@/hooks/useAuth';
-
+import { ROUTES } from '@/lib/constants';
 export default function OnboardingPage() {
   const { user, isLoading } = useAuth();
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState<'profile' | 'family'>(
     user?.profileComplete ? 'family' : 'profile'
   );
@@ -14,6 +16,13 @@ export default function OnboardingPage() {
       setCurrentStep('family');
     }
   }, [isLoading, user]);
+
+  // Prevent existing users from seeing onboarding
+  useEffect(() => {
+    if (!isLoading && user) {
+      navigate(ROUTES.main, { replace: true });
+    }
+  }, [isLoading, user, navigate]);
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="max-w-md w-full space-y-6">

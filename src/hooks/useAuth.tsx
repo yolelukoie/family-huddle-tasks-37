@@ -37,12 +37,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       setSessionId(currentSessionId);
       
-      // Load user for this session
-      const userKey = `${USER_KEY}_${currentSessionId}`;
-      const storedUser = localStorage.getItem(userKey);
-      
+      // Load global user (one user - one account)
+      const storedUser = localStorage.getItem(USER_KEY);
       if (storedUser) {
         setUser(JSON.parse(storedUser));
+      } else {
+        // Backward compatibility: migrate any session-scoped user to global key
+        const legacyKey = `${USER_KEY}_${currentSessionId}`;
+        const legacyUser = localStorage.getItem(legacyKey);
+        if (legacyUser) {
+          localStorage.setItem(USER_KEY, legacyUser);
+          setUser(JSON.parse(legacyUser));
+        } else {
+          // Fallback: pick the first key that matches old pattern app_current_user_*
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith(`${USER_KEY}_`)) {
+              const val = localStorage.getItem(key);
+              if (val) {
+                localStorage.setItem(USER_KEY, val);
+                setUser(JSON.parse(val));
+                break;
+              }
+            }
+          }
+        }
       }
     } catch (error) {
       console.error('Session initialization error:', error);
@@ -79,38 +98,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [initializeSession]);
 
   const createUser = useCallback((userData: Omit<User, 'id' | 'age' | 'profileComplete'>): User => {
-    if (!sessionId) throw new Error('No session available');
-    
     const newUser: User = {
       ...userData,
       id: generateId(),
       age: calculateAge(userData.dateOfBirth),
       profileComplete: true,
     };
-    
-    const userKey = `${USER_KEY}_${sessionId}`;
-    localStorage.setItem(userKey, JSON.stringify(newUser));
+    localStorage.setItem(USER_KEY, JSON.stringify(newUser));
     setUser(newUser);
-    
     return newUser;
-  }, [sessionId]);
+  }, []);
 
   const updateUser = useCallback((updates: Partial<User>) => {
-    if (!user || !sessionId) return;
-    
+    if (!user) return;
     const updatedUser = { ...user, ...updates };
-    const userKey = `${USER_KEY}_${sessionId}`;
-    localStorage.setItem(userKey, JSON.stringify(updatedUser));
+    localStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
     setUser(updatedUser);
-  }, [user, sessionId]);
+  }, [user]);
 
   const logout = useCallback(() => {
-    if (!sessionId) return;
-    
-    const userKey = `${USER_KEY}_${sessionId}`;
-    localStorage.removeItem(userKey);
+    localStorage.removeItem(USER_KEY);
     setUser(null);
-  }, [sessionId]);
+  }, []);
 
   const clearAuth = useCallback(() => {
     // Clear all auth/session storage
