@@ -509,6 +509,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      seed_family_defaults: {
+        Args: { p_creator: string; p_family_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
