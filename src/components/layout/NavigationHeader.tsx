@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { UserButton } from '@clerk/clerk-react';
 import { ArrowLeft, Home, CheckSquare, Target, MessageCircle, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/lib/constants';
@@ -35,6 +36,7 @@ export function NavigationHeader({ title, showBackButton = true }: NavigationHea
             )}
             <h1 className="text-lg font-semibold">{title}</h1>
           </div>
+          <UserButton afterSignOutUrl="/" />
         </div>
 
         {/* Navigation Pills */}

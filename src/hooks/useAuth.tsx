@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { useUser } from '@clerk/clerk-react';
 import type { User } from '@/lib/types';
 import { generateId, calculateAge } from '@/lib/utils';
 
@@ -20,6 +21,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const { user: clerkUser, isLoaded } = useUser();
   const [user, setUser] = useState<User | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -37,31 +39,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       setSessionId(currentSessionId);
       
-      // Load global user (one user - one account)
-      const storedUser = localStorage.getItem(USER_KEY);
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
-      } else {
-        // Backward compatibility: migrate any session-scoped user to global key
-        const legacyKey = `${USER_KEY}_${currentSessionId}`;
-        const legacyUser = localStorage.getItem(legacyKey);
-        if (legacyUser) {
-          localStorage.setItem(USER_KEY, legacyUser);
-          setUser(JSON.parse(legacyUser));
+      // Load user based on Clerk user ID if authenticated
+      if (clerkUser) {
+        const userKey = `${USER_KEY}_${clerkUser.id}`;
+        const storedUser = localStorage.getItem(userKey);
+        if (storedUser) {
+          setUser(JSON.parse(storedUser));
         } else {
-          // Fallback: pick the first key that matches old pattern app_current_user_*
-          for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key && key.startsWith(`${USER_KEY}_`)) {
-              const val = localStorage.getItem(key);
-              if (val) {
-                localStorage.setItem(USER_KEY, val);
-                setUser(JSON.parse(val));
-                break;
-              }
-            }
+          // Try to migrate from global user key
+          const globalUser = localStorage.getItem(USER_KEY);
+          if (globalUser) {
+            const parsedUser = JSON.parse(globalUser);
+            // Save to Clerk-specific key
+            localStorage.setItem(userKey, globalUser);
+            setUser(parsedUser);
+            // Clean up global key
+            localStorage.removeItem(USER_KEY);
           }
         }
+      } else {
+        setUser(null);
       }
     } catch (error) {
       console.error('Session initialization error:', error);
@@ -70,7 +67,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [clerkUser]);
+
+  // Initialize when Clerk is loaded
+  useEffect(() => {
+    if (isLoaded) {
+      initializeSession();
+    }
+  }, [isLoaded, initializeSession]);
 
   // Cross-tab synchronization
   useEffect(() => {
@@ -93,33 +97,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [sessionId]);
 
-  useEffect(() => {
-    initializeSession();
-  }, [initializeSession]);
-
   const createUser = useCallback((userData: Omit<User, 'id' | 'age' | 'profileComplete'>): User => {
+    if (!clerkUser) throw new Error('Must be signed in with Clerk to create user');
+    
     const newUser: User = {
       ...userData,
-      id: generateId(),
+      id: clerkUser.id, // Use Clerk user ID
       age: calculateAge(userData.dateOfBirth),
       profileComplete: true,
     };
-    localStorage.setItem(USER_KEY, JSON.stringify(newUser));
+    
+    const userKey = `${USER_KEY}_${clerkUser.id}`;
+    localStorage.setItem(userKey, JSON.stringify(newUser));
     setUser(newUser);
     return newUser;
-  }, []);
+  }, [clerkUser]);
 
   const updateUser = useCallback((updates: Partial<User>) => {
-    if (!user) return;
+    if (!user || !clerkUser) return;
+    
     const updatedUser = { ...user, ...updates };
-    localStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
+    const userKey = `${USER_KEY}_${clerkUser.id}`;
+    localStorage.setItem(userKey, JSON.stringify(updatedUser));
     setUser(updatedUser);
-  }, [user]);
+  }, [user, clerkUser]);
 
   const logout = useCallback(() => {
-    localStorage.removeItem(USER_KEY);
+    if (clerkUser) {
+      const userKey = `${USER_KEY}_${clerkUser.id}`;
+      localStorage.removeItem(userKey);
+    }
+    localStorage.removeItem(USER_KEY); // Clean up any legacy keys
     setUser(null);
-  }, []);
+  }, [clerkUser]);
 
   const clearAuth = useCallback(() => {
     // Clear all auth/session storage
@@ -146,8 +156,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthContext.Provider value={{
       user,
       sessionId,
-      isAuthenticated: !!user,
-      isLoading,
+      isAuthenticated: !!user && !!clerkUser,
+      isLoading: !isLoaded || isLoading,
       createUser,
       updateUser,
       logout,

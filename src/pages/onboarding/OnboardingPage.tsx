@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useUser } from '@clerk/clerk-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -42,6 +43,7 @@ const onboardingSchema = z.object({
 type OnboardingForm = z.infer<typeof onboardingSchema>;
 
 export default function OnboardingPage() {
+  const { user: clerkUser } = useUser();
   const { user, isLoading, createUser } = useAuth();
   const { createFamily, joinFamily } = useApp();
   const navigate = useNavigate();
@@ -52,6 +54,7 @@ export default function OnboardingPage() {
     resolver: zodResolver(onboardingSchema),
     defaultValues: {
       familyAction: 'create',
+      displayName: clerkUser?.firstName || clerkUser?.fullName || '',
     },
   });
 
@@ -124,7 +127,7 @@ export default function OnboardingPage() {
             Welcome to Family Stars! ⭐
           </h1>
           <p className="text-muted-foreground">
-            Let's get you started on your family adventure
+            Complete your profile to start your family adventure with {clerkUser?.firstName || 'Family Stars'}
           </p>
         </div>
 
