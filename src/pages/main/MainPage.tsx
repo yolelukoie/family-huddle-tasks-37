@@ -18,6 +18,7 @@ import { getCurrentStage, getStageProgress, getCharacterImagePath, getStageName 
 import { storage } from '@/lib/storage';
 import { isToday } from '@/lib/utils';
 import { AssignTaskModal } from '@/components/modals/AssignTaskModal';
+import { MilestoneCelebration } from '@/components/celebrations/MilestoneCelebration';
 import { Star, Calendar, Plus, RotateCcw, CheckCircle } from 'lucide-react';
 export default function MainPage() {
   const {
@@ -39,7 +40,7 @@ export default function MainPage() {
   const {
     updateGoalProgress
   } = useGoals();
-  const { currentCelebration, completeCelebration } = useCelebrations();
+  const { currentCelebration, completeCelebration, addCelebration } = useCelebrations();
   const navigate = useNavigate();
   const [showAssignTask, setShowAssignTask] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -74,13 +75,27 @@ export default function MainPage() {
   const stageName = getStageName(currentStage);
   const characterImagePath = getCharacterImagePath(user.gender, currentStage);
 
-  // Check for newly unlocked badges when stars change
+  // Check for newly unlocked badges and milestone when stars change
   useEffect(() => {
     if (previousStars !== totalStars) {
-      checkForNewBadges(previousStars, totalStars);
+      // Check for 1000 star milestone celebration
+      if (previousStars < 1000 && totalStars >= 1000) {
+        // Add milestone celebration to queue
+        setTimeout(() => {
+          addCelebration({ type: 'milestone', milestone: { stars: 1000 } });
+          // Reset character after celebration is shown
+          setTimeout(() => {
+            resetCharacterProgress(activeFamilyId);
+            resetBadgeProgress();
+            setPreviousStars(0);
+          }, 3500); // Wait for celebration to complete (3s) + buffer
+        }, 100);
+      } else {
+        checkForNewBadges(previousStars, totalStars);
+      }
       setPreviousStars(totalStars);
     }
-  }, [totalStars, previousStars, checkForNewBadges]);
+  }, [totalStars, previousStars, checkForNewBadges, addCelebration, resetCharacterProgress, resetBadgeProgress, activeFamilyId]);
 
   // Get today's tasks
   const todaysTasks = storage.getTasks(activeFamilyId).filter(task => !task.completed && isToday(task.dueDate));
@@ -257,6 +272,13 @@ export default function MainPage() {
       {currentCelebration && currentCelebration.item.type === 'goal' && (
         <GoalCelebration 
           goal={currentCelebration.item.goal} 
+          show={currentCelebration.show} 
+          onComplete={completeCelebration}
+        />
+      )}
+      
+      {currentCelebration && currentCelebration.item.type === 'milestone' && (
+        <MilestoneCelebration 
           show={currentCelebration.show} 
           onComplete={completeCelebration}
         />

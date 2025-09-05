@@ -3,7 +3,8 @@ import { Badge, Goal } from '@/lib/types';
 
 export type CelebrationItem = 
   | { type: 'badge'; badge: Badge }
-  | { type: 'goal'; goal: Goal };
+  | { type: 'goal'; goal: Goal }
+  | { type: 'milestone'; milestone: { stars: number } };
 
 export interface CelebrationState {
   item: CelebrationItem;

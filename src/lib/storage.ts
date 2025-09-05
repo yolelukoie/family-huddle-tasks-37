@@ -243,17 +243,15 @@ class LocalStorage {
     // Clear seen badges
     this.clearSeenBadges(familyId, userId);
 
-    // Mark completed tasks as history but keep current tasks
+    // Keep only active tasks (remove completed tasks)
     const tasks = this.getTasks(familyId);
-    const completedTasks = tasks.filter(t => t.completed && t.assignedTo === userId);
-    const currentTasks = tasks.filter(t => !t.completed || t.assignedTo !== userId);
-    this.setItem('tasks', [...currentTasks, ...completedTasks.map(t => ({ ...t, completed: false, completedAt: undefined }))]);
+    const activeTasks = tasks.filter(t => !t.completed);
+    this.setItem(`tasks_${familyId}`, activeTasks);
 
-    // Mark completed goals as history but keep active goals
+    // Keep only active goals (remove completed goals)
     const goals = this.getGoals(familyId, userId);
     const activeGoals = goals.filter(g => !g.completed);
-    const completedGoals = goals.filter(g => g.completed);
-    this.setItem('goals', [...this.getItem<Goal[]>('goals')?.filter(g => g.familyId !== familyId || g.userId !== userId) || [], ...activeGoals]);
+    this.setItem(`goals_${familyId}_${userId}`, activeGoals);
   }
 }
 
