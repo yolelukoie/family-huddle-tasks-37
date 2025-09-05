@@ -32,6 +32,7 @@ const App = () => (
               <AuthProvider>
                 <AppProvider>
                   <AppLayout />
+                  <DevStatus />
                 </AppProvider>
               </AuthProvider>
             </SignedIn>
@@ -46,7 +47,6 @@ const App = () => (
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>
-      <DevStatus />
     </BrowserRouter>
   </TooltipProvider>
 );
