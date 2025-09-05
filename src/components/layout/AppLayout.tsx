@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '@/hooks/useApp';
 import { useAuth } from '@/hooks/useAuth';
+import { CelebrationsProvider } from '@/contexts/CelebrationsContext';
 import { ROUTES } from '@/lib/constants';
 
 export function AppLayout() {
@@ -38,5 +39,9 @@ export function AppLayout() {
     );
   }
 
-  return <Outlet />;
+  return (
+    <CelebrationsProvider>
+      <Outlet />
+    </CelebrationsProvider>
+  );
 }

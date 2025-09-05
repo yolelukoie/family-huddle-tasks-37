@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { Goal } from '@/lib/types';
 
 interface GoalCelebrationProps {
@@ -8,17 +7,6 @@ interface GoalCelebrationProps {
 }
 
 export function GoalCelebration({ goal, show, onComplete }: GoalCelebrationProps) {
-  useEffect(() => {
-    if (show) {
-      // Auto-complete after 2 seconds
-      const timer = setTimeout(() => {
-        onComplete();
-      }, 2000);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [show, onComplete]);
-
   if (!show) return null;
 
   return (

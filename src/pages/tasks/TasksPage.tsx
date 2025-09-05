@@ -12,6 +12,7 @@ import { isToday, isFuture, formatDate } from '@/lib/utils';
 import { TaskHistoryModal } from '@/components/modals/TaskHistoryModal';
 import { AssignTaskModal } from '@/components/modals/AssignTaskModal';
 import { TaskCategorySection } from '@/components/tasks/TaskCategorySection';
+import { BadgeCelebration } from '@/components/badges/BadgeCelebration';
 import { GoalCelebration } from '@/components/celebrations/GoalCelebration';
 import { NavigationHeader } from '@/components/layout/NavigationHeader';
 import { History, Plus, CheckCircle } from 'lucide-react';
@@ -200,7 +201,15 @@ export default function TasksPage() {
         onOpenChange={setShowAssignTask}
       />
 
-      {/* Unified Goal Celebration */}
+      {/* Unified Celebrations */}
+      {currentCelebration && currentCelebration.item.type === 'badge' && (
+        <BadgeCelebration
+          badge={currentCelebration.item.badge}
+          show={currentCelebration.show}
+          onComplete={completeCelebration}
+        />
+      )}
+      
       {currentCelebration && currentCelebration.item.type === 'goal' && (
         <GoalCelebration
           goal={currentCelebration.item.goal}
