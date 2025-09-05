@@ -42,11 +42,6 @@ export function useGoals() {
     if (isCompleted) {
       const completedGoal = { ...activeGoal, currentStars: newCurrentStars, completed: true };
       addCelebration({ type: 'goal', goal: completedGoal });
-      
-      toast({
-        title: "Goal Achieved! 🎉",
-        description: `You've reached your goal of ${activeGoal.targetStars} stars!`,
-      });
     }
   }, [user, activeFamilyId, toast, addCelebration]);
 

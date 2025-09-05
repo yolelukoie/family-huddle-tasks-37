@@ -98,7 +98,6 @@ export const ADULT_STAGE_BADGES: Badge[] = [
 ];
 
 export const ON_THE_RISE_STAGE_BADGES: Badge[] = [
-  { id: 'ontherise_500', name: 'Promotion', description: 'First promotion! Title\'s longer; meetings too.', imagePath: '/lovable-uploads/a18af15c-0513-48bf-8cc1-36934bdf18a4.png', unlockStars: 500 },
   { id: 'ontherise_510', name: 'Compass', description: 'Found a career direction that feels right.', imagePath: '/lovable-uploads/cf20bfed-2630-4ef8-b559-9c0d74b2f50d.png', unlockStars: 510 },
   { id: 'ontherise_520', name: 'Portfolio', description: 'Your work finally looks like you.', imagePath: '/lovable-uploads/8eb0b8df-4352-4e5c-9d70-a195aa74dbc4.png', unlockStars: 520 },
   { id: 'ontherise_530', name: 'Wardrobe', description: 'Signature style unlocked.', imagePath: '/lovable-uploads/e1fdc189-0e84-45b3-ac33-01a11a3f4f01.png', unlockStars: 530 },
