@@ -4,33 +4,39 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useAuth } from '@/hooks/useAuth';
 import { useApp } from '@/hooks/useApp';
-import { storage } from '@/lib/storage';
 import { NavigationHeader } from '@/components/layout/NavigationHeader';
-import { Users, Share, Plus, Edit } from 'lucide-react';
+import { Users, Share, Plus, Edit, Settings } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 export default function FamilyPage() {
   const { user, updateUser } = useAuth();
-  const { activeFamilyId, userFamilies, setActiveFamilyId } = useApp();
+  const { activeFamilyId, userFamilies, families, setActiveFamilyId, createFamily, joinFamily, updateFamilyName } = useApp();
+  const { toast } = useToast();
   const [newDisplayName, setNewDisplayName] = useState(user?.displayName || '');
   const [showJoinFamily, setShowJoinFamily] = useState(false);
   const [inviteCode, setInviteCode] = useState('');
   const [showCreateFamily, setShowCreateFamily] = useState(false);
   const [newFamilyName, setNewFamilyName] = useState('');
+  const [editingFamilyId, setEditingFamilyId] = useState<string | null>(null);
+  const [editingFamilyName, setEditingFamilyName] = useState('');
 
-  if (!user || !activeFamilyId) return null;
+  if (!user) return null;
 
-  const activeFamily = storage.getFamilies().find(f => f.id === activeFamilyId);
-  const allFamilies = storage.getFamilies().filter(f => 
-    userFamilies.some(uf => uf.familyId === f.id)
-  );
+  const activeFamily = activeFamilyId ? families.find(f => f.id === activeFamilyId) : null;
+  const userFamilyIds = userFamilies.map(uf => uf.familyId);
+  const allUserFamilies = families.filter(f => userFamilyIds.includes(f.id));
 
   const handleUpdateDisplayName = (e: React.FormEvent) => {
     e.preventDefault();
     if (newDisplayName.trim() && newDisplayName !== user.displayName) {
-      storage.setUser({ ...user, displayName: newDisplayName.trim() });
-      window.location.reload();
+      updateUser({ displayName: newDisplayName.trim() });
+      toast({
+        title: "Profile updated",
+        description: "Your display name has been updated successfully.",
+      });
     }
   };
 
@@ -38,100 +44,79 @@ export default function FamilyPage() {
     e.preventDefault();
     if (!inviteCode.trim()) return;
 
-    const family = storage.findFamilyByInviteCode(inviteCode.trim());
-    if (!family) {
-      alert('Invalid invite code');
-      return;
+    try {
+      const family = joinFamily(inviteCode.trim());
+      if (family) {
+        setInviteCode('');
+        setShowJoinFamily(false);
+        toast({
+          title: "Joined family successfully!",
+          description: `Welcome to ${family.name}`,
+        });
+      } else {
+        toast({
+          title: "Invalid invite code",
+          description: "The invite code you entered is not valid.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error joining family",
+        description: "There was an error joining the family. Please try again.",
+        variant: "destructive",
+      });
     }
-
-    // Check if already member
-    const existingMembership = storage.getUserFamily(user.id, family.id);
-    if (existingMembership) {
-      alert('You are already a member of this family');
-      return;
-    }
-
-    // Add user to family
-    storage.addUserFamily({
-      userId: user.id,
-      familyId: family.id,
-      joinedAt: new Date().toISOString(),
-      totalStars: 0,
-      currentStage: 0,
-      lastReadTimestamp: Date.now(),
-      seenCelebrations: []
-    });
-
-    setInviteCode('');
-    setShowJoinFamily(false);
-    setActiveFamilyId(family.id);
-    window.location.reload();
   };
 
   const handleCreateFamily = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newFamilyName.trim()) return;
 
-    const familyId = Date.now().toString();
-    const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-
-    // Create family
-    storage.addFamily({
-      id: familyId,
-      name: newFamilyName.trim(),
-      createdBy: user.id,
-      createdAt: new Date().toISOString(),
-      inviteCode
-    });
-
-    // Add user to family
-    storage.addUserFamily({
-      userId: user.id,
-      familyId,
-      joinedAt: new Date().toISOString(),
-      totalStars: 0,
-      currentStage: 0,
-      lastReadTimestamp: Date.now(),
-      seenCelebrations: []
-    });
-
-    // Add default categories
-    storage.addTaskCategory({
-      id: `${familyId}_house_chores`,
-      name: 'House Chores',
-      familyId,
-      isHouseChores: true,
-      isDefault: true,
-      order: 1
-    });
-    storage.addTaskCategory({
-      id: `${familyId}_personal_growth`,
-      name: 'Personal Growth',
-      familyId,
-      isHouseChores: false,
-      isDefault: true,
-      order: 2
-    });
-    storage.addTaskCategory({
-      id: `${familyId}_happiness`,
-      name: 'Happiness',
-      familyId,
-      isHouseChores: false,
-      isDefault: true,
-      order: 3
-    });
-
-    setNewFamilyName('');
-    setShowCreateFamily(false);
-    setActiveFamilyId(familyId);
-    window.location.reload();
+    try {
+      createFamily(newFamilyName.trim());
+      setNewFamilyName('');
+      setShowCreateFamily(false);
+      toast({
+        title: "Family created successfully!",
+        description: `Welcome to ${newFamilyName.trim()}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error creating family",
+        description: "There was an error creating the family. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const copyInviteCode = () => {
-    if (activeFamily?.inviteCode) {
-      navigator.clipboard.writeText(activeFamily.inviteCode);
-      alert('Invite code copied to clipboard!');
+  const handleUpdateFamilyName = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingFamilyId || !editingFamilyName.trim()) return;
+
+    try {
+      updateFamilyName(editingFamilyId, editingFamilyName.trim());
+      setEditingFamilyId(null);
+      setEditingFamilyName('');
+      toast({
+        title: "Family name updated",
+        description: "The family name has been updated successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error updating family name",
+        description: "There was an error updating the family name. Please try again.",
+        variant: "destructive",
+      });
     }
+  };
+
+  const copyInviteCode = (inviteCode: string) => {
+    navigator.clipboard.writeText(inviteCode);
+    toast({
+      title: "Invite code copied!",
+      description: "The invite code has been copied to your clipboard.",
+    });
   };
 
   return (
@@ -184,7 +169,7 @@ export default function FamilyPage() {
                     Invite code: {activeFamily.inviteCode}
                   </p>
                 </div>
-                <Button variant="outline" onClick={copyInviteCode}>
+                <Button variant="outline" onClick={() => copyInviteCode(activeFamily.inviteCode)}>
                   <Share className="h-4 w-4 mr-2" />
                   Share Code
                 </Button>
@@ -199,33 +184,107 @@ export default function FamilyPage() {
             <CardTitle>Your Families</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {allFamilies.map(family => (
-              <div key={family.id} className="flex items-center justify-between p-3 border rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div>
-                    <div className="font-medium">{family.name}</div>
-                    <div className="text-sm text-muted-foreground">
-                      Code: {family.inviteCode}
+            {allUserFamilies.length === 0 ? (
+              <p className="text-muted-foreground text-center py-4">
+                No families yet. Create or join a family to get started!
+              </p>
+            ) : (
+              allUserFamilies.map(family => (
+                <div key={family.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div>
+                      <div className="font-medium">{family.name}</div>
+                      <div className="text-sm text-muted-foreground">
+                        Code: {family.inviteCode}
+                      </div>
                     </div>
+                    {family.id === activeFamilyId && (
+                      <Badge variant="default">Active</Badge>
+                    )}
+                    {family.createdBy === user.id && (
+                      <Badge variant="secondary">Owner</Badge>
+                    )}
                   </div>
-                  {family.id === activeFamilyId && (
-                    <Badge variant="default">Active</Badge>
-                  )}
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => copyInviteCode(family.inviteCode)}
+                    >
+                      <Share className="h-4 w-4" />
+                    </Button>
+                    
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          <Users className="h-4 w-4" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Family Members - {family.name}</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-2">
+                          <div className="p-2 border rounded">
+                            <div className="font-medium">{user.displayName}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {family.createdBy === user.id ? 'Owner' : 'Member'}
+                            </div>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            In this single-user version, only you are shown. Multi-user functionality would display all family members here.
+                          </p>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+
+                    {family.createdBy === user.id && (
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="sm">
+                            <Settings className="h-4 w-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Edit Family - {family.name}</DialogTitle>
+                          </DialogHeader>
+                          <form onSubmit={handleUpdateFamilyName} className="space-y-4">
+                            <div>
+                              <Label htmlFor="familyName">Family Name</Label>
+                              <Input
+                                id="familyName"
+                                value={editingFamilyName || family.name}
+                                onChange={(e) => {
+                                  setEditingFamilyId(family.id);
+                                  setEditingFamilyName(e.target.value);
+                                }}
+                                placeholder="Enter family name"
+                              />
+                            </div>
+                            <div className="flex gap-2">
+                              <Button type="submit" className="flex-1">
+                                Update Name
+                              </Button>
+                            </div>
+                          </form>
+                        </DialogContent>
+                      </Dialog>
+                    )}
+
+                    {family.id !== activeFamilyId && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setActiveFamilyId(family.id)}
+                      >
+                        Switch
+                      </Button>
+                    )}
+                  </div>
                 </div>
-                {family.id !== activeFamilyId && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setActiveFamilyId(family.id);
-                      window.location.reload();
-                    }}
-                  >
-                    Switch
-                  </Button>
-                )}
-              </div>
-            ))}
+              ))
+            )}
           </CardContent>
         </Card>
 
