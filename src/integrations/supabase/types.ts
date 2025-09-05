@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      badges: {
+        Row: {
+          description: string
+          id: string
+          image_path: string
+          name: string
+          stage: number
+          unlock_stars: number
+        }
+        Insert: {
+          description: string
+          id: string
+          image_path: string
+          name: string
+          stage: number
+          unlock_stars: number
+        }
+        Update: {
+          description?: string
+          id?: string
+          image_path?: string
+          name?: string
+          stage?: number
+          unlock_stars?: number
+        }
+        Relationships: []
+      }
       celebration_events: {
         Row: {
           event_id: string
@@ -51,6 +78,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      character_stages: {
+        Row: {
+          name: string
+          required_stars: number
+          stage: number
+        }
+        Insert: {
+          name: string
+          required_stars: number
+          stage: number
+        }
+        Update: {
+          name?: string
+          required_stars?: number
+          stage?: number
+        }
+        Relationships: []
       }
       chat_messages: {
         Row: {
@@ -195,7 +240,15 @@ export type Database = {
           profile_complete?: boolean
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_active_family_fk"
+            columns: ["active_family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       task_categories: {
         Row: {
