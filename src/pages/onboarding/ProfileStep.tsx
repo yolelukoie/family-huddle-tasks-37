@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useApp } from '@/hooks/useApp';
+import { useAuth } from '@/hooks/useAuth';
 
 const profileSchema = z.object({
   displayName: z.string().min(2, 'Name must be at least 2 characters'),

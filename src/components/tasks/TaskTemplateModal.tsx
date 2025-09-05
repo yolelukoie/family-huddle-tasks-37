@@ -6,7 +6,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { useApp } from '@/hooks/useApp';
+import { useAuth } from '@/hooks/useAuth';
 import { storage } from '@/lib/storage';
 import { generateId } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';

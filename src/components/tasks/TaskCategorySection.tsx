@@ -6,7 +6,7 @@ import { ChevronDown, ChevronRight, Plus, Trash2 } from 'lucide-react';
 import { storage } from '@/lib/storage';
 import { TaskTemplateModal } from './TaskTemplateModal';
 import { useToast } from '@/hooks/use-toast';
-import { useApp } from '@/hooks/useApp';
+import { useAuth } from '@/hooks/useAuth';
 import type { TaskCategory, TaskTemplate, Task } from '@/lib/types';
 
 interface TaskCategorySectionProps {

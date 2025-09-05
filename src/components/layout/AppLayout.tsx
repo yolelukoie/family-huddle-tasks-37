@@ -1,10 +1,13 @@
 import { useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '@/hooks/useApp';
+import { useAuth } from '@/hooks/useAuth';
 import { ROUTES } from '@/lib/constants';
 
 export function AppLayout() {
-  const { user, userFamilies, isLoading } = useApp();
+  const { user } = useAuth();
+  const { userFamilies, isLoading } = useApp();
+  const { isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 

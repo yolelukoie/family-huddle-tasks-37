@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { useAuth } from '@/hooks/useAuth';
 import { useApp } from '@/hooks/useApp';
 import { storage } from '@/lib/storage';
 import { NavigationHeader } from '@/components/layout/NavigationHeader';

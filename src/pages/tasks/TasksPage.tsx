@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/hooks/useAuth';
 import { useApp } from '@/hooks/useApp';
 import { useGoals } from '@/hooks/useGoals';
 import { storage } from '@/lib/storage';

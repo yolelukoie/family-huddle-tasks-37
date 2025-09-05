@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { useAuth } from '@/hooks/useAuth';
 import { useApp } from '@/hooks/useApp';
 import { storage } from '@/lib/storage';
 import { NavigationHeader } from '@/components/layout/NavigationHeader';

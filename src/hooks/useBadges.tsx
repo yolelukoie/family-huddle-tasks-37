@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from './useAuth';
 import { useApp } from './useApp';
 import { getCurrentStageBadges, getNewlyUnlockedBadges, shouldShowBadges } from '@/lib/badges';
 import { storage } from '@/lib/storage';

@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useAuth } from './useAuth';
 import { useApp } from './useApp';
 import { storage } from '@/lib/storage';
 import { Goal } from '@/lib/types';
