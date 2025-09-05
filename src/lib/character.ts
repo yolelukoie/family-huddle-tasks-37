@@ -50,6 +50,7 @@ export function getCharacterImagePath(gender: 'male' | 'female', stage: number):
     50: '/lovable-uploads/8e44eb0d-f6f2-40cf-b36f-9b407ca9d581.png', 
     200: '/lovable-uploads/8b3d5bae-b138-43ee-9af6-1846907c1ab6.png',
     350: '/lovable-uploads/a02ad475-a7f2-45db-baaa-204ba7f6b82a.png',
+    500: '/lovable-uploads/8794f1f3-bf37-49cb-a516-421d96999f3d.png',
     600: '/lovable-uploads/138f7453-8634-45c6-b2b3-6b44bf1297fe.png',
     700: '/lovable-uploads/b51674ec-939c-4e24-9ecb-2f9cf19f4526.png',
     800: '/lovable-uploads/7a1079f4-1eff-437f-858d-dc04c7493679.png'
@@ -61,6 +62,7 @@ export function getCharacterImagePath(gender: 'male' | 'female', stage: number):
     50: '/male-character-50.png', 
     200: '/male-character-200.png',
     350: '/male-character-350.png',
+    500: '/lovable-uploads/47659389-0e9d-4bc6-9239-28bb582e213a.png',
     600: '/male-character-600.png',
     700: '/male-character-700.png',
     800: '/male-character-800.png'

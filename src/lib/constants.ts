@@ -14,6 +14,7 @@ export const CHARACTER_STAGES: CharacterStage[] = [
   { stage: 50, requiredStars: 50, name: 'Child' },
   { stage: 200, requiredStars: 200, name: 'Teen' },
   { stage: 350, requiredStars: 350, name: 'Young Adult' },
+  { stage: 500, requiredStars: 500, name: 'On the Rise' },
   { stage: 600, requiredStars: 600, name: 'Adult' },
   { stage: 700, requiredStars: 700, name: 'Mature Adult' },
   { stage: 800, requiredStars: 800, name: 'Senior' },
@@ -94,7 +95,6 @@ export const ADULT_STAGE_BADGES: Badge[] = [
   { id: 'adult_470', name: 'Coin', description: 'Learned what "taxes" mean (ouch).', imagePath: '/lovable-uploads/0bd291fd-7bf1-4bb1-a9cc-1973757bf757.png', unlockStars: 470 },
   { id: 'adult_480', name: 'Alarm Clock', description: 'Alarm ignored = boss angry.', imagePath: '/lovable-uploads/69719e36-ebeb-468a-ae91-e8d5ee6cc929.png', unlockStars: 480 },
   { id: 'adult_490', name: 'Credit Card', description: 'Credit card balance: nope.', imagePath: '/lovable-uploads/2f5c34ad-8ee4-437d-8d5c-a604342cb611.png', unlockStars: 490 },
-  { id: 'adult_500', name: 'Trophy', description: 'Survived the first year!', imagePath: '/lovable-uploads/c0a439f2-f35a-4ec3-a854-c2b54093690f.png', unlockStars: 500 },
 ];
 
 export const PLACEHOLDER_BADGES: Badge[] = [
