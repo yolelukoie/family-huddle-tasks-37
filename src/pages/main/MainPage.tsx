@@ -172,18 +172,18 @@ export default function MainPage() {
                 img.style.display = 'none';
                 if (fallback) fallback.style.display = 'block';
               }} />
-                <span className="text-4xl hidden">👤</span>
-                
-                {/* Draggable Badges */}
-                {showBadges && (
-                  <DraggableBadgeDisplay 
-                    badges={unlockedBadges} 
-                    familyId={activeFamilyId!} 
-                    userId={user!.id}
-                    containerBounds={{ width: 160, height: 160 }}
-                    className="absolute inset-0"
-                  />
-                )}
+                 <span className="text-4xl hidden">👤</span>
+                 
+                 {/* Draggable Badges overlaying character */}
+                 {showBadges && (
+                    <DraggableBadgeDisplay 
+                      badges={unlockedBadges} 
+                      familyId={activeFamilyId!} 
+                      userId={user!.id}
+                      containerBounds={{ width: 160, height: 160 }}
+                      className="absolute top-0 left-0 w-40 h-40"
+                    />
+                 )}
               </div>
             </div>
 

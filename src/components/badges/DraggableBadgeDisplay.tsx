@@ -41,18 +41,18 @@ export function DraggableBadgeDisplay({
   
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Default scattered positions for initial badge placement (matching original positions)
+  // Default scattered positions matching original BadgeDisplay scattered layout
   const defaultPositions = [
-    { x: -24, y: 16 },    // top-left (outside container)
-    { x: 136, y: 8 },     // top-right (outside container)
-    { x: -32, y: 48 },    // left-mid (outside container)
-    { x: 144, y: 40 },    // right-mid (outside container)
-    { x: -24, y: 80 },    // left-lower (outside container)
-    { x: 136, y: 72 },    // right-lower (outside container)
-    { x: -32, y: 112 },   // bottom-left (outside container)
-    { x: 144, y: 120 },   // bottom-right (outside container)
-    { x: 72, y: -16 },    // top-center (outside container)
-    { x: 88, y: 144 },    // bottom-center (outside container)
+    { x: -15, y: 16 },    // top-left (outside container, -15% of 160px = -24px)
+    { x: 136, y: 8 },     // top-right (outside container, 85% + 15% = 160px - 24px)
+    { x: -32, y: 48 },    // left-mid (outside container, -20% of 160px = -32px)
+    { x: 152, y: 40 },    // right-mid (outside container, 95% + 20% = 152px)
+    { x: -24, y: 80 },    // left-lower (outside container, -15% of 160px = -24px)
+    { x: 136, y: 72 },    // right-lower (outside container, 85% + 15% = 136px)
+    { x: -32, y: 112 },   // bottom-left (outside container, -20% of 160px = -32px)
+    { x: 152, y: 104 },   // bottom-right (outside container, 95% + 20% = 152px)
+    { x: 56, y: -16 },    // top-center (outside container, 35% of 160px = 56px)
+    { x: 72, y: 144 },    // bottom-center (outside container, 45% of 160px = 72px)
   ];
 
   // Load saved positions from localStorage on mount
@@ -142,7 +142,7 @@ export function DraggableBadgeDisplay({
     <div 
       ref={containerRef}
       className={`relative ${className}`}
-      style={{ width: containerBounds.width, height: containerBounds.height }}
+      style={{ width: '160px', height: '160px' }}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerUp}
