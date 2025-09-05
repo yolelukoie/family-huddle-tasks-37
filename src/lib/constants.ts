@@ -17,7 +17,7 @@ export const CHARACTER_STAGES: CharacterStage[] = [
   { stage: 500, requiredStars: 500, name: 'On the Rise' },
   { stage: 600, requiredStars: 600, name: 'Adult' },
   { stage: 700, requiredStars: 700, name: 'Mature Adult' },
-  { stage: 800, requiredStars: 800, name: 'Senior' },
+  { stage: 800, requiredStars: 800, name: 'Golden Chapter' },
   { stage: 1000, requiredStars: 1000, name: 'Elder' },
 ];
 
@@ -131,6 +131,19 @@ export const MATURE_ADULT_STAGE_BADGES: Badge[] = [
   { id: 'mature_adult_toolbox', name: 'Toolbox', description: 'Fixed one thing, broke two.', imagePath: '/lovable-uploads/3362f7c3-7a5f-4a77-bc7a-4aaba94948f0.png', unlockStars: 770 },
   { id: 'mature_adult_graduation_cap', name: 'Graduation Cap', description: 'Finally finished that degree.', imagePath: '/lovable-uploads/115741fb-ad8e-4c19-9918-d5225f01c19c.png', unlockStars: 780 },
   { id: 'mature_adult_globe', name: 'Globe', description: 'Traveled the world (or at least 2 cities).', imagePath: '/lovable-uploads/94c2e039-882b-4890-9173-1e7555ed04c0.png', unlockStars: 790 },
+];
+
+export const GOLDEN_CHAPTER_STAGE_BADGES: Badge[] = [
+  { id: 'golden_gray_hair', name: 'Gray Hair Strand', description: 'New highlight: natural silver.', imagePath: '/lovable-uploads/5f05b3f0-1fe9-4b28-b625-b564ee36503e.png', unlockStars: 810 },
+  { id: 'golden_glasses', name: 'Glasses', description: 'Reading tiny text = impossible.', imagePath: '/lovable-uploads/1b22504a-6efe-40e3-89ce-e98c105c951e.png', unlockStars: 820 },
+  { id: 'golden_book_stack', name: 'Book Stack', description: 'Wisdom collection complete.', imagePath: '/lovable-uploads/65e8023c-2acb-4318-9110-9d01b10da4e8.png', unlockStars: 830 },
+  { id: 'golden_bbq_grill', name: 'BBQ Grill', description: 'Neighborhood\'s grill king.', imagePath: '/lovable-uploads/60d3d2b8-91b9-4f65-abbc-2d3b96feeb1b.png', unlockStars: 840 },
+  { id: 'golden_yacht_model', name: 'Yacht Model', description: 'Dream big, sail small.', imagePath: '/lovable-uploads/4ae59293-f478-4a70-861c-88670d84a3a4.png', unlockStars: 850 },
+  { id: 'golden_family_photo', name: 'Family Photo', description: 'Best crew ever.', imagePath: '/lovable-uploads/36b7445a-3f95-4cdc-9c7c-61e81733e137.png', unlockStars: 860 },
+  { id: 'golden_golf_club', name: 'Golf Club', description: 'Hole in… 23 tries.', imagePath: '/lovable-uploads/ee0e8bfd-8cd1-4c25-8f92-a779667f9e1b.png', unlockStars: 870 },
+  { id: 'golden_desk', name: 'Desk', description: 'Office is second home.', imagePath: '/lovable-uploads/31ebd777-bffc-4065-9955-d702c93fe9b3.png', unlockStars: 880 },
+  { id: 'golden_trophy', name: 'Trophy', description: 'Midlife = prime time!', imagePath: '/lovable-uploads/186659d3-5246-4729-9e99-2f0054c0c52c.png', unlockStars: 890 },
+  { id: 'golden_rocking_chair', name: 'Rocking Chair', description: 'Weekend nap champion.', imagePath: '/lovable-uploads/c4b79177-9a80-405d-99d6-b3ad6c3bc089.png', unlockStars: 900 },
 ];
 
 export const PLACEHOLDER_BADGES: Badge[] = [
