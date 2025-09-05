@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useApp } from '@/hooks/useApp';
-import { scopedStorage } from '@/lib/scopedStorage';
+import { storage } from '@/lib/storage';
 import { generateId } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
@@ -45,7 +45,7 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
   if (!user || !activeFamilyId) return null;
 
   const familyMembers = getFamilyMembers(activeFamilyId);
-  const categories = scopedStorage.getTaskCategories(user.id, activeFamilyId);
+  const categories = storage.getTaskCategories(activeFamilyId);
 
   // Check if user is 18+ for star value editing
   const canEditStars = user.age >= 18;
@@ -64,7 +64,7 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
       categoryId: data.categoryId,
     };
 
-    scopedStorage.addTask(user.id, activeFamilyId, task);
+    storage.addTask(task);
     
     toast({
       title: "Task assigned!",
