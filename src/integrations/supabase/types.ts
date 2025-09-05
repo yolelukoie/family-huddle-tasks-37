@@ -14,13 +14,448 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      celebration_events: {
+        Row: {
+          event_id: string
+          family_id: string
+          id: string
+          seen: boolean
+          timestamp: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          event_id: string
+          family_id: string
+          id?: string
+          seen?: boolean
+          timestamp?: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          event_id?: string
+          family_id?: string
+          id?: string
+          seen?: boolean
+          timestamp?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "celebration_events_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_messages: {
+        Row: {
+          content: string
+          created_at: string
+          family_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          family_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          family_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      families: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          invite_code: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          invite_code: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          invite_code?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      goals: {
+        Row: {
+          completed: boolean
+          completed_at: string | null
+          created_at: string
+          current_stars: number
+          family_id: string
+          id: string
+          reward: string | null
+          target_categories: string[] | null
+          target_stars: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          current_stars?: number
+          family_id: string
+          id?: string
+          reward?: string | null
+          target_categories?: string[] | null
+          target_stars: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          current_stars?: number
+          family_id?: string
+          id?: string
+          reward?: string | null
+          target_categories?: string[] | null
+          target_stars?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goals_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          active_family_id: string | null
+          age: number
+          created_at: string
+          date_of_birth: string
+          display_name: string
+          gender: string
+          id: string
+          profile_complete: boolean
+          updated_at: string
+        }
+        Insert: {
+          active_family_id?: string | null
+          age: number
+          created_at?: string
+          date_of_birth: string
+          display_name: string
+          gender: string
+          id: string
+          profile_complete?: boolean
+          updated_at?: string
+        }
+        Update: {
+          active_family_id?: string | null
+          age?: number
+          created_at?: string
+          date_of_birth?: string
+          display_name?: string
+          gender?: string
+          id?: string
+          profile_complete?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      task_categories: {
+        Row: {
+          created_at: string
+          family_id: string
+          id: string
+          is_default: boolean
+          is_house_chores: boolean
+          name: string
+          order_index: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          family_id: string
+          id?: string
+          is_default?: boolean
+          is_house_chores?: boolean
+          name: string
+          order_index?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          family_id?: string
+          id?: string
+          is_default?: boolean
+          is_house_chores?: boolean
+          name?: string
+          order_index?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_categories_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_templates: {
+        Row: {
+          category_id: string
+          created_at: string
+          created_by: string
+          description: string | null
+          family_id: string
+          id: string
+          is_default: boolean
+          is_deletable: boolean
+          name: string
+          star_value: number
+          updated_at: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          family_id: string
+          id?: string
+          is_default?: boolean
+          is_deletable?: boolean
+          name: string
+          star_value?: number
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          family_id?: string
+          id?: string
+          is_default?: boolean
+          is_deletable?: boolean
+          name?: string
+          star_value?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_templates_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "task_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_templates_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tasks: {
+        Row: {
+          assigned_by: string
+          assigned_to: string
+          category_id: string
+          completed: boolean
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          due_date: string
+          family_id: string
+          id: string
+          name: string
+          star_value: number
+          template_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          assigned_by: string
+          assigned_to: string
+          category_id: string
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          due_date: string
+          family_id: string
+          id?: string
+          name: string
+          star_value?: number
+          template_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          assigned_by?: string
+          assigned_to?: string
+          category_id?: string
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string
+          family_id?: string
+          id?: string
+          name?: string
+          star_value?: number
+          template_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "task_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "task_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_badges: {
+        Row: {
+          badge_id: string
+          family_id: string
+          id: string
+          seen: boolean
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          badge_id: string
+          family_id: string
+          id?: string
+          seen?: boolean
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          badge_id?: string
+          family_id?: string
+          id?: string
+          seen?: boolean
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_badges_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_families: {
+        Row: {
+          current_stage: number
+          family_id: string
+          id: string
+          joined_at: string
+          last_read_at: string | null
+          last_read_timestamp: number
+          seen_celebrations: string[]
+          total_stars: number
+          user_id: string
+        }
+        Insert: {
+          current_stage?: number
+          family_id: string
+          id?: string
+          joined_at?: string
+          last_read_at?: string | null
+          last_read_timestamp?: number
+          seen_celebrations?: string[]
+          total_stars?: number
+          user_id: string
+        }
+        Update: {
+          current_stage?: number
+          family_id?: string
+          id?: string
+          joined_at?: string
+          last_read_at?: string | null
+          last_read_timestamp?: number
+          seen_celebrations?: string[]
+          total_stars?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_families_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_invite_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
