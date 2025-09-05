@@ -144,6 +144,15 @@ export const GOLDEN_CHAPTER_STAGE_BADGES: Badge[] = [
   { id: 'golden_desk', name: 'Desk', description: 'Office is second home.', imagePath: '/lovable-uploads/31ebd777-bffc-4065-9955-d702c93fe9b3.png', unlockStars: 880 },
   { id: 'golden_trophy', name: 'Trophy', description: 'Midlife = prime time!', imagePath: '/lovable-uploads/186659d3-5246-4729-9e99-2f0054c0c52c.png', unlockStars: 890 },
   { id: 'golden_rocking_chair', name: 'Rocking Chair', description: 'Weekend nap champion.', imagePath: '/lovable-uploads/c4b79177-9a80-405d-99d6-b3ad6c3bc089.png', unlockStars: 900 },
+  { id: 'golden_cookbook', name: 'Cookbook', description: 'Secret recipe perfected.', imagePath: '/lovable-uploads/9ac9cd36-c6c1-4322-8aaa-379755f2105e.png', unlockStars: 910 },
+  { id: 'golden_hiking_stick', name: 'Hiking Stick', description: 'Mountains still call.', imagePath: '/lovable-uploads/640c6f87-bba4-4fb9-9d66-40d4e05e746f.png', unlockStars: 920 },
+  { id: 'golden_headphones', name: 'Headphones', description: 'Old but still rockin\'!', imagePath: '/lovable-uploads/9f75f10b-15c6-43d1-a169-bc91d37454d2.png', unlockStars: 930 },
+  { id: 'golden_piggy_bank', name: 'Piggy Bank', description: 'Savings plan: finally working.', imagePath: '/lovable-uploads/3146ffc4-733a-41b3-ba18-15df70eb6cdf.png', unlockStars: 940 },
+  { id: 'golden_medal', name: 'Medal', description: 'Lifetime achievement unlocked.', imagePath: '/lovable-uploads/89b6d0ce-d747-4ee6-a1c4-7a0521b5ab47.png', unlockStars: 950 },
+  { id: 'golden_dog_paw', name: 'Dog Paw', description: 'Dog still thinks I\'m the best.', imagePath: '/lovable-uploads/cf7ee777-52b2-4546-b2e4-22b6ca201496.png', unlockStars: 960 },
+  { id: 'golden_camera', name: 'Camera', description: 'Every wrinkle tells a story.', imagePath: '/lovable-uploads/30c6036b-c554-479a-956b-6349cc90c575.png', unlockStars: 970 },
+  { id: 'golden_calendar', name: 'Calendar', description: 'Birthday parties never stop.', imagePath: '/lovable-uploads/044ac21a-556d-4366-bcf5-4a5b29682f65.png', unlockStars: 980 },
+  { id: 'golden_champagne', name: 'Champagne', description: 'Cheers to the best years!', imagePath: '/lovable-uploads/74c56a2a-31e6-452b-ae6d-5f036ced7c9b.png', unlockStars: 990 },
 ];
 
 export const PLACEHOLDER_BADGES: Badge[] = [
