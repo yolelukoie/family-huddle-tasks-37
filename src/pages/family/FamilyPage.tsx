@@ -190,85 +190,43 @@ export default function FamilyPage() {
               </p>
             ) : (
               allUserFamilies.map(family => (
-                <div key={family.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div>
-                      <div className="font-medium">{family.name}</div>
+                <div key={family.id} className="p-4 border rounded-lg space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                    <div className="space-y-2">
+                      <div className="font-medium text-lg">{family.name}</div>
                       <div className="text-sm text-muted-foreground">
                         Code: {family.inviteCode}
                       </div>
+                      <div className="flex flex-wrap gap-2">
+                        {family.id === activeFamilyId && (
+                          <Badge variant="default">Active</Badge>
+                        )}
+                        {family.createdBy === user.id && (
+                          <Badge variant="secondary">Owner</Badge>
+                        )}
+                      </div>
                     </div>
-                    {family.id === activeFamilyId && (
-                      <Badge variant="default">Active</Badge>
-                    )}
-                    {family.createdBy === user.id && (
-                      <Badge variant="secondary">Owner</Badge>
-                    )}
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => copyInviteCode(family.inviteCode)}
-                    >
-                      <Share className="h-4 w-4" />
-                    </Button>
-                    
+                  <div className="flex flex-wrap gap-2 pt-2 border-t">
                     <Dialog>
                       <DialogTrigger asChild>
-                        <Button variant="outline" size="sm">
-                          <Users className="h-4 w-4" />
+                        <Button variant="outline" size="sm" className="flex-1 sm:flex-initial">
+                          <Users className="h-4 w-4 mr-1" />
+                          <span className="sm:hidden">Members</span>
                         </Button>
                       </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Family Members - {family.name}</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-2">
-                          <div className="p-2 border rounded">
-                            <div className="font-medium">{user.displayName}</div>
-                            <div className="text-sm text-muted-foreground">
-                              {family.createdBy === user.id ? 'Owner' : 'Member'}
-                            </div>
-                          </div>
-                          <p className="text-sm text-muted-foreground">
-                            In this single-user version, only you are shown. Multi-user functionality would display all family members here.
-                          </p>
-                        </div>
-                      </DialogContent>
+...
                     </Dialog>
 
                     {family.createdBy === user.id && (
                       <Dialog>
                         <DialogTrigger asChild>
-                          <Button variant="outline" size="sm">
-                            <Settings className="h-4 w-4" />
+                          <Button variant="outline" size="sm" className="flex-1 sm:flex-initial">
+                            <Settings className="h-4 w-4 mr-1" />
+                            <span className="sm:hidden">Edit</span>
                           </Button>
                         </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Edit Family - {family.name}</DialogTitle>
-                          </DialogHeader>
-                          <form onSubmit={handleUpdateFamilyName} className="space-y-4">
-                            <div>
-                              <Label htmlFor="familyName">Family Name</Label>
-                              <Input
-                                id="familyName"
-                                value={editingFamilyName || family.name}
-                                onChange={(e) => {
-                                  setEditingFamilyId(family.id);
-                                  setEditingFamilyName(e.target.value);
-                                }}
-                                placeholder="Enter family name"
-                              />
-                            </div>
-                            <div className="flex gap-2">
-                              <Button type="submit" className="flex-1">
-                                Update Name
-                              </Button>
-                            </div>
-                          </form>
-                        </DialogContent>
+...
                       </Dialog>
                     )}
 
@@ -277,6 +235,7 @@ export default function FamilyPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => setActiveFamilyId(family.id)}
+                        className="flex-1 sm:flex-initial"
                       >
                         Switch
                       </Button>
