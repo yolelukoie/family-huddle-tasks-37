@@ -50,11 +50,11 @@ export function FamilyStep() {
     defaultValues: { inviteCode: '' },
   });
 
-  const onCreateFamily = (data: CreateFamilyForm) => {
+  const onCreateFamily = async (data: CreateFamilyForm) => {
     if (!user || isLoading) return;
     
     try {
-      createFamily(data.familyName);
+      await createFamily(data.familyName);
       navigate(ROUTES.main);
       toast({
         title: "Family created!",
@@ -69,18 +69,26 @@ export function FamilyStep() {
     }
   };
 
-  const onJoinFamily = (data: JoinFamilyForm) => {
-    const family = joinFamily(data.inviteCode);
-    if (family) {
-      navigate(ROUTES.main);
+  const onJoinFamily = async (data: JoinFamilyForm) => {
+    try {
+      const family = await joinFamily(data.inviteCode);
+      if (family) {
+        navigate(ROUTES.main);
+        toast({
+          title: "Joined family!",
+          description: `Welcome to ${family.name}! 🎉`,
+        });
+      } else {
+        toast({
+          title: "Invalid code",
+          description: "The invite code you entered was not found.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
       toast({
-        title: "Joined family!",
-        description: `Welcome to ${family.name}! 🎉`,
-      });
-    } else {
-      toast({
-        title: "Invalid code",
-        description: "The invite code you entered was not found.",
+        title: "Error",
+        description: "Failed to join family. Please try again.",
         variant: "destructive",
       });
     }

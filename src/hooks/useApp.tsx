@@ -5,6 +5,7 @@ import { scopedStorage } from '@/lib/scopedStorage';
 import { generateId } from '@/lib/utils';
 import { DEFAULT_CATEGORIES, DEFAULT_HOUSE_CHORES } from '@/lib/constants';
 import { useAuth } from './useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AppContextType {
   activeFamilyId: string | null;
@@ -13,11 +14,11 @@ interface AppContextType {
   isLoading: boolean;
   
   // Family actions
-  createFamily: (name: string) => string;
-  joinFamily: (inviteCode: string) => Family | null;
-  switchFamily: (familyId: string) => void;
-  setActiveFamilyId: (familyId: string) => void;
-  updateFamilyName: (familyId: string, name: string) => void;
+  createFamily: (name: string) => Promise<string>;
+  joinFamily: (inviteCode: string) => Promise<Family | null>;
+  switchFamily: (familyId: string) => Promise<void>;
+  setActiveFamilyId: (familyId: string) => Promise<void>;
+  updateFamilyName: (familyId: string, name: string) => Promise<void>;
   
   // Utility
   getUserFamily: (familyId: string) => UserFamily | null;
@@ -42,214 +43,495 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (authLoading) return;
     
     if (user) {
-      // Migrate data from scopedStorage to storage if needed
-      migrateUserData(user.id);
+      // Load data from Supabase with localStorage fallback
+      loadFamilyData();
+    } else {
+      setFamilies([]);
+      setUserFamilies([]);
+      setIsLoading(false);
+    }
+  }, [user, authLoading, updateUser]);
+
+  // Load family data from Supabase with localStorage migration
+  const loadFamilyData = async () => {
+    if (!user) return;
+    
+    try {
+      // Load user families from Supabase
+      const { data: userFamilyData, error: userFamilyError } = await supabase
+        .from('user_families')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (userFamilyError) {
+        console.error('Error loading user families:', userFamilyError);
+        await migrateUserData(user.id);
+        return;
+      }
+
+      // Load families for this user
+      const familyIds = userFamilyData.map(uf => uf.family_id);
       
-      // Load data using storage
+      let familyData = [];
+      if (familyIds.length > 0) {
+        const { data, error: familyError } = await supabase
+          .from('families')
+          .select('*')
+          .in('id', familyIds);
+
+        if (familyError) {
+          console.error('Error loading families:', familyError);
+          await migrateUserData(user.id);
+          return;
+        }
+        familyData = data || [];
+      }
+
+      // Convert Supabase data to app types
+      const convertedUserFamilies: UserFamily[] = userFamilyData.map(uf => ({
+        userId: uf.user_id,
+        familyId: uf.family_id,
+        joinedAt: uf.joined_at,
+        totalStars: uf.total_stars,
+        currentStage: uf.current_stage,
+        lastReadTimestamp: uf.last_read_timestamp,
+        seenCelebrations: uf.seen_celebrations,
+      }));
+
+      const convertedFamilies: Family[] = familyData.map(f => ({
+        id: f.id,
+        name: f.name,
+        inviteCode: f.invite_code,
+        createdBy: f.created_by,
+        createdAt: f.created_at,
+      }));
+
+      setUserFamilies(convertedUserFamilies);
+      setFamilies(convertedFamilies);
+
+      // If user has families but no active family set, set the first one as active
+      if (convertedUserFamilies.length > 0 && !user.activeFamilyId) {
+        await updateUser({ activeFamilyId: convertedUserFamilies[0].familyId });
+      }
+
+      // If no families found in Supabase, try to migrate from localStorage
+      if (convertedUserFamilies.length === 0) {
+        await migrateUserData(user.id);
+      }
+      
+    } catch (error) {
+      console.error('Error in loadFamilyData:', error);
+      // Fall back to localStorage migration
+      await migrateUserData(user.id);
+    }
+    
+    setIsLoading(false);
+  };
+
+  // Migration function to move data from localStorage to Supabase
+  const migrateUserData = async (userId: string) => {
+    try {
+      // Check if migration is needed
+      const migrationKey = `migration_completed_${userId}`;
+      if (localStorage.getItem(migrationKey)) {
+        // Even if migrated, load from localStorage as fallback
+        loadFromLocalStorage();
+        return;
+      }
+
+      console.log('Starting migration from localStorage to Supabase...');
+
+      // Migrate families first
+      const scopedFamilies = scopedStorage.getFamilies();
+      const existingFamilies = storage.getFamilies();
+      const allFamilies = [...scopedFamilies, ...existingFamilies];
+      
+      for (const family of allFamilies) {
+        try {
+          await supabase
+            .from('families')
+            .upsert([{
+              id: family.id,
+              name: family.name,
+              invite_code: family.inviteCode,
+              created_by: family.createdBy,
+              created_at: family.createdAt,
+            }]);
+        } catch (error) {
+          console.error('Error migrating family:', family.id, error);
+        }
+      }
+
+      // Migrate user families
+      const scopedUserFamilies = scopedStorage.getUserFamilies(userId);
+      const existingUserFamilies = storage.getUserFamilies().filter(uf => uf.userId === userId);
+      const allUserFamilies = [...scopedUserFamilies, ...existingUserFamilies];
+      
+      for (const userFamily of allUserFamilies) {
+        try {
+          await supabase
+            .from('user_families')
+            .upsert([{
+              user_id: userFamily.userId,
+              family_id: userFamily.familyId,
+              joined_at: userFamily.joinedAt,
+              total_stars: userFamily.totalStars,
+              current_stage: userFamily.currentStage,
+              last_read_timestamp: userFamily.lastReadTimestamp,
+              seen_celebrations: userFamily.seenCelebrations,
+            }]);
+        } catch (error) {
+          console.error('Error migrating user family:', userFamily, error);
+        }
+      }
+
+      // Migrate family-specific data for each family
+      for (const userFamily of allUserFamilies) {
+        const familyId = userFamily.familyId;
+        
+        // Migrate task categories
+        const scopedCategories = scopedStorage.getTaskCategories(userId, familyId);
+        const existingCategories = storage.getTaskCategories(familyId);
+        const allCategories = [...scopedCategories, ...existingCategories];
+        
+        for (const category of allCategories) {
+          try {
+            await supabase
+              .from('task_categories')
+              .upsert([{
+                id: category.id,
+                family_id: category.familyId,
+                name: category.name,
+                is_default: category.isDefault,
+                is_house_chores: category.isHouseChores,
+                order_index: category.order,
+              }]);
+          } catch (error) {
+            console.error('Error migrating category:', category.id, error);
+          }
+        }
+
+        // Migrate task templates
+        const scopedTemplates = scopedStorage.getTaskTemplates(userId, familyId);
+        const existingTemplates = storage.getTaskTemplates(familyId);
+        const allTemplates = [...scopedTemplates, ...existingTemplates];
+        
+        for (const template of allTemplates) {
+          try {
+            await supabase
+              .from('task_templates')
+              .upsert([{
+                id: template.id,
+                family_id: template.familyId,
+                category_id: template.categoryId,
+                name: template.name,
+                description: template.description,
+                star_value: template.starValue,
+                is_default: template.isDefault,
+                is_deletable: template.isDeletable,
+                created_by: template.createdBy,
+              }]);
+          } catch (error) {
+            console.error('Error migrating template:', template.id, error);
+          }
+        }
+
+        // Migrate tasks
+        const scopedTasks = scopedStorage.getTasks(userId, familyId);
+        const existingTasks = storage.getTasks(familyId);
+        const allTasks = [...scopedTasks, ...existingTasks];
+        
+        for (const task of allTasks) {
+          try {
+            await supabase
+              .from('tasks')
+              .upsert([{
+                id: task.id,
+                family_id: task.familyId,
+                category_id: task.categoryId,
+                template_id: task.templateId,
+                name: task.name,
+                description: task.description,
+                star_value: task.starValue,
+                assigned_to: task.assignedTo,
+                assigned_by: task.assignedBy,
+                due_date: task.dueDate,
+                completed: task.completed,
+                completed_at: task.completedAt,
+              }]);
+          } catch (error) {
+            console.error('Error migrating task:', task.id, error);
+          }
+        }
+
+        // Migrate goals
+        const scopedGoals = scopedStorage.getGoals(userId, familyId);
+        const existingGoals = storage.getGoals(familyId, userId);
+        const allGoals = [...scopedGoals, ...existingGoals];
+        
+        for (const goal of allGoals) {
+          try {
+            await supabase
+              .from('goals')
+              .upsert([{
+                id: goal.id,
+                user_id: goal.userId,
+                family_id: goal.familyId,
+                target_stars: goal.targetStars,
+                current_stars: goal.currentStars,
+                reward: goal.reward,
+                completed: goal.completed,
+                completed_at: goal.completedAt,
+                target_categories: goal.targetCategories,
+              }]);
+          } catch (error) {
+            console.error('Error migrating goal:', goal.id, error);
+          }
+        }
+
+        // Migrate chat messages
+        const scopedMessages = scopedStorage.getMessages(userId, familyId);
+        const existingMessages = storage.getMessages(familyId);
+        const allMessages = [...scopedMessages, ...existingMessages];
+        
+        for (const message of allMessages) {
+          try {
+            await supabase
+              .from('chat_messages')
+              .upsert([{
+                id: message.id,
+                user_id: message.userId,
+                family_id: message.familyId,
+                content: message.content,
+                created_at: message.createdAt,
+              }]);
+          } catch (error) {
+            console.error('Error migrating message:', message.id, error);
+          }
+        }
+      }
+
+      // Mark migration as completed
+      localStorage.setItem(migrationKey, 'true');
+      console.log(`Migration completed for user ${userId}`);
+      
+      // Reload data from Supabase
+      await loadFamilyData();
+      
+    } catch (error) {
+      console.error('Migration failed:', error);
+      // Fall back to localStorage
+      loadFromLocalStorage();
+    }
+  };
+
+  // Load data from localStorage as fallback
+  const loadFromLocalStorage = () => {
+    if (!user) return;
+    
+    try {
       const storedFamilies = storage.getFamilies();
       const storedUserFamilies = storage.getUserFamilies().filter(uf => uf.userId === user.id);
       
       setFamilies(storedFamilies);
       setUserFamilies(storedUserFamilies);
 
-      // If user has families but no active family set, set the first one as active
-      if (storedUserFamilies.length > 0 && !user.activeFamilyId) {
-        updateUser({ activeFamilyId: storedUserFamilies[0].familyId });
-      }
-    } else {
-      setFamilies([]);
-      setUserFamilies([]);
-    }
-    
-    setIsLoading(false);
-  }, [user, authLoading, updateUser]);
-
-  // Migration function to move data from scopedStorage to storage
-  const migrateUserData = (userId: string) => {
-    try {
-      // Check if migration is needed
-      const migrationKey = `migration_completed_${userId}`;
-      if (localStorage.getItem(migrationKey)) {
-        return; // Already migrated
-      }
-
-      // Migrate families
-      const scopedFamilies = scopedStorage.getFamilies();
-      const existingFamilies = storage.getFamilies();
-      
-      scopedFamilies.forEach(family => {
-        const exists = existingFamilies.find(f => f.id === family.id);
-        if (!exists) {
-          storage.addFamily(family);
-        }
-      });
-
-      // Migrate user families
-      const scopedUserFamilies = scopedStorage.getUserFamilies(userId);
-      const existingUserFamilies = storage.getUserFamilies();
-      
-      scopedUserFamilies.forEach(userFamily => {
-        const exists = existingUserFamilies.find(uf => 
-          uf.userId === userFamily.userId && uf.familyId === userFamily.familyId
-        );
-        if (!exists) {
-          storage.addUserFamily(userFamily);
-        }
-      });
-
-      // Migrate family-specific data for each family
-      scopedUserFamilies.forEach(userFamily => {
-        const familyId = userFamily.familyId;
-        
-        // Migrate task categories
-        const scopedCategories = scopedStorage.getTaskCategories(userId, familyId);
-        const existingCategories = storage.getTaskCategories(familyId);
-        
-        scopedCategories.forEach(category => {
-          const exists = existingCategories.find(c => c.id === category.id);
-          if (!exists) {
-            storage.addTaskCategory(category);
-          }
-        });
-
-        // Migrate task templates
-        const scopedTemplates = scopedStorage.getTaskTemplates(userId, familyId);
-        const existingTemplates = storage.getTaskTemplates(familyId);
-        
-        scopedTemplates.forEach(template => {
-          const exists = existingTemplates.find(t => t.id === template.id);
-          if (!exists) {
-            storage.addTaskTemplate(template);
-          }
-        });
-
-        // Migrate tasks
-        const scopedTasks = scopedStorage.getTasks(userId, familyId);
-        const existingTasks = storage.getTasks(familyId);
-        
-        scopedTasks.forEach(task => {
-          const exists = existingTasks.find(t => t.id === task.id);
-          if (!exists) {
-            storage.addTask(task);
-          }
-        });
-
-        // Migrate goals
-        const scopedGoals = scopedStorage.getGoals(userId, familyId);
-        const existingGoals = storage.getGoals(familyId, userId);
-        
-        scopedGoals.forEach(goal => {
-          const exists = existingGoals.find(g => g.id === goal.id);
-          if (!exists) {
-            storage.addGoal(goal);
-          }
-        });
-
-        // Migrate chat messages
-        const scopedMessages = scopedStorage.getMessages(userId, familyId);
-        const existingMessages = storage.getMessages(familyId);
-        
-        scopedMessages.forEach(message => {
-          const exists = existingMessages.find(m => m.id === message.id);
-          if (!exists) {
-            storage.addMessage(message);
-          }
-        });
-      });
-
-      // Mark migration as completed
-      localStorage.setItem(migrationKey, 'true');
-      console.log(`Migration completed for user ${userId}`);
+      console.log('Loaded data from localStorage as fallback');
     } catch (error) {
-      console.error('Migration failed:', error);
+      console.error('Error loading from localStorage:', error);
     }
   };
 
 
-  const createFamily = (name: string): string => {
+  const createFamily = async (name: string): Promise<string> => {
     if (!user) throw new Error('No user found');
 
-    const family: Family = {
-      id: generateId(),
-      name,
-      inviteCode: storage.generateUniqueInviteCode(),
-      createdBy: user.id,
-      createdAt: new Date().toISOString(),
-    };
+    try {
+      // Generate invite code first
+      const { data: inviteCodeData, error: inviteError } = await supabase.rpc('generate_invite_code');
+      
+      if (inviteError) {
+        console.error('Error generating invite code:', inviteError);
+        throw inviteError;
+      }
 
-    const userFamily: UserFamily = {
-      userId: user.id,
-      familyId: family.id,
-      joinedAt: new Date().toISOString(),
-      totalStars: 0,
-      currentStage: 0,
-      lastReadTimestamp: Date.now(),
-      seenCelebrations: [],
-    };
+      // Create family in Supabase
+      const { data, error } = await supabase
+        .from('families')
+        .insert([{
+          name,
+          invite_code: inviteCodeData,
+          created_by: user.id,
+        }])
+        .select()
+        .single();
 
-    storage.addFamily(family);
-    storage.addUserFamily(userFamily);
+      if (error) {
+        console.error('Error creating family in Supabase:', error);
+        throw error;
+      }
 
-    // Seed default categories and tasks for new family
-    seedFamilyDefaults(family.id);
+      const family: Family = {
+        id: data.id,
+        name: data.name,
+        inviteCode: data.invite_code,
+        createdBy: data.created_by,
+        createdAt: data.created_at,
+      };
 
-    setFamilies(prev => [...prev, family]);
-    setUserFamilies(prev => [...prev, userFamily]);
+      // Create user family relationship in Supabase
+      const { error: userFamilyError } = await supabase
+        .from('user_families')
+        .insert([{
+          user_id: user.id,
+          family_id: family.id,
+        }]);
 
-    // Set as active family
-    updateUser({ activeFamilyId: family.id });
+      if (userFamilyError) {
+        console.error('Error creating user family relationship:', userFamilyError);
+        throw userFamilyError;
+      }
 
-    return family.id;
+      const userFamily: UserFamily = {
+        userId: user.id,
+        familyId: family.id,
+        joinedAt: new Date().toISOString(),
+        totalStars: 0,
+        currentStage: 0,
+        lastReadTimestamp: Date.now(),
+        seenCelebrations: [],
+      };
+
+      // Also save to localStorage as backup
+      storage.addFamily(family);
+      storage.addUserFamily(userFamily);
+
+      // Seed default categories and tasks for new family
+      await seedFamilyDefaults(family.id);
+
+      setFamilies(prev => [...prev, family]);
+      setUserFamilies(prev => [...prev, userFamily]);
+
+      // Set as active family
+      await updateUser({ activeFamilyId: family.id });
+
+      return family.id;
+    } catch (error) {
+      console.error('Failed to create family:', error);
+      throw error;
+    }
   };
 
-  const joinFamily = (inviteCode: string): Family | null => {
+  const joinFamily = async (inviteCode: string): Promise<Family | null> => {
     if (!user) return null;
 
-    const family = storage.findFamilyByInviteCode(inviteCode);
-    if (!family) return null;
+    try {
+      // Find family by invite code in Supabase
+      const { data: family, error } = await supabase
+        .from('families')
+        .select('*')
+        .eq('invite_code', inviteCode)
+        .maybeSingle();
 
-    // Check if user is already in this family
-    const existingMembership = userFamilies.find(
-      uf => uf.familyId === family.id
-    );
-    if (existingMembership) return family;
+      if (error) {
+        console.error('Error finding family:', error);
+        return null;
+      }
 
-    const userFamily: UserFamily = {
-      userId: user.id,
-      familyId: family.id,
-      joinedAt: new Date().toISOString(),
-      totalStars: 0,
-      currentStage: 0,
-      lastReadTimestamp: Date.now(),
-      seenCelebrations: [],
-    };
+      if (!family) return null;
 
-    storage.addUserFamily(userFamily);
-    setUserFamilies(prev => [...prev, userFamily]);
+      // Check if user is already in this family
+      const existingMembership = userFamilies.find(
+        uf => uf.familyId === family.id
+      );
+      
+      if (existingMembership) {
+        const convertedFamily: Family = {
+          id: family.id,
+          name: family.name,
+          inviteCode: family.invite_code,
+          createdBy: family.created_by,
+          createdAt: family.created_at,
+        };
+        return convertedFamily;
+      }
 
-    // Set as active family
-    updateUser({ activeFamilyId: family.id });
+      // Create user family relationship in Supabase
+      const { error: userFamilyError } = await supabase
+        .from('user_families')
+        .insert([{
+          user_id: user.id,
+          family_id: family.id,
+        }]);
 
-    return family;
-  };
+      if (userFamilyError) {
+        console.error('Error joining family:', userFamilyError);
+        return null;
+      }
 
-  const switchFamily = (familyId: string) => {
-    updateUser({ activeFamilyId: familyId });
-  };
+      const convertedFamily: Family = {
+        id: family.id,
+        name: family.name,
+        inviteCode: family.invite_code,
+        createdBy: family.created_by,
+        createdAt: family.created_at,
+      };
 
-  const setActiveFamilyId = (familyId: string) => {
-    updateUser({ activeFamilyId: familyId });
-  };
+      const userFamily: UserFamily = {
+        userId: user.id,
+        familyId: family.id,
+        joinedAt: new Date().toISOString(),
+        totalStars: 0,
+        currentStage: 0,
+        lastReadTimestamp: Date.now(),
+        seenCelebrations: [],
+      };
 
-  const updateFamilyName = (familyId: string, name: string) => {
-    // Check if another family already has this name
-    const existingFamily = storage.findFamilyByName(name);
-    if (existingFamily && existingFamily.id !== familyId) {
-      throw new Error('A family with this name already exists');
+      // Also save to localStorage as backup
+      storage.addFamily(convertedFamily);
+      storage.addUserFamily(userFamily);
+
+      setUserFamilies(prev => [...prev, userFamily]);
+      setFamilies(prev => [...prev, convertedFamily]);
+
+      // Set as active family
+      await updateUser({ activeFamilyId: family.id });
+
+      return convertedFamily;
+    } catch (error) {
+      console.error('Failed to join family:', error);
+      return null;
     }
+  };
 
-    storage.updateFamily(familyId, { name });
-    setFamilies(prev => prev.map(f => f.id === familyId ? { ...f, name } : f));
+  const switchFamily = async (familyId: string) => {
+    await updateUser({ activeFamilyId: familyId });
+  };
+
+  const setActiveFamilyId = async (familyId: string) => {
+    await updateUser({ activeFamilyId: familyId });
+  };
+
+  const updateFamilyName = async (familyId: string, name: string) => {
+    try {
+      // Update in Supabase
+      const { error } = await supabase
+        .from('families')
+        .update({ name })
+        .eq('id', familyId);
+
+      if (error) {
+        console.error('Error updating family name:', error);
+        throw error;
+      }
+
+      // Also update localStorage
+      storage.updateFamily(familyId, { name });
+      setFamilies(prev => prev.map(f => f.id === familyId ? { ...f, name } : f));
+    } catch (error) {
+      console.error('Failed to update family name:', error);
+      throw error;
+    }
   };
 
   const getUserFamily = (familyId: string): UserFamily | null => {
@@ -300,7 +582,29 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return storage.getUserProfile(userId);
   };
 
-  const seedFamilyDefaults = (familyId: string) => {
+  const seedFamilyDefaults = async (familyId: string) => {
+    if (!user) return;
+    
+    try {
+      // Use the Supabase function to seed family defaults
+      const { error } = await supabase.rpc('seed_family_defaults', {
+        p_family_id: familyId,
+        p_creator: user.id
+      });
+
+      if (error) {
+        console.error('Error seeding family defaults:', error);
+        // Fall back to manual seeding
+        await seedFamilyDefaultsManually(familyId);
+      }
+    } catch (error) {
+      console.error('Failed to seed family defaults:', error);
+      // Fall back to manual seeding
+      await seedFamilyDefaultsManually(familyId);
+    }
+  };
+
+  const seedFamilyDefaultsManually = async (familyId: string) => {
     if (!user) return;
     
     // Create default categories

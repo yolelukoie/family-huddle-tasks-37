@@ -70,10 +70,10 @@ export default function OnboardingPage() {
     }
   }, [isLoading, user, navigate]);
 
-  const onSubmit = (data: OnboardingForm) => {
+  const onSubmit = async (data: OnboardingForm) => {
     try {
       // Create user profile
-      const newUser = createUser({
+      const newUser = await createUser({
         displayName: data.displayName,
         dateOfBirth: data.dateOfBirth,
         gender: data.gender,
@@ -81,13 +81,13 @@ export default function OnboardingPage() {
 
       // Handle family action
       if (data.familyAction === 'create' && data.familyName) {
-        createFamily(data.familyName);
+        await createFamily(data.familyName);
         toast({
           title: "Welcome to Family Stars! ⭐",
           description: `Your family "${data.familyName}" has been created!`,
         });
       } else if (data.familyAction === 'join' && data.inviteCode) {
-        const family = joinFamily(data.inviteCode);
+        const family = await joinFamily(data.inviteCode);
         if (family) {
           toast({
             title: "Welcome to Family Stars! ⭐",

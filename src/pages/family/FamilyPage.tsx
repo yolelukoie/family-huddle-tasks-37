@@ -44,12 +44,12 @@ export default function FamilyPage() {
     }
   };
 
-  const handleJoinFamily = (e: React.FormEvent) => {
+  const handleJoinFamily = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inviteCode.trim()) return;
 
     try {
-      const family = joinFamily(inviteCode.trim());
+      const family = await joinFamily(inviteCode.trim());
       if (family) {
         setInviteCode('');
         setShowJoinFamily(false);
@@ -73,12 +73,12 @@ export default function FamilyPage() {
     }
   };
 
-  const handleCreateFamily = (e: React.FormEvent) => {
+  const handleCreateFamily = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newFamilyName.trim()) return;
 
     try {
-      createFamily(newFamilyName.trim());
+      await createFamily(newFamilyName.trim());
       setNewFamilyName('');
       setShowCreateFamily(false);
       toast({

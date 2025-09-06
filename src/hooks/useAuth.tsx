@@ -17,8 +17,8 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: any }>;
-  createUser: (userData: Omit<User, 'id' | 'age' | 'profileComplete'>) => User;
-  updateUser: (updates: Partial<User>) => void;
+  createUser: (userData: Omit<User, 'id' | 'age' | 'profileComplete'>) => Promise<User>;
+  updateUser: (updates: Partial<User>) => Promise<void>;
   logout: () => void;
   clearAuth: () => void;
 }
@@ -48,25 +48,111 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Load user data from localStorage based on Supabase user ID
-  const loadUserData = useCallback((supabaseUser: SupabaseUser | null) => {
+  // Load user data from Supabase profiles table
+  const loadUserData = useCallback(async (supabaseUser: SupabaseUser | null) => {
     if (supabaseUser) {
-      const userKey = `${USER_KEY}_${supabaseUser.id}`;
+      try {
+        // First try to get profile from Supabase
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', supabaseUser.id)
+          .maybeSingle();
+
+        if (error) {
+          console.error('Error loading profile:', error);
+          // Fall back to localStorage if Supabase fails
+          await migrateFromLocalStorage(supabaseUser.id);
+          return;
+        }
+
+        if (profile) {
+          // Convert Supabase profile to User type
+          const user: User = {
+            id: profile.id,
+            displayName: profile.display_name,
+            dateOfBirth: profile.date_of_birth,
+            gender: profile.gender as 'male' | 'female' | 'other',
+            age: profile.age,
+            profileComplete: profile.profile_complete,
+            activeFamilyId: profile.active_family_id,
+          };
+          setUser(user);
+        } else {
+          // No profile in Supabase, try to migrate from localStorage
+          await migrateFromLocalStorage(supabaseUser.id);
+        }
+      } catch (error) {
+        console.error('Error in loadUserData:', error);
+        setUser(null);
+      }
+    } else {
+      setUser(null);
+    }
+  }, []);
+
+  // Migrate user data from localStorage to Supabase
+  const migrateFromLocalStorage = useCallback(async (userId: string) => {
+    try {
+      const userKey = `${USER_KEY}_${userId}`;
       const storedUser = localStorage.getItem(userKey);
+      
       if (storedUser) {
-        setUser(JSON.parse(storedUser));
+        const parsedUser = JSON.parse(storedUser) as User;
+        
+        // Create profile in Supabase
+        const { error } = await supabase
+          .from('profiles')
+          .insert([{
+            id: parsedUser.id,
+            display_name: parsedUser.displayName,
+            date_of_birth: parsedUser.dateOfBirth,
+            gender: parsedUser.gender,
+            age: parsedUser.age,
+            profile_complete: parsedUser.profileComplete,
+            active_family_id: parsedUser.activeFamilyId,
+          }]);
+
+        if (!error) {
+          setUser(parsedUser);
+          // Keep localStorage as backup for now
+          console.log('Migrated user profile to Supabase');
+        } else {
+          console.error('Failed to migrate profile:', error);
+          setUser(parsedUser); // Still use localStorage data
+        }
       } else {
         // Try to migrate from global user key
         const globalUser = localStorage.getItem(USER_KEY);
         if (globalUser) {
-          const parsedUser = JSON.parse(globalUser);
-          localStorage.setItem(userKey, globalUser);
-          setUser(parsedUser);
-          localStorage.removeItem(USER_KEY);
+          const parsedUser = JSON.parse(globalUser) as User;
+          parsedUser.id = userId; // Update ID to match Supabase user
+          
+          const { error } = await supabase
+            .from('profiles')
+            .insert([{
+              id: parsedUser.id,
+              display_name: parsedUser.displayName,
+              date_of_birth: parsedUser.dateOfBirth,
+              gender: parsedUser.gender,
+              age: parsedUser.age,
+              profile_complete: parsedUser.profileComplete,
+              active_family_id: parsedUser.activeFamilyId,
+            }]);
+
+          if (!error) {
+            setUser(parsedUser);
+            localStorage.setItem(userKey, JSON.stringify(parsedUser));
+            localStorage.removeItem(USER_KEY);
+            console.log('Migrated global user profile to Supabase');
+          } else {
+            console.error('Failed to migrate global profile:', error);
+            setUser(parsedUser);
+          }
         }
       }
-    } else {
-      setUser(null);
+    } catch (error) {
+      console.error('Migration failed:', error);
     }
   }, []);
 
@@ -80,17 +166,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(session);
         
         // Defer user data loading to prevent deadlock
-        setTimeout(() => {
-          loadUserData(session?.user ?? null);
+        setTimeout(async () => {
+          await loadUserData(session?.user ?? null);
           setIsLoading(false);
         }, 0);
       }
     );
 
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
-      loadUserData(session?.user ?? null);
+      await loadUserData(session?.user ?? null);
       setIsLoading(false);
     });
 
@@ -154,7 +240,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error };
   }, []);
 
-  const createUser = useCallback((userData: Omit<User, 'id' | 'age' | 'profileComplete'>): User => {
+  const createUser = useCallback(async (userData: Omit<User, 'id' | 'age' | 'profileComplete'>): Promise<User> => {
     if (!session?.user) throw new Error('Must be signed in to create user');
     
     const newUser: User = {
@@ -164,16 +250,66 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       profileComplete: true,
     };
     
-    const userKey = `${USER_KEY}_${session.user.id}`;
-    localStorage.setItem(userKey, JSON.stringify(newUser));
-    setUser(newUser);
-    return newUser;
+    try {
+      // Save to Supabase first
+      const { error } = await supabase
+        .from('profiles')
+        .upsert([{
+          id: newUser.id,
+          display_name: newUser.displayName,
+          date_of_birth: newUser.dateOfBirth,
+          gender: newUser.gender,
+          age: newUser.age,
+          profile_complete: newUser.profileComplete,
+          active_family_id: newUser.activeFamilyId,
+        }]);
+
+      if (error) {
+        console.error('Failed to save profile to Supabase:', error);
+        throw error;
+      }
+
+      // Also save to localStorage as backup
+      const userKey = `${USER_KEY}_${session.user.id}`;
+      localStorage.setItem(userKey, JSON.stringify(newUser));
+      setUser(newUser);
+      return newUser;
+    } catch (error) {
+      // If Supabase fails, still save to localStorage
+      const userKey = `${USER_KEY}_${session.user.id}`;
+      localStorage.setItem(userKey, JSON.stringify(newUser));
+      setUser(newUser);
+      throw error;
+    }
   }, [session]);
 
-  const updateUser = useCallback((updates: Partial<User>) => {
+  const updateUser = useCallback(async (updates: Partial<User>) => {
     if (!user || !session?.user) return;
     
     const updatedUser = { ...user, ...updates };
+    
+    try {
+      // Update in Supabase first
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          display_name: updatedUser.displayName,
+          date_of_birth: updatedUser.dateOfBirth,
+          gender: updatedUser.gender,
+          age: updatedUser.age,
+          profile_complete: updatedUser.profileComplete,
+          active_family_id: updatedUser.activeFamilyId,
+        })
+        .eq('id', session.user.id);
+
+      if (error) {
+        console.error('Failed to update profile in Supabase:', error);
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+    }
+
+    // Always update localStorage and state
     const userKey = `${USER_KEY}_${session.user.id}`;
     localStorage.setItem(userKey, JSON.stringify(updatedUser));
     setUser(updatedUser);
