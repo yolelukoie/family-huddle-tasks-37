@@ -42,6 +42,7 @@ export function AuthPage() {
         title: "Welcome back!",
         description: "Successfully signed in.",
       });
+      navigate('/', { replace: true });
     }
     
     setIsLoading(false);
