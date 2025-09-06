@@ -153,11 +153,13 @@ export function DraggableBadgeDisplay({
 
   if (badges.length === 0) return null;
 
+  const isAbsolute = className?.includes('absolute') || className?.includes('fixed');
+
   return (
     <div 
       ref={containerRef}
-      className={`relative ${className}`}
-      style={{ width: `${containerBounds.width}px`, height: `${containerBounds.height}px` }}
+      className={`${isAbsolute ? '' : 'relative'} ${className}`}
+      style={isAbsolute ? undefined : { width: `${containerBounds.width}px`, height: `${containerBounds.height}px` }}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerUp}

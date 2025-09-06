@@ -164,7 +164,7 @@ export default function MainPage() {
           <CardContent>
             {/* Character Image and Badges */}
             <div className="flex justify-center mb-6">
-              <div className="relative">
+              <div className="relative w-40 h-40 overflow-hidden">
                 <img src={characterImagePath} alt={`${user.gender} character at ${stageName} stage`} className="w-40 h-40 object-contain" onError={e => {
                 // Fallback to emoji if image fails to load
                 const img = e.currentTarget;

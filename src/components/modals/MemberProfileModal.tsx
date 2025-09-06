@@ -70,7 +70,7 @@ export function MemberProfileModal({ open, onOpenChange, member, memberProfile, 
             <CardContent>
               {/* Character Image with Draggable Badges */}
               <div className="flex justify-center mb-6">
-                <div className="relative">
+                <div className="relative w-32 h-32 overflow-hidden">
                   <img 
                     src={characterImagePath} 
                     alt={`${memberProfile?.gender || 'character'} character at ${stageName} stage`} 
