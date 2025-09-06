@@ -164,15 +164,18 @@ export default function MainPage() {
           <CardContent>
             {/* Character Image and Badges */}
             <div className="flex justify-center mb-6">
-              <div className="relative w-40 h-40 overflow-hidden">
-                <img src={characterImagePath} alt={`${user.gender} character at ${stageName} stage`} className="w-40 h-40 object-contain" onError={e => {
-                // Fallback to emoji if image fails to load
-                const img = e.currentTarget;
-                const fallback = img.nextElementSibling as HTMLElement;
-                img.style.display = 'none';
-                if (fallback) fallback.style.display = 'block';
-              }} />
-                 <span className="text-4xl hidden">👤</span>
+              <div className="relative w-80 h-40 overflow-visible">
+                {/* Character Image Container */}
+                <div className="absolute left-1/2 transform -translate-x-1/2 w-40 h-40">
+                  <img src={characterImagePath} alt={`${user.gender} character at ${stageName} stage`} className="w-40 h-40 object-contain" onError={e => {
+                  // Fallback to emoji if image fails to load
+                  const img = e.currentTarget;
+                  const fallback = img.nextElementSibling as HTMLElement;
+                  img.style.display = 'none';
+                  if (fallback) fallback.style.display = 'block';
+                }} />
+                  <span className="text-4xl hidden">👤</span>
+                </div>
                  
                  {/* Draggable Badges overlaying character */}
                  {showBadges && (
@@ -180,10 +183,10 @@ export default function MainPage() {
                       badges={unlockedBadges} 
                       familyId={activeFamilyId!} 
                       userId={user!.id}
-                      containerBounds={{ width: 160, height: 160 }}
+                      containerBounds={{ width: 320, height: 160 }}
                       className="absolute inset-0 z-10"
                     />
-                 )}
+                  )}
               </div>
             </div>
 

@@ -70,20 +70,23 @@ export function MemberProfileModal({ open, onOpenChange, member, memberProfile, 
             <CardContent>
               {/* Character Image with Draggable Badges */}
               <div className="flex justify-center mb-6">
-                <div className="relative w-32 h-32 overflow-hidden">
-                  <img 
-                    src={characterImagePath} 
-                    alt={`${memberProfile?.gender || 'character'} character at ${stageName} stage`} 
-                    className="w-32 h-32 object-contain" 
-                    onError={(e) => {
-                      // Fallback to emoji if image fails to load
-                      const img = e.currentTarget;
-                      const fallback = img.nextElementSibling as HTMLElement;
-                      img.style.display = 'none';
-                      if (fallback) fallback.style.display = 'block';
-                    }} 
-                  />
-                  <span className="text-3xl hidden">👤</span>
+                <div className="relative w-64 h-32 overflow-visible">
+                  {/* Character Image Container */}
+                  <div className="absolute left-1/2 transform -translate-x-1/2 w-32 h-32">
+                    <img 
+                      src={characterImagePath} 
+                      alt={`${memberProfile?.gender || 'character'} character at ${stageName} stage`} 
+                      className="w-32 h-32 object-contain" 
+                      onError={(e) => {
+                        // Fallback to emoji if image fails to load
+                        const img = e.currentTarget;
+                        const fallback = img.nextElementSibling as HTMLElement;
+                        img.style.display = 'none';
+                        if (fallback) fallback.style.display = 'block';
+                      }} 
+                    />
+                    <span className="text-3xl hidden">👤</span>
+                  </div>
                   
                   {/* Draggable Badges */}
                   {unlockedBadges.length > 0 && (
@@ -91,7 +94,7 @@ export function MemberProfileModal({ open, onOpenChange, member, memberProfile, 
                       badges={unlockedBadges} 
                       familyId={familyId} 
                       userId={member.userId}
-                      containerBounds={{ width: 128, height: 128 }}
+                      containerBounds={{ width: 256, height: 128 }}
                       className="absolute inset-0"
                     />
                   )}
