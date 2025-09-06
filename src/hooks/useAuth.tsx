@@ -100,26 +100,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (storedUser) {
         const parsedUser = JSON.parse(storedUser) as User;
         
-        // Create profile in Supabase
-        const { error } = await supabase
-          .from('profiles')
-          .insert([{
-            id: parsedUser.id,
-            display_name: parsedUser.displayName,
-            date_of_birth: parsedUser.dateOfBirth,
-            gender: parsedUser.gender,
-            age: parsedUser.age,
-            profile_complete: parsedUser.profileComplete,
-            active_family_id: parsedUser.activeFamilyId,
-          }]);
+        // Only migrate if the stored user ID is not a valid UUID (old localStorage data)
+        if (parsedUser.id !== userId) {
+          // Update to use the Supabase user ID
+          parsedUser.id = userId;
+          
+          // Create profile in Supabase
+          const { error } = await supabase
+            .from('profiles')
+            .insert([{
+              id: parsedUser.id,
+              display_name: parsedUser.displayName,
+              date_of_birth: parsedUser.dateOfBirth,
+              gender: parsedUser.gender,
+              age: parsedUser.age,
+              profile_complete: parsedUser.profileComplete,
+              active_family_id: parsedUser.activeFamilyId,
+            }]);
 
-        if (!error) {
-          setUser(parsedUser);
-          // Keep localStorage as backup for now
-          console.log('Migrated user profile to Supabase');
+          if (!error) {
+            setUser(parsedUser);
+            localStorage.setItem(userKey, JSON.stringify(parsedUser));
+            console.log('Migrated user profile to Supabase with correct UUID');
+          } else {
+            console.error('Failed to migrate profile:', error);
+            setUser(parsedUser); // Still use localStorage data
+          }
         } else {
-          console.error('Failed to migrate profile:', error);
-          setUser(parsedUser); // Still use localStorage data
+          // User ID matches, just set the user
+          setUser(parsedUser);
         }
       } else {
         // Try to migrate from global user key

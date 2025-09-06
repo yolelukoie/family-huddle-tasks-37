@@ -46,7 +46,7 @@ export function TaskTemplateModal({ open, onOpenChange, category, familyId, onTe
 
   const onSubmit = (data: TaskTemplateForm) => {
     const template = {
-      id: generateId(),
+      id: generateId(), // Generate UUID for local storage compatibility
       categoryId: category.id,
       familyId: familyId,
       name: data.name,

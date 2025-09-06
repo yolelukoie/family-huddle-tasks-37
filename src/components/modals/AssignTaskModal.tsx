@@ -52,7 +52,7 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
 
   const onSubmit = (data: AssignTaskForm) => {
     const task = {
-      id: generateId(),
+      id: generateId(), // Generate UUID for local storage compatibility
       familyId: activeFamilyId,
       name: data.name,
       description: data.description,
