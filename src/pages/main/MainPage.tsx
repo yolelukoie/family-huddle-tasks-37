@@ -181,7 +181,7 @@ export default function MainPage() {
                       familyId={activeFamilyId!} 
                       userId={user!.id}
                       containerBounds={{ width: 160, height: 160 }}
-                      className="absolute top-0 left-0 w-40 h-40"
+                      className="absolute inset-0 z-10"
                     />
                  )}
               </div>

@@ -41,38 +41,56 @@ export function DraggableBadgeDisplay({
   
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Default scattered positions matching original BadgeDisplay scattered layout
+  // Badge size in px (w-12 h-12)
+  const BADGE_SIZE = 48;
+  const PADDING = 8;
+  const w = containerBounds.width;
+  const h = containerBounds.height;
+  const maxX = Math.max(0, w - BADGE_SIZE);
+  const maxY = Math.max(0, h - BADGE_SIZE);
+
+  // Default positions inside the container area
   const defaultPositions = [
-    { x: -15, y: 16 },    // top-left (outside container, -15% of 160px = -24px)
-    { x: 136, y: 8 },     // top-right (outside container, 85% + 15% = 160px - 24px)
-    { x: -32, y: 48 },    // left-mid (outside container, -20% of 160px = -32px)
-    { x: 152, y: 40 },    // right-mid (outside container, 95% + 20% = 152px)
-    { x: -24, y: 80 },    // left-lower (outside container, -15% of 160px = -24px)
-    { x: 136, y: 72 },    // right-lower (outside container, 85% + 15% = 136px)
-    { x: -32, y: 112 },   // bottom-left (outside container, -20% of 160px = -32px)
-    { x: 152, y: 104 },   // bottom-right (outside container, 95% + 20% = 152px)
-    { x: 56, y: -16 },    // top-center (outside container, 35% of 160px = 56px)
-    { x: 72, y: 144 },    // bottom-center (outside container, 45% of 160px = 72px)
+    { x: PADDING, y: PADDING },
+    { x: Math.max(PADDING, maxX), y: PADDING },
+    { x: PADDING, y: Math.max(PADDING, maxY) },
+    { x: Math.max(PADDING, maxX), y: Math.max(PADDING, maxY) },
+    { x: Math.max(0, (w - BADGE_SIZE) / 2), y: PADDING },
+    { x: Math.max(0, (w - BADGE_SIZE) / 2), y: Math.max(PADDING, maxY) },
+    { x: PADDING, y: Math.max(0, (h - BADGE_SIZE) / 2) },
+    { x: Math.max(PADDING, maxX), y: Math.max(0, (h - BADGE_SIZE) / 2) },
+    { x: Math.max(0, (w - BADGE_SIZE) / 2), y: Math.max(0, (h - BADGE_SIZE) / 2) },
+    { x: Math.max(PADDING, maxX * 0.25), y: Math.max(PADDING, maxY * 0.65) },
   ];
+
+  const clamp = (val: number, min: number, max: number) => Math.max(min, Math.min(max, val));
+  const clampPosition = (x: number, y: number) => ({
+    x: clamp(x, 0, maxX),
+    y: clamp(y, 0, maxY),
+  });
 
   // Load saved positions from localStorage on mount
   useEffect(() => {
-    const savedPositions = localStorage.getItem(`badge-positions-${familyId}-${userId}`);
-    if (savedPositions) {
-      setBadgePositions(JSON.parse(savedPositions));
+    const key = `badge-positions-${familyId}-${userId}`;
+    const saved = localStorage.getItem(key);
+
+    const buildInitial = () => badges.map((badge, index) => {
+      const d = defaultPositions[index % defaultPositions.length];
+      const clamped = clampPosition(d.x, d.y);
+      return { id: badge.id, x: clamped.x, y: clamped.y };
+    });
+
+    if (saved) {
+      try {
+        const parsed: BadgePosition[] = JSON.parse(saved);
+        setBadgePositions(parsed.map(p => ({ id: p.id, ...clampPosition(p.x, p.y) })));
+      } catch {
+        setBadgePositions(buildInitial());
+      }
     } else {
-      // Initialize with default positions
-      const initialPositions = badges.map((badge, index) => {
-        const defaultPos = defaultPositions[index % defaultPositions.length];
-        return {
-          id: badge.id,
-          x: defaultPos.x,
-          y: defaultPos.y,
-        };
-      });
-      setBadgePositions(initialPositions);
+      setBadgePositions(buildInitial());
     }
-  }, [badges, familyId, userId]);
+  }, [badges, familyId, userId, w, h]);
 
   // Save positions to localStorage whenever they change
   useEffect(() => {
@@ -111,17 +129,14 @@ export function DraggableBadgeDisplay({
   const handlePointerMove = (e: React.PointerEvent) => {
     if (!dragState.isDragging || !dragState.badgeId || !containerRef.current) return;
 
-    const rect = containerRef.current.getBoundingClientRect();
     const deltaX = e.clientX - dragState.startX;
     const deltaY = e.clientY - dragState.startY;
-    
-    // Calculate new position relative to container (allow badges to go outside for scattered effect)
-    const newX = dragState.initialX + deltaX;
-    const newY = dragState.initialY + deltaY;
+
+    const { x, y } = clampPosition(dragState.initialX + deltaX, dragState.initialY + deltaY);
 
     setBadgePositions(prev => {
       const updated = prev.filter(p => p.id !== dragState.badgeId);
-      return [...updated, { id: dragState.badgeId!, x: newX, y: newY }];
+      return [...updated, { id: dragState.badgeId!, x, y }];
     });
   };
 
@@ -142,7 +157,7 @@ export function DraggableBadgeDisplay({
     <div 
       ref={containerRef}
       className={`relative ${className}`}
-      style={{ width: '160px', height: '160px' }}
+      style={{ width: `${containerBounds.width}px`, height: `${containerBounds.height}px` }}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerUp}
