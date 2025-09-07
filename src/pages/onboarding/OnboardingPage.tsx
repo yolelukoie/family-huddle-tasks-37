@@ -72,23 +72,33 @@ export default function OnboardingPage() {
 
   const onSubmit = async (data: OnboardingForm) => {
     try {
+      console.log('Starting onboarding submission:', data);
+      
       // Create user profile
       const newUser = await createUser({
         displayName: data.displayName,
         dateOfBirth: data.dateOfBirth,
         gender: data.gender,
       });
+      
+      console.log('Profile created successfully:', newUser);
 
       // Handle family action
       if (data.familyAction === 'create' && data.familyName) {
-        await createFamily(data.familyName);
+        console.log('Creating family:', data.familyName);
+        const familyId = await createFamily(data.familyName);
+        console.log('Family created successfully with ID:', familyId);
+        
         toast({
           title: "Welcome to Family Stars! ⭐",
           description: `Your family "${data.familyName}" has been created!`,
         });
       } else if (data.familyAction === 'join' && data.inviteCode) {
+        console.log('Joining family with code:', data.inviteCode);
         const family = await joinFamily(data.inviteCode);
         if (family) {
+          console.log('Joined family successfully:', family.name);
+          
           toast({
             title: "Welcome to Family Stars! ⭐",
             description: `You've joined "${family.name}"!`,
@@ -103,8 +113,13 @@ export default function OnboardingPage() {
         }
       }
 
-      navigate(ROUTES.main, { replace: true });
+      console.log('Onboarding completed, navigating to main page');
+      // Small delay to ensure state updates are processed
+      setTimeout(() => {
+        navigate(ROUTES.main, { replace: true });
+      }, 100);
     } catch (error) {
+      console.error('Onboarding error:', error);
       toast({
         title: "Error",
         description: "Something went wrong. Please try again.",

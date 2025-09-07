@@ -21,6 +21,7 @@ export function AuthPage() {
 
   useEffect(() => {
     if (isAuthenticated && !authLoading) {
+      // Let AppLayout handle the routing based on user state
       navigate('/', { replace: true });
     }
   }, [isAuthenticated, authLoading, navigate]);
@@ -42,7 +43,7 @@ export function AuthPage() {
         title: "Welcome back!",
         description: "Successfully signed in.",
       });
-      navigate('/', { replace: true });
+      // Let AppLayout handle routing based on user state
     }
     
     setIsLoading(false);

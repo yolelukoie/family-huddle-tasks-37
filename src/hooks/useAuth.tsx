@@ -313,15 +313,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) {
         console.error('Failed to update profile in Supabase:', error);
+        throw error;
       }
+
+      // Update local state immediately after successful Supabase update
+      const userKey = `${USER_KEY}_${session.user.id}`;
+      localStorage.setItem(userKey, JSON.stringify(updatedUser));
+      setUser(updatedUser);
+      
+      console.log('User profile updated successfully:', updatedUser);
     } catch (error) {
       console.error('Error updating profile:', error);
+      // Still update local state as fallback
+      const userKey = `${USER_KEY}_${session.user.id}`;
+      localStorage.setItem(userKey, JSON.stringify(updatedUser));
+      setUser(updatedUser);
+      throw error;
     }
-
-    // Always update localStorage and state
-    const userKey = `${USER_KEY}_${session.user.id}`;
-    localStorage.setItem(userKey, JSON.stringify(updatedUser));
-    setUser(updatedUser);
   }, [user, session]);
 
   const logout = useCallback(() => {

@@ -28,8 +28,16 @@ export function AppLayout() {
       return;
     }
 
-    // If user exists but hasn't completed full setup, redirect to onboarding
-    if (user && (!user.profileComplete || !user.activeFamilyId)) {
+    // If user exists but hasn't completed profile setup, redirect to onboarding
+    if (user && !user.profileComplete) {
+      if (location.pathname !== ROUTES.onboarding) {
+        navigate(ROUTES.onboarding, { replace: true });
+      }
+      return;
+    }
+
+    // If user has completed profile but no active family, and not on onboarding, redirect to onboarding
+    if (user && user.profileComplete && !user.activeFamilyId) {
       if (location.pathname !== ROUTES.onboarding) {
         navigate(ROUTES.onboarding, { replace: true });
       }
