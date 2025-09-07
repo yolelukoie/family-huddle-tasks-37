@@ -142,7 +142,7 @@ export type Database = {
           created_at?: string
           created_by: string
           id?: string
-          invite_code: string
+          invite_code?: string
           name: string
           updated_at?: string
         }
@@ -508,6 +508,16 @@ export type Database = {
       generate_invite_code: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      join_family_by_code: {
+        Args: { p_invite_code: string }
+        Returns: {
+          created_at: string
+          created_by: string
+          id: string
+          invite_code: string
+          name: string
+        }[]
       }
       seed_family_defaults: {
         Args: { p_creator: string; p_family_id: string }
