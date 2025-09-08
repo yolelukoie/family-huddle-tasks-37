@@ -423,17 +423,32 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         totalStars: userFamily.totalStars + stars
       };
       
+      // Optimistic UI update
       setUserFamilies(prev => prev.map(uf => 
         uf.familyId === familyId && uf.userId === user?.id 
           ? updatedUserFamily 
           : uf
       ));
       
-      // Also update localStorage
+      // Persist to Supabase (fire-and-forget)
+      if (user?.id) {
+        supabase
+          .from('user_families')
+          .update({ total_stars: updatedUserFamily.totalStars })
+          .eq('user_id', user.id)
+          .eq('family_id', familyId)
+          .then(({ error }) => {
+            if (error) {
+              console.error('Failed to persist stars to Supabase:', error);
+            }
+          });
+      }
+      
+      // Keep localStorage as a backup only
       storage.updateUserFamily(user?.id || '', familyId, updatedUserFamily);
     }
   };
-
+  
   const resetCharacterProgress = (familyId: string): void => {
     const userFamily = getUserFamily(familyId);
     if (userFamily) {
@@ -443,17 +458,31 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         currentStage: 1
       };
       
+      // Optimistic UI update
       setUserFamilies(prev => prev.map(uf => 
         uf.familyId === familyId && uf.userId === user?.id 
           ? updatedUserFamily 
           : uf
       ));
       
-      // Also update localStorage
+      // Persist to Supabase (fire-and-forget)
+      if (user?.id) {
+        supabase
+          .from('user_families')
+          .update({ total_stars: 0, current_stage: 1 })
+          .eq('user_id', user.id)
+          .eq('family_id', familyId)
+          .then(({ error }) => {
+            if (error) {
+              console.error('Failed to reset progress in Supabase:', error);
+            }
+          });
+      }
+      
+      // Keep localStorage as a backup only
       storage.updateUserFamily(user?.id || '', familyId, updatedUserFamily);
     }
   };
-
   return (
     <AppContext.Provider value={{
       activeFamilyId,
