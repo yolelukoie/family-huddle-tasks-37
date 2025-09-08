@@ -9,13 +9,14 @@ import { useApp } from '@/hooks/useApp';
 import { useBadges } from '@/hooks/useBadges';
 import { useGoals } from '@/hooks/useGoals';
 import { useCelebrations } from '@/hooks/useCelebrations';
+import { useTasks } from '@/hooks/useTasks';
 import { NavigationHeader } from '@/components/layout/NavigationHeader';
 import { DraggableBadgeDisplay } from '@/components/badges/DraggableBadgeDisplay';
 import { BadgeCelebration } from '@/components/badges/BadgeCelebration';
 import { GoalCelebration } from '@/components/celebrations/GoalCelebration';
 import { ROUTES } from '@/lib/constants';
 import { getCurrentStage, getStageProgress, getCharacterImagePath, getStageName } from '@/lib/character';
-import { storage } from '@/lib/storage';
+import { supabase } from '@/integrations/supabase/client';
 import { isToday } from '@/lib/utils';
 import { AssignTaskModal } from '@/components/modals/AssignTaskModal';
 import { MilestoneCelebration } from '@/components/celebrations/MilestoneCelebration';
@@ -41,6 +42,7 @@ export default function MainPage() {
     updateGoalProgress
   } = useGoals();
   const { currentCelebration, completeCelebration, addCelebration } = useCelebrations();
+  const { tasks, categories, updateTask } = useTasks();
   const navigate = useNavigate();
   const [showAssignTask, setShowAssignTask] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -97,15 +99,31 @@ export default function MainPage() {
     }
   }, [totalStars, previousStars, checkForNewBadges, addCelebration, resetCharacterProgress, resetBadgeProgress, activeFamilyId]);
 
-  // Get today's tasks
-  const todaysTasks = storage.getTasks(activeFamilyId).filter(task => !task.completed && isToday(task.dueDate));
+  // Get today's tasks from useTasks hook
+  const todaysTasks = tasks.filter(task => !task.completed && isToday(task.dueDate));
 
-  // Get active goal (refetch to ensure fresh data)
-  const activeGoal = storage.getGoals(activeFamilyId, user.id).find(g => !g.completed);
+  // Get active goal (fetch from Supabase)
+  const [activeGoal, setActiveGoal] = useState(null);
+  useEffect(() => {
+    const fetchActiveGoal = async () => {
+      if (!user?.id || !activeFamilyId) return;
+      
+      const { data } = await supabase
+        .from('goals')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('family_id', activeFamilyId)
+        .eq('completed', false)
+        .limit(1);
+        
+      setActiveGoal(data && data.length > 0 ? data[0] : null);
+    };
+    
+    fetchActiveGoal();
+  }, [user?.id, activeFamilyId, refreshKey]);
 
-  // Get task categories for star breakdown
-  const categories = storage.getTaskCategories(activeFamilyId);
-  const completedTasks = storage.getTasks(activeFamilyId).filter(task => task.completed && task.assignedTo === user.id);
+  // Get task categories for star breakdown from useTasks hook
+  const completedTasks = tasks.filter(task => task.completed && task.assignedTo === user?.id);
   const categoryStars = categories.map(category => {
     const categoryTasks = completedTasks.filter(task => task.categoryId === category.id);
     const stars = categoryTasks.reduce((sum, task) => sum + task.starValue, 0);
@@ -114,20 +132,21 @@ export default function MainPage() {
       stars
     };
   });
-  const handleCompleteTask = (taskId: string) => {
+  const handleCompleteTask = async (taskId: string) => {
     const task = todaysTasks.find(t => t.id === taskId);
     if (!task) return;
-    storage.updateTask(taskId, {
+    
+    await updateTask(taskId, {
       completed: true,
       completedAt: new Date().toISOString()
     });
 
     // Add stars if it's the user's task
-    if (task.assignedTo === user.id) {
+    if (task.assignedTo === user?.id) {
       addStars(activeFamilyId, task.starValue);
 
       // Update goal progress
-      updateGoalProgress(task.categoryId, task.starValue);
+      await updateGoalProgress(task.categoryId, task.starValue);
     }
 
     // Refresh component to show updated goal progress
@@ -213,8 +232,8 @@ export default function MainPage() {
             {/* Active Goal */}
             {activeGoal && <div className="p-3 bg-family-success/10 rounded-lg border border-family-success/20">
                 <div className="text-sm font-medium text-family-success">Active Goal</div>
-                <div className="text-sm">{activeGoal.currentStars}/{activeGoal.targetStars} stars</div>
-                <Progress value={activeGoal.currentStars / activeGoal.targetStars * 100} className="h-2 mt-1" />
+                <div className="text-sm">{activeGoal.current_stars}/{activeGoal.target_stars} stars</div>
+                <Progress value={activeGoal.current_stars / activeGoal.target_stars * 100} className="h-2 mt-1" />
                 {activeGoal.reward && <div className="text-xs text-muted-foreground mt-1">Reward: {activeGoal.reward}</div>}
               </div>}
           </CardContent>
@@ -240,7 +259,7 @@ export default function MainPage() {
                     </div>
                      <div className="flex items-center gap-2">
                        <Badge variant="outline">{task.starValue} ⭐</Badge>
-                       {task.assignedTo === user.id && <Button onClick={() => handleCompleteTask(task.id)} size="sm" variant="ghost" className="p-2 h-8 w-8 text-family-success hover:text-family-success hover:bg-family-success/10">
+                       {task.assignedTo === user?.id && <Button onClick={() => handleCompleteTask(task.id)} size="sm" variant="ghost" className="p-2 h-8 w-8 text-family-success hover:text-family-success hover:bg-family-success/10">
                            <CheckCircle className="h-5 w-5" />
                          </Button>}
                      </div>

@@ -78,11 +78,24 @@ export function useBadges() {
   }, [user, activeFamilyId, addCelebration]);
 
   // Reset seen badges when character is reset
-  const resetBadgeProgress = useCallback(() => {
-    if (user && activeFamilyId) {
-      clearSeenBadges(activeFamilyId, user.id);
+  const resetBadgeProgress = useCallback(async () => {
+    if (!user || !activeFamilyId) return;
+    
+    try {
+      // Clear all badges for this user and family in Supabase
+      const { error } = await supabase
+        .from('user_badges')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('family_id', activeFamilyId);
+        
+      if (error) {
+        console.error('Failed to reset badge progress in Supabase:', error);
+      }
+    } catch (error) {
+      console.error('Error resetting badge progress:', error);
     }
-  }, [user, activeFamilyId, clearSeenBadges]);
+  }, [user, activeFamilyId]);
 
   return {
     unlockedBadges,
