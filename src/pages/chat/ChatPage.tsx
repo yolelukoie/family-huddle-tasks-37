@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { useApp } from '@/hooks/useApp';
-import { storage } from '@/lib/storage';
+import { useChat } from '@/hooks/useChat';
 import { NavigationHeader } from '@/components/layout/NavigationHeader';
 import { Send } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
@@ -13,28 +13,12 @@ import { formatDate } from '@/lib/utils';
 export default function ChatPage() {
   const { user } = useAuth();
   const { activeFamilyId } = useApp();
+  const { messages, sendMessage: sendChatMessage } = useChat();
   const navigate = useNavigate();
   const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState<any[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (activeFamilyId) {
-      const familyMessages = storage.getMessages(activeFamilyId);
-      setMessages(familyMessages);
-      
-      // Update last read timestamp
-      const now = new Date().toISOString();
-      const userFamilies = storage.getUserFamilies();
-      const userFamily = userFamilies.find(uf => uf.userId === user?.id && uf.familyId === activeFamilyId);
-      if (userFamily) {
-        storage.updateUserFamily(user!.id, activeFamilyId, {
-          lastReadAt: now
-        });
-      }
-    }
-  }, [activeFamilyId, user?.id]);
-
+  // Auto-scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -64,23 +48,14 @@ export default function ChatPage() {
     );
   }
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!message.trim()) return;
 
-    const newMessage = {
-      id: Date.now().toString(),
-      familyId: activeFamilyId,
-      userId: user.id,
-      userDisplayName: user.displayName,
-      content: message.trim(),
-      timestamp: new Date().toISOString(),
-      createdAt: new Date().toISOString()
-    };
-
-    storage.addMessage(newMessage);
-    setMessages(prev => [...prev, newMessage]);
-    setMessage('');
+    const success = await sendChatMessage(message);
+    if (success) {
+      setMessage('');
+    }
   };
 
   return (

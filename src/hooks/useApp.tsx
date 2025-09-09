@@ -52,6 +52,36 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user, authLoading, updateUser]);
 
+  // Hydrate data when active family changes
+  useEffect(() => {
+    if (user && activeFamilyId) {
+      hydrateActiveFamily();
+    }
+  }, [activeFamilyId]);
+
+  // Add focus/visibility refetch
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && user && activeFamilyId) {
+        hydrateActiveFamily();
+      }
+    };
+
+    const handleFocus = () => {
+      if (user && activeFamilyId) {
+        hydrateActiveFamily();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [user, activeFamilyId]);
+
   // Load family data from Supabase with localStorage migration
   const loadFamilyData = async () => {
     if (!user) return;
@@ -357,6 +387,42 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Failed to join family:', error);
       return null;
+    }
+  };
+
+  const hydrateActiveFamily = async () => {
+    if (!user || !activeFamilyId) return;
+
+    try {
+      // Refresh user family data for active family
+      const { data: userFamilyData, error } = await supabase
+        .from('user_families')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('family_id', activeFamilyId)
+        .single();
+
+      if (!error && userFamilyData) {
+        const updatedUserFamily: UserFamily = {
+          userId: userFamilyData.user_id,
+          familyId: userFamilyData.family_id,
+          joinedAt: userFamilyData.joined_at,
+          totalStars: userFamilyData.total_stars,
+          currentStage: userFamilyData.current_stage,
+          lastReadTimestamp: userFamilyData.last_read_timestamp,
+          seenCelebrations: userFamilyData.seen_celebrations,
+        };
+
+        setUserFamilies(prev => 
+          prev.map(uf => 
+            uf.familyId === activeFamilyId && uf.userId === user.id 
+              ? updatedUserFamily 
+              : uf
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Error hydrating active family:', error);
     }
   };
 

@@ -7,8 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useApp } from '@/hooks/useApp';
 import { useGoals } from '@/hooks/useGoals';
+import { useTasks } from '@/hooks/useTasks';
 import { useCelebrations } from '@/hooks/useCelebrations';
-import { storage } from '@/lib/storage';
 import { isToday, isFuture, formatDate } from '@/lib/utils';
 import { TaskHistoryModal } from '@/components/modals/TaskHistoryModal';
 import { AssignTaskModal } from '@/components/modals/AssignTaskModal';
@@ -22,11 +22,11 @@ export default function TasksPage() {
   const { user } = useAuth();
   const { activeFamilyId, addStars } = useApp();
   const { updateGoalProgress } = useGoals();
+  const { tasks, categories, updateTask, addCategory } = useTasks();
   const { currentCelebration, completeCelebration } = useCelebrations();
   const navigate = useNavigate();
   const [showHistory, setShowHistory] = useState(false);
   const [showAssignTask, setShowAssignTask] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
 
   // Handle loading and missing data states
   if (!user) {
@@ -53,35 +53,25 @@ export default function TasksPage() {
     );
   }
 
-  const allTasks = storage.getTasks(activeFamilyId);
-  const categories = storage.getTaskCategories(activeFamilyId);
+  const todaysTasks = tasks.filter(task => !task.completed && isToday(task.dueDate));
+  const upcomingTasks = tasks.filter(task => !task.completed && isFuture(task.dueDate));
 
-  const todaysTasks = allTasks.filter(task => !task.completed && isToday(task.dueDate));
-  const upcomingTasks = allTasks.filter(task => !task.completed && isFuture(task.dueDate));
-
-  const handleCompleteTask = (taskId: string) => {
-    const task = allTasks.find(t => t.id === taskId);
+  const handleCompleteTask = async (taskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
     if (!task) return;
 
-    storage.updateTask(taskId, {
+    await updateTask(taskId, {
       completed: true,
       completedAt: new Date().toISOString(),
     });
 
     // Add stars if it's the user's task
-    if (task.assignedTo === user.id) {
+    if (task.assignedTo === user.id && activeFamilyId) {
       addStars(activeFamilyId, task.starValue);
       
       // Update goal progress
       updateGoalProgress(task.categoryId, task.starValue);
     }
-
-    // Refresh component
-    setRefreshKey(prev => prev + 1);
-  };
-
-  const handleTaskAdded = () => {
-    setRefreshKey(prev => prev + 1);
   };
 
   return (
@@ -169,18 +159,16 @@ export default function TasksPage() {
             <div className="flex justify-between items-center">
               <CardTitle>Task Categories</CardTitle>
               <Button
-                onClick={() => {
+                onClick={async () => {
                   const name = prompt('Enter category name:');
-                  if (name && name.trim()) {
-                    storage.addTaskCategory({
-                      id: Date.now().toString(),
+                  if (name && name.trim() && activeFamilyId) {
+                    await addCategory({
                       name: name.trim(),
                       familyId: activeFamilyId,
                       isHouseChores: false,
                       isDefault: false,
                       order: Date.now()
                     });
-                    window.location.reload();
                   }
                 }}
                 variant="outline"
@@ -194,10 +182,9 @@ export default function TasksPage() {
           <CardContent className="space-y-4">
             {categories.map(category => (
               <TaskCategorySection 
-                key={`${category.id}-${refreshKey}`} 
+                key={category.id} 
                 category={category}
                 familyId={activeFamilyId}
-                onTaskAdded={handleTaskAdded}
               />
             ))}
           </CardContent>
@@ -224,7 +211,6 @@ export default function TasksPage() {
       <AssignTaskModal 
         open={showAssignTask}
         onOpenChange={setShowAssignTask}
-        onTaskAssigned={handleTaskAdded}
       />
 
       {/* Unified Celebrations */}
@@ -254,7 +240,8 @@ interface TaskItemProps {
 }
 
 function TaskItem({ task, onComplete, currentUserId }: TaskItemProps) {
-  const category = storage.getTaskCategories(task.familyId).find(c => c.id === task.categoryId);
+  const { categories } = useTasks();
+  const category = categories.find(c => c.id === task.categoryId);
   
   return (
     <Card className="hover:shadow-md transition-shadow">

@@ -6,7 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/hooks/useAuth';
 import { useApp } from '@/hooks/useApp';
-import { storage } from '@/lib/storage';
+import { useGoals } from '@/hooks/useGoals';
+import { useTasks } from '@/hooks/useTasks';
 import { NavigationHeader } from '@/components/layout/NavigationHeader';
 import { History, Plus, Trash2 } from 'lucide-react';
 import { CreateGoalModal } from '@/components/modals/CreateGoalModal';
@@ -15,6 +16,8 @@ import { GoalHistoryModal } from '@/components/modals/GoalHistoryModal';
 export default function GoalsPage() {
   const { user } = useAuth();
   const { activeFamilyId } = useApp();
+  const { activeGoal, completedGoals, deleteGoal } = useGoals();
+  const { categories } = useTasks();
   const navigate = useNavigate();
   const [showCreateGoal, setShowCreateGoal] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -44,14 +47,9 @@ export default function GoalsPage() {
     );
   }
 
-  const goals = storage.getGoals(activeFamilyId, user.id);
-  const activeGoal = goals.find(g => !g.completed);
-  const completedGoals = goals.filter(g => g.completed);
-
-  const handleDeleteGoal = (goalId: string) => {
+  const handleDeleteGoal = async (goalId: string) => {
     if (confirm('Are you sure you want to delete this goal?')) {
-      storage.deleteGoal(goalId);
-      window.location.reload();
+      await deleteGoal(goalId);
     }
   };
 
@@ -109,7 +107,7 @@ export default function GoalsPage() {
                   <h4 className="font-medium mb-2">Target Categories:</h4>
                   <div className="flex flex-wrap gap-2">
                     {activeGoal.targetCategories.map(categoryId => {
-                      const category = storage.getTaskCategories(activeFamilyId).find(c => c.id === categoryId);
+                      const category = categories.find(c => c.id === categoryId);
                       return category ? (
                         <Badge key={categoryId} variant="outline">{category.name}</Badge>
                       ) : null;
