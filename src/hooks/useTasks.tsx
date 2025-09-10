@@ -296,6 +296,69 @@ export function useTasks() {
     }
   }, [activeFamilyId, user, templates, toast]);
 
+  const addTodayTaskFromTemplate = useCallback(async (templateId: string) => {
+    if (!activeFamilyId || !user) return null;
+
+    // find the template in memory to copy its defaults
+    const t = templates.find(x => x.id === templateId);
+    if (!t) {
+      console.error('Template not found for Today:', templateId);
+      return null;
+    }
+
+    // YYYY-MM-DD to avoid timezone issues
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const due = `${yyyy}-${mm}-${dd}`;
+
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .insert([{
+          name: t.name,
+          description: t.description || null,
+          category_id: t.categoryId,
+          star_value: t.starValue,
+          family_id: activeFamilyId,
+          template_id: t.id,
+          assigned_to: user.id,
+          assigned_by: user.id,
+          due_date: due,
+        }])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating Today task:', error);
+        return null;
+      }
+
+      const newTask: Task = {
+        id: data.id,
+        name: data.name,
+        description: data.description || '',
+        categoryId: data.category_id,
+        starValue: data.star_value,
+        completed: data.completed,
+        completedAt: data.completed_at || undefined,
+        familyId: data.family_id,
+        templateId: data.template_id || undefined,
+        assignedTo: data.assigned_to,
+        assignedBy: data.assigned_by,
+        dueDate: data.due_date,
+      };
+
+      // Update local state immediately
+      setTasks(prev => [...prev, newTask]);
+      return newTask;
+    } catch (e) {
+      console.error('Failed to create Today task:', e);
+      return null;
+    }
+  }, [activeFamilyId, user, templates]);
+
   return {
     tasks,
     categories,
@@ -305,6 +368,7 @@ export function useTasks() {
     updateTask,
     addCategory,
     addTemplate,
+    addTodayTaskFromTemplate,
     refreshData: loadFamilyTasks,
   };
 }

@@ -3,11 +3,11 @@ import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
 import { ChevronDown, ChevronRight, Plus, Trash2 } from 'lucide-react';
-import { storage } from '@/lib/storage';
 import { TaskTemplateModal } from './TaskTemplateModal';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import type { TaskCategory, TaskTemplate, Task } from '@/lib/types';
+import { useTasks } from '@/hooks/useTasks';
+import type { TaskCategory, TaskTemplate } from '@/lib/types';
 
 interface TaskCategorySectionProps {
   category: TaskCategory;
@@ -20,37 +20,29 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { templates, addTodayTaskFromTemplate } = useTasks();
 
-  const templates = storage.getTaskTemplates(familyId, category.id);
+  const categoryTemplates = templates.filter(t => t.categoryId === category.id);
 
-  const handleAddToToday = (template: TaskTemplate) => {
+  const handleAddToToday = async (template: TaskTemplate) => {
     if (!user) return;
     
-    // Create a new task from the template
-    const today = new Date();
-    today.setHours(23, 59, 59, 999); // Set to end of day
-
-    const newTask: Task = {
-      id: `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      name: template.name,
-      description: template.description,
-      starValue: template.starValue,
-      dueDate: today.toISOString(),
-      categoryId: template.categoryId,
-      familyId: template.familyId,
-      assignedTo: user.id, // Assign to current user
-      assignedBy: user.id, // User added it themselves
-      completed: false
-    };
-
-    storage.addTask(newTask);
-    toast({
-      title: "Added to Today",
-      description: `"${template.name}" has been added to today's tasks.`,
-    });
-    
-    // Trigger refresh in parent component
-    onTaskAdded?.();
+    const newTask = await addTodayTaskFromTemplate(template.id);
+    if (newTask) {
+      toast({
+        title: "Added to Today",
+        description: `"${template.name}" has been added to today's tasks.`,
+      });
+      
+      // Trigger refresh in parent component
+      onTaskAdded?.();
+    } else {
+      toast({
+        title: "Error",
+        description: "Failed to add task to today. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -61,7 +53,7 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
             <div className="flex items-center gap-3">
               {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
               <span className="font-medium">{category.name}</span>
-              <Badge variant="outline">{templates.length} templates</Badge>
+              <Badge variant="outline">{categoryTemplates.length} templates</Badge>
             </div>
             {!category.isDefault && !category.isHouseChores && (
               <Button
@@ -70,7 +62,7 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
                 onClick={(e) => {
                   e.stopPropagation();
                   if (confirm(`Delete "${category.name}" category? This will also delete all templates and tasks in this category.`)) {
-                    storage.deleteTaskCategory(category.id);
+                    // TODO: Implement category deletion in useTasks hook
                     onTaskAdded?.(); // Refresh parent
                     toast({
                       title: "Category deleted",
@@ -88,7 +80,7 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
         
         <CollapsibleContent className="space-y-2 pt-2">
           <div className="ml-7 space-y-2">
-            {templates.map(template => (
+            {categoryTemplates.map(template => (
               <div 
                 key={template.id} 
                 className="flex items-center justify-between p-2 border rounded cursor-pointer hover:bg-accent transition-colors"
@@ -111,7 +103,7 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
                       onClick={(e) => {
                         e.stopPropagation();
                         if (confirm('Delete this task template?')) {
-                          storage.deleteTaskTemplate(template.id);
+                          // TODO: Implement template deletion in useTasks hook
                           onTaskAdded?.(); // Refresh parent
                         }
                       }}

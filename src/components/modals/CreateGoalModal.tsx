@@ -5,7 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { storage } from '@/lib/storage';
+import { useTasks } from '@/hooks/useTasks';
+import { useGoals } from '@/hooks/useGoals';
+import { useToast } from '@/hooks/use-toast';
 
 interface CreateGoalModalProps {
   open: boolean;
@@ -18,30 +20,52 @@ export function CreateGoalModal({ open, onOpenChange, familyId, userId }: Create
   const [targetStars, setTargetStars] = useState('');
   const [reward, setReward] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const categories = storage.getTaskCategories(familyId);
+  const { categories } = useTasks();
+  const { createGoal } = useGoals();
+  const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!targetStars || parseInt(targetStars) <= 0) return;
 
-    storage.addGoal({
-      id: Date.now().toString(),
-      familyId,
-      userId,
-      targetStars: parseInt(targetStars),
-      currentStars: 0,
-      targetCategories: selectedCategories.length > 0 ? selectedCategories : undefined,
-      reward: reward.trim() || undefined,
-      completed: false,
-      createdAt: new Date().toISOString()
-    });
+    setLoading(true);
+    try {
+      const success = await createGoal({
+        familyId,
+        userId,
+        targetStars: parseInt(targetStars),
+        targetCategories: selectedCategories.length > 0 ? selectedCategories : [],
+        reward: reward.trim() || undefined,
+      });
 
-    setTargetStars('');
-    setReward('');
-    setSelectedCategories([]);
-    onOpenChange(false);
-    window.location.reload();
+      if (success) {
+        setTargetStars('');
+        setReward('');
+        setSelectedCategories([]);
+        onOpenChange(false);
+        toast({
+          title: "Success",
+          description: "Goal created successfully!",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to create goal. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Failed to create goal:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create goal. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const toggleCategory = (categoryId: string) => {
@@ -104,7 +128,9 @@ export function CreateGoalModal({ open, onOpenChange, familyId, userId }: Create
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit">Create Goal</Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? 'Creating...' : 'Create Goal'}
+            </Button>
           </div>
         </form>
       </DialogContent>
