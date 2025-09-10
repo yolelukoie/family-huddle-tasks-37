@@ -26,6 +26,7 @@ interface AppContextType {
   getUserProfile: (userId: string) => User | null;
   getTotalStars: (familyId: string) => number;
   addStars: (familyId: string, stars: number) => void;
+  applyStarsDelta: (familyId: string, delta: number) => Promise<boolean>;
   resetCharacterProgress: (familyId: string) => void;
 }
 
@@ -515,6 +516,61 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
   
+  const applyStarsDelta = async (familyId: string, delta: number): Promise<boolean> => {
+    if (!user || !familyId || !delta) return false;
+
+    // Find current state
+    const curr = getUserFamily(familyId);
+    const prevTotal = curr?.totalStars ?? 0;
+    const newTotal = Math.max(0, prevTotal + delta);
+
+    // Optimistic UI update
+    setUserFamilies(prev => prev.map(uf =>
+      uf.familyId === familyId && uf.userId === user.id
+        ? { ...uf, totalStars: newTotal }
+        : uf
+    ));
+
+    // Persist to Supabase (await, not fire-and-forget)
+    const { error } = await supabase
+      .from('user_families')
+      .update({ total_stars: newTotal })
+      .eq('user_id', user.id)
+      .eq('family_id', familyId);
+
+    if (error) {
+      console.error('applyStarsDelta failed:', error);
+      // Rollback optimistic state
+      setUserFamilies(prev => prev.map(uf =>
+        uf.familyId === familyId && uf.userId === user.id
+          ? { ...uf, totalStars: prevTotal }
+          : uf
+      ));
+      return false;
+    }
+
+    // Simple stage progression: every 50 stars -> next stage
+    const stageSize = 50;
+    const wantStage = Math.max(1, Math.floor(newTotal / stageSize) + 1);
+    if ((curr?.currentStage ?? 1) !== wantStage) {
+      const { error: stageErr } = await supabase
+        .from('user_families')
+        .update({ current_stage: wantStage })
+        .eq('user_id', user.id)
+        .eq('family_id', familyId);
+      
+      if (!stageErr) {
+        setUserFamilies(prev => prev.map(uf =>
+          uf.familyId === familyId && uf.userId === user.id
+            ? { ...uf, currentStage: wantStage }
+            : uf
+        ));
+      }
+    }
+
+    return true;
+  };
+
   const resetCharacterProgress = (familyId: string): void => {
     const userFamily = getUserFamily(familyId);
     if (userFamily) {
@@ -565,6 +621,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       getUserProfile,
       getTotalStars,
       addStars,
+      applyStarsDelta,
       resetCharacterProgress,
     }}>
       {children}

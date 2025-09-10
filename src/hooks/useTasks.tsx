@@ -11,7 +11,7 @@ const MAX_TEMPLATES_PER_CATEGORY = 50;
 
 export function useTasks() {
   const { user } = useAuth();
-  const { activeFamilyId } = useApp();
+  const { activeFamilyId, applyStarsDelta } = useApp();
   const { toast } = useToast();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [categories, setCategories] = useState<TaskCategory[]>([]);
@@ -162,11 +162,22 @@ export function useTasks() {
     if (!activeFamilyId) return;
 
     try {
+      // Find the task to calculate star delta
+      const prev = tasks.find(t => t.id === taskId);
+      const wasCompleted = !!prev?.completed;
+      const starVal = prev?.starValue ?? 0;
+
+      const willBeCompleted = updates.completed === true;
+      let delta = 0;
+      if (willBeCompleted && !wasCompleted) delta = +starVal;
+      if (!willBeCompleted && wasCompleted) delta = -starVal;
+
+      // Persist the task completion first
       const { error } = await supabase
         .from('tasks')
         .update({
           completed: updates.completed,
-          completed_at: updates.completedAt || null,
+          completed_at: updates.completedAt || (willBeCompleted ? new Date().toISOString() : null),
         })
         .eq('id', taskId);
 
@@ -175,13 +186,19 @@ export function useTasks() {
         return;
       }
 
+      // Update local task list
       setTasks(prev => prev.map(task => 
         task.id === taskId ? { ...task, ...updates } : task
       ));
+
+      // Apply stars delta to user_families (await)
+      if (delta !== 0 && activeFamilyId) {
+        await applyStarsDelta(activeFamilyId, delta);
+      }
     } catch (error) {
       console.error('Failed to update task:', error);
     }
-  }, [activeFamilyId]);
+  }, [activeFamilyId, tasks]);
 
   const addCategory = useCallback(async (category: Omit<TaskCategory, 'id' | 'createdAt'>) => {
     if (!activeFamilyId) return null;
