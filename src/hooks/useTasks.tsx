@@ -108,6 +108,16 @@ export function useTasks() {
       return null;
     }
 
+    // Ensure due_date defaults to today if missing
+    const ensureDate = (d?: string) => {
+      if (d) return d;
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    };
+
     try {
       const { data, error } = await supabase
         .from('tasks')
@@ -118,18 +128,17 @@ export function useTasks() {
           star_value: task.starValue,
           family_id: activeFamilyId,
           template_id: task.templateId || null,
-          assigned_to: task.assignedTo,
-          assigned_by: task.assignedBy,
-          due_date: task.dueDate,
+          assigned_to: task.assignedTo ?? user.id,
+          assigned_by: task.assignedBy ?? user.id,
+          due_date: ensureDate(task.dueDate),
         }])
         .select()
         .single();
 
       if (error) {
-        console.error('Error adding task:', error);
         toast({
           title: "Error",
-          description: "Failed to add task. Please try again.",
+          description: `Failed to add task: ${error.message}`,
           variant: "destructive",
         });
         return null;
@@ -152,8 +161,12 @@ export function useTasks() {
 
       setTasks(prev => [...prev, newTask]);
       return newTask;
-    } catch (error) {
-      console.error('Failed to add task:', error);
+    } catch (e: any) {
+      toast({
+        title: "Error",
+        description: `Failed to add task: ${e?.message || e}`,
+        variant: "destructive",
+      });
       return null;
     }
   }, [activeFamilyId, user, tasks.length, toast]);
@@ -161,50 +174,53 @@ export function useTasks() {
   const updateTask = useCallback(async (taskId: string, updates: Partial<Task>) => {
     if (!activeFamilyId) return;
 
+    const prev = tasks.find(t => t.id === taskId);
+    const wasCompleted = !!prev?.completed;
+    const starVal = prev?.starValue ?? 0;
+    const willBeCompleted = updates.completed === true;
+    let delta = 0;
+    if (willBeCompleted && !wasCompleted) delta = +starVal;
+    if (!willBeCompleted && wasCompleted) delta = -starVal;
+
     try {
-      // Find the task to calculate star delta
-      const prev = tasks.find(t => t.id === taskId);
-      const wasCompleted = !!prev?.completed;
-      const starVal = prev?.starValue ?? 0;
-
-      const willBeCompleted = updates.completed === true;
-      let delta = 0;
-      if (willBeCompleted && !wasCompleted) delta = +starVal;
-      if (!willBeCompleted && wasCompleted) delta = -starVal;
-
-      // Persist the task completion first
       const { error } = await supabase
         .from('tasks')
         .update({
           completed: updates.completed,
-          completed_at: updates.completedAt || (willBeCompleted ? new Date().toISOString() : null),
+          completed_at: updates.completedAt ?? (willBeCompleted ? new Date().toISOString() : null),
         })
         .eq('id', taskId);
 
       if (error) {
-        console.error('Error updating task:', error);
+        toast({
+          title: "Error",
+          description: `Failed to update task: ${error.message}`,
+          variant: "destructive",
+        });
         return;
       }
 
-      // Update local task list
-      setTasks(prev => prev.map(task => 
-        task.id === taskId ? { ...task, ...updates } : task
-      ));
+      setTasks(prevList => prevList.map(task => task.id === taskId ? { ...task, ...updates } : task));
 
-      // Apply stars delta to user_families (await)
-      if (delta !== 0 && activeFamilyId) {
+      // persist user_families total_stars/current_stage
+      if (delta !== 0) {
         await applyStarsDelta(activeFamilyId, delta);
       }
-    } catch (error) {
-      console.error('Failed to update task:', error);
+    } catch (e: any) {
+      toast({
+        title: "Error",
+        description: `Failed to update task: ${e?.message || e}`,
+        variant: "destructive",
+      });
     }
-  }, [activeFamilyId, tasks]);
+  }, [activeFamilyId, tasks, applyStarsDelta, toast]);
 
   const addCategory = useCallback(async (category: Omit<TaskCategory, 'id' | 'createdAt'>) => {
     if (!activeFamilyId) return null;
 
-    // Check limit
-    if (categories.length >= MAX_CATEGORIES_PER_FAMILY) {
+    // Check limit using only categories for the current family
+    const familyCategories = categories.filter(c => c.familyId === activeFamilyId);
+    if (familyCategories.length >= MAX_CATEGORIES_PER_FAMILY) {
       toast({
         title: "Limit Reached", 
         description: `Cannot add more than ${MAX_CATEGORIES_PER_FAMILY} categories per family.`,
@@ -212,6 +228,8 @@ export function useTasks() {
       });
       return null;
     }
+
+    const nextOrder = category.order ?? familyCategories.length;
 
     try {
       const { data, error } = await supabase
@@ -221,16 +239,15 @@ export function useTasks() {
           family_id: activeFamilyId,
           is_default: category.isDefault || false,
           is_house_chores: category.isHouseChores || false,
-          order_index: category.order || categories.length,
+          order_index: nextOrder,
         }])
         .select()
         .single();
 
       if (error) {
-        console.error('Error adding category:', error);
         toast({
           title: "Error",
-          description: "Failed to add category. Please try again.",
+          description: `Failed to add category: ${error.message}`,
           variant: "destructive", 
         });
         return null;
@@ -247,11 +264,15 @@ export function useTasks() {
 
       setCategories(prev => [...prev, newCategory]);
       return newCategory;
-    } catch (error) {
-      console.error('Failed to add category:', error);
+    } catch (e: any) {
+      toast({
+        title: "Error",
+        description: `Failed to add category: ${e?.message || e}`,
+        variant: "destructive",
+      });
       return null;
     }
-  }, [activeFamilyId, categories.length, toast]);
+  }, [activeFamilyId, categories, toast]);
 
   const addTemplate = useCallback(async (template: Omit<TaskTemplate, 'id' | 'createdAt'>) => {
     if (!activeFamilyId || !user) return null;
@@ -284,10 +305,9 @@ export function useTasks() {
         .single();
 
       if (error) {
-        console.error('Error adding template:', error);
         toast({
           title: "Error",
-          description: "Failed to add template. Please try again.",
+          description: `Failed to add template: ${error.message}`,
           variant: "destructive",
         });
         return null;
@@ -307,8 +327,12 @@ export function useTasks() {
 
       setTemplates(prev => [...prev, newTemplate]);
       return newTemplate;
-    } catch (error) {
-      console.error('Failed to add template:', error);
+    } catch (e: any) {
+      toast({
+        title: "Error",
+        description: `Failed to add template: ${e?.message || e}`,
+        variant: "destructive",
+      });
       return null;
     }
   }, [activeFamilyId, user, templates, toast]);
