@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { storage } from '@/lib/storage';
+import { useTasks } from '@/hooks/useTasks';
 
 interface CreateCategoryModalProps {
   open: boolean;
@@ -13,23 +13,30 @@ interface CreateCategoryModalProps {
 
 export function CreateCategoryModal({ open, onOpenChange, familyId }: CreateCategoryModalProps) {
   const [name, setName] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { addCategory } = useTasks();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim() || loading) return;
 
-    storage.addTaskCategory({
-      id: Date.now().toString(),
-      name: name.trim(),
-      familyId,
-      isHouseChores: false,
-      isDefault: false,
-      order: Date.now()
-    });
-
-    setName('');
-    onOpenChange(false);
-    window.location.reload();
+    setLoading(true);
+    try {
+      const result = await addCategory({
+        name: name.trim(),
+        familyId,
+        isHouseChores: false,
+        isDefault: false,
+        order: 0, // Will be computed by the hook
+      });
+      
+      if (result) {
+        setName('');
+        onOpenChange(false);
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -53,7 +60,9 @@ export function CreateCategoryModal({ open, onOpenChange, familyId }: CreateCate
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit">Create Category</Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? 'Creating...' : 'Create Category'}
+            </Button>
           </div>
         </form>
       </DialogContent>

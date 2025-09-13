@@ -7,8 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
-import { storage } from '@/lib/storage';
-import { generateId } from '@/lib/utils';
+import { useTasks } from '@/hooks/useTasks';
 import { useToast } from '@/hooks/use-toast';
 import type { TaskCategory } from '@/lib/types';
 
@@ -31,6 +30,7 @@ interface TaskTemplateModalProps {
 export function TaskTemplateModal({ open, onOpenChange, category, familyId, onTemplateCreated }: TaskTemplateModalProps) {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { addTemplate } = useTasks();
 
   const form = useForm<TaskTemplateForm>({
     resolver: zodResolver(taskTemplateSchema),
@@ -44,29 +44,30 @@ export function TaskTemplateModal({ open, onOpenChange, category, familyId, onTe
   // Check if user is 18+ for star value editing
   const canEditStars = user.age >= 18;
 
-  const onSubmit = (data: TaskTemplateForm) => {
-    const template = {
-      id: generateId(), // Generate UUID for local storage compatibility
+  const onSubmit = async (data: TaskTemplateForm) => {
+    if (!user) return;
+
+    const result = await addTemplate({
       categoryId: category.id,
       familyId: familyId,
       name: data.name,
-      description: data.description,
+      description: data.description || '',
       starValue: data.starValue,
       isDefault: false,
       isDeletable: true,
       createdBy: user.id,
-    };
-
-    storage.addTaskTemplate(template);
-    
-    toast({
-      title: "Task template created!",
-      description: `"${data.name}" has been added to ${category.name}.`,
     });
+    
+    if (result) {
+      toast({
+        title: "Task template created!",
+        description: `"${data.name}" has been added to ${category.name}.`,
+      });
 
-    form.reset();
-    onOpenChange(false);
-    onTemplateCreated?.(); // Refresh parent instead of reload
+      form.reset();
+      onOpenChange(false);
+      onTemplateCreated?.();
+    }
   };
 
   return (

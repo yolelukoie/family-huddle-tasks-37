@@ -205,6 +205,26 @@ export function useTasks() {
       // persist user_families total_stars/current_stage
       if (delta !== 0) {
         await applyStarsDelta(activeFamilyId, delta);
+        
+        // Award badges after stars are updated
+        const { getUserFamily } = useApp();
+        const uf = getUserFamily(activeFamilyId);
+        const total = uf?.totalStars ?? 0;
+
+        const toUnlock: string[] = [];
+        // Badge rules - replace with your real rules
+        if (delta > 0 && wasCompleted === false) toUnlock.push('first_task_done');
+        if (total >= 10) toUnlock.push('ten_stars');
+        if (total >= 50) toUnlock.push('fifty_stars');
+
+        for (const badgeId of toUnlock) {
+          const { error: bErr } = await supabase.from('user_badges').insert({
+            user_id: user!.id,
+            family_id: activeFamilyId,
+            badge_id: badgeId
+          });
+          // ignore duplicates (UNIQUE constraint should exist)
+        }
       }
     } catch (e: any) {
       toast({
@@ -214,6 +234,53 @@ export function useTasks() {
       });
     }
   }, [activeFamilyId, tasks, applyStarsDelta, toast]);
+
+  // Helper to ensure a category exists by name
+  const ensureCategoryByName = useCallback(async (name: string, opts?: { isHouseChores?: boolean }) => {
+    if (!activeFamilyId) return null;
+
+    // 1) Try to find (case-insensitive) in current family
+    const existing = categories.find(
+      c => c.familyId === activeFamilyId && c.name.toLowerCase() === name.toLowerCase()
+    );
+    if (existing) return existing;
+
+    // 2) If not found, create with the next order
+    const familyCategories = categories.filter(c => c.familyId === activeFamilyId);
+    const nextOrder =
+      (familyCategories.length === 0
+        ? 0
+        : Math.max(...familyCategories.map(c => c.order ?? 0))) + 1;
+
+    const { data, error } = await supabase
+      .from('task_categories')
+      .insert([{
+        name,
+        family_id: activeFamilyId,
+        is_default: name.toLowerCase() === 'assigned',
+        is_house_chores: !!opts?.isHouseChores,
+        order_index: nextOrder,
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      toast({ title: "Error", description: `Failed to create category "${name}": ${error.message}`, variant: "destructive" });
+      return null;
+    }
+
+    const newCategory: TaskCategory = {
+      id: data.id,
+      name: data.name,
+      familyId: data.family_id,
+      isDefault: data.is_default,
+      isHouseChores: data.is_house_chores,
+      order: data.order_index,
+    };
+
+    setCategories(prev => [...prev, newCategory]);
+    return newCategory;
+  }, [activeFamilyId, categories, toast, supabase]);
 
   const addCategory = useCallback(async (category: Omit<TaskCategory, 'id' | 'createdAt'>) => {
     if (!activeFamilyId) return null;
@@ -229,7 +296,10 @@ export function useTasks() {
       return null;
     }
 
-    const nextOrder = category.order ?? familyCategories.length;
+    const nextOrder =
+      (familyCategories.length === 0
+        ? 0
+        : Math.max(...familyCategories.map(c => c.order ?? 0))) + 1;
 
     try {
       const { data, error } = await supabase
@@ -410,6 +480,7 @@ export function useTasks() {
     addCategory,
     addTemplate,
     addTodayTaskFromTemplate,
+    ensureCategoryByName,
     refreshData: loadFamilyTasks,
   };
 }

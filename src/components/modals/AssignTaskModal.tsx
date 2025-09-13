@@ -9,8 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useApp } from '@/hooks/useApp';
-import { storage } from '@/lib/storage';
-import { generateId } from '@/lib/utils';
+import { useTasks } from '@/hooks/useTasks';
 import { useToast } from '@/hooks/use-toast';
 
 const assignTaskSchema = z.object({
@@ -19,7 +18,6 @@ const assignTaskSchema = z.object({
   assignedTo: z.string().min(1, 'Please select who to assign this task to'),
   dueDate: z.string().min(1, 'Due date is required'),
   starValue: z.coerce.number().min(0).max(20, 'Star value must be between 0 and 20'),
-  categoryId: z.string().min(1, 'Please select a category'),
 });
 
 type AssignTaskForm = z.infer<typeof assignTaskSchema>;
@@ -34,6 +32,7 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
   const { user } = useAuth();
   const { activeFamilyId, getFamilyMembers } = useApp();
   const { toast } = useToast();
+  const { addTask, ensureCategoryByName } = useTasks();
 
   const form = useForm<AssignTaskForm>({
     resolver: zodResolver(assignTaskSchema),
@@ -45,38 +44,36 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
   if (!user || !activeFamilyId) return null;
 
   const familyMembers = getFamilyMembers(activeFamilyId);
-  const categories = storage.getTaskCategories(activeFamilyId);
 
   // Check if user is 18+ for star value editing
   const canEditStars = user.age >= 18;
 
-  const onSubmit = (data: AssignTaskForm) => {
-    const task = {
-      id: generateId(), // Generate UUID for local storage compatibility
-      familyId: activeFamilyId,
+  const onSubmit = async (data: AssignTaskForm) => {
+    // Ensure "Assigned" category exists
+    const assignedCategory = await ensureCategoryByName('Assigned');
+    if (!assignedCategory) return;
+
+    const result = await addTask({
       name: data.name,
-      description: data.description,
+      description: data.description || '',
       assignedTo: data.assignedTo,
       assignedBy: user.id,
       dueDate: data.dueDate,
       starValue: data.starValue,
       completed: false,
-      categoryId: data.categoryId,
-    };
-
-    storage.addTask(task);
-    
-    toast({
-      title: "Task assigned!",
-      description: `"${data.name}" has been assigned successfully.`,
+      categoryId: assignedCategory.id,
+      familyId: activeFamilyId,
     });
 
-    form.reset();
-    onOpenChange(false);
-    
-    // Trigger refresh in parent component
-    if (onTaskAssigned) {
-      onTaskAssigned();
+    if (result) {
+      toast({
+        title: "Task assigned!",
+        description: `"${data.name}" has been assigned successfully.`,
+      });
+
+      form.reset();
+      onOpenChange(false);
+      onTaskAssigned?.();
     }
   };
 
@@ -169,32 +166,7 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="categoryId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Category</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {categories.map(category => (
-                          <SelectItem key={category.id} value={category.id}>
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
+            <div className="grid grid-cols-1 gap-4">
               <FormField
                 control={form.control}
                 name="starValue"
