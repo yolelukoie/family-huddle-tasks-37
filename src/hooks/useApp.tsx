@@ -633,6 +633,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       // Rehydrate family data to refresh everything
       await hydrateActiveFamily();
+      
+      // Emit event to refresh tasks in TasksProvider
+      window.dispatchEvent(new CustomEvent('tasks:changed'));
     }
   };
   return (

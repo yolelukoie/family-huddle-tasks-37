@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { AppProvider } from "@/hooks/useApp";
+import { TasksProvider } from "@/contexts/TasksContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthPage } from "@/pages/auth/AuthPage";
 import { ResetPasswordPage } from "@/pages/auth/ResetPasswordPage";
@@ -28,8 +29,10 @@ const App = () => (
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/" element={
             <AppProvider>
-              <AppLayout />
-              <DevStatus />
+              <TasksProvider>
+                <AppLayout />
+                <DevStatus />
+              </TasksProvider>
             </AppProvider>
           }>
             <Route index element={<MainPage />} />
