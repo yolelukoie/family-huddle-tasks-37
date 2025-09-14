@@ -27,7 +27,7 @@ interface AppContextType {
   getTotalStars: (familyId: string) => number;
   addStars: (familyId: string, stars: number) => void;
   applyStarsDelta: (familyId: string, delta: number) => Promise<boolean>;
-  resetCharacterProgress: (familyId: string) => void;
+  resetCharacterProgress: (familyId: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -414,13 +414,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           seenCelebrations: userFamilyData.seen_celebrations,
         };
 
-        setUserFamilies(prev => 
-          prev.map(uf => 
-            uf.familyId === activeFamilyId && uf.userId === user.id 
-              ? updatedUserFamily 
-              : uf
-          )
-        );
+        // Upsert user family - update if exists, add if not
+        setUserFamilies(prev => {
+          const existingIndex = prev.findIndex(uf => 
+            uf.familyId === activeFamilyId && uf.userId === user.id
+          );
+          
+          if (existingIndex >= 0) {
+            // Update existing
+            return prev.map((uf, index) => 
+              index === existingIndex ? updatedUserFamily : uf
+            );
+          } else {
+            // Add new
+            return [...prev, updatedUserFamily];
+          }
+        });
       }
     } catch (error) {
       console.error('Error hydrating active family:', error);
@@ -571,7 +580,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return true;
   };
 
-  const resetCharacterProgress = (familyId: string): void => {
+  const resetCharacterProgress = async (familyId: string): Promise<void> => {
+    if (!user?.id) return;
+
     const userFamily = getUserFamily(familyId);
     if (userFamily) {
       const updatedUserFamily = {
@@ -587,22 +598,41 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           : uf
       ));
       
-      // Persist to Supabase (fire-and-forget)
-      if (user?.id) {
-        supabase
-          .from('user_families')
-          .update({ total_stars: 0, current_stage: 1 })
-          .eq('user_id', user.id)
-          .eq('family_id', familyId)
-          .then(({ error }) => {
-            if (error) {
-              console.error('Failed to reset progress in Supabase:', error);
-            }
-          });
+      // Reset user_families
+      const { error: familyError } = await supabase
+        .from('user_families')
+        .update({ total_stars: 0, current_stage: 1 })
+        .eq('user_id', user.id)
+        .eq('family_id', familyId);
+
+      if (familyError) {
+        console.error('Failed to reset progress in Supabase:', familyError);
       }
-      
-      // Keep localStorage as a backup only
-      storage.updateUserFamily(user?.id || '', familyId, updatedUserFamily);
+
+      // Uncomplete all tasks for this user in this family
+      const { error: tasksError } = await supabase
+        .from('tasks')
+        .update({ completed: false, completed_at: null })
+        .eq('family_id', familyId)
+        .eq('assigned_to', user.id);
+
+      if (tasksError) {
+        console.error('Failed to uncomplete tasks:', tasksError);
+      }
+
+      // Delete all badges for this user in this family
+      const { error: badgesError } = await supabase
+        .from('user_badges')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('family_id', familyId);
+
+      if (badgesError) {
+        console.error('Failed to delete badges:', badgesError);
+      }
+
+      // Rehydrate family data to refresh everything
+      await hydrateActiveFamily();
     }
   };
   return (

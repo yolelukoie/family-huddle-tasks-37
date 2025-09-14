@@ -182,56 +182,49 @@ export function useTasks() {
     if (willBeCompleted && !wasCompleted) delta = +starVal;
     if (!willBeCompleted && wasCompleted) delta = -starVal;
 
-    try {
-      const { error } = await supabase
-        .from('tasks')
-        .update({
-          completed: updates.completed,
-          completed_at: updates.completedAt ?? (willBeCompleted ? new Date().toISOString() : null),
-        })
-        .eq('id', taskId);
+    // Scope try/catch to just the Supabase operation
+    const { error } = await supabase
+      .from('tasks')
+      .update({
+        completed: updates.completed,
+        completed_at: updates.completedAt ?? (willBeCompleted ? new Date().toISOString() : null),
+      })
+      .eq('id', taskId);
 
-      if (error) {
-        toast({
-          title: "Error",
-          description: `Failed to update task: ${error.message}`,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      setTasks(prevList => prevList.map(task => task.id === taskId ? { ...task, ...updates } : task));
-
-      // persist user_families total_stars/current_stage
-      if (delta !== 0) {
-        await applyStarsDelta(activeFamilyId, delta);
-        
-        // Award badges after stars are updated
-        const { getUserFamily } = useApp();
-        const uf = getUserFamily(activeFamilyId);
-        const total = uf?.totalStars ?? 0;
-
-        const toUnlock: string[] = [];
-        // Badge rules - replace with your real rules
-        if (delta > 0 && wasCompleted === false) toUnlock.push('first_task_done');
-        if (total >= 10) toUnlock.push('ten_stars');
-        if (total >= 50) toUnlock.push('fifty_stars');
-
-        for (const badgeId of toUnlock) {
-          const { error: bErr } = await supabase.from('user_badges').insert({
-            user_id: user!.id,
-            family_id: activeFamilyId,
-            badge_id: badgeId
-          });
-          // ignore duplicates (UNIQUE constraint should exist)
-        }
-      }
-    } catch (e: any) {
+    if (error) {
       toast({
         title: "Error",
-        description: `Failed to update task: ${e?.message || e}`,
+        description: `Failed to update task: ${error.message}`,
         variant: "destructive",
       });
+      return;
+    }
+
+    setTasks(prevList => prevList.map(task => task.id === taskId ? { ...task, ...updates } : task));
+
+    // persist user_families total_stars/current_stage
+    if (delta !== 0) {
+      await applyStarsDelta(activeFamilyId, delta);
+      
+      // Award badges after stars are updated
+      const { getUserFamily } = useApp();
+      const uf = getUserFamily(activeFamilyId);
+      const total = uf?.totalStars ?? 0;
+
+      const toUnlock: string[] = [];
+      // Badge rules - replace with your real rules
+      if (delta > 0 && wasCompleted === false) toUnlock.push('first_task_done');
+      if (total >= 10) toUnlock.push('ten_stars');
+      if (total >= 50) toUnlock.push('fifty_stars');
+
+      for (const badgeId of toUnlock) {
+        const { error: bErr } = await supabase.from('user_badges').insert({
+          user_id: user!.id,
+          family_id: activeFamilyId,
+          badge_id: badgeId
+        });
+        // ignore duplicates (UNIQUE constraint should exist)
+      }
     }
   }, [activeFamilyId, tasks, applyStarsDelta, toast]);
 

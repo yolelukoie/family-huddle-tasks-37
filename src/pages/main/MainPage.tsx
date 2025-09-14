@@ -86,8 +86,8 @@ export default function MainPage() {
         setTimeout(() => {
           addCelebration({ type: 'milestone', milestone: { stars: 1000 } });
           // Reset character after celebration is shown
-          setTimeout(() => {
-            resetCharacterProgress(activeFamilyId);
+          setTimeout(async () => {
+            await resetCharacterProgress(activeFamilyId);
             resetBadgeProgress();
             setPreviousStars(0);
           }, 3500); // Wait for celebration to complete (3s) + buffer
@@ -152,9 +152,9 @@ export default function MainPage() {
     // Refresh component to show updated goal progress
     setRefreshKey(prev => prev + 1);
   };
-  const handleResetCharacter = () => {
+  const handleResetCharacter = async () => {
     if (window.confirm('Are you sure? This will reset your character progress for this family only.')) {
-      resetCharacterProgress(activeFamilyId);
+      await resetCharacterProgress(activeFamilyId);
       resetBadgeProgress();
       setPreviousStars(0);
     }
