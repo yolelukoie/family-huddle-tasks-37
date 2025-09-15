@@ -11,7 +11,8 @@ export function useBadges() {
   const { activeFamilyId, getTotalStars } = useApp();
   const { addCelebration } = useCelebrations();
 
-  const totalStars = activeFamilyId ? getTotalStars(activeFamilyId) : 0;
+  // Safely get total stars with fallback
+  const totalStars = (activeFamilyId && getTotalStars) ? getTotalStars(activeFamilyId) : 0;
   const unlockedBadges = getCurrentStageBadges(totalStars);
   const showBadges = shouldShowBadges(totalStars);
 
@@ -20,10 +21,10 @@ export function useBadges() {
   const checkForNewBadges = useCallback(async (oldStars: number, newStars: number) => {
     if (!user || !activeFamilyId) return;
 
-    const newBadges = getNewlyUnlockedBadges(oldStars, newStars);
-    if (newBadges.length === 0) return;
-
     try {
+      const newBadges = getNewlyUnlockedBadges(oldStars, newStars);
+      if (newBadges.length === 0) return;
+
       const badgeIds = newBadges.map(b => b.id);
       // Fetch existing badge rows for these ids
       const { data: existing, error: selError } = await supabase
