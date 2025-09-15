@@ -3,6 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useApp } from '@/hooks/useApp';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useCelebrations } from '@/hooks/useCelebrations';
 import type { Task, TaskCategory, TaskTemplate } from '@/lib/types';
 
 const MAX_TASKS_PER_FAMILY = 100;
@@ -29,6 +30,7 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const { activeFamilyId, applyStarsDelta, getUserFamily } = useApp();
   const { toast } = useToast();
+  const { addCelebration } = useCelebrations();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [categories, setCategories] = useState<TaskCategory[]>([]);
   const [templates, setTemplates] = useState<TaskTemplate[]>([]);
@@ -236,31 +238,50 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
     if (delta !== 0) {
       await applyStarsDelta(updated.family_id, delta);
       
-      // Award badges after stars are updated - use fresh totals
-      const prevTotal = getUserFamily(updated.family_id)?.totalStars ?? 0;
-      const newTotal = prevTotal; // applyStarsDelta already updated the total
+      // Award badges after stars are updated
+      const userFamily = getUserFamily(updated.family_id);
+      const newTotal = userFamily?.totalStars ?? 0;
+      const oldTotal = newTotal - delta;
+      
+      console.log(`Badge check: ${oldTotal} -> ${newTotal} stars (delta: ${delta})`);
 
-      const toUnlock: string[] = [];
-      // Badge rules
-      if (delta > 0 && !prevCompleted) toUnlock.push('first_task_done');
-      if (newTotal >= 10) toUnlock.push('ten_stars');
-      if (newTotal >= 50) toUnlock.push('fifty_stars');
+      // Import badge functions
+      const { getNewlyUnlockedBadges } = await import('@/lib/badges');
+      const newBadges = getNewlyUnlockedBadges(oldTotal, newTotal);
+      console.log('New badges to unlock:', newBadges.map(b => b.id));
 
-      for (const badgeId of toUnlock) {
+      if (newBadges.length > 0) {
+        const badgeInserts = newBadges.map(badge => ({
+          user_id: user!.id,
+          family_id: updated.family_id,
+          badge_id: badge.id,
+          seen: true
+        }));
+
         try {
           const { error } = await supabase
             .from('user_badges')
-            .upsert(
-              { user_id: user!.id, family_id: updated.family_id, badge_id: badgeId },
-              { onConflict: 'user_id,family_id,badge_id', ignoreDuplicates: true }
-            );
-          // Ignore duplicate errors
-        } catch {
-          // Ignore duplicates (UNIQUE constraint on user_id, family_id, badge_id)
+            .upsert(badgeInserts, { 
+              onConflict: 'user_id,family_id,badge_id',
+              ignoreDuplicates: true 
+            });
+          
+          if (error) {
+            console.error('Failed to insert badges:', error);
+          } else {
+            console.log('Successfully awarded badges:', newBadges.map(b => b.id));
+          }
+        } catch (error) {
+          console.error('Error awarding badges:', error);
         }
-      }
 
-      if (toUnlock.length > 0) {
+        // Trigger badge celebration and refresh
+        newBadges.forEach(badge => {
+          if (addCelebration) {
+            addCelebration({ type: 'badge', badge });
+          }
+        });
+        
         window.dispatchEvent(new CustomEvent('badges:changed'));
       }
     }

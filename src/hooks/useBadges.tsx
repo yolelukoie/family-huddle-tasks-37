@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useAuth } from './useAuth';
 import { useApp } from './useApp';
 import { getCurrentStageBadges, getNewlyUnlockedBadges, shouldShowBadges } from '@/lib/badges';
@@ -10,13 +10,61 @@ export function useBadges() {
   const { user } = useAuth();
   const { activeFamilyId, getTotalStars } = useApp();
   const { addCelebration } = useCelebrations();
+  const [persistedBadges, setPersistedBadges] = useState<Set<string>>(new Set());
+  const [isLoading, setIsLoading] = useState(false);
 
   // Safely get total stars with fallback
   const totalStars = (activeFamilyId && getTotalStars) ? getTotalStars(activeFamilyId) : 0;
-  const unlockedBadges = getCurrentStageBadges(totalStars);
+  const availableBadges = getCurrentStageBadges(totalStars);
   const showBadges = shouldShowBadges(totalStars);
 
-// Supabase-backed badge helpers are handled inline in checkForNewBadges
+  // Combine available badges with persisted status
+  const unlockedBadges = availableBadges.filter(badge => persistedBadges.has(badge.id));
+
+  // Load persisted badges from database
+  const loadPersistedBadges = useCallback(async () => {
+    if (!user || !activeFamilyId) {
+      setPersistedBadges(new Set());
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from('user_badges')
+        .select('badge_id')
+        .eq('user_id', user.id)
+        .eq('family_id', activeFamilyId);
+
+      if (error) {
+        console.error('Failed to load persisted badges:', error);
+        return;
+      }
+
+      const badgeIds = new Set((data || []).map(row => row.badge_id as string));
+      setPersistedBadges(badgeIds);
+      console.log('Loaded persisted badges:', Array.from(badgeIds));
+    } catch (error) {
+      console.error('Error loading persisted badges:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user, activeFamilyId]);
+
+  // Load badges when family changes
+  useEffect(() => {
+    loadPersistedBadges();
+  }, [loadPersistedBadges]);
+
+  // Listen for badge changes
+  useEffect(() => {
+    const handler = () => {
+      console.log('Badge change event received, reloading badges');
+      loadPersistedBadges();
+    };
+    window.addEventListener('badges:changed', handler);
+    return () => window.removeEventListener('badges:changed', handler);
+  }, [loadPersistedBadges]);
 
   const checkForNewBadges = useCallback(async (oldStars: number, newStars: number) => {
     if (!user || !activeFamilyId) return;
@@ -106,8 +154,11 @@ export function useBadges() {
 
   return {
     unlockedBadges,
+    availableBadges,
     showBadges,
     checkForNewBadges,
     resetBadgeProgress,
+    isLoading,
+    totalStars,
   };
 }
