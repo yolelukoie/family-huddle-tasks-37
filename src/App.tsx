@@ -27,22 +27,13 @@ const App = () => (
         <Routes>
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
-          <Route path="/" element={
+          <Route path="/*" element={
             <AppProvider>
               <TasksProvider>
                 <AppLayout />
-                <DevStatus />
               </TasksProvider>
             </AppProvider>
-          }>
-            <Route index element={<MainPage />} />
-            <Route path={ROUTES.onboarding.slice(1)} element={<OnboardingPage />} />
-            <Route path={ROUTES.tasks.slice(1)} element={<TasksPage />} />
-            <Route path={ROUTES.goals.slice(1)} element={<GoalsPage />} />
-            <Route path={ROUTES.chat.slice(1)} element={<ChatPage />} />
-            <Route path={ROUTES.family.slice(1)} element={<FamilyPage />} />
-            <Route path="*" element={<NotFound />} />
-          </Route>
+          } />
         </Routes>
       </AuthProvider>
     </BrowserRouter>
