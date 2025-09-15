@@ -438,10 +438,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const switchFamily = async (familyId: string): Promise<void> => {
     await updateUser({ activeFamilyId: familyId });
+    await hydrateActiveFamily(); // immediate re-hydration
+    window.dispatchEvent(new CustomEvent('tasks:changed')); // TasksProvider will reload
+    window.dispatchEvent(new CustomEvent('badges:changed')); // badges hook will reload
   };
 
   const setActiveFamilyId = async (familyId: string): Promise<void> => {
     await updateUser({ activeFamilyId: familyId });
+    await hydrateActiveFamily(); // immediate re-hydration
+    window.dispatchEvent(new CustomEvent('tasks:changed')); // TasksProvider will reload
+    window.dispatchEvent(new CustomEvent('badges:changed')); // badges hook will reload
   };
 
   const updateFamilyName = async (familyId: string, name: string): Promise<void> => {
@@ -609,15 +615,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         console.error('Failed to reset progress in Supabase:', familyError);
       }
 
-      // Uncomplete all tasks for this user in this family
-      const { error: tasksError } = await supabase
+      // Delete ALL completed tasks for this user in this family
+      const { error: delErr } = await supabase
         .from('tasks')
-        .update({ completed: false, completed_at: null })
+        .delete()
         .eq('family_id', familyId)
-        .eq('assigned_to', user.id);
+        .eq('assigned_to', user.id)
+        .eq('completed', true);
 
-      if (tasksError) {
-        console.error('Failed to uncomplete tasks:', tasksError);
+      if (delErr) {
+        console.error('Failed to delete completed tasks:', delErr);
       }
 
       // Delete all badges for this user in this family
@@ -634,8 +641,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       // Rehydrate family data to refresh everything
       await hydrateActiveFamily();
       
-      // Emit event to refresh tasks in TasksProvider
+      // Emit events to refresh tasks and badges
       window.dispatchEvent(new CustomEvent('tasks:changed'));
+      window.dispatchEvent(new CustomEvent('badges:changed'));
     }
   };
   return (

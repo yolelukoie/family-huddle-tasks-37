@@ -72,6 +72,9 @@ export function useBadges() {
       }
 
       celebrate.forEach(badge => addCelebration({ type: 'badge', badge }));
+      
+      // Emit event for badge displays to refresh
+      window.dispatchEvent(new CustomEvent('badges:changed'));
     } catch (e) {
       console.error('checkForNewBadges failed:', e);
     }
@@ -92,6 +95,9 @@ export function useBadges() {
       if (error) {
         console.error('Failed to reset badge progress in Supabase:', error);
       }
+      
+      // Emit event for badge displays to refresh
+      window.dispatchEvent(new CustomEvent('badges:changed'));
     } catch (error) {
       console.error('Error resetting badge progress:', error);
     }

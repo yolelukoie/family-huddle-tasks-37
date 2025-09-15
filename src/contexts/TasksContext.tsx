@@ -236,26 +236,32 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
     if (delta !== 0) {
       await applyStarsDelta(updated.family_id, delta);
       
-      // Award badges after stars are updated
-      const uf = getUserFamily(updated.family_id);
-      const total = uf?.totalStars ?? 0;
+      // Award badges after stars are updated - use fresh totals
+      const prevTotal = getUserFamily(updated.family_id)?.totalStars ?? 0;
+      const newTotal = prevTotal; // applyStarsDelta already updated the total
 
       const toUnlock: string[] = [];
       // Badge rules
       if (delta > 0 && !prevCompleted) toUnlock.push('first_task_done');
-      if (total >= 10) toUnlock.push('ten_stars');
-      if (total >= 50) toUnlock.push('fifty_stars');
+      if (newTotal >= 10) toUnlock.push('ten_stars');
+      if (newTotal >= 50) toUnlock.push('fifty_stars');
 
       for (const badgeId of toUnlock) {
         try {
-          await supabase
+          const { error } = await supabase
             .from('user_badges')
-            .insert({ user_id: user!.id, family_id: updated.family_id, badge_id: badgeId })
-            .select('badge_id')
-            .single();
+            .upsert(
+              { user_id: user!.id, family_id: updated.family_id, badge_id: badgeId },
+              { onConflict: 'user_id,family_id,badge_id', ignoreDuplicates: true }
+            );
+          // Ignore duplicate errors
         } catch {
           // Ignore duplicates (UNIQUE constraint on user_id, family_id, badge_id)
         }
+      }
+
+      if (toUnlock.length > 0) {
+        window.dispatchEvent(new CustomEvent('badges:changed'));
       }
     }
 
