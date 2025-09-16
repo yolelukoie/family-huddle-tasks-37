@@ -180,13 +180,15 @@ export default function TasksPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            {categories.map(category => (
-              <TaskCategorySection 
-                key={category.id} 
-                category={category}
-                familyId={activeFamilyId}
-              />
-            ))}
+            {categories
+              .filter(category => category.name !== 'Assigned') // Hide system category
+              .map(category => (
+                <TaskCategorySection 
+                  key={category.id} 
+                  category={category}
+                  familyId={activeFamilyId}
+                />
+              ))}
           </CardContent>
         </Card>
 

@@ -18,6 +18,8 @@ interface TasksContextValue {
   addTask: (task: Omit<Task, 'id' | 'createdAt'>) => Promise<Task | null>;
   updateTask: (taskId: string, updates: Partial<Task>) => Promise<void>;
   addCategory: (category: Omit<TaskCategory, 'id' | 'createdAt'>) => Promise<TaskCategory | null>;
+  deleteCategory: (categoryId: string) => Promise<boolean>;
+  deleteTemplate: (templateId: string) => Promise<boolean>;
   addTemplate: (template: Omit<TaskTemplate, 'id' | 'createdAt'>) => Promise<TaskTemplate | null>;
   addTodayTaskFromTemplate: (templateId: string) => Promise<Task | null>;
   ensureCategoryByName: (name: string, opts?: { isHouseChores?: boolean }) => Promise<TaskCategory | null>;
@@ -544,6 +546,112 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
     }
   }, [activeFamilyId, user, templates]);
 
+  const deleteCategory = useCallback(async (categoryId: string) => {
+    if (!activeFamilyId) return false;
+
+    const category = categories.find(c => c.id === categoryId);
+    if (!category) return false;
+
+    // Prevent deletion of default categories
+    if (category.isDefault || category.isHouseChores) {
+      toast({
+        title: "Cannot Delete",
+        description: "Default and house chores categories cannot be deleted.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    try {
+      // Delete all templates in this category first
+      const { error: templatesError } = await supabase
+        .from('task_templates')
+        .delete()
+        .eq('category_id', categoryId);
+
+      if (templatesError) {
+        console.error('Error deleting templates:', templatesError);
+      }
+
+      // Delete all tasks in this category
+      const { error: tasksError } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('category_id', categoryId);
+
+      if (tasksError) {
+        console.error('Error deleting tasks:', tasksError);
+      }
+
+      // Delete the category
+      const { error } = await supabase
+        .from('task_categories')
+        .delete()
+        .eq('id', categoryId);
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: `Failed to delete category: ${error.message}`,
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      // Update local state
+      setCategories(prev => prev.filter(c => c.id !== categoryId));
+      setTemplates(prev => prev.filter(t => t.categoryId !== categoryId));
+      setTasks(prev => prev.filter(t => t.categoryId !== categoryId));
+      
+      // Emit change event
+      window.dispatchEvent(new CustomEvent('tasks:changed'));
+      
+      return true;
+    } catch (e: any) {
+      toast({
+        title: "Error", 
+        description: `Failed to delete category: ${e?.message || e}`,
+        variant: "destructive",
+      });
+      return false;
+    }
+  }, [activeFamilyId, categories, toast]);
+
+  const deleteTemplate = useCallback(async (templateId: string) => {
+    if (!activeFamilyId) return false;
+
+    try {
+      const { error } = await supabase
+        .from('task_templates')
+        .delete()
+        .eq('id', templateId);
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: `Failed to delete template: ${error.message}`,
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      // Update local state
+      setTemplates(prev => prev.filter(t => t.id !== templateId));
+      
+      // Emit change event
+      window.dispatchEvent(new CustomEvent('tasks:changed'));
+      
+      return true;
+    } catch (e: any) {
+      toast({
+        title: "Error",
+        description: `Failed to delete template: ${e?.message || e}`,
+        variant: "destructive",
+      });
+      return false;
+    }
+  }, [activeFamilyId, toast]);
+
   const contextValue: TasksContextValue = {
     tasks,
     categories,
@@ -552,6 +660,8 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
     addTask,
     updateTask,
     addCategory,
+    deleteCategory,
+    deleteTemplate,
     addTemplate,
     addTodayTaskFromTemplate,
     ensureCategoryByName,

@@ -20,7 +20,7 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
-  const { templates, addTodayTaskFromTemplate } = useTasks();
+  const { templates, addTodayTaskFromTemplate, deleteCategory, deleteTemplate } = useTasks();
 
   const categoryTemplates = templates.filter(t => t.categoryId === category.id);
 
@@ -59,15 +59,17 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={(e) => {
+                onClick={async (e) => {
                   e.stopPropagation();
                   if (confirm(`Delete "${category.name}" category? This will also delete all templates and tasks in this category.`)) {
-                    // TODO: Implement category deletion in useTasks hook
-                    onTaskAdded?.(); // Refresh parent
-                    toast({
-                      title: "Category deleted",
-                      description: `"${category.name}" and all its tasks have been deleted.`,
-                    });
+                    const success = await deleteCategory(category.id);
+                    if (success) {
+                      toast({
+                        title: "Category deleted",
+                        description: `"${category.name}" and all its tasks have been deleted.`,
+                      });
+                      onTaskAdded?.(); // Refresh parent
+                    }
                   }
                 }}
                 className="h-6 w-6 p-0 text-destructive hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
@@ -100,11 +102,13 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={(e) => {
+                      onClick={async (e) => {
                         e.stopPropagation();
                         if (confirm('Delete this task template?')) {
-                          // TODO: Implement template deletion in useTasks hook
-                          onTaskAdded?.(); // Refresh parent
+                          const success = await deleteTemplate(template.id);
+                          if (success) {
+                            onTaskAdded?.(); // Refresh parent
+                          }
                         }
                       }}
                       className="h-6 w-6 p-0 text-destructive hover:text-destructive"
