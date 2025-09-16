@@ -534,10 +534,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const applyStarsDelta = async (familyId: string, delta: number): Promise<boolean> => {
     if (!user || !familyId || !delta) return false;
 
+    console.log(`useApp: applyStarsDelta called with familyId: ${familyId}, delta: ${delta}`);
+
     // Find current state
     const curr = getUserFamily(familyId);
     const prevTotal = curr?.totalStars ?? 0;
     const newTotal = Math.max(0, prevTotal + delta);
+
+    console.log(`useApp: Stars update: ${prevTotal} -> ${newTotal} (delta: ${delta})`);
 
     // Optimistic UI update
     setUserFamilies(prev => prev.map(uf =>
@@ -554,7 +558,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       .eq('family_id', familyId);
 
     if (error) {
-      console.error('applyStarsDelta failed:', error);
+      console.error('useApp: applyStarsDelta failed:', error);
       // Rollback optimistic state
       setUserFamilies(prev => prev.map(uf =>
         uf.familyId === familyId && uf.userId === user.id
@@ -564,10 +568,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       return false;
     }
 
+    console.log(`useApp: Successfully updated total_stars to ${newTotal} in database`);
+
     // Simple stage progression: every 50 stars -> next stage
     const stageSize = 50;
     const wantStage = Math.max(1, Math.floor(newTotal / stageSize) + 1);
     if ((curr?.currentStage ?? 1) !== wantStage) {
+      console.log(`useApp: Stage progression: ${curr?.currentStage ?? 1} -> ${wantStage}`);
       const { error: stageErr } = await supabase
         .from('user_families')
         .update({ current_stage: wantStage })
@@ -580,6 +587,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             ? { ...uf, currentStage: wantStage }
             : uf
         ));
+      } else {
+        console.error('useApp: Failed to update stage:', stageErr);
       }
     }
 

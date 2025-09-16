@@ -136,16 +136,15 @@ export default function MainPage() {
     const task = todaysTasks.find(t => t.id === taskId);
     if (!task) return;
     
+    console.log('MainPage: Completing task', taskId, 'stars:', task.starValue, 'assigned to:', task.assignedTo, 'user:', user?.id);
+    
     await updateTask(taskId, {
       completed: true,
       completedAt: new Date().toISOString()
     });
 
-    // Add stars if it's the user's task
+    // Update goal progress if it's the user's task (stars are handled by TasksContext)
     if (task.assignedTo === user?.id) {
-      addStars(activeFamilyId, task.starValue);
-
-      // Update goal progress
       await updateGoalProgress(task.categoryId, task.starValue);
     }
 
