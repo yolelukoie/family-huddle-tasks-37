@@ -29,13 +29,13 @@ const App = () => (
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/*" element={
-            <AppProvider>
-              <CelebrationsProvider>
+            <CelebrationsProvider>
+              <AppProvider>
                 <TasksProvider>
                   <AppLayout />
                 </TasksProvider>
-              </CelebrationsProvider>
-            </AppProvider>
+              </AppProvider>
+            </CelebrationsProvider>
           } />
         </Routes>
       </AuthProvider>
