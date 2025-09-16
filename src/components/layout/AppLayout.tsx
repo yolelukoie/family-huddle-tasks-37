@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '@/hooks/useApp';
 import { useAuth } from '@/hooks/useAuth';
-import { CelebrationsProvider } from '@/contexts/CelebrationsContext';
 import { ROUTES } from '@/lib/constants';
 import MainPage from '@/pages/main/MainPage';
 import OnboardingPage from '@/pages/onboarding/OnboardingPage';
@@ -70,19 +69,17 @@ export function AppLayout() {
   }
 
   return (
-    <CelebrationsProvider>
-      <div>
-        <Routes>
-          <Route index element={<MainPage />} />
-          <Route path={ROUTES.onboarding.slice(1)} element={<OnboardingPage />} />
-          <Route path={ROUTES.tasks.slice(1)} element={<TasksPage />} />
-          <Route path={ROUTES.goals.slice(1)} element={<GoalsPage />} />
-          <Route path={ROUTES.chat.slice(1)} element={<ChatPage />} />
-          <Route path={ROUTES.family.slice(1)} element={<FamilyPage />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-        <DevStatus />
-      </div>
-    </CelebrationsProvider>
+    <div>
+      <Routes>
+        <Route index element={<MainPage />} />
+        <Route path={ROUTES.onboarding.slice(1)} element={<OnboardingPage />} />
+        <Route path={ROUTES.tasks.slice(1)} element={<TasksPage />} />
+        <Route path={ROUTES.goals.slice(1)} element={<GoalsPage />} />
+        <Route path={ROUTES.chat.slice(1)} element={<ChatPage />} />
+        <Route path={ROUTES.family.slice(1)} element={<FamilyPage />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+      <DevStatus />
+    </div>
   );
 }

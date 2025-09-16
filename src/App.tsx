@@ -5,6 +5,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { AppProvider } from "@/hooks/useApp";
 import { TasksProvider } from "@/contexts/TasksContext";
+import { CelebrationsProvider } from "@/contexts/CelebrationsContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthPage } from "@/pages/auth/AuthPage";
 import { ResetPasswordPage } from "@/pages/auth/ResetPasswordPage";
@@ -29,9 +30,11 @@ const App = () => (
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/*" element={
             <AppProvider>
-              <TasksProvider>
-                <AppLayout />
-              </TasksProvider>
+              <CelebrationsProvider>
+                <TasksProvider>
+                  <AppLayout />
+                </TasksProvider>
+              </CelebrationsProvider>
             </AppProvider>
           } />
         </Routes>
