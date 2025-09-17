@@ -532,7 +532,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
   
   const applyStarsDelta = async (familyId: string, delta: number): Promise<boolean> => {
-    if (!user || !familyId || !delta) return false;
+    if (!user || !familyId || !Number.isFinite(delta) || delta === 0) return false;
 
     console.log(`useApp: applyStarsDelta called with familyId: ${familyId}, delta: ${delta}`);
 
@@ -540,6 +540,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const curr = getUserFamily(familyId);
     const prevTotal = curr?.totalStars ?? 0;
     const newTotal = Math.max(0, prevTotal + delta);
+    const newStage = Math.max(1, Math.floor(newTotal / 50) + 1);
 
     console.log(`useApp: Stars update: ${prevTotal} -> ${newTotal} (delta: ${delta})`);
 
@@ -550,12 +551,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         : uf
     ));
 
-    // Persist to Supabase (await, not fire-and-forget)
-    const { error } = await supabase
+    // Persist to Supabase and detect if any rows were updated
+    const { data: rows, error } = await supabase
       .from('user_families')
-      .update({ total_stars: newTotal })
+      .update({
+        total_stars: newTotal,
+        current_stage: newStage
+      })
       .eq('user_id', user.id)
-      .eq('family_id', familyId);
+      .eq('family_id', familyId)
+      .select('total_stars, current_stage');
 
     if (error) {
       console.error('useApp: applyStarsDelta failed:', error);
@@ -568,30 +573,49 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       return false;
     }
 
-    console.log(`useApp: Successfully updated total_stars to ${newTotal} in database`);
-
-    // Simple stage progression: every 50 stars -> next stage
-    const stageSize = 50;
-    const wantStage = Math.max(1, Math.floor(newTotal / stageSize) + 1);
-    if ((curr?.currentStage ?? 1) !== wantStage) {
-      console.log(`useApp: Stage progression: ${curr?.currentStage ?? 1} -> ${wantStage}`);
-      const { error: stageErr } = await supabase
+    if (!rows || rows.length === 0) {
+      // No row existed – insert membership with the computed values
+      const { data: inserted, error: insErr } = await supabase
         .from('user_families')
-        .update({ current_stage: wantStage })
-        .eq('user_id', user.id)
-        .eq('family_id', familyId);
-      
-      if (!stageErr) {
+        .insert([{
+          user_id: user.id,
+          family_id: familyId,
+          total_stars: newTotal,
+          current_stage: newStage,
+        }])
+        .select('total_stars, current_stage')
+        .single();
+
+      if (insErr || !inserted) {
+        console.error('useApp: Failed to insert user_families row:', insErr);
+        // Rollback optimistic state
         setUserFamilies(prev => prev.map(uf =>
           uf.familyId === familyId && uf.userId === user.id
-            ? { ...uf, currentStage: wantStage }
+            ? { ...uf, totalStars: prevTotal }
             : uf
         ));
-      } else {
-        console.error('useApp: Failed to update stage:', stageErr);
+        return false;
       }
+
+      // Adopt server truth
+      setUserFamilies(prev => prev.map(uf =>
+        uf.familyId === familyId && uf.userId === user.id
+          ? { ...uf, totalStars: inserted.total_stars, currentStage: inserted.current_stage }
+          : uf
+      ));
+      console.log(`useApp: Inserted new user_families row with ${inserted.total_stars} stars`);
+      return true;
     }
 
+    // Use server truth to update local state (prevents hydrate clobber)
+    const row = rows[0];
+    setUserFamilies(prev => prev.map(uf =>
+      uf.familyId === familyId && uf.userId === user.id
+        ? { ...uf, totalStars: row.total_stars, currentStage: row.current_stage }
+        : uf
+    ));
+
+    console.log(`useApp: Successfully updated total_stars to ${row.total_stars} in database`);
     return true;
   };
 
