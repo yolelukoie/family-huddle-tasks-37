@@ -53,8 +53,8 @@ export default function TasksPage() {
     );
   }
 
-  const todaysTasks = tasks.filter(task => !task.completed && isToday(task.dueDate));
-  const upcomingTasks = tasks.filter(task => !task.completed && isFuture(task.dueDate));
+  const todaysTasks = tasks.filter(task => !task.completed && isToday(task.dueDate) && task.assignedTo === user.id);
+  const upcomingTasks = tasks.filter(task => !task.completed && isFuture(task.dueDate) && task.assignedTo === user.id);
 
   const handleCompleteTask = async (taskId: string) => {
     const task = tasks.find(t => t.id === taskId);

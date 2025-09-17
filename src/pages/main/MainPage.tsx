@@ -99,8 +99,8 @@ export default function MainPage() {
     }
   }, [totalStars, previousStars, checkForNewBadges, addCelebration, resetCharacterProgress, resetBadgeProgress, activeFamilyId]);
 
-  // Get today's tasks from useTasks hook
-  const todaysTasks = tasks.filter(task => !task.completed && isToday(task.dueDate));
+  // Get today's tasks from useTasks hook - only tasks assigned to current user
+  const todaysTasks = tasks.filter(task => !task.completed && isToday(task.dueDate) && task.assignedTo === user?.id);
 
   // Get active goal (fetch from Supabase)
   const [activeGoal, setActiveGoal] = useState(null);

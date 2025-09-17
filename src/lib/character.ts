@@ -58,16 +58,16 @@ export function getCharacterImagePath(gender: 'male' | 'female' | 'other', stage
     800: '/lovable-uploads/7a1079f4-1eff-437f-858d-dc04c7493679.png'
   };
 
-  // Mapping of male stages to uploaded images (will be updated when images are uploaded)
+  // Mapping of male stages to uploaded images
   const maleStageImages: Record<number, string> = {
-    0: '/male-character-0.png',
-    50: '/male-character-50.png', 
-    200: '/male-character-200.png',
-    350: '/male-character-350.png',
+    0: '/lovable-uploads/71c3b5b5-9781-4042-b774-82bdf23af465.png',
+    50: '/lovable-uploads/94c2e039-882b-4890-9173-1e7555ed04c0.png', 
+    200: '/lovable-uploads/9740a3d8-1664-457b-80a2-0e9caad66358.png',
+    350: '/lovable-uploads/9b069300-3c2a-48ce-90c5-55a898aef9b9.png',
     500: '/lovable-uploads/47659389-0e9d-4bc6-9239-28bb582e213a.png',
-    600: '/male-character-600.png',
-    700: '/male-character-700.png',
-    800: '/male-character-800.png'
+    600: '/lovable-uploads/89b6d0ce-d747-4ee6-a1c4-7a0521b5ab47.png',
+    700: '/lovable-uploads/31ebd777-bffc-4065-9955-d702c93fe9b3.png',
+    800: '/lovable-uploads/640c6f87-bba4-4fb9-9d66-40d4e05e746f.png'
   };
 
   if (effectiveGender === 'female' && femaleStageImages[stage]) {
