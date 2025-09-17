@@ -466,6 +466,7 @@ export type Database = {
           last_read_timestamp: number
           seen_celebrations: string[]
           total_stars: number
+          updated_at: string
           user_id: string
         }
         Insert: {
@@ -477,6 +478,7 @@ export type Database = {
           last_read_timestamp?: number
           seen_celebrations?: string[]
           total_stars?: number
+          updated_at?: string
           user_id: string
         }
         Update: {
@@ -488,6 +490,7 @@ export type Database = {
           last_read_timestamp?: number
           seen_celebrations?: string[]
           total_stars?: number
+          updated_at?: string
           user_id?: string
         }
         Relationships: [

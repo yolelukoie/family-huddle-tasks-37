@@ -340,21 +340,32 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const joinFamily = async (inviteCode: string): Promise<Family | null> => {
-    if (!user) return null;
+    if (!user) {
+      console.error('useApp: Cannot join family - no authenticated user');
+      return null;
+    }
+
+    console.log(`useApp: Attempting to join family with invite code: ${inviteCode}`);
 
     try {
       // Use RPC function to safely join family by invite code
       const { data: familyData, error } = await supabase
         .rpc('join_family_by_code', { p_invite_code: inviteCode });
 
+      console.log('useApp: RPC join_family_by_code response:', { familyData, error });
+
       if (error) {
-        console.error('Error joining family:', error);
+        console.error('useApp: Error calling join_family_by_code RPC:', error);
         return null;
       }
 
-      if (!familyData || familyData.length === 0) return null;
+      if (!familyData || familyData.length === 0) {
+        console.warn('useApp: No family found with invite code:', inviteCode);
+        return null;
+      }
 
       const family = familyData[0];
+      console.log('useApp: Family data received from RPC:', family);
 
       const convertedFamily: Family = {
         id: family.id,
@@ -363,6 +374,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         createdBy: family.created_by,
         createdAt: family.created_at,
       };
+
+      console.log('useApp: Converted family object:', convertedFamily);
 
       const userFamily: UserFamily = {
         userId: user.id,
@@ -374,19 +387,41 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         seenCelebrations: [],
       };
 
+      console.log('useApp: Created user family relationship:', userFamily);
+
       // Also save to localStorage as backup
       storage.addFamily(convertedFamily);
       storage.addUserFamily(userFamily);
+      console.log('useApp: Saved to localStorage');
 
-      setFamilies(prev => [...prev, convertedFamily]);
-      setUserFamilies(prev => [...prev, userFamily]);
+      setFamilies(prev => {
+        const exists = prev.some(f => f.id === convertedFamily.id);
+        if (exists) {
+          console.log('useApp: Family already exists in state');
+          return prev;
+        }
+        console.log('useApp: Adding family to state');
+        return [...prev, convertedFamily];
+      });
+
+      setUserFamilies(prev => {
+        const exists = prev.some(uf => uf.familyId === convertedFamily.id && uf.userId === user.id);
+        if (exists) {
+          console.log('useApp: User-family relationship already exists in state');
+          return prev;
+        }
+        console.log('useApp: Adding user-family relationship to state');
+        return [...prev, userFamily];
+      });
 
       // Set as active family
+      console.log('useApp: Setting active family to:', family.id);
       await updateUser({ activeFamilyId: family.id });
 
+      console.log('useApp: Successfully completed joinFamily process');
       return convertedFamily;
     } catch (error) {
-      console.error('Failed to join family:', error);
+      console.error('useApp: Exception in joinFamily:', error);
       return null;
     }
   };
