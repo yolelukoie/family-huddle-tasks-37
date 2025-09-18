@@ -511,20 +511,84 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const getUserFamily = (familyId: string): UserFamily | null => {
-    return userFamilies.find(uf => uf.familyId === familyId) || null;
-  };
+  const [allFamilyMembers, setAllFamilyMembers] = useState<Record<string, UserFamily[]>>({});
+  const [userProfiles, setUserProfiles] = useState<Record<string, User>>({});
 
   const getFamilyMembers = (familyId: string): UserFamily[] => {
-    // For now, return all user families for this family
-    // In the future, we might need to query all users in the family
-    return userFamilies.filter(uf => uf.familyId === familyId);
+    return allFamilyMembers[familyId] || [];
   };
 
   const getUserProfile = (userId: string): User | null => {
-    // This would need to be implemented to fetch user profiles
-    // For now, return null as this functionality isn't fully implemented
-    return null;
+    return userProfiles[userId] || null;
+  };
+
+  // Fetch all family members for a family
+  const fetchFamilyMembers = async (familyId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_families')
+        .select('*')
+        .eq('family_id', familyId);
+
+      if (!error && data) {
+        const members = data.map(item => ({
+          userId: item.user_id,
+          familyId: item.family_id,
+          joinedAt: item.joined_at,
+          totalStars: item.total_stars,
+          currentStage: item.current_stage,
+          lastReadTimestamp: item.last_read_timestamp,
+          seenCelebrations: item.seen_celebrations,
+        }));
+
+        setAllFamilyMembers(prev => ({
+          ...prev,
+          [familyId]: members
+        }));
+
+        // Fetch profiles for each member
+        const userIds = members.map(m => m.userId);
+        await fetchUserProfiles(userIds);
+      }
+    } catch (error) {
+      console.error('Error fetching family members:', error);
+    }
+  };
+
+  // Fetch user profiles
+  const fetchUserProfiles = async (userIds: string[]) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .in('id', userIds);
+
+      if (!error && data) {
+        const profiles = data.reduce((acc, profile) => {
+          acc[profile.id] = {
+            id: profile.id,
+            displayName: profile.display_name,
+            dateOfBirth: profile.date_of_birth,
+            gender: profile.gender as 'male' | 'female' | 'other',
+            age: profile.age,
+            profileComplete: profile.profile_complete,
+            activeFamilyId: profile.active_family_id,
+          };
+          return acc;
+        }, {} as Record<string, User>);
+
+        setUserProfiles(prev => ({
+          ...prev,
+          ...profiles
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching user profiles:', error);
+    }
+  };
+
+  const getUserFamily = (familyId: string): UserFamily | null => {
+    return userFamilies.find(uf => uf.familyId === familyId) || null;
   };
 
   const getTotalStars = (familyId: string): number => {

@@ -30,7 +30,7 @@ interface AssignTaskModalProps {
 
 export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTaskModalProps) {
   const { user } = useAuth();
-  const { activeFamilyId, getFamilyMembers } = useApp();
+  const { activeFamilyId, getFamilyMembers, getUserProfile } = useApp();
   const { toast } = useToast();
   const { addTask, ensureCategoryByName } = useTasks();
 
@@ -139,11 +139,14 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
                         <SelectItem value={user.id}>Myself</SelectItem>
                         {familyMembers
                           .filter(member => member.userId !== user.id)
-                          .map(member => (
-                            <SelectItem key={member.userId} value={member.userId}>
-                              Family Member {member.userId.slice(-4)}
-                            </SelectItem>
-                          ))}
+                          .map(member => {
+                            const memberProfile = getUserProfile(member.userId);
+                            return (
+                              <SelectItem key={member.userId} value={member.userId}>
+                                {memberProfile?.displayName || `Member ${member.userId.slice(-4)}`}
+                              </SelectItem>
+                            );
+                          })}
                       </SelectContent>
                     </Select>
                     <FormMessage />

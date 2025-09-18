@@ -17,6 +17,7 @@ interface TasksContextValue {
   loading: boolean;
   addTask: (task: Omit<Task, 'id' | 'createdAt'>) => Promise<Task | null>;
   updateTask: (taskId: string, updates: Partial<Task>) => Promise<void>;
+  deleteTask: (taskId: string) => Promise<boolean>;
   addCategory: (category: Omit<TaskCategory, 'id' | 'createdAt'>) => Promise<TaskCategory | null>;
   deleteCategory: (categoryId: string) => Promise<boolean>;
   deleteTemplate: (templateId: string) => Promise<boolean>;
@@ -652,6 +653,33 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
     }
   }, [activeFamilyId, toast]);
 
+  const deleteTask = useCallback(async (taskId: string): Promise<boolean> => {
+    if (!activeFamilyId) return false;
+
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', taskId)
+        .eq('family_id', activeFamilyId);
+
+      if (error) throw error;
+
+      // Update local state
+      setTasks(prev => prev.filter(task => task.id !== taskId));
+      
+      return true;
+    } catch (error) {
+      console.error('Failed to delete task:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete task. Please try again.",
+        variant: "destructive",
+      });
+      return false;
+    }
+  }, [activeFamilyId, toast]);
+
   const contextValue: TasksContextValue = {
     tasks,
     categories,
@@ -659,6 +687,7 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
     loading,
     addTask,
     updateTask,
+    deleteTask,
     addCategory,
     deleteCategory,
     deleteTemplate,
