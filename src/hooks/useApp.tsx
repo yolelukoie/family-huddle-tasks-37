@@ -559,12 +559,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // Fetch all family members for a family
   const fetchFamilyMembers = async (familyId: string) => {
     try {
+      // Since RLS only allows viewing own user_families records, 
+      // we need to get family members through a different approach
+      // For now, just get the current user's family relationship
       const { data, error } = await supabase
         .from('user_families')
         .select('*')
-        .eq('family_id', familyId);
+        .eq('family_id', familyId)
+        .eq('user_id', user?.id);
 
-      if (!error && data) {
+      if (!error && data && data.length > 0) {
         const members = data.map(item => ({
           userId: item.user_id,
           familyId: item.family_id,
@@ -580,9 +584,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           [familyId]: members
         }));
 
-        // Fetch profiles for each member
-        const userIds = members.map(m => m.userId);
-        await fetchUserProfiles(userIds);
+        // Fetch profile for current user
+        if (user?.id) {
+          await fetchUserProfiles([user.id]);
+        }
       }
     } catch (error) {
       console.error('Error fetching family members:', error);
