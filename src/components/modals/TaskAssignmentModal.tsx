@@ -20,7 +20,7 @@ interface TaskAssignmentModalProps {
 export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }: TaskAssignmentModalProps) {
   const { user } = useAuth();
   const { getUserProfile } = useApp();
-  const { updateTask, deleteTask } = useTasks();
+  const { updateTask, deleteTask, ensureCategoryByName } = useTasks();
   const { toast } = useToast();
   
   if (!task || !user) return null;
@@ -32,9 +32,13 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
     try {
       // Move task to appropriate category based on due date
       const dueDate = new Date(task.dueDate);
-      const categoryName = isToday(dueDate) ? "Today's Tasks" : (isFuture(dueDate) ? "Upcoming Tasks" : "Today's Tasks");
+      const catName = isToday(dueDate) ? "Today's Tasks" : "Upcoming Tasks";
+      const cat = await ensureCategoryByName(catName);
       
-      // Task is already assigned to user, just mark as accepted by keeping it
+      if (cat) {
+        await updateTask(task.id, { categoryId: cat.id });
+      }
+
       toast({
         title: "Task accepted!",
         description: `"${task.name}" has been added to your tasks.`,
@@ -44,7 +48,6 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
       onOpenChange(false);
 
       // Notify the assigner
-      // In a real app, you'd send this notification through your backend
       console.log(`Task "${task.name}" was accepted by ${user.displayName}`);
       
     } catch (error) {

@@ -60,6 +60,27 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [activeFamilyId]);
 
+  // Wire fetchFamilyMembers() to run whenever the active family is set/changes
+  useEffect(() => {
+    if (!activeFamilyId) return;
+    fetchFamilyMembers(activeFamilyId);
+  }, [activeFamilyId]);
+
+  // Optional realtime refresh for family members
+  useEffect(() => {
+    if (!activeFamilyId) return;
+    const ch = supabase
+      .channel(`family-members-${activeFamilyId}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'user_families',
+        filter: `family_id=eq.${activeFamilyId}`
+      }, () => fetchFamilyMembers(activeFamilyId))
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [activeFamilyId]);
+
   // Add focus/visibility refetch
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -366,6 +387,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       const family = familyData[0];
       console.log('useApp: Family data received from RPC:', family);
+
+      // Insert the membership row (the RPC may have already done this, but ensure it exists)
+      const { error: ufErr } = await supabase
+        .from('user_families')
+        .insert([{ user_id: user.id, family_id: family.id }])
+        .select()
+        .single();
+      
+      // Ignore "duplicate key" if you retry
+      if (ufErr && ufErr.code !== '23505') {
+        console.error('Failed to insert user_families row on join:', ufErr);
+        return null;
+      }
 
       const convertedFamily: Family = {
         id: family.id,

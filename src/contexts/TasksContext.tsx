@@ -208,13 +208,19 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
     const prev = tasks.find(t => t.id === taskId);
     const prevCompleted = !!prev?.completed;
 
-    // Update task in Supabase and get the updated row to compute delta from fresh data
+    // Build update object for all possible fields
+    const patch: any = {};
+    if (updates.completed !== undefined) {
+      patch.completed = updates.completed;
+      patch.completed_at = updates.completedAt ?? (updates.completed ? new Date().toISOString() : null);
+    }
+    if (updates.categoryId !== undefined) patch.category_id = updates.categoryId;
+    if (updates.assignedTo !== undefined) patch.assigned_to = updates.assignedTo;
+    if (updates.dueDate !== undefined) patch.due_date = updates.dueDate;
+
     const { data: updated, error } = await supabase
       .from('tasks')
-      .update({
-        completed: updates.completed,
-        completed_at: updates.completedAt ?? (updates.completed ? new Date().toISOString() : null),
-      })
+      .update(patch)
       .eq('id', taskId)
       .select('id, completed, star_value, family_id')
       .single();
