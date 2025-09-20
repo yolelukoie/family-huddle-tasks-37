@@ -512,6 +512,39 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_family_members: {
+        Args: { p_family_id: string }
+        Returns: {
+          active_family_id: string
+          age: number
+          current_stage: number
+          date_of_birth: string
+          display_name: string
+          family_id: string
+          gender: string
+          joined_at: string
+          profile_complete: boolean
+          profile_id: string
+          total_stars: number
+          user_id: string
+        }[]
+      }
+      get_my_family_ids: {
+        Args: Record<PropertyKey, never>
+        Returns: string[]
+      }
+      get_user_family_ids: {
+        Args: { p_user_id: string }
+        Returns: string[]
+      }
+      is_family_comember: {
+        Args: { p_user_id: string }
+        Returns: boolean
+      }
+      is_in_same_family: {
+        Args: { target_user: string }
+        Returns: boolean
+      }
       join_family_by_code: {
         Args: { p_invite_code: string }
         Returns: {

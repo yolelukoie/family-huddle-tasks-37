@@ -559,8 +559,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // Fetch all family members for a family using RPC
   const fetchFamilyMembers = async (familyId: string) => {
     try {
+      // Call RPC as a generic function since types aren't updated yet
       const { data, error } = await supabase
-        .rpc('get_family_members', { p_family_id: familyId });
+        .rpc('get_family_members' as any, { p_family_id: familyId });
+
+      console.log('fetchFamilyMembers: RPC result:', { data, error, familyId });
 
       if (error) {
         console.error('fetchFamilyMembers: RPC get_family_members failed:', error);
@@ -568,9 +571,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      if (!data) return;
+      if (!data || !Array.isArray(data)) {
+        console.log('fetchFamilyMembers: No data or invalid data format');
+        return;
+      }
 
-      console.log(`fetchFamilyMembers: RPC returned ${data.length} members:`, data.map(row => row.user_id));
+      console.log(`fetchFamilyMembers: RPC returned ${data.length} members:`, data.map((row: any) => row.user_id));
 
       // Map RPC rows to your existing types
       const members: UserFamily[] = data.map((row: any) => ({
@@ -595,6 +601,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           activeFamilyId: row.active_family_id ?? null,
         };
       }
+
+      console.log('fetchFamilyMembers: Final members:', members.map(m => m.userId));
+      console.log('fetchFamilyMembers: Final profiles:', Object.keys(profiles));
 
       setAllFamilyMembers(prev => ({ ...prev, [familyId]: members }));
       setUserProfiles(prev => ({ ...prev, ...profiles }));
