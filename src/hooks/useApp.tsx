@@ -556,41 +556,52 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return userProfiles[userId] || null;
   };
 
-  // Fetch all family members for a family
+  // Fetch all family members for a family using RPC
   const fetchFamilyMembers = async (familyId: string) => {
     try {
-      // Since RLS only allows viewing own user_families records, 
-      // we need to get family members through a different approach
-      // For now, just get the current user's family relationship
       const { data, error } = await supabase
-        .from('user_families')
-        .select('*')
-        .eq('family_id', familyId)
-        .eq('user_id', user?.id);
+        .rpc('get_family_members', { p_family_id: familyId });
 
-      if (!error && data && data.length > 0) {
-        const members = data.map(item => ({
-          userId: item.user_id,
-          familyId: item.family_id,
-          joinedAt: item.joined_at,
-          totalStars: item.total_stars,
-          currentStage: item.current_stage,
-          lastReadTimestamp: item.last_read_timestamp,
-          seenCelebrations: item.seen_celebrations,
-        }));
-
-        setAllFamilyMembers(prev => ({
-          ...prev,
-          [familyId]: members
-        }));
-
-        // Fetch profile for current user
-        if (user?.id) {
-          await fetchUserProfiles([user.id]);
-        }
+      if (error) {
+        console.error('fetchFamilyMembers: RPC get_family_members failed:', error);
+        // Do not clear existing state on error
+        return;
       }
-    } catch (error) {
-      console.error('Error fetching family members:', error);
+
+      if (!data) return;
+
+      console.log(`fetchFamilyMembers: RPC returned ${data.length} members:`, data.map(row => row.user_id));
+
+      // Map RPC rows to your existing types
+      const members: UserFamily[] = data.map((row: any) => ({
+        userId: row.user_id,
+        familyId: row.family_id,
+        joinedAt: row.joined_at,
+        totalStars: row.total_stars ?? 0,
+        currentStage: row.current_stage ?? 1,
+        lastReadTimestamp: null,
+        seenCelebrations: [],
+      }));
+
+      const profiles: Record<string, User> = {};
+      for (const row of data) {
+        profiles[row.user_id] = {
+          id: row.profile_id ?? row.user_id,
+          displayName: row.display_name ?? null,
+          dateOfBirth: row.date_of_birth ?? null,
+          gender: (row.gender ?? 'other') as 'male' | 'female' | 'other',
+          age: row.age ?? null,
+          profileComplete: !!row.profile_complete,
+          activeFamilyId: row.active_family_id ?? null,
+        };
+      }
+
+      setAllFamilyMembers(prev => ({ ...prev, [familyId]: members }));
+      setUserProfiles(prev => ({ ...prev, ...profiles }));
+
+      console.log(`fetchFamilyMembers: Set ${members.length} members and ${Object.keys(profiles).length} profiles`);
+    } catch (e) {
+      console.error('fetchFamilyMembers: unexpected error', e);
     }
   };
 

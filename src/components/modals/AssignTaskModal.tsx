@@ -43,7 +43,10 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
 
   if (!user || !activeFamilyId) return null;
 
-  const familyMembers = getFamilyMembers(activeFamilyId);
+  const members = activeFamilyId ? getFamilyMembers(activeFamilyId) : [];
+  const otherMembers = members.filter(m => m.userId !== user.id);
+
+  console.log('AssignTaskModal: members rendered:', members.map(m => ({ userId: m.userId, profile: getUserProfile(m.userId)?.displayName })));
 
   // Check if user is 18+ for star value editing
   const canEditStars = user.age >= 18;
@@ -135,19 +138,16 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
                           <SelectValue placeholder="Select person" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
-                        <SelectItem value={user.id}>Myself</SelectItem>
-                        {familyMembers
-                          .filter(member => member.userId !== user.id)
-                          .map(member => {
-                            const memberProfile = getUserProfile(member.userId);
-                            return (
-                              <SelectItem key={member.userId} value={member.userId}>
-                                {memberProfile?.displayName || `Member ${member.userId.slice(-4)}`}
-                              </SelectItem>
-                            );
-                          })}
-                      </SelectContent>
+                       <SelectContent>
+                         <SelectItem value={user.id}>
+                           {getUserProfile(user.id)?.displayName ?? 'Myself'}
+                         </SelectItem>
+                         {otherMembers.map(m => {
+                           const p = getUserProfile(m.userId);
+                           const label = p?.displayName ?? `Member ${m.userId.slice(-4)}`;
+                           return <SelectItem key={m.userId} value={m.userId}>{label}</SelectItem>;
+                         })}
+                       </SelectContent>
                     </Select>
                     <FormMessage />
                   </FormItem>
