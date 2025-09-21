@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useApp } from '@/hooks/useApp';
-import { storage } from '@/lib/storage';
+import { useTasks } from '@/hooks/useTasks';
 import { formatDate } from '@/lib/utils';
 
 interface TaskHistoryModalProps {
@@ -12,14 +12,13 @@ interface TaskHistoryModalProps {
 
 export function TaskHistoryModal({ open, onOpenChange }: TaskHistoryModalProps) {
   const { activeFamilyId } = useApp();
+  const { tasks, categories } = useTasks();
 
   if (!activeFamilyId) return null;
 
-  const completedTasks = storage.getTasks(activeFamilyId)
+  const completedTasks = tasks
     .filter(task => task.completed)
     .sort((a, b) => new Date(b.completedAt!).getTime() - new Date(a.completedAt!).getTime());
-
-  const categories = storage.getTaskCategories(activeFamilyId);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

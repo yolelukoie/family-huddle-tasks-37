@@ -30,10 +30,8 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
 
   const handleAccept = async () => {
     try {
-      // Move task to appropriate category based on due date
-      const dueDate = new Date(task.dueDate);
-      const catName = isToday(dueDate) ? "Today's Tasks" : "Upcoming Tasks";
-      const cat = await ensureCategoryByName(catName);
+      // Move task to "Assigned" category regardless of due date
+      const cat = await ensureCategoryByName("Assigned");
       
       if (cat) {
         await updateTask(task.id, { categoryId: cat.id });
