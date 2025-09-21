@@ -22,6 +22,7 @@ import { AssignTaskModal } from '@/components/modals/AssignTaskModal';
 import { MilestoneCelebration } from '@/components/celebrations/MilestoneCelebration';
 import { TaskAssignmentModal } from '@/components/modals/TaskAssignmentModal';
 import { useTaskAssignments } from '@/hooks/useTaskAssignments';
+import { useTaskNotifications } from '@/hooks/useTaskNotifications';
 import { Star, Calendar, Plus, RotateCcw, CheckCircle } from 'lucide-react';
 export default function MainPage() {
   const {
@@ -51,6 +52,9 @@ export default function MainPage() {
     handleTaskResponse, 
     closeAssignmentModal 
   } = useTaskAssignments();
+  
+  // Check for task assignment notifications
+  useTaskNotifications();
   const navigate = useNavigate();
   const [showAssignTask, setShowAssignTask] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -188,9 +192,9 @@ export default function MainPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {/* Character Image and Badges */}
+             {/* Character Image and Badges */}
             <div className="flex justify-center mb-6">
-              <div className="relative w-80 h-40 overflow-visible">
+              <div className="relative w-80 h-40 overflow-hidden">
                 {/* Character Image Container */}
                 <div className="absolute left-1/2 transform -translate-x-1/2 w-40 h-40">
                   <img src={characterImagePath} alt={`${user.gender} character at ${stageName} stage`} className="w-40 h-40 object-contain" onError={e => {
@@ -203,14 +207,14 @@ export default function MainPage() {
                   <span className="text-4xl hidden">👤</span>
                 </div>
                  
-                 {/* Draggable Badges overlaying character */}
-                 {showBadges && (
+                  {/* Draggable Badges overlaying character */}
+                  {showBadges && (
                     <DraggableBadgeDisplay 
                       badges={unlockedBadges} 
                       familyId={activeFamilyId!} 
                       userId={user!.id}
                       containerBounds={{ width: 320, height: 160 }}
-                      className="absolute inset-0 z-10"
+                      className="absolute inset-0 z-0"
                     />
                   )}
               </div>

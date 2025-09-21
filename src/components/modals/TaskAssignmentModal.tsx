@@ -45,8 +45,20 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
       onTaskResponse?.(task.id, true);
       onOpenChange(false);
 
-      // Notify the assigner
-      console.log(`Task "${task.name}" was accepted by ${user.displayName}`);
+      // Store notification for the assigner
+      const notification = {
+        id: Date.now().toString(),
+        taskId: task.id,
+        taskName: task.name,
+        assigneeId: user.id,
+        assigneeName: user.displayName,
+        action: 'accepted',
+        timestamp: new Date().toISOString()
+      };
+      
+      const existingNotifications = JSON.parse(localStorage.getItem(`task-notifications-${task.assignedBy}`) || '[]');
+      existingNotifications.push(notification);
+      localStorage.setItem(`task-notifications-${task.assignedBy}`, JSON.stringify(existingNotifications));
       
     } catch (error) {
       console.error('Error accepting task:', error);
@@ -71,9 +83,20 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
       onTaskResponse?.(task.id, false);
       onOpenChange(false);
 
-      // Notify the assigner
-      // In a real app, you'd send this notification through your backend
-      console.log(`Task "${task.name}" was rejected by ${user.displayName}`);
+      // Store notification for the assigner
+      const notification = {
+        id: Date.now().toString(),
+        taskId: task.id,
+        taskName: task.name,
+        assigneeId: user.id,
+        assigneeName: user.displayName,
+        action: 'rejected',
+        timestamp: new Date().toISOString()
+      };
+      
+      const existingNotifications = JSON.parse(localStorage.getItem(`task-notifications-${task.assignedBy}`) || '[]');
+      existingNotifications.push(notification);
+      localStorage.setItem(`task-notifications-${task.assignedBy}`, JSON.stringify(existingNotifications));
       
     } catch (error) {
       console.error('Error rejecting task:', error);
