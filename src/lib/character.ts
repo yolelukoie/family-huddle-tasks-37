@@ -46,42 +46,12 @@ export function getStageProgress(totalStars: number): { current: number; target:
 export function getCharacterImagePath(gender: 'male' | 'female' | 'other', stage: number): string {
   // For 'other', default to female images
   const effectiveGender = gender === 'other' ? 'female' : gender;
-  const supabaseUrl = 'https://zglvtspmrihotbfbjtvw.supabase.co/storage/v1/object/public/character-images';
   
-  // Mapping of female stages to Supabase storage
-  const femaleStageImages: Record<number, string> = {
-    0: `${supabaseUrl}/female_stage_000.png`,
-    50: `${supabaseUrl}/female_stage_050.png`, 
-    200: `${supabaseUrl}/female_stage_200.png`,
-    350: `${supabaseUrl}/female_stage_350.png`,
-    500: `${supabaseUrl}/female_stage_500.png`,
-    600: `${supabaseUrl}/female_stage_600.png`,
-    700: `${supabaseUrl}/female_stage_700.png`,
-    800: `${supabaseUrl}/female_stage_800.png`
-  };
-
-  // Mapping of male stages to Supabase storage
-  const maleStageImages: Record<number, string> = {
-    0: `${supabaseUrl}/male_stage_000.png`,
-    50: `${supabaseUrl}/male_stage_050.png`, 
-    200: `${supabaseUrl}/male_stage_200.png`,
-    350: `${supabaseUrl}/male_stage_350.png`,
-    500: `${supabaseUrl}/male_stage_500.png`,
-    600: `${supabaseUrl}/male_stage_600.png`,
-    700: `${supabaseUrl}/male_stage_700.png`,
-    800: `${supabaseUrl}/male_stage_800.png`
-  };
-
-  if (effectiveGender === 'female' && femaleStageImages[stage]) {
-    return femaleStageImages[stage];
-  }
-
-  if (effectiveGender === 'male' && maleStageImages[stage]) {
-    return maleStageImages[stage];
-  }
-
-  // Fallback to placeholder for missing images
-  return `/character-placeholder-${effectiveGender}-${stage}.png`;
+  // Format stage number with leading zeros (000, 050, 200, etc.)
+  const stageStr = stage.toString().padStart(3, '0');
+  
+  // Use public folder images
+  return `/${effectiveGender}_stage_${stageStr}.png`;
 }
 
 export function getStageName(stage: number): string {
