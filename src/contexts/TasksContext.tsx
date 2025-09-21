@@ -251,52 +251,7 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
       const success = await applyStarsDelta(updated.family_id, delta);
       
       if (success) {
-        // Award badges after stars are updated
-        const userFamily = getUserFamily(updated.family_id);
-        const newTotal = userFamily?.totalStars ?? 0;
-        const oldTotal = newTotal - delta;
-        
-        console.log(`TasksContext: Badge check: ${oldTotal} -> ${newTotal} stars (delta: ${delta})`);
-
-        // Import badge functions
-        const { getNewlyUnlockedBadges } = await import('@/lib/badges');
-        const newBadges = getNewlyUnlockedBadges(oldTotal, newTotal);
-        console.log('TasksContext: New badges to unlock:', newBadges.map(b => b.id));
-
-        if (newBadges.length > 0) {
-          const badgeInserts = newBadges.map(badge => ({
-            user_id: user!.id,
-            family_id: updated.family_id,
-            badge_id: badge.id,
-            seen: true
-          }));
-
-          try {
-            const { error } = await supabase
-              .from('user_badges')
-              .upsert(badgeInserts, { 
-                onConflict: 'user_id,family_id,badge_id',
-                ignoreDuplicates: true 
-              });
-            
-            if (error) {
-              console.error('TasksContext: Failed to insert badges:', error);
-            } else {
-              console.log('TasksContext: Successfully awarded badges:', newBadges.map(b => b.id));
-            }
-          } catch (error) {
-            console.error('TasksContext: Error awarding badges:', error);
-          }
-
-          // Trigger badge celebration and refresh
-          newBadges.forEach(badge => {
-            if (addCelebration) {
-              addCelebration({ type: 'badge', badge });
-            }
-          });
-          
-          window.dispatchEvent(new CustomEvent('badges:changed'));
-        }
+        // Badges are checked in MainPage.tsx, no need to check here
       } else {
         console.error('TasksContext: Failed to apply stars delta, skipping badge award');
       }

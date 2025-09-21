@@ -76,23 +76,24 @@ export default function ChatPage() {
                 </div>
               ) : (
                 messages.map(msg => (
-                  <div
-                    key={msg.id}
-                    className={`flex ${msg.userId === user.id ? 'justify-end' : 'justify-start'}`}
-                  >
+                  <div key={msg.id} className="space-y-1">
+                    <div className="text-xs font-medium text-muted-foreground pl-1">
+                      {msg.userDisplayName}
+                    </div>
                     <div
-                      className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                        msg.userId === user.id
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted'
-                      }`}
+                      className={`flex ${msg.userId === user.id ? 'justify-end' : 'justify-start'}`}
                     >
-                      {msg.userId !== user.id && (
-                        <div className="text-xs font-medium mb-1">{msg.userDisplayName}</div>
-                      )}
-                      <div className="text-sm">{msg.content}</div>
-                      <div className="text-xs opacity-70 mt-1">
-                        {formatDate(msg.createdAt)}
+                      <div
+                        className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                          msg.userId === user.id
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted'
+                        }`}
+                      >
+                        <div className="text-sm">{msg.content}</div>
+                        <div className="text-xs opacity-70 mt-1">
+                          {formatDate(msg.createdAt)}
+                        </div>
                       </div>
                     </div>
                   </div>

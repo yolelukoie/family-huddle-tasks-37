@@ -50,8 +50,8 @@ export function useTaskNotifications() {
     // Check immediately
     checkNotifications();
 
-    // Set up polling to check for new notifications every 5 seconds
-    const interval = setInterval(checkNotifications, 5000);
+    // Set up polling to check for new notifications every 2 seconds
+    const interval = setInterval(checkNotifications, 2000);
 
     return () => clearInterval(interval);
   }, [user?.id, toast]);

@@ -58,40 +58,17 @@ export default function MainPage() {
   const navigate = useNavigate();
   const [showAssignTask, setShowAssignTask] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [previousStars, setPreviousStars] = useState(0);
-  // Handle loading and missing data states
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading user data...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!activeFamilyId) {
-    // User exists but has no active family - redirect to onboarding to complete family setup
-    setTimeout(() => navigate(ROUTES.onboarding, { replace: true }), 0);
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Setting up your family...</p>
-        </div>
-      </div>
-    );
-  }
   const totalStars = getTotalStars(activeFamilyId);
   const currentStage = getCurrentStage(totalStars);
   const stageProgress = getStageProgress(totalStars);
   const stageName = getStageName(currentStage);
   const characterImagePath = getCharacterImagePath(user.gender, currentStage);
 
+  const [previousStars, setPreviousStars] = useState(totalStars);
+
   // Check for newly unlocked badges and milestone when stars change
   useEffect(() => {
-    if (previousStars !== totalStars) {
+    if (previousStars !== totalStars && previousStars !== 0) {
       // Check for 1000 star milestone celebration
       if (previousStars < 1000 && totalStars >= 1000) {
         // Add milestone celebration to queue
@@ -107,8 +84,8 @@ export default function MainPage() {
       } else {
         checkForNewBadges(previousStars, totalStars);
       }
-      setPreviousStars(totalStars);
     }
+    setPreviousStars(totalStars);
   }, [totalStars, previousStars, checkForNewBadges, addCelebration, resetCharacterProgress, resetBadgeProgress, activeFamilyId]);
 
   // Get today's tasks from useTasks hook - only tasks assigned to current user
