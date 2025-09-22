@@ -6,8 +6,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useCelebrations } from '@/hooks/useCelebrations';
 import type { Task, TaskCategory, TaskTemplate } from '@/lib/types';
 
-const MAX_TASKS_PER_FAMILY = 100;
-const MAX_CATEGORIES_PER_FAMILY = 20;
+const MAX_CATEGORIES_PER_FAMILY = 10;
+const MAX_ACTIVE_TASKS_PER_CATEGORY = 20;
 const MAX_TEMPLATES_PER_CATEGORY = 50;
 
 interface TasksContextValue {
@@ -125,14 +125,26 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
   const addTask = useCallback(async (task: Omit<Task, 'id' | 'createdAt'>) => {
     if (!activeFamilyId || !user) return null;
 
-    // Check limit
-    if (tasks.length >= MAX_TASKS_PER_FAMILY) {
-      toast({
-        title: "Limit Reached",
-        description: `Cannot add more than ${MAX_TASKS_PER_FAMILY} tasks per family.`,
-        variant: "destructive",
-      });
-      return null;
+    // Check if this is a peer assignment
+    const isPeerAssignment = !!(user && (task.assignedTo ?? user.id) !== user.id);
+
+    // For non-peer assignments, check per-category active task limit
+    if (!isPeerAssignment) {
+      const { count, error: countErr } = await supabase
+        .from('tasks')
+        .select('id', { count: 'exact', head: true })
+        .eq('family_id', activeFamilyId)
+        .eq('category_id', task.categoryId)
+        .eq('completed', false);
+
+      if (!countErr && (count ?? 0) >= MAX_ACTIVE_TASKS_PER_CATEGORY) {
+        toast({
+          title: 'Limit Reached',
+          description: `This category already has ${MAX_ACTIVE_TASKS_PER_CATEGORY} active tasks.`,
+          variant: 'destructive',
+        });
+        return null;
+      }
     }
 
     // Ensure due_date defaults to today if missing
@@ -448,6 +460,23 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
     const t = templates.find(x => x.id === templateId);
     if (!t) {
       console.error('Template not found for Today:', templateId);
+      return null;
+    }
+
+    // Check per-category active task limit (templates are always self-assigned)
+    const { count, error: countErr } = await supabase
+      .from('tasks')
+      .select('id', { count: 'exact', head: true })
+      .eq('family_id', activeFamilyId)
+      .eq('category_id', t.categoryId)
+      .eq('completed', false);
+
+    if (!countErr && (count ?? 0) >= MAX_ACTIVE_TASKS_PER_CATEGORY) {
+      toast({
+        title: 'Limit Reached',
+        description: `This category already has ${MAX_ACTIVE_TASKS_PER_CATEGORY} active tasks.`,
+        variant: 'destructive',
+      });
       return null;
     }
 
