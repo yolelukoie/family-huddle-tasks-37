@@ -11,6 +11,8 @@ import ChatPage from '@/pages/chat/ChatPage';
 import FamilyPage from '@/pages/family/FamilyPage';
 import NotFound from '@/pages/NotFound';
 import { DevStatus } from '@/components/dev/DevStatus';
+import { NotificationsBootstrap } from '@/components/notifications/NotificationsBootstrap';
+import { DevTestButton } from '@/components/dev/DevTestButton';
 
 export function AppLayout() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
@@ -70,6 +72,7 @@ export function AppLayout() {
 
   return (
     <div>
+      <NotificationsBootstrap />
       <Routes>
         <Route index element={<MainPage />} />
         <Route path={ROUTES.onboarding.slice(1)} element={<OnboardingPage />} />
@@ -80,6 +83,7 @@ export function AppLayout() {
         <Route path="*" element={<NotFound />} />
       </Routes>
       <DevStatus />
+      {process.env.NODE_ENV === 'development' && <DevTestButton />}
     </div>
   );
 }
