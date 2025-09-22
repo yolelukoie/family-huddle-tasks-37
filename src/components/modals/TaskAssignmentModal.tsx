@@ -9,6 +9,7 @@ import { useTasks } from '@/hooks/useTasks';
 import { useToast } from '@/hooks/use-toast';
 import { Task } from '@/lib/types';
 import { format, isToday, isFuture } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
 
 interface TaskAssignmentModalProps {
   open: boolean;
@@ -37,6 +38,21 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
         await updateTask(task.id, { categoryId: cat.id });
       }
 
+      // INSERT a notification event for the assigner
+      await (supabase as any).from('task_events').insert({
+        task_id: task.id,
+        family_id: task.familyId,
+        recipient_id: task.assignedBy,   // notify the sender
+        actor_id: user.id,                // me (the acceptor)
+        event_type: 'accepted',
+        payload: {
+          name: task.name,
+          stars: task.starValue,
+          due_date: task.dueDate,
+          actor_name: user.displayName ?? null
+        }
+      });
+
       toast({
         title: "Task accepted!",
         description: `"${task.name}" has been added to your tasks.`,
@@ -44,21 +60,6 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
 
       onTaskResponse?.(task.id, true);
       onOpenChange(false);
-
-      // Store notification for the assigner
-      const notification = {
-        id: Date.now().toString(),
-        taskId: task.id,
-        taskName: task.name,
-        assigneeId: user.id,
-        assigneeName: user.displayName,
-        action: 'accepted',
-        timestamp: new Date().toISOString()
-      };
-      
-      const existingNotifications = JSON.parse(localStorage.getItem(`task-notifications-${task.assignedBy}`) || '[]');
-      existingNotifications.push(notification);
-      localStorage.setItem(`task-notifications-${task.assignedBy}`, JSON.stringify(existingNotifications));
       
     } catch (error) {
       console.error('Error accepting task:', error);
@@ -75,6 +76,21 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
       // Delete the task since it was rejected
       await deleteTask(task.id);
 
+      // INSERT a notification event for the assigner
+      await (supabase as any).from('task_events').insert({
+        task_id: task.id,
+        family_id: task.familyId,
+        recipient_id: task.assignedBy,  // notify the sender
+        actor_id: user.id,
+        event_type: 'rejected',
+        payload: {
+          name: task.name,
+          stars: task.starValue,
+          due_date: task.dueDate,
+          actor_name: user.displayName ?? null
+        }
+      });
+
       toast({
         title: "Task rejected",
         description: `"${task.name}" has been rejected.`,
@@ -82,21 +98,6 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
 
       onTaskResponse?.(task.id, false);
       onOpenChange(false);
-
-      // Store notification for the assigner
-      const notification = {
-        id: Date.now().toString(),
-        taskId: task.id,
-        taskName: task.name,
-        assigneeId: user.id,
-        assigneeName: user.displayName,
-        action: 'rejected',
-        timestamp: new Date().toISOString()
-      };
-      
-      const existingNotifications = JSON.parse(localStorage.getItem(`task-notifications-${task.assignedBy}`) || '[]');
-      existingNotifications.push(notification);
-      localStorage.setItem(`task-notifications-${task.assignedBy}`, JSON.stringify(existingNotifications));
       
     } catch (error) {
       console.error('Error rejecting task:', error);
