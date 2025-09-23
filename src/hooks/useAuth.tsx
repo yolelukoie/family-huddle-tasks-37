@@ -74,31 +74,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Load user data from Supabase profiles table
   const loadUserData = useCallback(async (supabaseUser: SupabaseUser | null) => {
-    if (!supabaseUser) { setUser(null); return; }
-  
-    try {
-      const { data: profile, error } = await supabase
-        .from('profiles').select('*').eq('id', supabaseUser.id).maybeSingle();
-  
-      if (error) { console.error('Error loading profile:', error); return; }
-      if (!profile) { /* nothing yet; ensureProfile will have inserted */ return; }
-  
-      const user: User = {
-        id: profile.id,
-        displayName: profile.display_name,
-        dateOfBirth: profile.date_of_birth,
-        gender: profile.gender as 'male' | 'female' | 'other',
-        age: profile.age,
-        profileComplete: profile.profile_complete,
-        activeFamilyId: profile.active_family_id,
-      };
-      setUser(user);
-    } catch (err) {
-      console.error('Error in loadUserData:', err);
+    if (supabaseUser) {
+      try {
+        // First try to get profile from Supabase
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', supabaseUser.id)
+          .maybeSingle();
+
+        if (error) {
+          console.error('Error loading profile:', error);
+          // Fall back to localStorage if Supabase fails
+          await migrateFromLocalStorage(supabaseUser.id);
+          return;
+        }
+
+        if (profile) {
+          // Convert Supabase profile to User type
+          const user: User = {
+            id: profile.id,
+            displayName: profile.display_name,
+            dateOfBirth: profile.date_of_birth,
+            gender: profile.gender as 'male' | 'female' | 'other',
+            age: profile.age,
+            profileComplete: profile.profile_complete,
+            activeFamilyId: profile.active_family_id,
+          };
+          setUser(user);
+        } else {
+          // No profile in Supabase, try to migrate from localStorage
+          await migrateFromLocalStorage(supabaseUser.id);
+        }
+      } catch (error) {
+        console.error('Error in loadUserData:', error);
+        setUser(null);
+      }
+    } else {
       setUser(null);
     }
   }, []);
-
 
   // Migrate user data from localStorage to Supabase
   const migrateFromLocalStorage = useCallback(async (userId: string) => {
@@ -193,13 +208,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsLoading(false);
       }
     );
-
-    // Get initial session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      await loadUserData(session?.user ?? null);
-      setIsLoading(false);
-    });
 
     return () => subscription.unsubscribe();
   }, [initializeSession, loadUserData]);
