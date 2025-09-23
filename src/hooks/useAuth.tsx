@@ -7,6 +7,30 @@ import { generateId, calculateAge } from '@/lib/utils';
 const SESSION_KEY = 'app_session_id';
 const USER_KEY = 'app_current_user';
 
+// ADD: safe helpers
+const getUserId = (s: Session | null) => s?.user?.id ?? null;
+
+const ensureProfile = async (uid: string) => {
+  // Create a minimal profile row if it doesn't exist yet
+  const { data: existing, error: selErr } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('id', uid)
+    .maybeSingle();
+
+  if (selErr) {
+    console.error('Profile select error', selErr);
+    return;
+  }
+  if (!existing) {
+    const { error: insErr } = await supabase
+      .from('profiles')
+      .insert([{ id: uid, profile_complete: false }]); // other fields can stay null for now
+    if (insErr) console.error('Profile insert error', insErr);
+  }
+};
+
+
 interface AuthContextType {
   user: User | null;
   sessionId: string | null;
