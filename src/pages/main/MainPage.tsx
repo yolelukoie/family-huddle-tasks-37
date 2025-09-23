@@ -24,7 +24,25 @@ import { TaskAssignmentModal } from '@/components/modals/TaskAssignmentModal';
 import { useTaskAssignments } from '@/hooks/useTaskAssignments';
 import { useTaskNotifications } from '@/hooks/useTaskNotifications';
 import { Star, Calendar, Plus, RotateCcw, CheckCircle } from 'lucide-react';
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+
 export default function MainPage() {
+  const { user, isAuthenticated, isLoading } = useAuth();
+
+  // 1) Wait for auth
+  if (isLoading) {
+    return <div className="p-6">Loading…</div>;
+  }
+
+  // 2) Kick to login if not signed in
+  if (!isAuthenticated) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  // 3) (Optional) If you require profile to be completed, gate here:
+  if (!user?.profileComplete) return <Navigate to="/onboarding" replace />;
+
   const {
     user
   } = useAuth();
@@ -185,15 +203,16 @@ export default function MainPage() {
                 </div>
                  
                   {/* Draggable Badges overlaying character */}
-                  {showBadges && (
-                    <DraggableBadgeDisplay 
-                      badges={unlockedBadges} 
-                      familyId={activeFamilyId!} 
-                      userId={user!.id}
+                  {showBadges && !!user?.id && !!activeFamilyId && (
+                    <DraggableBadgeDisplay
+                      badges={unlockedBadges}
+                      familyId={activeFamilyId}
+                      userId={user.id}
                       containerBounds={{ width: 320, height: 160 }}
                       className="absolute inset-0 z-0"
                     />
                   )}
+
               </div>
             </div>
 
