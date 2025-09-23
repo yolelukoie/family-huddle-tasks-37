@@ -317,7 +317,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthContext.Provider value={{
       user,
       sessionId,
-      isAuthenticated: !!session,
+      isAuthenticated: !!session?.user,
       isLoading,
       signUp,
       signIn,
