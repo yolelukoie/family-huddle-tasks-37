@@ -74,119 +74,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Load user data from Supabase profiles table
   const loadUserData = useCallback(async (supabaseUser: SupabaseUser | null) => {
-    if (supabaseUser) {
-      try {
-        // First try to get profile from Supabase
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', supabaseUser.id)
-          .maybeSingle();
-
-        if (error) {
-          console.error('Error loading profile:', error);
-          // Fall back to localStorage if Supabase fails
-          await migrateFromLocalStorage(supabaseUser.id);
-          return;
-        }
-
-        if (profile) {
-          // Convert Supabase profile to User type
-          const user: User = {
-            id: profile.id,
-            displayName: profile.display_name,
-            dateOfBirth: profile.date_of_birth,
-            gender: profile.gender as 'male' | 'female' | 'other',
-            age: profile.age,
-            profileComplete: profile.profile_complete,
-            activeFamilyId: profile.active_family_id,
-          };
-          setUser(user);
-        } else {
-          // No profile in Supabase, try to migrate from localStorage
-          await migrateFromLocalStorage(supabaseUser.id);
-        }
-      } catch (error) {
-        console.error('Error in loadUserData:', error);
-        setUser(null);
+    if (!supabaseUser) {
+      setUser(null);
+      return;
+    }
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', supabaseUser.id)
+        .maybeSingle();
+  
+      if (error) {
+        console.error('Error loading profile:', error);
+        // Do NOT migrate from localStorage here
+        return;
       }
-    } else {
+  
+      if (!profile) {
+        // ensureProfile() runs in onAuthStateChange; if row isn't there yet, we'll try again on next state change / navigation
+        return;
+      }
+  
+      const mapped: User = {
+        id: profile.id,
+        displayName: profile.display_name,
+        dateOfBirth: profile.date_of_birth,
+        gender: profile.gender as 'male' | 'female' | 'other',
+        age: profile.age,
+        profileComplete: profile.profile_complete,
+        activeFamilyId: profile.active_family_id,
+      };
+      setUser(mapped);
+    } catch (err) {
+      console.error('Error in loadUserData:', err);
       setUser(null);
     }
   }, []);
 
+
   // Migrate user data from localStorage to Supabase
-  const migrateFromLocalStorage = useCallback(async (userId: string) => {
-    try {
-      const userKey = `${USER_KEY}_${userId}`;
-      const storedUser = localStorage.getItem(userKey);
-      
-      if (storedUser) {
-        const parsedUser = JSON.parse(storedUser) as User;
-        
-        // Only migrate if the stored user ID is not a valid UUID (old localStorage data)
-        if (parsedUser.id !== userId) {
-          // Update to use the Supabase user ID
-          parsedUser.id = userId;
-          
-          // Create profile in Supabase
-          const { error } = await supabase
-            .from('profiles')
-            .insert([{
-              id: parsedUser.id,
-              display_name: parsedUser.displayName,
-              date_of_birth: parsedUser.dateOfBirth,
-              gender: parsedUser.gender,
-              age: parsedUser.age,
-              profile_complete: parsedUser.profileComplete,
-              active_family_id: parsedUser.activeFamilyId,
-            }]);
-
-          if (!error) {
-            setUser(parsedUser);
-            localStorage.setItem(userKey, JSON.stringify(parsedUser));
-            console.log('Migrated user profile to Supabase with correct UUID');
-          } else {
-            console.error('Failed to migrate profile:', error);
-            setUser(parsedUser); // Still use localStorage data
-          }
-        } else {
-          // User ID matches, just set the user
-          setUser(parsedUser);
-        }
-      } else {
-        // Try to migrate from global user key
-        const globalUser = localStorage.getItem(USER_KEY);
-        if (globalUser) {
-          const parsedUser = JSON.parse(globalUser) as User;
-          parsedUser.id = userId; // Update ID to match Supabase user
-          
-          const { error } = await supabase
-            .from('profiles')
-            .insert([{
-              id: parsedUser.id,
-              display_name: parsedUser.displayName,
-              date_of_birth: parsedUser.dateOfBirth,
-              gender: parsedUser.gender,
-              age: parsedUser.age,
-              profile_complete: parsedUser.profileComplete,
-              active_family_id: parsedUser.activeFamilyId,
-            }]);
-
-          if (!error) {
-            setUser(parsedUser);
-            localStorage.setItem(userKey, JSON.stringify(parsedUser));
-            localStorage.removeItem(USER_KEY);
-            console.log('Migrated global user profile to Supabase');
-          } else {
-            console.error('Failed to migrate global profile:', error);
-            setUser(parsedUser);
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Migration failed:', error);
-    }
+  const migrateFromLocalStorage = useCallback(async (_userId: string) => {
+    // Disabled during testing; Supabase is the source of truth.
+    return;
   }, []);
 
   // Initialize auth state
