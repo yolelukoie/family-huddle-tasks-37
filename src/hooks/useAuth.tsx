@@ -277,15 +277,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const createUser = useCallback(async (userData: Omit<User, 'id' | 'age' | 'profileComplete'>): Promise<User> => {
-    if (!session?.user) throw new Error('Must be signed in to create user');
-    
+    const uid = getUserId(session);
+    if (!uid) throw new Error('Must be signed in to create user');
+  
     const newUser: User = {
       ...userData,
-      id: session.user.id,
+      id: uid,
       age: calculateAge(userData.dateOfBirth),
       profileComplete: true,
     };
-    
+  
     try {
       // Save to Supabase first
       const { error } = await supabase
@@ -297,27 +298,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           gender: newUser.gender,
           age: newUser.age,
           profile_complete: newUser.profileComplete,
-          active_family_id: newUser.activeFamilyId,
+          active_family_id: newUser.activeFamilyId ?? null,
         }]);
-
-      if (error) {
-        console.error('Failed to save profile to Supabase:', error);
-        throw error;
-      }
-
+  
+      if (error) throw error;
+  
       // Also save to localStorage as backup
-      const userKey = `${USER_KEY}_${session.user.id}`;
+      const userKey = `${USER_KEY}_${uid}`;
       localStorage.setItem(userKey, JSON.stringify(newUser));
       setUser(newUser);
       return newUser;
     } catch (error) {
-      // If Supabase fails, still save to localStorage
-      const userKey = `${USER_KEY}_${session.user.id}`;
+      // If Supabase fails, still save to localStorage (guarded)
+      const userKey = `${USER_KEY}_${uid}`;
       localStorage.setItem(userKey, JSON.stringify(newUser));
       setUser(newUser);
       throw error;
     }
   }, [session]);
+
 
   const updateUser = useCallback(async (updates: Partial<User>) => {
     if (!user || !session?.user) return;
