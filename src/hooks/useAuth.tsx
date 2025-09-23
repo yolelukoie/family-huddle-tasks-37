@@ -118,37 +118,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Initialize auth state
   useEffect(() => {
     initializeSession();
-
-    const { data: { session } } = await supabase.auth.getSession();
-    setSession(session);
-
-    const uid = getUserId(session);
-    if (uid) {
-      await loadUserData(session?.user ?? null);
-    } else {
-      await loadUserData(null);
-    }
-    setIsLoading(false);
-
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setSession(session);
-    
-        const uid = getUserId(session);
-        if (uid) {
-          // We only LOAD. If there is no profile yet, onboarding's createUser() will create it later.
-          await loadUserData(session.user);
-        } else {
-          await loadUserData(null);
+  
+    let unsub: { unsubscribe: () => void } | null = null;
+    let isMounted = true;
+  
+    (async () => {
+      // 1) Hydrate existing session on cold load (Preview)
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!isMounted) return;
+  
+      setSession(session);
+  
+      const uid = getUserId(session);
+      await loadUserData(uid ? (session?.user ?? null) : null);
+      if (!isMounted) return;
+      setIsLoading(false);
+  
+      // 2) Subscribe for future auth changes
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        async (_event, session) => {
+          if (!isMounted) return;
+          setSession(session);
+  
+          const uid2 = getUserId(session);
+          await loadUserData(uid2 ? (session?.user ?? null) : null);
+          if (!isMounted) return;
+          setIsLoading(false);
         }
-        setIsLoading(false);
-      }
-    );
-
-
-    return () => subscription.unsubscribe();
+      );
+  
+      unsub = subscription;
+    })();
+  
+    // cleanup must be synchronous
+    return () => {
+      isMounted = false;
+      if (unsub) unsub.unsubscribe();
+    };
   }, [initializeSession, loadUserData]);
+
 
   // Cross-tab synchronization
   useEffect(() => {
