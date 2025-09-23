@@ -26,23 +26,20 @@ import { useTaskNotifications } from '@/hooks/useTaskNotifications';
 import { Star, Calendar, Plus, RotateCcw, CheckCircle } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-
 export default function MainPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
 
-  // 1) Wait for auth
   if (isLoading) {
     return <div className="p-6">Loading…</div>;
   }
 
-  // 2) Kick to login if not signed in
   if (!isAuthenticated) {
     return <Navigate to="/auth" replace />;
   }
 
-  // 3) (Optional) If you require profile to be completed, gate here:
+  // If you require onboarding before main:
   if (!user?.profileComplete) return <Navigate to="/onboarding" replace />;
-
+  
   const {
     user
   } = useAuth();
