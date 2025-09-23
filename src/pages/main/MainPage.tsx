@@ -62,7 +62,7 @@ export default function MainPage() {
   const currentStage = getCurrentStage(totalStars);
   const stageProgress = getStageProgress(totalStars);
   const stageName = getStageName(currentStage);
-  const characterImagePath = getCharacterImagePath(user.gender, currentStage);
+  const characterImagePath = getCharacterImagePath(user?.gender || 'male', currentStage);
 
   const [previousStars, setPreviousStars] = useState(totalStars);
 
@@ -156,7 +156,7 @@ export default function MainPage() {
         {/* Greeting */}
         <div className="text-center">
           <h1 className="text-3xl font-bold text-family-warm mb-2">
-            Hello, {user.displayName}! ✨
+            Hello, {user?.displayName}! ✨
           </h1>
         </div>
 
@@ -174,7 +174,7 @@ export default function MainPage() {
               <div className="relative w-80 h-40 overflow-hidden">
                 {/* Character Image Container */}
                 <div className="absolute left-1/2 transform -translate-x-1/2 w-40 h-40">
-                  <img src={characterImagePath} alt={`${user.gender} character at ${stageName} stage`} className="w-40 h-40 object-contain" onError={e => {
+                  <img src={characterImagePath} alt={`${user?.gender || 'character'} character at ${stageName} stage`} className="w-40 h-40 object-contain" onError={e => {
                   // Fallback to emoji if image fails to load
                   const img = e.currentTarget;
                   const fallback = img.nextElementSibling as HTMLElement;
