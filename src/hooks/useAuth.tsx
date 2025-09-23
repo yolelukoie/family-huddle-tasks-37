@@ -319,10 +319,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 
   const updateUser = useCallback(async (updates: Partial<User>) => {
-    if (!user || !session?.user) return;
-    
+    const uid = getUserId(session);
+    if (!user || !uid) return;
+  
     const updatedUser = { ...user, ...updates };
-    
+  
     try {
       // Update in Supabase first
       const { error } = await supabase
@@ -333,30 +334,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           gender: updatedUser.gender,
           age: updatedUser.age,
           profile_complete: updatedUser.profileComplete,
-          active_family_id: updatedUser.activeFamilyId,
+          active_family_id: updatedUser.activeFamilyId ?? null,
         })
-        .eq('id', session.user.id);
-
+        .eq('id', uid);
+  
       if (error) {
         console.error('Failed to update profile in Supabase:', error);
         throw error;
       }
-
+  
       // Update local state immediately after successful Supabase update
-      const userKey = `${USER_KEY}_${session.user.id}`;
+      const userKey = `${USER_KEY}_${uid}`;
       localStorage.setItem(userKey, JSON.stringify(updatedUser));
       setUser(updatedUser);
-      
       console.log('User profile updated successfully:', updatedUser);
     } catch (error) {
       console.error('Error updating profile:', error);
       // Still update local state as fallback
-      const userKey = `${USER_KEY}_${session.user.id}`;
+      const userKey = `${USER_KEY}_${uid}`;
       localStorage.setItem(userKey, JSON.stringify(updatedUser));
       setUser(updatedUser);
       throw error;
     }
   }, [user, session]);
+
 
   const logout = useCallback(() => {
     if (session?.user) {
