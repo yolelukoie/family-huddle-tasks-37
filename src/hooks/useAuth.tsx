@@ -195,14 +195,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (_event, session) => {
         setSession(session);
-        
-        // Defer user data loading to prevent deadlock
-        setTimeout(async () => {
-          await loadUserData(session?.user ?? null);
-          setIsLoading(false);
-        }, 0);
+    
+        const uid = getUserId(session);
+        if (uid) {
+          await ensureProfile(uid);
+          await loadUserData(session.user); // safe, user exists here
+        } else {
+          await loadUserData(null);
+        }
+        setIsLoading(false);
       }
     );
 
