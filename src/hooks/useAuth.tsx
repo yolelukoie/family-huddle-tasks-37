@@ -360,13 +360,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 
   const logout = useCallback(() => {
-    if (session?.user) {
-      const userKey = `${USER_KEY}_${session.user.id}`;
+    const uid = getUserId(session);
+    if (uid) {
+      const userKey = `${USER_KEY}_${uid}`;
       localStorage.removeItem(userKey);
     }
     localStorage.removeItem(USER_KEY);
     setUser(null);
   }, [session]);
+
 
   const clearAuth = useCallback(() => {
     const keysToRemove = [];
