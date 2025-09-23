@@ -10,8 +10,8 @@ const USER_KEY = 'app_current_user';
 // ADD: safe helpers
 const getUserId = (s: Session | null) => s?.user?.id ?? null;
 
-const ensureProfile = async (uid: string) => {
-  // Create a minimal profile row if it doesn't exist yet
+// EnsureProfile with this "check-only" version
+const ensureProfile = async (uid: string): Promise<boolean> => {
   const { data: existing, error: selErr } = await supabase
     .from('profiles')
     .select('id')
@@ -20,15 +20,11 @@ const ensureProfile = async (uid: string) => {
 
   if (selErr) {
     console.error('Profile select error', selErr);
-    return;
+    return false;
   }
-  if (!existing) {
-    const { error: insErr } = await supabase
-      .from('profiles')
-      .insert([{ id: uid, profile_complete: false }]); // other fields can stay null for now
-    if (insErr) console.error('Profile insert error', insErr);
-  }
+  return !!existing;
 };
+
 
 
 interface AuthContextType {
@@ -130,14 +126,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
         const uid = getUserId(session);
         if (uid) {
-          await ensureProfile(uid);
-          await loadUserData(session.user); // safe, user exists here
+          // We only LOAD. If there is no profile yet, onboarding's createUser() will create it later.
+          await loadUserData(session.user);
         } else {
           await loadUserData(null);
         }
         setIsLoading(false);
       }
     );
+
 
     return () => subscription.unsubscribe();
   }, [initializeSession, loadUserData]);
