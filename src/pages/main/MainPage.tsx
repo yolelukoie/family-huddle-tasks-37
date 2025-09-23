@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -24,8 +24,6 @@ import { TaskAssignmentModal } from '@/components/modals/TaskAssignmentModal';
 import { useTaskAssignments } from '@/hooks/useTaskAssignments';
 import { useTaskNotifications } from '@/hooks/useTaskNotifications';
 import { Star, Calendar, Plus, RotateCcw, CheckCircle } from 'lucide-react';
-import { Navigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
 export default function MainPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
 
@@ -40,9 +38,6 @@ export default function MainPage() {
   // If you require onboarding before main:
   if (!user?.profileComplete) return <Navigate to="/onboarding" replace />;
   
-  const {
-    user
-  } = useAuth();
   const {
     activeFamilyId,
     getTotalStars,
