@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '@/hooks/useApp';
 import { useAuth } from '@/hooks/useAuth';
+import { useTaskNotifications } from '@/hooks/useTaskNotifications';
 import { ROUTES } from '@/lib/constants';
 import MainPage from '@/pages/main/MainPage';
 import OnboardingPage from '@/pages/onboarding/OnboardingPage';
@@ -11,10 +12,11 @@ import ChatPage from '@/pages/chat/ChatPage';
 import FamilyPage from '@/pages/family/FamilyPage';
 import NotFound from '@/pages/NotFound';
 import { DevStatus } from '@/components/dev/DevStatus';
-import { NotificationsBootstrap } from '@/components/notifications/NotificationsBootstrap';
 import { DevTestButton } from '@/components/dev/DevTestButton';
 
 export function AppLayout() {
+  // Mount notifications hook globally for all authenticated users
+  useTaskNotifications();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const { isLoading } = useApp();
   const navigate = useNavigate();
@@ -72,7 +74,6 @@ export function AppLayout() {
 
   return (
     <div>
-      <NotificationsBootstrap />
       <Routes>
         <Route index element={<MainPage />} />
         <Route path={ROUTES.onboarding.slice(1)} element={<OnboardingPage />} />

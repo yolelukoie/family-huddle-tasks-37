@@ -10,6 +10,8 @@ export function useTaskNotifications() {
 
   useEffect(() => {
     if (!user?.id) return;
+    
+    console.log('[notif] subscribe for', user.id);
 
     // Avoid duplicate channels on re-renders
     if (channelRef.current) {
@@ -18,16 +20,16 @@ export function useTaskNotifications() {
     }
 
     const channel = supabase
-      .channel(`task-events:${user.id}`)
+      .channel(`task-events-${user.id}`)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'task_events', filter: `recipient_id=eq.${user.id}` },
         (payload: any) => {
+          console.log('[notif] event', payload);
           const e = payload.new;
           const type = e.event_type as 'accepted' | 'rejected';
           const taskName = e.payload?.name ?? 'task';
           const who = e.payload?.actor_name ?? 'They';
-          console.debug('[task_events] received', { type, taskName, who, payload: e });
 
           toast({
             title: type === 'accepted' ? 'Task accepted' : 'Task rejected',
@@ -42,6 +44,7 @@ export function useTaskNotifications() {
     channelRef.current = channel;
 
     return () => {
+      console.log('[notif] unsubscribe for', user.id);
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;
