@@ -7,7 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 
 export function useChat() {
   const { user } = useAuth();
-  const { activeFamilyId } = useApp();
+  const { activeFamilyId, getUserProfile } = useApp();
   const { toast } = useToast();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
@@ -29,15 +29,25 @@ export function useChat() {
         return;
       }
 
-      const convertedMessages: ChatMessage[] = (data || []).map(msg => ({
-        id: msg.id,
-        familyId: msg.family_id,
-        userId: msg.user_id,
-        userDisplayName: user.id === msg.user_id ? user.displayName : 'Family Member',
-        content: msg.content,
-        timestamp: msg.created_at,
-        createdAt: msg.created_at,
-      }));
+      const convertedMessages: ChatMessage[] = (data || []).map(msg => {
+        let displayName = 'Unknown';
+        if (user.id === msg.user_id) {
+          displayName = user.displayName || 'You';
+        } else {
+          const senderProfile = getUserProfile(msg.user_id);
+          displayName = senderProfile?.displayName || 'Family Member';
+        }
+        
+        return {
+          id: msg.id,
+          familyId: msg.family_id,
+          userId: msg.user_id,
+          userDisplayName: displayName,
+          content: msg.content,
+          timestamp: msg.created_at,
+          createdAt: msg.created_at,
+        };
+      });
 
       setMessages(convertedMessages);
     } catch (error) {
@@ -45,7 +55,7 @@ export function useChat() {
     } finally {
       setLoading(false);
     }
-  }, [user, activeFamilyId]);
+  }, [user, activeFamilyId, getUserProfile]);
 
   // Load messages when family changes
   useEffect(() => {
@@ -68,11 +78,20 @@ export function useChat() {
         },
         (payload) => {
           const newMessage = payload.new as any;
+          
+          let displayName = 'Unknown';
+          if (newMessage.user_id === user?.id) {
+            displayName = user.displayName || 'You';
+          } else {
+            const senderProfile = getUserProfile(newMessage.user_id);
+            displayName = senderProfile?.displayName || 'Family Member';
+          }
+          
           const convertedMessage: ChatMessage = {
             id: newMessage.id,
             familyId: newMessage.family_id,
             userId: newMessage.user_id,
-            userDisplayName: newMessage.user_id === user?.id ? user.displayName : 'Family Member',
+            userDisplayName: displayName,
             content: newMessage.content,
             timestamp: newMessage.created_at,
             createdAt: newMessage.created_at,
@@ -86,7 +105,7 @@ export function useChat() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [activeFamilyId, user]);
+  }, [activeFamilyId, user, getUserProfile]);
 
   const sendMessage = useCallback(async (content: string) => {
     if (!user || !activeFamilyId || !content.trim()) return false;
