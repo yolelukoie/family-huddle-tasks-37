@@ -291,6 +291,39 @@ export type Database = {
           },
         ]
       }
+      task_events: {
+        Row: {
+          actor_id: string
+          created_at: string
+          event_type: string
+          family_id: string
+          id: string
+          payload: Json
+          recipient_id: string
+          task_id: string
+        }
+        Insert: {
+          actor_id: string
+          created_at?: string
+          event_type: string
+          family_id: string
+          id?: string
+          payload?: Json
+          recipient_id: string
+          task_id: string
+        }
+        Update: {
+          actor_id?: string
+          created_at?: string
+          event_type?: string
+          family_id?: string
+          id?: string
+          payload?: Json
+          recipient_id?: string
+          task_id?: string
+        }
+        Relationships: []
+      }
       task_templates: {
         Row: {
           category_id: string
