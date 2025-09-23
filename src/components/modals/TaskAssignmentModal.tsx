@@ -39,27 +39,23 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
       }
 
       // INSERT a notification event for the assigner
-      const { error: evErr } = await (supabase as any)
-        .from('task_events')
-        .insert([{
-          task_id: task.id,
-          family_id: task.familyId,
-          recipient_id: task.assignedBy,  // the assigner should be notified
-          actor_id: user.id,              // the acceptor/rejector
-          event_type: 'accepted',
-          payload: { 
-            name: task.name, 
-            stars: task.starValue, 
-            due_date: task.dueDate, 
-            actor_name: user.displayName ?? null 
-          }
-        }])
-        .select()
-        .single();
-
+      const { error: evErr } = await supabase.from('task_events').insert({
+        task_id: task.id,
+        family_id: task.familyId,
+        recipient_id: task.assignedBy,   // notify the assigner
+        actor_id: user.id,               // me, the acceptor/rejector
+        event_type: 'accepted',          // or 'rejected' in the reject handler
+        payload: {
+          name: task.name,
+          stars: task.starValue,
+          due_date: task.dueDate,
+          actor_name: (user as any)?.displayName ?? null, // avoid undefined
+        }
+      });
       if (evErr) {
         console.error('task_events insert failed', evErr);
       }
+
 
       toast({
         title: "Task accepted!",
@@ -85,27 +81,23 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
       await deleteTask(task.id);
 
       // INSERT a notification event for the assigner
-      const { error: evErr } = await (supabase as any)
-        .from('task_events')
-        .insert([{
-          task_id: task.id,
-          family_id: task.familyId,
-          recipient_id: task.assignedBy,  // the assigner should be notified
-          actor_id: user.id,              // the acceptor/rejector
-          event_type: 'rejected',
-          payload: { 
-            name: task.name, 
-            stars: task.starValue, 
-            due_date: task.dueDate, 
-            actor_name: user.displayName ?? null 
-          }
-        }])
-        .select()
-        .single();
-
+      const { error: evErr } = await supabase.from('task_events').insert({
+        task_id: task.id,
+        family_id: task.familyId,
+        recipient_id: task.assignedBy,   // notify the assigner
+        actor_id: user.id,               // me, the acceptor/rejector
+        event_type: 'accepted',          // or 'rejected' in the reject handler
+        payload: {
+          name: task.name,
+          stars: task.starValue,
+          due_date: task.dueDate,
+          actor_name: (user as any)?.displayName ?? null, // avoid undefined
+        }
+      });
       if (evErr) {
         console.error('task_events insert failed', evErr);
       }
+
 
       toast({
         title: "Task rejected",
