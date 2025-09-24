@@ -506,6 +506,11 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
 
       if (error) {
         console.error('Error creating Today task:', error);
+        toast({
+          title: 'Error',
+          description: `Failed to add task: ${error.message}`,
+          variant: 'destructive',
+        });
         return null;
       }
 
@@ -531,8 +536,13 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
       window.dispatchEvent(new CustomEvent('tasks:changed'));
       
       return newTask;
-    } catch (e) {
+    } catch (e: any) {
       console.error('Failed to create Today task:', e);
+      toast({
+        title: 'Error',
+        description: `Failed to add task: ${e?.message || 'Unknown error'}`,
+        variant: 'destructive',
+      });
       return null;
     }
   }, [activeFamilyId, user, templates]);

@@ -46,8 +46,6 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
   const members = activeFamilyId ? getFamilyMembers(activeFamilyId) : [];
   const otherMembers = members.filter(m => m.userId !== user.id);
 
-  console.log('AssignTaskModal: members rendered:', members.map(m => ({ userId: m.userId, profile: getUserProfile(m.userId)?.displayName })));
-
   // Check if user is 18+ for star value editing
   const canEditStars = user.age >= 18;
 
