@@ -19,7 +19,6 @@ import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
 export function AppLayout() {
   // Mount notifications hook globally for all authenticated users
   useRealtimeNotifications();
-  useTaskNotifications();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const { isLoading } = useApp();
   const navigate = useNavigate();
