@@ -97,36 +97,6 @@ export function useRealtimeNotifications() {
     return () => { supabase.removeChannel(ch); };
   }, [user?.id, toast]);
 
-  // CHAT (everyone except the author; scoped to active family if available)
-  useEffect(() => {
-    if (!user?.id) return;
-
-    const filter = activeFamilyId ? `family_id=eq.${activeFamilyId}` : undefined;
-    const chan = `chat:${user.id}:${activeFamilyId ?? 'all'}`;
-
-    const ch = supabase
-      .channel(chan)
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'chat_messages', ...(filter ? { filter } : {}) },
-        (e) => {
-          const row = (e as any).new as ChatMessage | undefined;
-          if (!row) {
-            console.error('[chat_messages] Missing .new in realtime event:', e);
-            return;
-          }
-          if (row.author_id === user.id) return;
-
-          toast({ title: 'New chat message', description: 'A new message was posted in family chat.' });
-        }
-      )
-      .subscribe((status) => {
-        if (status !== 'SUBSCRIBED') console.warn(`[chat_messages] Channel status: ${status}`);
-      });
-
-    return () => { supabase.removeChannel(ch); };
-  }, [user?.id, activeFamilyId, toast]);
-
   // FAMILY SYNC (categories/templates) — silent refresh
   useEffect(() => {
     if (!user?.id || !activeFamilyId) return;
