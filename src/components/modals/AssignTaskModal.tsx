@@ -66,6 +66,24 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
       familyId: activeFamilyId,
     });
 
+    if (result && result.id) {
+      const { error: evErr } = await supabase.from('task_events').insert({
+        task_id: result.id,
+        family_id: activeFamilyId,
+        recipient_id: data.assignedTo,        // assignee gets the toast
+        actor_id: user.id,                     // assigner is the actor
+        event_type: 'assigned',
+        payload: {
+          name: data.name,                     // <— matches the listener
+          due_date: data.dueDate ?? null,
+          actor_name: (user as any).displayName ?? 'Someone',
+        },
+      });
+      if (evErr) {
+        console.error('[task_events] insert failed (assigned):', evErr);
+      }
+    }
+
     if (result) {
       toast({
         title: "Task assigned!",
