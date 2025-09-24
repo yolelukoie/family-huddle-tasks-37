@@ -8,7 +8,6 @@ import type { Task, TaskCategory, TaskTemplate } from '@/lib/types';
 
 const MAX_CATEGORIES_PER_FAMILY = 10;
 const MAX_ACTIVE_TASKS_PER_CATEGORY = 20;
-const MAX_TEMPLATES_PER_CATEGORY = 50;
 
 interface TasksContextValue {
   tasks: Task[];
@@ -389,17 +388,6 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
   const addTemplate = useCallback(async (template: Omit<TaskTemplate, 'id' | 'createdAt'>) => {
     if (!activeFamilyId || !user) return null;
 
-    // Check limit per category
-    const categoryTemplates = templates.filter(t => t.categoryId === template.categoryId);
-    if (categoryTemplates.length >= MAX_TEMPLATES_PER_CATEGORY) {
-      toast({
-        title: "Limit Reached",
-        description: `Cannot add more than ${MAX_TEMPLATES_PER_CATEGORY} templates per category.`,
-        variant: "destructive",
-      });
-      return null;
-    }
-
     try {
       const { data, error } = await supabase
         .from('task_templates')
@@ -470,29 +458,36 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
     
     console.log('✅ Found template:', t);
 
+
+    // --- START: date helpers ---
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const todayDateStr = `${yyyy}-${mm}-${dd}`; // 'YYYY-MM-DD' for Postgres DATE
+    
+    // If due_date is TIMESTAMP, also compute start/end of day
+    const startOfDay = new Date(yyyy, today.getMonth(), today.getDate());
+    const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000);
+    const startISO = startOfDay.toISOString();
+    const endISO = endOfDay.toISOString();
+    // --- END: date helpers ---
+    
     // Check per-category active task limit (templates are always self-assigned)
     console.log('🔵 Checking task limit for category:', t.categoryId);
-    const { count, error: countErr } = await supabase
+    const { count: activeInCategory } = await supabase
       .from('tasks')
       .select('id', { count: 'exact', head: true })
       .eq('family_id', activeFamilyId)
-      .eq('category_id', t.categoryId)
-      .eq('completed', false);
+      .eq('assigned_to', user.id)
+      .eq('category_id', template.categoryId)
+      .eq('completed', false)
+      .eq('due_date', todayDateStr);
 
-    if (countErr) {
-      console.error('❌ Error checking task count:', countErr);
-      toast({
-        title: 'Error',
-        description: `Failed to check task limit: ${countErr.message}`,
-        variant: 'destructive',
-      });
-      return null;
-    }
+    console.log('🔵 Task count check (active today):', { count: activeInCategory, limit: MAX_ACTIVE_TASKS_PER_CATEGORY });
 
-    console.log('✅ Task count check passed:', { count, limit: MAX_ACTIVE_TASKS_PER_CATEGORY });
-
-    if ((count ?? 0) >= MAX_ACTIVE_TASKS_PER_CATEGORY) {
-      console.log('❌ Task limit reached:', count, '>=', MAX_ACTIVE_TASKS_PER_CATEGORY);
+    if ((activeInCategory ?? 0) >= MAX_ACTIVE_TASKS_PER_CATEGORY) {
+      console.log('❌ Task limit reached:', activeInCategory, '>=', MAX_ACTIVE_TASKS_PER_CATEGORY);
       toast({
         title: 'Limit Reached',
         description: `This category already has ${MAX_ACTIVE_TASKS_PER_CATEGORY} active tasks.`,
@@ -500,13 +495,6 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
       });
       return null;
     }
-
-    // YYYY-MM-DD to avoid timezone issues
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, '0');
-    const dd = String(today.getDate()).padStart(2, '0');
-    const due = `${yyyy}-${mm}-${dd}`;
 
     try {
       const insertData = {
@@ -518,7 +506,7 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
         template_id: t.id,
         assigned_to: user.id,
         assigned_by: user.id,
-        due_date: due,
+        due_date: todayDateStr,
       };
       
       console.log('🔵 Inserting task with data:', insertData);
