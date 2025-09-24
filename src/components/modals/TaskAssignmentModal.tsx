@@ -41,15 +41,15 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
       // INSERT a notification event for the assigner
       const { error: evErr } = await supabase.from('task_events').insert({
         task_id: task.id,
-        family_id: task.familyId,
+        family_id: activeFamilyId!,
         recipient_id: task.assignedBy,   // notify the assigner
-        actor_id: user.id,               // me, the acceptor/rejector
+        actor_id: user!.id,               // me, the acceptor/rejector
         event_type: 'accepted',          // or 'rejected' in the reject handler
         payload: {
           name: task.name,
           stars: task.starValue,
           due_date: task.dueDate,
-          actor_name: (user as any)?.displayName ?? null, // avoid undefined
+          actor_name: user!.displayName, // avoid undefined
         }
       });
       if (evErr) {
@@ -83,15 +83,15 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
       // INSERT a notification event for the assigner
       const { error: evErr } = await supabase.from('task_events').insert({
         task_id: task.id,
-        family_id: task.familyId,
+        family_id: activeFamilyId!,
         recipient_id: task.assignedBy,   // notify the assigner
-        actor_id: user.id,               // me, the acceptor/rejector
+        actor_id: user!.id,               // me, the acceptor/rejector
         event_type: 'accepted',          // or 'rejected' in the reject handler
         payload: {
           name: task.name,
           stars: task.starValue,
           due_date: task.dueDate,
-          actor_name: (user as any)?.displayName ?? null, // avoid undefined
+          actor_name: user!.displayName, // avoid undefined
         }
       });
       if (evErr) {
