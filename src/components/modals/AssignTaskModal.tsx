@@ -75,14 +75,14 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
         console.error('[task_events] missing familyId for assigned event');
       } else {
         const { error: evErr } = await supabase.from('task_events').insert({
-          task_id: newTask.id,
+          task_id: task.id,
           family_id: familyId,
-          recipient_id: newTask.assignedTo,          // assignee gets the toast
+          recipient_id: task.assignedTo,          // assignee gets the toast
           actor_id: user.id,                          // assigner
           event_type: 'assigned',
           payload: {
-            name: newTask.name,                       // matches listener
-            due_date: newTask.dueDate ?? null,
+            name: task.name,                       // matches listener
+            due_date: task.dueDate ?? null,
             actor_name: (user as any).displayName ?? 'Someone',
           },
         });
