@@ -9,10 +9,11 @@ export function useChat() {
   const { user } = useAuth();
   const { activeFamilyId, getUserProfile } = useApp();
   const { toast } = useToast();
+
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Load messages for active family
+  // Load full history for the active family
   const loadMessages = useCallback(async () => {
     if (!user || !activeFamilyId) return;
 
@@ -25,19 +26,17 @@ export function useChat() {
         .order('created_at', { ascending: true });
 
       if (error) {
-        console.error('Error loading messages:', error);
+        console.error('[chat] Error loading messages:', error);
         return;
       }
 
-      const convertedMessages: ChatMessage[] = (data || []).map(msg => {
-        let displayName = 'Unknown';
-        if (user.id === msg.user_id) {
-          displayName = user.displayName || 'You';
-        } else {
-          const senderProfile = getUserProfile(msg.user_id);
-          displayName = senderProfile?.displayName || 'Family Member';
-        }
-        
+      const converted: ChatMessage[] = (data ?? []).map((msg) => {
+        const isMine = user.id === msg.user_id;
+        const senderProfile = isMine ? null : getUserProfile(msg.user_id);
+        const displayName = isMine
+          ? user.displayName || 'You'
+          : senderProfile?.displayName || 'Family Member';
+
         return {
           id: msg.id,
           familyId: msg.family_id,
@@ -49,107 +48,119 @@ export function useChat() {
         };
       });
 
-      setMessages(prev => [...prev, convertedMessage]);
-
-      // NEW: toast for messages not from me
-      if (newMessage.user_id !== user?.id) {
-        toast({
-          title: "New chat message",
-          description: `${convertedMessage.userDisplayName}: ${convertedMessage.content}`,
-        });
-      }
-
-      setMessages(convertedMessages);
-    } catch (error) {
-      console.error('Error in loadMessages:', error);
+      setMessages(converted);
+    } catch (err) {
+      console.error('[chat] Error in loadMessages:', err);
     } finally {
       setLoading(false);
     }
   }, [user, activeFamilyId, getUserProfile]);
 
-  // Load messages when family changes
+  // Load when family changes
   useEffect(() => {
     loadMessages();
   }, [loadMessages]);
 
-  // Set up realtime subscription
+  // Realtime subscription for new messages
   useEffect(() => {
-    if (!activeFamilyId) return;
+    if (!activeFamilyId || !user?.id) return;
 
-    const channel = supabase
-      .channel('chat-messages')
+    const channelName = `chat-page:${user.id}:${activeFamilyId}`;
+    const filter = `family_id=eq.${activeFamilyId}`;
+
+    const ch = supabase
+      .channel(channelName)
       .on(
         'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'chat_messages',
-          filter: `family_id=eq.${activeFamilyId}`
-        },
-        (payload) => {
-          const newMessage = payload.new as any;
-          
-          let displayName = 'Unknown';
-          if (newMessage.user_id === user?.id) {
-            displayName = user.displayName || 'You';
-          } else {
-            const senderProfile = getUserProfile(newMessage.user_id);
-            displayName = senderProfile?.displayName || 'Family Member';
+        { event: 'INSERT', schema: 'public', table: 'chat_messages', filter },
+        (e) => {
+          const newRow = (e as any).new as {
+            id: string;
+            family_id: string;
+            user_id: string;
+            content: string;
+            created_at: string;
+          } | undefined;
+
+          if (!newRow) {
+            console.error('[chat] Realtime event missing .new:', e);
+            return;
           }
-          
-          const convertedMessage: ChatMessage = {
-            id: newMessage.id,
-            familyId: newMessage.family_id,
-            userId: newMessage.user_id,
+
+          const isMine = newRow.user_id === user.id;
+          const senderProfile = isMine ? null : getUserProfile(newRow.user_id);
+          const displayName = isMine
+            ? user.displayName || 'You'
+            : senderProfile?.displayName || 'Family Member';
+
+          const converted: ChatMessage = {
+            id: newRow.id,
+            familyId: newRow.family_id,
+            userId: newRow.user_id,
             userDisplayName: displayName,
-            content: newMessage.content,
-            timestamp: newMessage.created_at,
-            createdAt: newMessage.created_at,
+            content: newRow.content,
+            timestamp: newRow.created_at,
+            createdAt: newRow.created_at,
           };
-          
-          setMessages(prev => [...prev, convertedMessage]);
+
+          setMessages((prev) => [...prev, converted]);
+
+          // Toast only for messages from others
+          if (!isMine) {
+            toast({
+              title: 'New chat message',
+              description: `${displayName}: ${newRow.content}`,
+            });
+          }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status !== 'SUBSCRIBED') {
+          console.warn(`[chat] Channel ${channelName} status: ${status}`);
+        }
+      });
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(ch);
     };
-  }, [activeFamilyId, user, getUserProfile]);
+  }, [activeFamilyId, user?.id, user?.displayName, getUserProfile, toast]);
 
-  const sendMessage = useCallback(async (content: string) => {
-    if (!user || !activeFamilyId || !content.trim()) return false;
+  const sendMessage = useCallback(
+    async (content: string) => {
+      if (!user || !activeFamilyId || !content.trim()) return false;
 
-    try {
-      const { error } = await supabase
-        .from('chat_messages')
-        .insert([{
-          family_id: activeFamilyId,
-          user_id: user.id,
-          content: content.trim()
-        }]);
+      try {
+        const { error } = await supabase.from('chat_messages').insert([
+          {
+            family_id: activeFamilyId,
+            user_id: user.id,
+            content: content.trim(),
+          },
+        ]);
 
-      if (error) {
-        console.error('Error sending message:', error);
+        if (error) {
+          console.error('[chat] Error sending message:', error);
+          toast({
+            title: 'Error',
+            description: 'Failed to send message',
+            variant: 'destructive',
+          });
+          return false;
+        }
+
+        return true;
+      } catch (err) {
+        console.error('[chat] Error in sendMessage:', err);
         toast({
-          title: "Error",
-          description: "Failed to send message",
-          variant: "destructive",
+          title: 'Error',
+          description: 'Failed to send message',
+          variant: 'destructive',
         });
         return false;
       }
-
-      return true;
-    } catch (error) {
-      console.error('Error in sendMessage:', error);
-      toast({
-        title: "Error",
-        description: "Failed to send message",
-        variant: "destructive",
-      });
-      return false;
-    }
-  }, [user, activeFamilyId, toast]);
+    },
+    [user, activeFamilyId, toast]
+  );
 
   const refreshMessages = useCallback(() => {
     loadMessages();

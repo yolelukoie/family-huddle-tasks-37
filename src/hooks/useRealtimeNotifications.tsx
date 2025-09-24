@@ -17,14 +17,6 @@ type TaskEvent = {
   created_at: string;
 };
 
-type ChatMessage = {
-  id: string;
-  family_id: string;
-  author_id: string;
-  content: string;
-  created_at: string;
-};
-
 type FamilySyncEvent = {
   id: string;
   family_id: string;
