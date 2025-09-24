@@ -98,7 +98,7 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
         family_id: familyId,
         recipient_id: task.assignedBy,   // notify the assigner
         actor_id: user!.id,               // me, the acceptor/rejector
-        event_type: 'accepted',          // or 'rejected' in the reject handler
+        event_type: 'rejected',          // or 'rejected' in the reject handler
         payload: {
           name: task.name,
           stars: task.starValue,
