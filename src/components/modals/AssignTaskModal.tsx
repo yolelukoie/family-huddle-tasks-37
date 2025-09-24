@@ -11,6 +11,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useApp } from '@/hooks/useApp';
 import { useTasks } from '@/hooks/useTasks';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+
 
 const assignTaskSchema = z.object({
   name: z.string().min(1, 'Task name is required'),
@@ -66,22 +68,34 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
       familyId: activeFamilyId,
     });
 
-    if (result && result.id) {
-      const { error: evErr } = await supabase.from('task_events').insert({
-        task_id: result.id,
-        family_id: activeFamilyId,
-        recipient_id: data.assignedTo,        // assignee gets the toast
-        actor_id: user.id,                     // assigner is the actor
-        event_type: 'assigned',
-        payload: {
-          name: data.name,                     // <— matches the listener
-          due_date: data.dueDate ?? null,
-          actor_name: (user as any).displayName ?? 'Someone',
-        },
-      });
-      if (evErr) {
-        console.error('[task_events] insert failed (assigned):', evErr);
+    // after addTask(...) succeeds and you have newTask (or result.id)
+    try {
+      const familyId = activeFamilyId ?? newTask.familyId; // whichever you have
+      if (!familyId) {
+        console.error('[task_events] missing familyId for assigned event');
+      } else {
+        const { error: evErr } = await supabase.from('task_events').insert({
+          task_id: newTask.id,
+          family_id: familyId,
+          recipient_id: newTask.assignedTo,          // assignee gets the toast
+          actor_id: user.id,                          // assigner
+          event_type: 'assigned',
+          payload: {
+            name: newTask.name,                       // matches listener
+            due_date: newTask.dueDate ?? null,
+            actor_name: (user as any).displayName ?? 'Someone',
+          },
+        });
+        if (evErr) {
+          console.error('[task_events] insert failed (assigned):', evErr);
+        }
       }
+    } catch (e) {
+      console.error('[task_events] insert threw (assigned):', e);
+    } finally {
+      // make sure UI recovers even if notification insert fails
+      onOpenChange(false);
+      setSubmitting(false); // if you use a local loading state
     }
 
     if (result) {
