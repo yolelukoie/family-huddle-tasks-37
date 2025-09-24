@@ -68,34 +68,61 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
       familyId: activeFamilyId,
     });
 
-    // after addTask(...) succeeds and you have newTask (or result.id)
     try {
-      const familyId = activeFamilyId ?? newTask.familyId; // whichever you have
-      if (!familyId) {
-        console.error('[task_events] missing familyId for assigned event');
+      if (!result || !('id' in result)) {
+        console.error('[AssignTaskModal] addTask returned unexpected result:', result);
       } else {
-        const { error: evErr } = await supabase.from('task_events').insert({
-          task_id: task.id,
-          family_id: familyId,
-          recipient_id: task.assignedTo,          // assignee gets the toast
-          actor_id: user.id,                          // assigner
-          event_type: 'assigned',
-          payload: {
-            name: task.name,                       // matches listener
-            due_date: task.dueDate ?? null,
-            actor_name: (user as any).displayName ?? 'Someone',
-          },
-        });
-        if (evErr) {
-          console.error('[task_events] insert failed (assigned):', evErr);
+        const createdId =
+          (result as any).id ??
+          (result as any)?.task?.id;
+    
+        const familyId =
+          (result as any).familyId ??
+          (result as any).family_id ??
+          activeFamilyId;
+    
+        const assignedTo =
+          (result as any).assignedTo ??
+          (result as any).assigned_to ??
+          (form.getValues().assignedTo);
+    
+        const createdName =
+          (result as any).name ??
+          (result as any)?.task?.name ??
+          form.getValues().name;
+    
+        const createdDue =
+          (result as any).dueDate ??
+          (result as any).due_date ??
+          form.getValues().dueDate ??
+          null;
+    
+        if (!createdId) {
+          console.error('[task_events] no id of that task. result:', result);
+        } else if (!familyId) {
+          console.error('[task_events] no family_id. result:', result);
+        } else {
+          const { error: evErr } = await supabase.from('task_events').insert({
+            task_id: createdId,
+            family_id: familyId,
+            recipient_id: assignedTo,         
+            actor_id: user.id,                
+            event_type: 'assigned',
+            payload: {
+              name: createdName,              
+              due_date: createdDue ? new Date(createdDue).toISOString() : null,
+              actor_name: (user as any).displayName ?? 'Someone',
+            },
+          });
+          if (evErr) {
+            console.error('[task_events] insert failed (assigned):', evErr);
+          }
         }
       }
     } catch (e) {
       console.error('[task_events] insert threw (assigned):', e);
     } finally {
-      // make sure UI recovers even if notification insert fails
       onOpenChange(false);
-      setSubmitting(false); // if you use a local loading state
     }
 
     if (result) {
