@@ -49,6 +49,16 @@ export function useChat() {
         };
       });
 
+      setMessages(prev => [...prev, convertedMessage]);
+
+      // NEW: toast for messages not from me
+      if (newMessage.user_id !== user?.id) {
+        toast({
+          title: "New chat message",
+          description: `${convertedMessage.userDisplayName}: ${convertedMessage.content}`,
+        });
+      }
+
       setMessages(convertedMessages);
     } catch (error) {
       console.error('Error in loadMessages:', error);
