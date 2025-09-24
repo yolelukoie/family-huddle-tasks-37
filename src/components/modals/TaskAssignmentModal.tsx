@@ -21,6 +21,7 @@ interface TaskAssignmentModalProps {
 export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }: TaskAssignmentModalProps) {
   const { user } = useAuth();
   const { getUserProfile } = useApp();
+  const { activeFamily } = useApp();
   const { updateTask, deleteTask, ensureCategoryByName } = useTasks();
   const { toast } = useToast();
   
@@ -41,7 +42,7 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
       // INSERT a notification event for the assigner
       const { error: evErr } = await supabase.from('task_events').insert({
         task_id: task.id,
-        family_id: activeFamilyId!,
+        family_id: activeFamily?.id,
         recipient_id: task.assignedBy,   // notify the assigner
         actor_id: user!.id,               // me, the acceptor/rejector
         event_type: 'accepted',          // or 'rejected' in the reject handler
@@ -83,7 +84,7 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
       // INSERT a notification event for the assigner
       const { error: evErr } = await supabase.from('task_events').insert({
         task_id: task.id,
-        family_id: activeFamilyId!,
+        family_id: activeFamily?.id,
         recipient_id: task.assignedBy,   // notify the assigner
         actor_id: user!.id,               // me, the acceptor/rejector
         event_type: 'accepted',          // or 'rejected' in the reject handler
