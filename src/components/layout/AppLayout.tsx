@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '@/hooks/useApp';
 import { useAuth } from '@/hooks/useAuth';
-import { useTaskNotifications } from '@/hooks/useTaskNotifications';
 import { ROUTES } from '@/lib/constants';
 import MainPage from '@/pages/main/MainPage';
 import OnboardingPage from '@/pages/onboarding/OnboardingPage';

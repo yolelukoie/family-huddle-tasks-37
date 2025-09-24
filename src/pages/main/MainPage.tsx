@@ -64,7 +64,7 @@ export default function MainPage() {
   } = useTaskAssignments();
   
   // Check for task assignment notifications
-  useTaskNotifications();
+  useRealtimeNotifications();
   const navigate = useNavigate();
   const [showAssignTask, setShowAssignTask] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
