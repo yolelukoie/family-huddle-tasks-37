@@ -7,7 +7,8 @@ import { Star, Calendar } from 'lucide-react';
 import { DraggableBadgeDisplay } from '@/components/badges/DraggableBadgeDisplay';
 import { getCurrentStageBadges } from '@/lib/badges';
 import { getCurrentStage, getStageProgress, getCharacterImagePath, getStageName } from '@/lib/character';
-import { storage } from '@/lib/storage';
+import { useTasks } from '@/hooks/useTasks';
+import { useGoals } from '@/hooks/useGoals';
 import { isToday } from '@/lib/utils';
 import { User, UserFamily } from '@/lib/types';
 
@@ -20,6 +21,8 @@ interface MemberProfileModalProps {
 }
 
 export function MemberProfileModal({ open, onOpenChange, member, memberProfile, familyId }: MemberProfileModalProps) {
+  const { tasks } = useTasks();
+  const { goals } = useGoals();
   const totalStars = member.totalStars;
   const currentStage = getCurrentStage(totalStars);
   const stageProgress = getStageProgress(totalStars);
@@ -27,12 +30,12 @@ export function MemberProfileModal({ open, onOpenChange, member, memberProfile, 
   const characterImagePath = getCharacterImagePath(memberProfile?.gender || 'female', currentStage);
   const unlockedBadges = getCurrentStageBadges(totalStars);
   
-  // Get member's tasks for today
-  const allTasks = storage.getTasks(familyId).filter(task => task.assignedTo === member.userId);
+  // Get member's tasks for today from context
+  const allTasks = tasks.filter(task => task.assignedTo === member.userId && task.familyId === familyId);
   const todaysTasks = allTasks.filter(task => !task.completed && isToday(task.dueDate));
   
-  // Get member's active goal
-  const activeGoal = storage.getGoals(familyId, member.userId).find(g => !g.completed);
+  // Get member's active goal from context
+  const activeGoal = goals.find(g => !g.completed && g.userId === member.userId && g.familyId === familyId);
 
   const displayName = memberProfile?.displayName || `Family Member`;
 
@@ -101,13 +104,15 @@ export function MemberProfileModal({ open, onOpenChange, member, memberProfile, 
 
               {/* Active Goal */}
               {activeGoal && (
-                <div className="p-3 bg-family-success/10 rounded-lg border border-family-success/20">
-                  <div className="text-sm font-medium text-family-success">Active Goal</div>
-                  <div className="text-sm">{activeGoal.currentStars}/{activeGoal.targetStars} stars</div>
-                  <Progress value={(activeGoal.currentStars / activeGoal.targetStars) * 100} className="h-2 mt-1" />
-                  {activeGoal.reward && (
-                    <div className="text-xs text-muted-foreground mt-1">Reward: {activeGoal.reward}</div>
-                  )}
+                <div className="mb-4">
+                  <div className="p-3 bg-family-success/10 rounded-lg border border-family-success/20">
+                    <div className="text-sm font-medium text-family-success mb-1">Active Goal</div>
+                    <div className="text-sm mb-2">{activeGoal.currentStars}/{activeGoal.targetStars} stars</div>
+                    <Progress value={(activeGoal.currentStars / activeGoal.targetStars) * 100} className="h-2" />
+                    {activeGoal.reward && (
+                      <div className="text-xs text-muted-foreground mt-1">Reward: {activeGoal.reward}</div>
+                    )}
+                  </div>
                 </div>
               )}
             </CardContent>

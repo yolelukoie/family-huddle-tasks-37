@@ -82,7 +82,9 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
         
         <CollapsibleContent className="space-y-2 pt-2">
           <div className="ml-7 space-y-2">
-            {categoryTemplates.map(template => (
+            {categoryTemplates
+              .filter(template => template.name !== 'test') // Filter out the test task
+              .map(template => (
               <div 
                 key={template.id} 
                 className="flex items-center justify-between p-2 border rounded cursor-pointer hover:bg-accent transition-colors"
@@ -99,9 +101,7 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
                     {template.starValue} ⭐
                   </Badge>
                   {!category.isHouseChores && template.isDeletable && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
+                    <div
                       onClick={async (e) => {
                         e.stopPropagation();
                         if (confirm('Delete this task template?')) {
@@ -111,10 +111,10 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
                           }
                         }
                       }}
-                      className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                      className="h-6 w-6 p-1 text-destructive hover:text-destructive hover:bg-destructive/10 rounded cursor-pointer flex items-center justify-center"
                     >
                       <Trash2 className="h-3 w-3" />
-                    </Button>
+                    </div>
                   )}
                 </div>
               </div>
