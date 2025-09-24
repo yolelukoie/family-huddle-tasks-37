@@ -22,7 +22,7 @@ import { AssignTaskModal } from '@/components/modals/AssignTaskModal';
 import { MilestoneCelebration } from '@/components/celebrations/MilestoneCelebration';
 import { TaskAssignmentModal } from '@/components/modals/TaskAssignmentModal';
 import { useTaskAssignments } from '@/hooks/useTaskAssignments';
-import { useTaskNotifications } from '@/hooks/useTaskNotifications';
+import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
 import { Star, Calendar, Plus, RotateCcw, CheckCircle } from 'lucide-react';
 export default function MainPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
