@@ -454,16 +454,24 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
   }, [activeFamilyId, user, templates, toast]);
 
   const addTodayTaskFromTemplate = useCallback(async (templateId: string) => {
-    if (!activeFamilyId || !user) return null;
+    console.log('🔵 addTodayTaskFromTemplate called with:', { templateId, activeFamilyId, userId: user?.id });
+    
+    if (!activeFamilyId || !user) {
+      console.log('❌ Missing activeFamilyId or user:', { activeFamilyId, user: !!user });
+      return null;
+    }
 
     // find the template in memory to copy its defaults
     const t = templates.find(x => x.id === templateId);
     if (!t) {
-      console.error('Template not found for Today:', templateId);
+      console.error('❌ Template not found for Today:', templateId, 'Available templates:', templates.map(t => t.id));
       return null;
     }
+    
+    console.log('✅ Found template:', t);
 
     // Check per-category active task limit (templates are always self-assigned)
+    console.log('🔵 Checking task limit for category:', t.categoryId);
     const { count, error: countErr } = await supabase
       .from('tasks')
       .select('id', { count: 'exact', head: true })
@@ -471,7 +479,20 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
       .eq('category_id', t.categoryId)
       .eq('completed', false);
 
-    if (!countErr && (count ?? 0) >= MAX_ACTIVE_TASKS_PER_CATEGORY) {
+    if (countErr) {
+      console.error('❌ Error checking task count:', countErr);
+      toast({
+        title: 'Error',
+        description: `Failed to check task limit: ${countErr.message}`,
+        variant: 'destructive',
+      });
+      return null;
+    }
+
+    console.log('✅ Task count check passed:', { count, limit: MAX_ACTIVE_TASKS_PER_CATEGORY });
+
+    if ((count ?? 0) >= MAX_ACTIVE_TASKS_PER_CATEGORY) {
+      console.log('❌ Task limit reached:', count, '>=', MAX_ACTIVE_TASKS_PER_CATEGORY);
       toast({
         title: 'Limit Reached',
         description: `This category already has ${MAX_ACTIVE_TASKS_PER_CATEGORY} active tasks.`,
@@ -488,31 +509,43 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
     const due = `${yyyy}-${mm}-${dd}`;
 
     try {
+      const insertData = {
+        name: t.name,
+        description: t.description || null,
+        category_id: t.categoryId,
+        star_value: t.starValue,
+        family_id: activeFamilyId,
+        template_id: t.id,
+        assigned_to: user.id,
+        assigned_by: user.id,
+        due_date: due,
+      };
+      
+      console.log('🔵 Inserting task with data:', insertData);
+      
       const { data, error } = await supabase
         .from('tasks')
-        .insert([{
-          name: t.name,
-          description: t.description || null,
-          category_id: t.categoryId,
-          star_value: t.starValue,
-          family_id: activeFamilyId,
-          template_id: t.id,
-          assigned_to: user.id,
-          assigned_by: user.id,
-          due_date: due,
-        }])
+        .insert([insertData])
         .select()
         .single();
 
       if (error) {
-        console.error('Error creating Today task:', error);
+        console.error('❌ Supabase error creating task:', {
+          error,
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        });
         toast({
-          title: 'Error',
-          description: `Failed to add task: ${error.message}`,
+          title: 'Database Error',
+          description: `Failed to add task: ${error.message} (Code: ${error.code})`,
           variant: 'destructive',
         });
         return null;
       }
+      
+      console.log('✅ Task created successfully:', data);
 
       const newTask: Task = {
         id: data.id,

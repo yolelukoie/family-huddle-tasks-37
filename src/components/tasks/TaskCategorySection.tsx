@@ -25,10 +25,18 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
   const categoryTemplates = templates.filter(t => t.categoryId === category.id);
 
   const handleAddToToday = async (template: TaskTemplate) => {
-    if (!user) return;
+    console.log('🔵 TaskCategorySection: handleAddToToday called with template:', template);
     
+    if (!user) {
+      console.log('❌ TaskCategorySection: No user found');
+      return;
+    }
+    
+    console.log('🔵 TaskCategorySection: Calling addTodayTaskFromTemplate with ID:', template.id);
     const newTask = await addTodayTaskFromTemplate(template.id);
+    
     if (newTask) {
+      console.log('✅ TaskCategorySection: Task added successfully:', newTask);
       toast({
         title: "Added to Today",
         description: `"${template.name}" has been added to today's tasks.`,
@@ -37,6 +45,7 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
       // Trigger refresh in parent component
       onTaskAdded?.();
     } else {
+      console.log('❌ TaskCategorySection: Task creation failed');
       toast({
         title: "Error",
         description: "Failed to add task to today. Please try again.",
