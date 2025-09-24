@@ -7,7 +7,7 @@ import { useCelebrations } from '@/hooks/useCelebrations';
 import type { Task, TaskCategory, TaskTemplate } from '@/lib/types';
 
 const MAX_CATEGORIES_PER_FAMILY = 10;
-const MAX_ACTIVE_TASKS_PER_CATEGORY = 20;
+const MAX_TEMPLATES_PER_CATEGORY = 20;
 
 interface TasksContextValue {
   tasks: Task[];
@@ -123,29 +123,7 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
 
   const addTask = useCallback(async (task: Omit<Task, 'id' | 'createdAt'>) => {
     if (!activeFamilyId || !user) return null;
-
-    // Check if this is a peer assignment
-    const isPeerAssignment = !!(user && (task.assignedTo ?? user.id) !== user.id);
-
-    // For non-peer assignments, check per-category active task limit
-    if (!isPeerAssignment) {
-      const { count, error: countErr } = await supabase
-        .from('tasks')
-        .select('id', { count: 'exact', head: true })
-        .eq('family_id', activeFamilyId)
-        .eq('category_id', task.categoryId)
-        .eq('completed', false);
-
-      if (!countErr && (count ?? 0) >= MAX_ACTIVE_TASKS_PER_CATEGORY) {
-        toast({
-          title: 'Limit Reached',
-          description: `This category already has ${MAX_ACTIVE_TASKS_PER_CATEGORY} active tasks.`,
-          variant: 'destructive',
-        });
-        return null;
-      }
-    }
-
+  
     // Ensure due_date defaults to today if missing
     const ensureDate = (d?: string) => {
       if (d) return d;
@@ -155,7 +133,7 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
       const dd = String(now.getDate()).padStart(2, '0');
       return `${yyyy}-${mm}-${dd}`;
     };
-
+  
     try {
       const { data, error } = await supabase
         .from('tasks')
@@ -172,16 +150,12 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
         }])
         .select()
         .single();
-
+  
       if (error) {
-        toast({
-          title: "Error",
-          description: `Failed to add task: ${error.message}`,
-          variant: "destructive",
-        });
+        toast({ title: "Error", description: `Failed to add task: ${error.message}`, variant: "destructive" });
         return null;
       }
-
+  
       const newTask: Task = {
         id: data.id,
         name: data.name,
@@ -196,22 +170,15 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
         assignedBy: data.assigned_by,
         dueDate: data.due_date,
       };
-
+  
       setTasks(prev => [...prev, newTask]);
-      
-      // Emit change event for other components
       window.dispatchEvent(new CustomEvent('tasks:changed'));
-      
       return newTask;
     } catch (e: any) {
-      toast({
-        title: "Error",
-        description: `Failed to add task: ${e?.message || e}`,
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: `Failed to add task: ${e?.message || e}`, variant: "destructive" });
       return null;
     }
-  }, [activeFamilyId, user, tasks.length, toast]);
+  }, [activeFamilyId, user, toast]);
 
   const updateTask = useCallback(async (taskId: string, updates: Partial<Task>) => {
     if (!activeFamilyId) return;
@@ -387,115 +354,92 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
 
   const addTemplate = useCallback(async (template: Omit<TaskTemplate, 'id' | 'createdAt'>) => {
     if (!activeFamilyId || !user) return null;
-
-    try {
-      const { data, error } = await supabase
-        .from('task_templates')
-        .insert([{
-          name: template.name,
-          description: template.description || null,
-          category_id: template.categoryId,
-          star_value: template.starValue,
-          family_id: activeFamilyId,
-          is_default: template.isDefault || false,
-          is_deletable: template.isDeletable ?? true,
-          created_by: user.id,
-        }])
-        .select()
-        .single();
-
-      if (error) {
-        toast({
-          title: "Error",
-          description: `Failed to add template: ${error.message}`,
-          variant: "destructive",
-        });
-        return null;
-      }
-
-      const newTemplate: TaskTemplate = {
-        id: data.id,
-        name: data.name,
-        description: data.description || '',
-        categoryId: data.category_id,
-        starValue: data.star_value,
-        familyId: data.family_id,
-        isDefault: data.is_default,
-        isDeletable: data.is_deletable,
-        createdBy: data.created_by,
-      };
-
-      setTemplates(prev => [...prev, newTemplate]);
-      
-      // Emit change event for other components
-      window.dispatchEvent(new CustomEvent('tasks:changed'));
-      
-      return newTemplate;
-    } catch (e: any) {
+  
+    // Quick client-side guard by current state (same family + category)
+    const existingInCategory = templates.filter(t => t.familyId === activeFamilyId && t.categoryId === template.categoryId);
+    if (existingInCategory.length >= MAX_TEMPLATES_PER_CATEGORY) {
       toast({
-        title: "Error",
-        description: `Failed to add template: ${e?.message || e}`,
+        title: "Limit Reached",
+        description: `You can have at most ${MAX_TEMPLATES_PER_CATEGORY} templates in this category.`,
         variant: "destructive",
       });
       return null;
     }
+  
+    // Insert the template
+    const { data, error } = await supabase
+      .from('task_templates')
+      .insert([{
+        name: template.name,
+        description: template.description || null,
+        category_id: template.categoryId,
+        star_value: template.starValue,
+        family_id: activeFamilyId,
+        is_default: template.isDefault || false,
+        is_deletable: template.isDeletable ?? true,
+        created_by: user.id,
+      }])
+      .select()
+      .single();
+  
+    if (error) {
+      toast({ title: "Error", description: `Failed to add template: ${error.message}`, variant: "destructive" });
+      return null;
+    }
+  
+    // Authoritative count after insert (handles concurrent creators)
+    const { count, error: countErr } = await supabase
+      .from('task_templates')
+      .select('id', { count: 'exact', head: true })
+      .eq('family_id', activeFamilyId)
+      .eq('category_id', template.categoryId);
+  
+    if (!countErr && (count ?? 0) > MAX_TEMPLATES_PER_CATEGORY) {
+      // Too many now – delete just-inserted template to keep the earliest ones
+      await supabase.from('task_templates').delete().eq('id', data.id);
+      toast({
+        title: "Limit Reached",
+        description: `Only the first ${MAX_TEMPLATES_PER_CATEGORY} templates are kept. Yours was not saved because the category is full.`,
+        variant: "destructive",
+      });
+      return null;
+    }
+  
+    // Add to local state
+    const newTemplate: TaskTemplate = {
+      id: data.id,
+      name: data.name,
+      description: data.description || '',
+      categoryId: data.category_id,
+      starValue: data.star_value,
+      familyId: data.family_id,
+      isDefault: data.is_default,
+      isDeletable: data.is_deletable,
+      createdBy: data.created_by,
+      createdAt: data.created_at,
+    };
+  
+    setTemplates(prev => [...prev, newTemplate]);
+    window.dispatchEvent(new CustomEvent('tasks:changed'));
+    return newTemplate;
   }, [activeFamilyId, user, templates, toast]);
 
   const addTodayTaskFromTemplate = useCallback(async (templateId: string) => {
-    console.log('🔵 addTodayTaskFromTemplate called with:', { templateId, activeFamilyId, userId: user?.id });
-    
-    if (!activeFamilyId || !user) {
-      console.log('❌ Missing activeFamilyId or user:', { activeFamilyId, user: !!user });
-      return null;
-    }
-
-    // find the template in memory to copy its defaults
+    if (!activeFamilyId || !user) return null;
+  
     const t = templates.find(x => x.id === templateId);
     if (!t) {
-      console.error('❌ Template not found for Today:', templateId, 'Available templates:', templates.map(t => t.id));
+      console.error('Template not found for Today:', templateId);
       return null;
     }
-    
-    console.log('✅ Found template:', t);
-
-
-    // --- START: date helpers ---
+  
+    // today's date (YYYY-MM-DD)
     const today = new Date();
     const yyyy = today.getFullYear();
     const mm = String(today.getMonth() + 1).padStart(2, '0');
     const dd = String(today.getDate()).padStart(2, '0');
-    const todayDateStr = `${yyyy}-${mm}-${dd}`; // 'YYYY-MM-DD' for Postgres DATE
-    
-    // If due_date is TIMESTAMP, also compute start/end of day
-    const startOfDay = new Date(yyyy, today.getMonth(), today.getDate());
-    const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000);
-    const startISO = startOfDay.toISOString();
-    const endISO = endOfDay.toISOString();
-    // --- END: date helpers ---
-    
-    // Check per-category active task limit (templates are always self-assigned)
-    console.log('🔵 Checking task limit for category:', t.categoryId);
-    const { count: activeInCategory } = await supabase
-      .from('tasks')
-      .select('id', { count: 'exact', head: true })
-      .eq('family_id', activeFamilyId)
-      .eq('assigned_to', user.id)
-      .eq('category_id', template.categoryId)
-      .eq('completed', false)
-      .eq('due_date', todayDateStr);
-
-    console.log('🔵 Task count check (active today):', { count: activeInCategory, limit: MAX_ACTIVE_TASKS_PER_CATEGORY });
-
-    if ((activeInCategory ?? 0) >= MAX_ACTIVE_TASKS_PER_CATEGORY) {
-      console.log('❌ Task limit reached:', activeInCategory, '>=', MAX_ACTIVE_TASKS_PER_CATEGORY);
-      toast({
-        title: 'Limit Reached',
-        description: `This category already has ${MAX_ACTIVE_TASKS_PER_CATEGORY} active tasks.`,
-        variant: 'destructive',
-      });
-      return null;
-    }
-
+    const todayDateStr = `${yyyy}-${mm}-${dd}`;
+  
     try {
       const insertData = {
         name: t.name,
@@ -508,33 +452,18 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
         assigned_by: user.id,
         due_date: todayDateStr,
       };
-      
-      console.log('🔵 Inserting task with data:', insertData);
-      
+  
       const { data, error } = await supabase
         .from('tasks')
         .insert([insertData])
         .select()
         .single();
-
+  
       if (error) {
-        console.error('❌ Supabase error creating task:', {
-          error,
-          code: error.code,
-          message: error.message,
-          details: error.details,
-          hint: error.hint
-        });
-        toast({
-          title: 'Database Error',
-          description: `Failed to add task: ${error.message} (Code: ${error.code})`,
-          variant: 'destructive',
-        });
+        toast({ title: 'Database Error', description: `Failed to add task: ${error.message}`, variant: 'destructive' });
         return null;
       }
-      
-      console.log('✅ Task created successfully:', data);
-
+  
       const newTask: Task = {
         id: data.id,
         name: data.name,
@@ -549,24 +478,15 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
         assignedBy: data.assigned_by,
         dueDate: data.due_date,
       };
-
-      // Update local state immediately
+  
       setTasks(prev => [...prev, newTask]);
-      
-      // Emit change event for other components
       window.dispatchEvent(new CustomEvent('tasks:changed'));
-      
       return newTask;
     } catch (e: any) {
-      console.error('Failed to create Today task:', e);
-      toast({
-        title: 'Error',
-        description: `Failed to add task: ${e?.message || 'Unknown error'}`,
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: `Failed to add task: ${e?.message || 'Unknown error'}`, variant: 'destructive' });
       return null;
     }
-  }, [activeFamilyId, user, templates]);
+  }, [activeFamilyId, user, templates, toast]);
 
   const deleteCategory = useCallback(async (categoryId: string) => {
     if (!activeFamilyId) return false;
