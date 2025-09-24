@@ -27,24 +27,12 @@ export function MemberProfileModal({ open, onOpenChange, member, memberProfile, 
   const characterImagePath = getCharacterImagePath(memberProfile?.gender || 'female', currentStage);
   const unlockedBadges = getCurrentStageBadges(totalStars);
   
-  // Get member's tasks (completed and today's active)
+  // Get member's tasks for today
   const allTasks = storage.getTasks(familyId).filter(task => task.assignedTo === member.userId);
   const todaysTasks = allTasks.filter(task => !task.completed && isToday(task.dueDate));
-  const completedTasks = allTasks.filter(task => task.completed);
   
   // Get member's active goal
   const activeGoal = storage.getGoals(familyId, member.userId).find(g => !g.completed);
-  
-  // Get task categories for star breakdown
-  const categories = storage.getTaskCategories(familyId);
-  const categoryStars = categories.map(category => {
-    const categoryTasks = completedTasks.filter(task => task.categoryId === category.id);
-    const stars = categoryTasks.reduce((sum, task) => sum + task.starValue, 0);
-    return {
-      category: category.name,
-      stars
-    };
-  });
 
   const displayName = memberProfile?.displayName || `Family Member`;
 
@@ -110,15 +98,6 @@ export function MemberProfileModal({ open, onOpenChange, member, memberProfile, 
                 <Progress value={stageProgress.percentage} className="h-3" />
               </div>
 
-              {/* Category Breakdown */}
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-4">
-                {categoryStars.map(({ category, stars }) => (
-                  <div key={category} className="text-center p-2 bg-white/50 rounded-lg">
-                    <div className="text-sm font-medium">{category}</div>
-                    <div className="text-lg font-bold text-family-star">{stars} ⭐</div>
-                  </div>
-                ))}
-              </div>
 
               {/* Active Goal */}
               {activeGoal && (
@@ -166,22 +145,6 @@ export function MemberProfileModal({ open, onOpenChange, member, memberProfile, 
             </CardContent>
           </Card>
 
-          {/* Stats Summary */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Statistics</CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-primary">{totalStars}</div>
-                <div className="text-sm text-muted-foreground">Total Stars</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-primary">{completedTasks.length}</div>
-                <div className="text-sm text-muted-foreground">Tasks Completed</div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </DialogContent>
     </Dialog>
