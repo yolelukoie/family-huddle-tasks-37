@@ -39,17 +39,28 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
         await updateTask(task.id, { categoryId: cat.id });
       }
 
+      const familyId = task.familyId ?? activeFamily?.id;
+      if (!familyId) {
+        console.error('Missing familyId for task_events insert');
+        toast({
+          title: "Cannot notify",
+          description: "Family is not loaded yet. Try again in a moment.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       // INSERT a notification event for the assigner
       const { error: evErr } = await supabase.from('task_events').insert({
         task_id: task.id,
-        family_id: activeFamily?.id,
+        family_id: familyId,
         recipient_id: task.assignedBy,   // notify the assigner
         actor_id: user!.id,               // me, the acceptor/rejector
         event_type: 'accepted',          // or 'rejected' in the reject handler
         payload: {
           name: task.name,
           stars: task.starValue,
-          due_date: task.dueDate,
+          due_date: task.dueDate ? new Date(task.dueDate).toISOString() : null,
           actor_name: user!.displayName, // avoid undefined
         }
       });
@@ -84,10 +95,10 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
       // INSERT a notification event for the assigner
       const { error: evErr } = await supabase.from('task_events').insert({
         task_id: task.id,
-        family_id: activeFamily?.id,
+        family_id: familyId,
         recipient_id: task.assignedBy,   // notify the assigner
         actor_id: user!.id,               // me, the acceptor/rejector
-        event_type: 'accepted',          // or 'rejected' in the reject handler
+        event_type: 'rejected',          // or 'rejected' in the reject handler
         payload: {
           name: task.name,
           stars: task.starValue,
