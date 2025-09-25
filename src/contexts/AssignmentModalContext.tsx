@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useCallback } from "react";
 import { Task } from "@/lib/types";
-import { TaskAssignmentModal } from "@/components/tasks/TaskAssignmentModal";
+import { TaskAssignmentModal } from "@/components/modals/TaskAssignmentModal";
 
 type Ctx = {
   openAssignmentModal: (task: Task) => void;
