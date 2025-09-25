@@ -51,6 +51,24 @@ export function useRealtimeNotifications() {
     }, 150);
   };
 
+  // DEBUG
+  useEffect(() => {
+    const ch = supabase
+      .channel('debug-task-events')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'task_events' },
+        (e) => {
+          console.log('[DEBUG task_events INSERT]', e);
+        }
+      )
+      .subscribe((status) => {
+        if (status !== 'SUBSCRIBED') console.warn('[debug-task-events] status:', status);
+      });
+  
+    return () => { supabase.removeChannel(ch); };
+  }, []);
+
   // CHAT EVENTS
   useEffect(() => {
     if (!user?.id || !activeFamilyId) return;
