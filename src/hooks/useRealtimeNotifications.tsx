@@ -79,7 +79,7 @@ export function useRealtimeNotifications() {
     return () => { supabase.removeChannel(ch); };
   }, [user?.id, activeFamilyId, toast, getUserProfile]);
 
-  // TASK EVENTS (recipient only) — open modal immediately on "assigned" with de-dupe
+  // TASK EVENTS (recipient only) — open modal immediately on "assigned"
   useEffect(() => {
     if (!user?.id) return;
   
@@ -88,20 +88,24 @@ export function useRealtimeNotifications() {
       .channel(chan)
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'task_events', filter: `recipient_id=eq.${user.id}` },
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'task_events',
+          filter: `recipient_id=eq.${user.id}`,
+        },
         async (e) => {
           const row = (e as any).new as TaskEvent | undefined;
-          if (!row) return;
-  
-          // de-dupe by task_events.id (handle each event once)
-          if (row.id) {
-            if (processedEventIds.current.has(row.id)) return;
-            processedEventIds.current.add(row.id);
+          if (!row) {
+            console.error('[task_events] Missing .new in realtime event:', e);
+            return;
           }
   
-          if (row.event_type === 'assigned') {
+          const evtType = row.event_type;
+  
+          if (evtType === 'assigned') {
+            // Load the full task row so the modal has everything it needs
             try {
-              // fetch full task for the modal
               const { data, error } = await supabase
                 .from('tasks')
                 .select('*')
@@ -109,13 +113,19 @@ export function useRealtimeNotifications() {
                 .single();
   
               if (error || !data) {
-                // fallback toast so the user still sees something
+                console.error('[task_events] failed to load task for modal:', error ?? 'no data');
+  
+                // Fallback toast so the user still sees *something*
                 const actor = row.payload?.actor_name ?? 'Someone';
                 const taskName = row.payload?.name ?? 'a task';
-                toast({ title: 'New task assigned', description: `${actor} assigned "${taskName}" to you.` });
+                toast({
+                  title: 'New task assigned',
+                  description: `${actor} assigned "${taskName}" to you.`,
+                });
                 return;
               }
   
+              // Map snake_case / camelCase to your Task shape
               const taskForModal = {
                 id: data.id,
                 name: data.name,
@@ -129,6 +139,7 @@ export function useRealtimeNotifications() {
                 completed: !!data.completed,
               } as any;
   
+              // Open the Accept/Reject modal immediately
               openAssignmentModal(taskForModal);
             } catch (err) {
               console.error('[task_events] open modal failed:', err);
@@ -136,13 +147,16 @@ export function useRealtimeNotifications() {
             return;
           }
   
-          // accepted / rejected → toast to the assigner
+          // accepted / rejected → toast only
           const actor = row.payload?.actor_name ?? 'Someone';
           const taskName = row.payload?.name ?? 'your task';
-          if (row.event_type === 'accepted') {
+  
+          if (evtType === 'accepted') {
             toast({ title: 'Task accepted', description: `${actor} accepted "${taskName}".` });
-          } else if (row.event_type === 'rejected') {
+          } else if (evtType === 'rejected') {
             toast({ title: 'Task rejected', description: `${actor} rejected "${taskName}".` });
+          } else {
+            console.warn('[task_events] Unknown event_type:', evtType, 'Row:', row);
           }
         }
       )
@@ -150,9 +164,10 @@ export function useRealtimeNotifications() {
         if (status !== 'SUBSCRIBED') console.warn(`[task-events] Channel status: ${status}`);
       });
   
-    return () => { supabase.removeChannel(ch); };
-    // Keep deps minimal: we want a stable subscription while the user is logged in
-  }, [user?.id, openAssignmentModal, toast]);
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [user?.id, activeFamilyId, openAssignmentModal, toast]);
 
 
 
