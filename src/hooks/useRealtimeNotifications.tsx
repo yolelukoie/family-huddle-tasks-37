@@ -30,8 +30,12 @@ type FamilySyncEvent = {
 export function useRealtimeNotifications() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { activeFamilyId } = useApp();
   const { refreshData } = useTasks();
+  const {
+    activeFamilyId,
+    fetchFamilyMembers,
+    getUserProfile,      // needed for chat name lookup
+  } = useApp();
 
   // Debounce refresh for category/template sync
   const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -46,8 +50,6 @@ export function useRealtimeNotifications() {
       }
     }, 150);
   };
-
-  const { activeFamilyId, getUserProfile } = useApp(); // add getUserProfile
 
   // CHAT EVENTS
   useEffect(() => {
