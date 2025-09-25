@@ -1,10 +1,4 @@
-// src/contexts/AssignmentModalContext.tsx
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-} from "react";
+import React, { createContext, useContext, useState, useCallback } from "react";
 import { Task } from "@/lib/types";
 import { TaskAssignmentModal } from "@/components/modals/TaskAssignmentModal";
 
@@ -19,21 +13,17 @@ export function AssignmentModalProvider({ children }: { children: React.ReactNod
   const [task, setTask] = useState<Task | null>(null);
 
   const openAssignmentModal = useCallback((t: Task) => {
-    if (!t?.id) return;
-    // de-dupe while open
-    setTask((current) => (current?.id === t.id ? current : t));
+    setTask((current) => (current?.id === t.id ? current : t)); // de-dupe same task
   }, []);
 
-  const closeAssignmentModal = useCallback(() => {
-    setTask(null);
-  }, []);
+  const closeAssignmentModal = useCallback(() => setTask(null), []);
 
   return (
     <AssignmentModalCtx.Provider value={{ openAssignmentModal, closeAssignmentModal }}>
       {children}
       <TaskAssignmentModal
         open={!!task}
-        onOpenChange={(open) => { if (!open) closeAssignmentModal(); }}
+        onOpenChange={(open) => { if (!open) setTask(null); }}
         task={task}
       />
     </AssignmentModalCtx.Provider>
