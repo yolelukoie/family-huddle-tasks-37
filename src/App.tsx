@@ -19,6 +19,7 @@ import ChatPage from "./pages/chat/ChatPage";
 import FamilyPage from "./pages/family/FamilyPage";
 import NotFound from "./pages/NotFound";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
+import { AssignmentModalProvider } from "@/contexts/AssignmentModalContext";
 
 function RealtimeRoot() {
   useRealtimeNotifications();
@@ -38,8 +39,10 @@ const App = () => (
             <CelebrationsProvider>
               <AppProvider>
                 <TasksProvider>
-                  <RealtimeRoot />
-                  <AppLayout />
+                  <AssignmentModalProvider>
+                    <RealtimeRoot />
+                    <AppLayout />
+                  </AssignmentModalProvider>
                 </TasksProvider>
               </AppProvider>
             </CelebrationsProvider>
