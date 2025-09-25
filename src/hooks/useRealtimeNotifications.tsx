@@ -39,7 +39,6 @@ export function useRealtimeNotifications() {
   } = useApp();
 
   const { openAssignmentModal } = useAssignmentModal();
-  const processedEventIds = useRef<Set<string>>(new Set());
 
   // Debounce refresh for category/template sync
   const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -88,12 +87,7 @@ export function useRealtimeNotifications() {
       .channel(chan)
       .on(
         'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'task_events',
-          filter: `recipient_id=eq.${user.id}`,
-        },
+        { event: 'INSERT', schema: 'public', table: 'task_events', filter: `recipient_id=eq.${user.id}` },
         async (e) => {
           const row = (e as any).new as TaskEvent | undefined;
           if (!row) {
@@ -101,6 +95,7 @@ export function useRealtimeNotifications() {
             return;
           }
   
+          // Safety: no payload is fine now; we load the task from DB
           const evtType = row.event_type;
   
           if (evtType === 'assigned') {
@@ -114,14 +109,10 @@ export function useRealtimeNotifications() {
   
               if (error || !data) {
                 console.error('[task_events] failed to load task for modal:', error ?? 'no data');
-  
-                // Fallback toast so the user still sees *something*
+                // Fallback toast so user still sees *something*
                 const actor = row.payload?.actor_name ?? 'Someone';
                 const taskName = row.payload?.name ?? 'a task';
-                toast({
-                  title: 'New task assigned',
-                  description: `${actor} assigned "${taskName}" to you.`,
-                });
+                toast({ title: 'New task assigned', description: `${actor} assigned "${taskName}" to you.` });
                 return;
               }
   
@@ -137,7 +128,7 @@ export function useRealtimeNotifications() {
                 familyId: data.family_id ?? data.familyId ?? activeFamilyId,
                 categoryId: data.category_id ?? data.categoryId,
                 completed: !!data.completed,
-              } as any;
+              } as any; // matches TaskAssignmentModal's expected Task
   
               // Open the Accept/Reject modal immediately
               openAssignmentModal(taskForModal);
@@ -147,7 +138,7 @@ export function useRealtimeNotifications() {
             return;
           }
   
-          // accepted / rejected → toast only
+          // For accept/reject we keep the simple toast
           const actor = row.payload?.actor_name ?? 'Someone';
           const taskName = row.payload?.name ?? 'your task';
   
@@ -164,10 +155,9 @@ export function useRealtimeNotifications() {
         if (status !== 'SUBSCRIBED') console.warn(`[task-events] Channel status: ${status}`);
       });
   
-    return () => {
-      supabase.removeChannel(ch);
-    };
+    return () => { supabase.removeChannel(ch); };
   }, [user?.id, activeFamilyId, openAssignmentModal, toast]);
+
 
 
 
