@@ -12,8 +12,14 @@ const AssignmentModalCtx = createContext<Ctx | null>(null);
 export function AssignmentModalProvider({ children }: { children: React.ReactNode }) {
   const [task, setTask] = useState<Task | null>(null);
 
+  const dismissedTaskIds = useRef<Set<string>>(new Set());
+
   const openAssignmentModal = useCallback((t: Task) => {
-    setTask((current) => (current?.id === t.id ? current : t)); // de-dupe same task
+    if (!t?.id) return;
+    // Don't reopen if the user already accepted/rejected/closed it
+    if (dismissedTaskIds.current.has(t.id)) return;
+
+    setTask((current) => (current?.id === t.id ? current : t)); // de-dupe same task while open
   }, []);
 
   const closeAssignmentModal = useCallback(() => setTask(null), []);
