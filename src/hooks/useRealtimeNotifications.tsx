@@ -47,6 +47,32 @@ export function useRealtimeNotifications() {
     }, 150);
   };
 
+  const { activeFamilyId, getUserProfile } = useApp(); // add getUserProfile
+
+  // CHAT EVENTS
+  useEffect(() => {
+    if (!user?.id || !activeFamilyId) return;
+  
+    const chan = `chat-global:${activeFamilyId}`;
+    const ch = supabase
+      .channel(chan)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `family_id=eq.${activeFamilyId}` },
+        (e) => {
+          const row = (e as any).new as { user_id: string; content: string } | undefined;
+          if (!row || row.user_id === user.id) return; // only notify on others' messages
+          const name = getUserProfile(row.user_id)?.displayName ?? 'Family member';
+          toast({ title: 'New chat message', description: `${name}: ${row.content}` });
+        }
+      )
+      .subscribe((status) => {
+        if (status !== 'SUBSCRIBED') console.warn(`[chat-global] Channel status: ${status}`);
+      });
+  
+    return () => { supabase.removeChannel(ch); };
+  }, [user?.id, activeFamilyId, toast, getUserProfile]);
+  
   // TASK EVENTS (recipient only)
   useEffect(() => {
     if (!user?.id) return;

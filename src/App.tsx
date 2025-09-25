@@ -18,6 +18,12 @@ import GoalsPage from "./pages/goals/GoalsPage";
 import ChatPage from "./pages/chat/ChatPage";
 import FamilyPage from "./pages/family/FamilyPage";
 import NotFound from "./pages/NotFound";
+import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
+
+function RealtimeRoot() {
+  useRealtimeNotifications();
+  return null;
+}
 
 const App = () => (
   <TooltipProvider>
@@ -32,6 +38,7 @@ const App = () => (
             <CelebrationsProvider>
               <AppProvider>
                 <TasksProvider>
+                  <RealtimeRoot />
                   <AppLayout />
                 </TasksProvider>
               </AppProvider>
