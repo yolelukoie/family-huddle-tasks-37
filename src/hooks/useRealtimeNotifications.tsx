@@ -78,7 +78,7 @@ export function useRealtimeNotifications() {
   
     return () => { supabase.removeChannel(ch); };
   }, [user?.id, activeFamilyId, toast, getUserProfile]);
-  
+
   // TASK EVENTS (recipient only) — open modal immediately on "assigned" with de-dupe
   useEffect(() => {
     if (!user?.id) return;
@@ -93,15 +93,15 @@ export function useRealtimeNotifications() {
           const row = (e as any).new as TaskEvent | undefined;
           if (!row) return;
   
-          // 🔒 de-dupe by task_events.id to avoid re-opening the same modal
+          // de-dupe by task_events.id (handle each event once)
           if (row.id) {
             if (processedEventIds.current.has(row.id)) return;
             processedEventIds.current.add(row.id);
           }
   
           if (row.event_type === 'assigned') {
-            // Load full task so modal has everything it needs
             try {
+              // fetch full task for the modal
               const { data, error } = await supabase
                 .from('tasks')
                 .select('*')
@@ -109,7 +109,7 @@ export function useRealtimeNotifications() {
                 .single();
   
               if (error || !data) {
-                // Fallback toast if fetch blocked
+                // fallback toast so the user still sees something
                 const actor = row.payload?.actor_name ?? 'Someone';
                 const taskName = row.payload?.name ?? 'a task';
                 toast({ title: 'New task assigned', description: `${actor} assigned "${taskName}" to you.` });
@@ -136,7 +136,7 @@ export function useRealtimeNotifications() {
             return;
           }
   
-          // accepted / rejected → toast only
+          // accepted / rejected → toast to the assigner
           const actor = row.payload?.actor_name ?? 'Someone';
           const taskName = row.payload?.name ?? 'your task';
           if (row.event_type === 'accepted') {
@@ -151,7 +151,9 @@ export function useRealtimeNotifications() {
       });
   
     return () => { supabase.removeChannel(ch); };
-  }, [user?.id, activeFamilyId, openAssignmentModal, toast]);
+    // Keep deps minimal: we want a stable subscription while the user is logged in
+  }, [user?.id, openAssignmentModal, toast]);
+
 
 
   // FAMILY SYNC (categories/templates) — silent refresh
