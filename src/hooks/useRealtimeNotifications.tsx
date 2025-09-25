@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useApp } from '@/hooks/useApp';
 import { useTasks } from '@/hooks/useTasks';
+import { useAssignmentModal } from "@/contexts/AssignmentModalContext";
 
 type TaskEvent = {
   id: string;
@@ -36,6 +37,8 @@ export function useRealtimeNotifications() {
     fetchFamilyMembers,
     getUserProfile,      // needed for chat name lookup
   } = useApp();
+
+  const { openAssignmentModal } = useAssignmentModal();
 
   // Debounce refresh for category/template sync
   const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -93,55 +96,85 @@ export function useRealtimeNotifications() {
     return () => { supabase.removeChannel(ch); };
   }, [user?.id, activeFamilyId, toast, getUserProfile]);
   
-  // TASK EVENTS (recipient only)
+  // TASK EVENTS (recipient only) — open modal immediately on "assigned"
   useEffect(() => {
     if (!user?.id) return;
-
+  
     const chan = `task-events:${user.id}`;
     const ch = supabase
       .channel(chan)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'task_events', filter: `recipient_id=eq.${user.id}` },
-        (e) => {
+        async (e) => {
           const row = (e as any).new as TaskEvent | undefined;
           if (!row) {
             console.error('[task_events] Missing .new in realtime event:', e);
             return;
           }
-          if (!row.payload) {
-            console.error('[task_events] payload is null:', row);
+  
+          // Safety: no payload is fine now; we load the task from DB
+          const evtType = row.event_type;
+  
+          if (evtType === 'assigned') {
+            // Load the full task row so the modal has everything it needs
+            try {
+              const { data, error } = await supabase
+                .from('tasks')
+                .select('*')
+                .eq('id', row.task_id)
+                .single();
+  
+              if (error || !data) {
+                console.error('[task_events] failed to load task for modal:', error ?? 'no data');
+                // Fallback toast so user still sees *something*
+                const actor = row.payload?.actor_name ?? 'Someone';
+                const taskName = row.payload?.name ?? 'a task';
+                toast({ title: 'New task assigned', description: `${actor} assigned "${taskName}" to you.` });
+                return;
+              }
+  
+              // Map snake_case / camelCase to your Task shape
+              const taskForModal = {
+                id: data.id,
+                name: data.name,
+                description: data.description ?? '',
+                starValue: data.star_value ?? data.starValue ?? 0,
+                assignedBy: data.assigned_by ?? data.assignedBy,
+                assignedTo: data.assigned_to ?? data.assignedTo,
+                dueDate: data.due_date ?? data.dueDate,
+                familyId: data.family_id ?? data.familyId ?? activeFamilyId,
+                categoryId: data.category_id ?? data.categoryId,
+                completed: !!data.completed,
+              } as any; // matches TaskAssignmentModal's expected Task
+  
+              // Open the Accept/Reject modal immediately
+              openAssignmentModal(taskForModal);
+            } catch (err) {
+              console.error('[task_events] open modal failed:', err);
+            }
             return;
           }
-
-          const taskName = row.payload.name;
-          const actor = row.payload.actor_name ?? 'Someone';
-
-          if (!taskName) {
-            console.error('[task_events] payload missing "name". Row:', row);
-          }
-
-          switch (row.event_type) {
-            case 'assigned':
-              toast({ title: 'New task assigned', description: `${actor} assigned "${taskName ?? 'a task'}" to you.` });
-              break;
-            case 'accepted':
-              toast({ title: 'Task accepted', description: `${actor} accepted "${taskName ?? 'your task'}".` });
-              break;
-            case 'rejected':
-              toast({ title: 'Task rejected', description: `${actor} rejected "${taskName ?? 'your task'}".` });
-              break;
-            default:
-              console.warn('[task_events] Unknown event_type:', row.event_type, 'Row:', row);
+  
+          // For accept/reject we keep the simple toast
+          const actor = row.payload?.actor_name ?? 'Someone';
+          const taskName = row.payload?.name ?? 'your task';
+  
+          if (evtType === 'accepted') {
+            toast({ title: 'Task accepted', description: `${actor} accepted "${taskName}".` });
+          } else if (evtType === 'rejected') {
+            toast({ title: 'Task rejected', description: `${actor} rejected "${taskName}".` });
+          } else {
+            console.warn('[task_events] Unknown event_type:', evtType, 'Row:', row);
           }
         }
       )
       .subscribe((status) => {
-        if (status !== 'SUBSCRIBED') console.warn(`[task_events] Channel status: ${status}`);
+        if (status !== 'SUBSCRIBED') console.warn(`[task-events] Channel status: ${status}`);
       });
-
+  
     return () => { supabase.removeChannel(ch); };
-  }, [user?.id, toast]);
+  }, [user?.id, activeFamilyId, openAssignmentModal, toast]);
 
   // FAMILY SYNC (categories/templates) — silent refresh
   useEffect(() => {
