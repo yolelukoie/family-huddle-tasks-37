@@ -69,55 +69,54 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
     });
 
     try {
-      if (!result || !('id' in result)) {
-        console.error('[AssignTaskModal] addTask returned unexpected result:', result);
+      // Accept BOTH shapes: { id, ... } OR { task: { id, ... }, ... }
+      const createdId =
+        (result as any)?.id ??
+        (result as any)?.task?.id;
+    
+      const familyId =
+        (result as any)?.familyId ??
+        (result as any)?.family_id ??
+        activeFamilyId;
+    
+      const assignedTo =
+        (result as any)?.assignedTo ??
+        (result as any)?.assigned_to ??
+        form.getValues().assignedTo;
+    
+      const createdName =
+        (result as any)?.name ??
+        (result as any)?.task?.name ??
+        form.getValues().name;
+    
+      const createdDue =
+        (result as any)?.dueDate ??
+        (result as any)?.due_date ??
+        form.getValues().dueDate ??
+        null;
+    
+      if (!createdId || !familyId || !assignedTo) {
+        console.error('[task_events] missing fields', { createdId, familyId, assignedTo, result });
       } else {
-        const createdId =
-          (result as any).id ??
-          (result as any)?.task?.id;
-    
-        const familyId =
-          (result as any).familyId ??
-          (result as any).family_id ??
-          activeFamilyId;
-    
-        const assignedTo =
-          (result as any).assignedTo ??
-          (result as any).assigned_to ??
-          (form.getValues().assignedTo);
-    
-        const createdName =
-          (result as any).name ??
-          (result as any)?.task?.name ??
-          form.getValues().name;
-    
-        const createdDue =
-          (result as any).dueDate ??
-          (result as any).due_date ??
-          form.getValues().dueDate ??
-          null;
-    
-        if (!createdId) {
-          console.error('[task_events] no id of that task. result:', result);
-        } else if (!familyId) {
-          console.error('[task_events] no family_id. result:', result);
-        } else {
-          const { error: evErr } = await supabase.from('task_events').insert({
+        const { data, error: evErr } = await supabase
+          .from('task_events')
+          .insert({
             task_id: createdId,
             family_id: familyId,
-            recipient_id: assignedTo,         
-            actor_id: user.id,                
+            recipient_id: assignedTo,
+            actor_id: user.id,
             event_type: 'assigned',
             payload: {
-              name: createdName,              
+              name: createdName,
               due_date: createdDue ? new Date(createdDue).toISOString() : null,
-              actor_name: (user as any).displayName ?? 'Someone',
+              actor_name: (user as any)?.displayName ?? 'Someone',
             },
-          });
-          if (evErr) {
-            console.error('[task_events] insert failed (assigned):', evErr);
-          }
-        }
+          })
+          .select('id')  // helpful while testing
+          .single();
+    
+        if (evErr) console.error('[task_events] insert failed (assigned):', evErr);
+        else console.log('[task_events] insert ok (assigned), id=', data?.id);
       }
     } catch (e) {
       console.error('[task_events] insert threw (assigned):', e);
