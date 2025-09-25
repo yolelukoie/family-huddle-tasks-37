@@ -39,6 +39,7 @@ export function useRealtimeNotifications() {
   } = useApp();
 
   const { openAssignmentModal } = useAssignmentModal();
+  const handledEventIds = useRef<Set<string>>(new Set());
 
   // Debounce refresh for category/template sync
   const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -91,7 +92,7 @@ export function useRealtimeNotifications() {
     return () => { supabase.removeChannel(ch); };
   }, [user?.id, activeFamilyId, toast, getUserProfile]);
 
-  // TASK EVENTS (recipient only) — open modal immediately on "assigned"
+  // TASK EVENTS (recipient only) — open modal immediately on "assigned", with de-dupe
   useEffect(() => {
     if (!user?.id) return;
   
@@ -103,16 +104,17 @@ export function useRealtimeNotifications() {
         { event: 'INSERT', schema: 'public', table: 'task_events', filter: `recipient_id=eq.${user.id}` },
         async (e) => {
           const row = (e as any).new as TaskEvent | undefined;
-          if (!row) {
-            console.error('[task_events] Missing .new in realtime event:', e);
-            return;
+          if (!row) return;
+  
+          // 🔒 ignore the same event id if we've already handled it
+          if (row.id) {
+            if (handledEventIds.current.has(row.id)) return;
+            handledEventIds.current.add(row.id);
           }
   
-          // Safety: no payload is fine now; we load the task from DB
           const evtType = row.event_type;
   
           if (evtType === 'assigned') {
-            // Load the full task row so the modal has everything it needs
             try {
               const { data, error } = await supabase
                 .from('tasks')
@@ -121,15 +123,12 @@ export function useRealtimeNotifications() {
                 .single();
   
               if (error || !data) {
-                console.error('[task_events] failed to load task for modal:', error ?? 'no data');
-                // Fallback toast so user still sees *something*
                 const actor = row.payload?.actor_name ?? 'Someone';
                 const taskName = row.payload?.name ?? 'a task';
                 toast({ title: 'New task assigned', description: `${actor} assigned "${taskName}" to you.` });
                 return;
               }
   
-              // Map snake_case / camelCase to your Task shape
               const taskForModal = {
                 id: data.id,
                 name: data.name,
@@ -141,9 +140,8 @@ export function useRealtimeNotifications() {
                 familyId: data.family_id ?? data.familyId ?? activeFamilyId,
                 categoryId: data.category_id ?? data.categoryId,
                 completed: !!data.completed,
-              } as any; // matches TaskAssignmentModal's expected Task
+              } as any;
   
-              // Open the Accept/Reject modal immediately
               openAssignmentModal(taskForModal);
             } catch (err) {
               console.error('[task_events] open modal failed:', err);
@@ -151,16 +149,13 @@ export function useRealtimeNotifications() {
             return;
           }
   
-          // For accept/reject we keep the simple toast
+          // accepted / rejected → toast for the assigner
           const actor = row.payload?.actor_name ?? 'Someone';
           const taskName = row.payload?.name ?? 'your task';
-  
           if (evtType === 'accepted') {
             toast({ title: 'Task accepted', description: `${actor} accepted "${taskName}".` });
           } else if (evtType === 'rejected') {
             toast({ title: 'Task rejected', description: `${actor} rejected "${taskName}".` });
-          } else {
-            console.warn('[task_events] Unknown event_type:', evtType, 'Row:', row);
           }
         }
       )
@@ -169,10 +164,8 @@ export function useRealtimeNotifications() {
       });
   
     return () => { supabase.removeChannel(ch); };
-  }, [user?.id, activeFamilyId, openAssignmentModal, toast]);
-
-
-
+    // Keep deps minimal so we don't re-subscribe unnecessarily in dev StrictMode
+  }, [user?.id, openAssignmentModal, toast]);
 
   // FAMILY SYNC (categories/templates) — silent refresh
   useEffect(() => {
