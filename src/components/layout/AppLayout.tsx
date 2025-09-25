@@ -12,12 +12,9 @@ import FamilyPage from '@/pages/family/FamilyPage';
 import NotFound from '@/pages/NotFound';
 import { DevStatus } from '@/components/dev/DevStatus';
 import { DevTestButton } from '@/components/dev/DevTestButton';
-import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
-
 
 export function AppLayout() {
   // Mount notifications hook globally for all authenticated users
-  useRealtimeNotifications();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const { isLoading } = useApp();
   const navigate = useNavigate();

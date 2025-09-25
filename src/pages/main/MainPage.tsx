@@ -22,7 +22,6 @@ import { AssignTaskModal } from '@/components/modals/AssignTaskModal';
 import { MilestoneCelebration } from '@/components/celebrations/MilestoneCelebration';
 import { TaskAssignmentModal } from '@/components/modals/TaskAssignmentModal';
 import { useTaskAssignments } from '@/hooks/useTaskAssignments';
-import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
 import { Star, Calendar, Plus, RotateCcw, CheckCircle } from 'lucide-react';
 export default function MainPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -63,8 +62,6 @@ export default function MainPage() {
     closeAssignmentModal 
   } = useTaskAssignments();
   
-  // Check for task assignment notifications
-  useRealtimeNotifications();
   const navigate = useNavigate();
   const [showAssignTask, setShowAssignTask] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
