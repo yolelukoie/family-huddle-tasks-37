@@ -54,6 +54,19 @@ export function useRealtimeNotifications() {
     }, 150);
   };
 
+  // TEMP: see ANY task_events insert, regardless of recipient
+  useEffect(() => {
+    const ch = supabase
+      .channel('debug:task_events:nofilter')
+      .on('postgres_changes', { schema: 'public', table: 'task_events', event: 'INSERT' }, (e) => {
+        console.log('%c[DEBUG] task_events INSERT (nofilter):', 'color:#0aa', e);
+      })
+      .subscribe((status) => {
+        if (status !== 'SUBSCRIBED') console.warn('[DEBUG] nofilter channel status:', status);
+      });
+    return () => { supabase.removeChannel(ch); };
+  }, []);
+
   // CHAT EVENTS
   useEffect(() => {
     if (!user?.id || !activeFamilyId) return;
