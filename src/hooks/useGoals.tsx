@@ -62,8 +62,10 @@ export function useGoals() {
   useEffect(() => {
     if (!user || !activeFamilyId) return;
 
+    const channelName = `goals:${user.id}:${activeFamilyId}`
+
     const channel = supabase
-      .channel('goals-changes')
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
