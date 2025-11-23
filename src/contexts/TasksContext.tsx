@@ -416,7 +416,6 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
       isDefault: data.is_default,
       isDeletable: data.is_deletable,
       createdBy: data.created_by,
-      createdAt: data.created_at,
     };
   
     setTemplates(prev => [...prev, newTemplate]);

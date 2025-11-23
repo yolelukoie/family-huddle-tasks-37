@@ -156,6 +156,36 @@ export type Database = {
         }
         Relationships: []
       }
+      family_sync_events: {
+        Row: {
+          created_at: string
+          entity: string
+          entity_id: string
+          family_id: string
+          id: string
+          op: string
+          payload: Json | null
+        }
+        Insert: {
+          created_at?: string
+          entity: string
+          entity_id: string
+          family_id: string
+          id?: string
+          op: string
+          payload?: Json | null
+        }
+        Update: {
+          created_at?: string
+          entity?: string
+          entity_id?: string
+          family_id?: string
+          id?: string
+          op?: string
+          payload?: Json | null
+        }
+        Relationships: []
+      }
       goals: {
         Row: {
           completed: boolean
@@ -541,10 +571,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      generate_invite_code: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      generate_invite_code: { Args: never; Returns: string }
       get_family_members: {
         Args: { p_family_id: string }
         Returns: {
@@ -562,22 +589,10 @@ export type Database = {
           user_id: string
         }[]
       }
-      get_my_family_ids: {
-        Args: Record<PropertyKey, never>
-        Returns: string[]
-      }
-      get_user_family_ids: {
-        Args: { p_user_id: string }
-        Returns: string[]
-      }
-      is_family_comember: {
-        Args: { p_user_id: string }
-        Returns: boolean
-      }
-      is_in_same_family: {
-        Args: { target_user: string }
-        Returns: boolean
-      }
+      get_my_family_ids: { Args: never; Returns: string[] }
+      get_user_family_ids: { Args: { p_user_id: string }; Returns: string[] }
+      is_family_comember: { Args: { p_user_id: string }; Returns: boolean }
+      is_in_same_family: { Args: { target_user: string }; Returns: boolean }
       join_family_by_code: {
         Args: { p_invite_code: string }
         Returns: {

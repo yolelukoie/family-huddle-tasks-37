@@ -34,7 +34,6 @@ export function useRealtimeNotifications() {
   const { refreshData } = useTasks();
   const {
     activeFamilyId,
-    fetchFamilyMembers,
     getUserProfile,      // needed for chat name lookup
   } = useApp();
 
@@ -133,12 +132,12 @@ export function useRealtimeNotifications() {
                 id: data.id,
                 name: data.name,
                 description: data.description ?? '',
-                starValue: data.star_value ?? data.starValue ?? 0,
-                assignedBy: data.assigned_by ?? data.assignedBy,
-                assignedTo: data.assigned_to ?? data.assignedTo,
-                dueDate: data.due_date ?? data.dueDate,
-                familyId: data.family_id ?? data.familyId ?? activeFamilyId,
-                categoryId: data.category_id ?? data.categoryId,
+                starValue: data.star_value ?? 0,
+                assignedBy: data.assigned_by,
+                assignedTo: data.assigned_to,
+                dueDate: data.due_date,
+                familyId: data.family_id ?? activeFamilyId,
+                categoryId: data.category_id,
                 completed: !!data.completed,
               } as any;
   
