@@ -12,6 +12,7 @@ import { MemberProfileModal } from '@/components/modals/MemberProfileModal';
 import { Users, Share, Plus, Edit, Settings, Star } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getCurrentStage, getStageName } from '@/lib/character';
+import { LEMON_CHECKOUT_URL } from '@/config/subscription';
 
 export default function FamilyPage() {
   const { user, updateUser } = useAuth();
@@ -153,6 +154,27 @@ export default function FamilyPage() {
                 </div>
               </div>
             </form>
+          </CardContent>
+        </Card>
+
+        {/* Subscription */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Settings className="h-5 w-5" />
+              Subscription
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              You're currently on a free trial. You can manage your subscription here.
+            </p>
+            <Button 
+              variant="secondary" 
+              onClick={() => window.location.href = LEMON_CHECKOUT_URL}
+            >
+              Manage subscription
+            </Button>
           </CardContent>
         </Card>
 
