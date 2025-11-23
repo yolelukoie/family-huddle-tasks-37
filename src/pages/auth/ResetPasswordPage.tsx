@@ -16,13 +16,16 @@ export function ResetPasswordPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Prepare session from email link (supports PKCE ?code=... and hash #access_token=...&refresh_token=...)
+  // Helper: small wait
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+  // Ensure we *really* have an authenticated session from the email link
   useEffect(() => {
     let cancelled = false;
 
-    const processLink = async () => {
+    const prepareSessionFromLink = async () => {
       try {
-        // Parse both hash and query
+        // Accept both hash (#access_token...) and query (?code=...) styles
         const hash = window.location.hash?.startsWith("#") ? window.location.hash.slice(1) : "";
         const hashParams = new URLSearchParams(hash);
         const accessToken = searchParams.get("access_token") || hashParams.get("access_token") || undefined;
@@ -32,39 +35,49 @@ export function ResetPasswordPage() {
         if (code) {
           const { error } = await supabase.auth.exchangeCodeForSession(code);
           if (error) throw error;
-          if (!cancelled) setIsSessionReady(true);
         } else if (accessToken && refreshToken) {
           const { error } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
           if (error) throw error;
-          if (!cancelled) setIsSessionReady(true);
-        } else {
-          // Already have a session?
-          const { data } = await supabase.auth.getSession();
-          if (data.session) {
-            if (!cancelled) setIsSessionReady(true);
-          } else {
-            throw new Error("Missing reset credentials");
-          }
         }
 
-        // Clean URL (remove query and hash so refresh won’t break)
+        // Poll briefly until the session is definitely available (avoids races)
+        for (let i = 0; i < 20; i++) {
+          // up to ~2s
+          const { data } = await supabase.auth.getSession();
+          if (data.session?.access_token) {
+            if (!cancelled) setIsSessionReady(true);
+            break;
+          }
+          await sleep(100);
+        }
+
+        // If link had no tokens, we might already be signed in (e.g., dev)
+        if (!cancelled && !isSessionReady) {
+          const { data } = await supabase.auth.getSession();
+          if (data.session?.access_token) setIsSessionReady(true);
+        }
+
+        // Clean URL (remove hash/query)
         window.history.replaceState({}, document.title, window.location.pathname);
       } catch (err) {
         console.error("Reset link processing failed:", err);
-        toast({
-          title: "Invalid reset link",
-          description: "This password reset link is invalid or has expired.",
-          variant: "destructive",
-        });
-        navigate("/auth", { replace: true });
+        if (!cancelled) {
+          toast({
+            title: "Invalid reset link",
+            description: "This password reset link is invalid or has expired.",
+            variant: "destructive",
+          });
+          navigate("/auth", { replace: true });
+        }
       }
     };
 
-    processLink();
+    prepareSessionFromLink();
     return () => {
       cancelled = true;
     };
-  }, [searchParams, navigate, toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,7 +103,26 @@ export function ResetPasswordPage() {
 
     setIsLoading(true);
     try {
-      const { error } = await supabase.auth.updateUser({ password });
+      // Double-check we have a session before calling updateUser
+      const { data: s1 } = await supabase.auth.getSession();
+      if (!s1.session) {
+        // Try a quick refresh once
+        await supabase.auth.refreshSession();
+        const { data: s2 } = await supabase.auth.getSession();
+        if (!s2.session) {
+          throw new Error("No active reset session. Please open the latest email link again.");
+        }
+      }
+
+      // Guard against hanging requests by racing with a timeout
+      const updatePromise = supabase.auth.updateUser({ password });
+      const timeout = new Promise<never>((_, rej) =>
+        setTimeout(() => rej(new Error("Network timeout while updating password.")), 15000),
+      );
+
+      const { error } = (await Promise.race([updatePromise, timeout])) as Awaited<
+        ReturnType<typeof supabase.auth.updateUser>
+      >;
       if (error) {
         console.error("[reset-password] updateUser error:", error);
         toast({
@@ -101,14 +133,20 @@ export function ResetPasswordPage() {
         return;
       }
 
-      toast({ title: "Password updated", description: "You are now signed in with your new password." });
-      // Make the next login clean (no leftover hash/query)
-      window.history.replaceState({}, "", "/");
-      navigate("/", { replace: true });
+      // (Optional) Sign out to invalidate old tokens, then send to /auth
+      try {
+        await supabase.auth.signOut({ scope: "global" });
+      } catch (_) {
+        // ignore
+      }
+
+      toast({ title: "Password updated", description: "Please sign in with your new password." });
+      window.history.replaceState({}, "", "/auth");
+      navigate("/auth", { replace: true });
     } catch (err: any) {
       console.error("[reset-password] unexpected error:", err);
       toast({
-        title: "Unexpected error",
+        title: "Error updating password",
         description: String(err?.message || err),
         variant: "destructive",
       });
