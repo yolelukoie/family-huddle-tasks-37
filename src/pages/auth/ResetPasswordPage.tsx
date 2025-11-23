@@ -101,10 +101,10 @@ export function ResetPasswordPage() {
         return;
       }
 
-      toast({ title: "Password updated", description: "You can sign in with your new password." });
+      toast({ title: "Password updated", description: "You are now signed in with your new password." });
       // Make the next login clean (no leftover hash/query)
-      window.history.replaceState({}, "", "/auth");
-      navigate("/auth", { replace: true });
+      window.history.replaceState({}, "", "/");
+      navigate("/", { replace: true });
     } catch (err: any) {
       console.error("[reset-password] unexpected error:", err);
       toast({
