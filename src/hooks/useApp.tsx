@@ -19,6 +19,7 @@ interface AppContextType {
   switchFamily: (familyId: string) => Promise<void>;
   setActiveFamilyId: (familyId: string) => Promise<void>;
   updateFamilyName: (familyId: string, name: string) => Promise<void>;
+  quitFamily: (familyId: string) => Promise<boolean>;
   
   // Utility
   getUserFamily: (familyId: string) => UserFamily | null;
@@ -545,6 +546,66 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const quitFamily = async (familyId: string): Promise<boolean> => {
+    if (!user) return false;
+
+    try {
+      // Check if user has only one family
+      if (userFamilies.length === 1) {
+        return false; // Cannot quit last family
+      }
+
+      // Get family members
+      const members = getFamilyMembers(familyId);
+      
+      // If user is the only member, delete the family
+      if (members.length === 1 && members[0].userId === user.id) {
+        // Delete the family
+        const { error: familyError } = await supabase
+          .from('families')
+          .delete()
+          .eq('id', familyId);
+
+        if (familyError) {
+          console.error('Error deleting family:', familyError);
+          throw familyError;
+        }
+
+        // Remove from local state
+        setFamilies(prev => prev.filter(f => f.id !== familyId));
+        setUserFamilies(prev => prev.filter(uf => uf.familyId !== familyId));
+      } else {
+        // Just remove user from the family
+        const { error: userFamilyError } = await supabase
+          .from('user_families')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('family_id', familyId);
+
+        if (userFamilyError) {
+          console.error('Error removing user from family:', userFamilyError);
+          throw userFamilyError;
+        }
+
+        // Remove from local state
+        setUserFamilies(prev => prev.filter(uf => uf.familyId !== familyId));
+      }
+
+      // If the family being quit is the active family, switch to another one
+      if (activeFamilyId === familyId) {
+        const remainingFamilies = userFamilies.filter(uf => uf.familyId !== familyId);
+        if (remainingFamilies.length > 0) {
+          await setActiveFamilyId(remainingFamilies[0].familyId);
+        }
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Failed to quit family:', error);
+      throw error;
+    }
+  };
+
   const [allFamilyMembers, setAllFamilyMembers] = useState<Record<string, UserFamily[]>>({});
   const [userProfiles, setUserProfiles] = useState<Record<string, User>>({});
 
@@ -848,6 +909,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       switchFamily,
       setActiveFamilyId,
       updateFamilyName,
+      quitFamily,
       getUserFamily,
       getFamilyMembers,
       getUserProfile,

@@ -16,7 +16,7 @@ import { LEMON_CHECKOUT_URL } from '@/config/subscription';
 
 export default function FamilyPage() {
   const { user, updateUser } = useAuth();
-  const { activeFamilyId, userFamilies, families, setActiveFamilyId, createFamily, joinFamily, updateFamilyName, getFamilyMembers, getUserProfile } = useApp();
+  const { activeFamilyId, userFamilies, families, setActiveFamilyId, createFamily, joinFamily, updateFamilyName, quitFamily, getFamilyMembers, getUserProfile } = useApp();
   const { toast } = useToast();
   const [newDisplayName, setNewDisplayName] = useState(user?.displayName || '');
   const [showJoinFamily, setShowJoinFamily] = useState(false);
@@ -111,6 +111,34 @@ export default function FamilyPage() {
       toast({
         title: "Error updating family name",
         description: "There was an error updating the family name. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleQuitFamily = async (familyId: string) => {
+    try {
+      const success = await quitFamily(familyId);
+      
+      if (!success) {
+        toast({
+          title: "Cannot quit family",
+          description: "You must have at least one family. If you want to quit this family, create another one firstly.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setEditingFamilyId(null);
+      setEditingFamilyName('');
+      toast({
+        title: "Left family",
+        description: "You have successfully left the family.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error leaving family",
+        description: "There was an error leaving the family. Please try again.",
         variant: "destructive",
       });
     }
@@ -314,17 +342,27 @@ export default function FamilyPage() {
                                 required
                               />
                             </div>
-                            <div className="flex gap-2">
-                              <Button type="submit" className="flex-1">Update</Button>
+                            <div className="flex flex-col gap-2">
+                              <div className="flex gap-2">
+                                <Button type="submit" className="flex-1">Update</Button>
+                                <Button 
+                                  type="button" 
+                                  variant="outline" 
+                                  onClick={() => {
+                                    setEditingFamilyId(null);
+                                    setEditingFamilyName('');
+                                  }}
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
                               <Button 
                                 type="button" 
-                                variant="outline" 
-                                onClick={() => {
-                                  setEditingFamilyId(null);
-                                  setEditingFamilyName('');
-                                }}
+                                variant="destructive" 
+                                onClick={() => handleQuitFamily(family.id)}
+                                className="w-full"
                               >
-                                Cancel
+                                Quit Family
                               </Button>
                             </div>
                           </form>
