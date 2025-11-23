@@ -21,7 +21,6 @@ interface TaskAssignmentModalProps {
 export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }: TaskAssignmentModalProps) {
   const { user } = useAuth();
   const { getUserProfile } = useApp();
-  const { activeFamily } = useApp();
   const { updateTask, deleteTask, ensureCategoryByName } = useTasks();
   const { toast } = useToast();
   
@@ -30,7 +29,7 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
   const assignerProfile = getUserProfile(task.assignedBy);
   const assignerName = assignerProfile?.displayName || 'Someone';
 
-  const familyId = task.familyId ?? activeFamily?.id;
+  const familyId = task.familyId;
   if (!familyId) {
     console.error('Missing familyId for task_events insert');
     toast({
@@ -38,7 +37,7 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
       description: "Family is not loaded yet. Try again in a moment.",
       variant: "destructive",
     });
-    return;
+    return null;
   }
 
   const handleAccept = async () => {
