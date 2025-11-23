@@ -521,6 +521,7 @@ export type Database = {
       }
       user_families: {
         Row: {
+          chat_cleared_at: string | null
           current_stage: number
           family_id: string
           id: string
@@ -533,6 +534,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          chat_cleared_at?: string | null
           current_stage?: number
           family_id: string
           id?: string
@@ -545,6 +547,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          chat_cleared_at?: string | null
           current_stage?: number
           family_id?: string
           id?: string
