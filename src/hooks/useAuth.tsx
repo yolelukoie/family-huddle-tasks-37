@@ -178,6 +178,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [sessionId]);
 
+  // Handle Supabase email links like #access_token=...&refresh_token=...&type=recovery
+  useEffect(() => {
+    if (!window.location.hash.includes('access_token')) return;
+
+    const params = new URLSearchParams(window.location.hash.slice(1));
+    const access_token = params.get('access_token');
+    const refresh_token = params.get('refresh_token');
+    const type = params.get('type'); // 'recovery' | 'magiclink' | etc.
+
+    if (access_token && refresh_token) {
+      supabase.auth
+        .setSession({ access_token, refresh_token })
+        .then(() => {
+          // Clean URL and go to the right screen
+          if (type === 'recovery') {
+            window.history.replaceState({}, '', '/reset-password');
+          } else {
+            window.history.replaceState({}, '', '/');
+          }
+        })
+        .catch((e) => console.error('[Auth] setSession from hash failed:', e));
+    }
+  }, []);
+
   const signUp = useCallback(async (email: string, password: string) => {
     const redirectUrl = `${window.location.origin}/`;
     
@@ -202,9 +226,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setSession(null);
+    try {
+      await supabase.auth.signOut({ scope: 'global' });
+    } finally {
+      setUser(null);
+      setSession(null);
+      // drop any hash leftovers & go to the auth screen
+      if (window.location.hash) window.history.replaceState({}, '', '/auth');
+      window.location.assign('/auth');
+    }
   }, []);
 
   const resetPassword = useCallback(async (email: string) => {
@@ -299,14 +329,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 
   const logout = useCallback(() => {
-    const uid = getUserId(session);
-    if (uid) {
-      const userKey = `${USER_KEY}_${uid}`;
-      localStorage.removeItem(userKey);
-    }
-    localStorage.removeItem(USER_KEY);
-    setUser(null);
-  }, [session]);
+    // Keep compatibility if any component still calls logout()
+    // Just delegate to signOut so prod behaves the same.
+    void signOut();
+  }, [signOut]);
 
 
   const clearAuth = useCallback(() => {
