@@ -7,13 +7,13 @@ import { useAuth } from '@/hooks/useAuth';
 import { useApp } from '@/hooks/useApp';
 import { useChat } from '@/hooks/useChat';
 import { NavigationHeader } from '@/components/layout/NavigationHeader';
-import { Send } from 'lucide-react';
+import { Send, Trash2 } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 
 export default function ChatPage() {
   const { user } = useAuth();
   const { activeFamilyId } = useApp();
-  const { messages, sendMessage: sendChatMessage } = useChat();
+  const { messages, sendMessage: sendChatMessage, clearChat } = useChat();
   const navigate = useNavigate();
   const [message, setMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -64,8 +64,17 @@ export default function ChatPage() {
       
       <div className="max-w-4xl mx-auto p-4 h-[calc(100vh-80px)] flex flex-col">
         <Card className="flex-1 flex flex-col">
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Family Chat</CardTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => clearChat()}
+              className="text-muted-foreground hover:text-destructive"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Clear Chat
+            </Button>
           </CardHeader>
           <CardContent className="flex-1 flex flex-col space-y-4">
             {/* Messages */}

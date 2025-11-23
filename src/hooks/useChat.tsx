@@ -12,6 +12,30 @@ export function useChat() {
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
+  const [chatClearedAt, setChatClearedAt] = useState<string | null>(null);
+
+  // Load chat_cleared_at timestamp for the current user
+  const loadChatClearedAt = useCallback(async () => {
+    if (!user || !activeFamilyId) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('user_families')
+        .select('chat_cleared_at')
+        .eq('user_id', user.id)
+        .eq('family_id', activeFamilyId)
+        .single();
+
+      if (error) {
+        console.error('[chat] Error loading chat_cleared_at:', error);
+        return;
+      }
+
+      setChatClearedAt(data?.chat_cleared_at || null);
+    } catch (err) {
+      console.error('[chat] Error in loadChatClearedAt:', err);
+    }
+  }, [user, activeFamilyId]);
 
   // Load full history for the active family
   const loadMessages = useCallback(async () => {
@@ -30,7 +54,12 @@ export function useChat() {
         return;
       }
 
-      const converted: ChatMessage[] = (data ?? []).map((msg) => {
+      // Filter messages based on chat_cleared_at timestamp
+      const filtered = chatClearedAt
+        ? (data ?? []).filter((msg) => new Date(msg.created_at) > new Date(chatClearedAt))
+        : (data ?? []);
+
+      const converted: ChatMessage[] = filtered.map((msg) => {
         const isMine = user.id === msg.user_id;
         const senderProfile = isMine ? null : getUserProfile(msg.user_id);
         const displayName = isMine
@@ -54,9 +83,14 @@ export function useChat() {
     } finally {
       setLoading(false);
     }
-  }, [user, activeFamilyId, getUserProfile]);
+  }, [user, activeFamilyId, getUserProfile, chatClearedAt]);
 
-  // Load when family changes
+  // Load chat_cleared_at when family changes
+  useEffect(() => {
+    loadChatClearedAt();
+  }, [loadChatClearedAt]);
+
+  // Load messages when family or chatClearedAt changes
   useEffect(() => {
     loadMessages();
   }, [loadMessages]);
@@ -166,10 +200,52 @@ export function useChat() {
     loadMessages();
   }, [loadMessages]);
 
+  const clearChat = useCallback(async () => {
+    if (!user || !activeFamilyId) return false;
+
+    try {
+      const { error } = await supabase
+        .from('user_families')
+        .update({ chat_cleared_at: new Date().toISOString() })
+        .eq('user_id', user.id)
+        .eq('family_id', activeFamilyId);
+
+      if (error) {
+        console.error('[chat] Error clearing chat:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to clear chat',
+          variant: 'destructive',
+        });
+        return false;
+      }
+
+      // Update local state
+      setChatClearedAt(new Date().toISOString());
+      setMessages([]);
+      
+      toast({
+        title: 'Chat cleared',
+        description: 'Your chat history has been cleared',
+      });
+
+      return true;
+    } catch (err) {
+      console.error('[chat] Error in clearChat:', err);
+      toast({
+        title: 'Error',
+        description: 'Failed to clear chat',
+        variant: 'destructive',
+      });
+      return false;
+    }
+  }, [user, activeFamilyId, toast]);
+
   return {
     messages,
     loading,
     sendMessage,
     refreshMessages,
+    clearChat,
   };
 }
