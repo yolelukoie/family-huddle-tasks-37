@@ -246,6 +246,7 @@ export type Database = {
           display_name: string
           gender: string
           id: string
+          preferred_language: string | null
           profile_complete: boolean
           updated_at: string
         }
@@ -258,6 +259,7 @@ export type Database = {
           display_name: string
           gender: string
           id: string
+          preferred_language?: string | null
           profile_complete?: boolean
           updated_at?: string
         }
@@ -270,6 +272,7 @@ export type Database = {
           display_name?: string
           gender?: string
           id?: string
+          preferred_language?: string | null
           profile_complete?: boolean
           updated_at?: string
         }

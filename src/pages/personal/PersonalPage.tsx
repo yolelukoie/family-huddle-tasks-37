@@ -4,18 +4,29 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/hooks/useAuth';
 import { NavigationHeader } from '@/components/layout/NavigationHeader';
-import { Edit, Settings, Upload, Loader2 } from 'lucide-react';
+import { Edit, Settings, Upload, Loader2, Languages } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LEMON_CHECKOUT_URL } from '@/config/subscription';
 import { supabase } from '@/integrations/supabase/client';
+
+const LANGUAGES = [
+  { code: 'en', name: 'English' },
+  { code: 'es', name: 'Español' },
+  { code: 'zh', name: '中文' },
+  { code: 'hi', name: 'हिन्दी' },
+  { code: 'ru', name: 'Русский' },
+  { code: 'he', name: 'עברית' },
+];
 
 export default function PersonalPage() {
   const { user, updateUser } = useAuth();
   const { toast } = useToast();
   const [newDisplayName, setNewDisplayName] = useState(user?.displayName || '');
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState<string>('en');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!user) return null;
@@ -109,6 +120,31 @@ export default function PersonalPage() {
     }
   };
 
+  const handleLanguageChange = async (language: string) => {
+    setSelectedLanguage(language);
+    
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ preferred_language: language })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Language updated",
+        description: "Your language preference has been saved.",
+      });
+    } catch (error) {
+      console.error('Error updating language:', error);
+      toast({
+        title: "Update failed",
+        description: "There was an error updating your language preference.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -191,6 +227,33 @@ export default function PersonalPage() {
                 </div>
               </div>
             </form>
+          </CardContent>
+        </Card>
+
+        {/* Language Selection */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Languages className="h-5 w-5" />
+              Language
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <Label htmlFor="language">Preferred Language</Label>
+              <Select value={selectedLanguage} onValueChange={handleLanguageChange}>
+                <SelectTrigger id="language">
+                  <SelectValue placeholder="Select a language" />
+                </SelectTrigger>
+                <SelectContent>
+                  {LANGUAGES.map((lang) => (
+                    <SelectItem key={lang.code} value={lang.code}>
+                      {lang.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </CardContent>
         </Card>
 
