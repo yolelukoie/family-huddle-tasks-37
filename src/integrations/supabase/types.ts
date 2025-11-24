@@ -240,6 +240,7 @@ export type Database = {
         Row: {
           active_family_id: string | null
           age: number
+          avatar_url: string | null
           created_at: string
           date_of_birth: string
           display_name: string
@@ -251,6 +252,7 @@ export type Database = {
         Insert: {
           active_family_id?: string | null
           age: number
+          avatar_url?: string | null
           created_at?: string
           date_of_birth: string
           display_name: string
@@ -262,6 +264,7 @@ export type Database = {
         Update: {
           active_family_id?: string | null
           age?: number
+          avatar_url?: string | null
           created_at?: string
           date_of_birth?: string
           display_name?: string

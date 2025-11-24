@@ -6,6 +6,7 @@ export interface User {
   age: number;
   profileComplete: boolean;
   activeFamilyId?: string;
+  avatar_url?: string;
 }
 
 export interface Family {
