@@ -726,6 +726,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           age: row.age ?? null,
           profileComplete: !!row.profile_complete,
           activeFamilyId: row.active_family_id ?? null,
+          avatar_url: row.avatar_url ?? null,
         };
       }
 

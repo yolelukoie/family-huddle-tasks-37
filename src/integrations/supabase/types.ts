@@ -586,6 +586,7 @@ export type Database = {
         Returns: {
           active_family_id: string
           age: number
+          avatar_url: string
           current_stage: number
           date_of_birth: string
           display_name: string
