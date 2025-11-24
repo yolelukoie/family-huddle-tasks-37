@@ -81,6 +81,7 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
           id: c.id,
           name: c.name,
           familyId: c.family_id,
+          userId: c.user_id,
           isDefault: c.is_default,
           isHouseChores: c.is_house_chores,
           order: c.order_index,
@@ -277,6 +278,7 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
       id: data.id,
       name: data.name,
       familyId: data.family_id,
+      userId: data.user_id,
       isDefault: data.is_default,
       isHouseChores: data.is_house_chores,
       order: data.order_index,
@@ -311,6 +313,7 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
         .insert([{
           name: category.name,
           family_id: activeFamilyId,
+          user_id: category.userId || null,
           is_default: category.isDefault || false,
           is_house_chores: category.isHouseChores || false,
           order_index: nextOrder,
@@ -331,6 +334,7 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
         id: data.id,
         name: data.name,
         familyId: data.family_id,
+        userId: data.user_id,
         isDefault: data.is_default,
         isHouseChores: data.is_house_chores,
         order: data.order_index,
@@ -514,11 +518,13 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
         console.error('Error deleting templates:', templatesError);
       }
 
-      // Delete all tasks in this category
+      // Delete only INCOMPLETE tasks in this category
+      // Completed tasks are kept for star tracking
       const { error: tasksError } = await supabase
         .from('tasks')
         .delete()
-        .eq('category_id', categoryId);
+        .eq('category_id', categoryId)
+        .eq('completed', false);
 
       if (tasksError) {
         console.error('Error deleting tasks:', tasksError);
@@ -539,13 +545,19 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
         return false;
       }
 
-      // Update local state
+      // Update local state - remove category, templates, and incomplete tasks
+      // Keep completed tasks for star tracking
       setCategories(prev => prev.filter(c => c.id !== categoryId));
       setTemplates(prev => prev.filter(t => t.categoryId !== categoryId));
-      setTasks(prev => prev.filter(t => t.categoryId !== categoryId));
+      setTasks(prev => prev.filter(t => !(t.categoryId === categoryId && !t.completed)));
       
       // Emit change event
       window.dispatchEvent(new CustomEvent('tasks:changed'));
+      
+      toast({
+        title: "Success",
+        description: "Category deleted. Your earned stars are preserved.",
+      });
       
       return true;
     } catch (e: any) {

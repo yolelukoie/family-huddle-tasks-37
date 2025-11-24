@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useTasks } from '@/hooks/useTasks';
+import { useAuth } from '@/hooks/useAuth';
 
 interface CreateCategoryModalProps {
   open: boolean;
@@ -15,16 +16,18 @@ export function CreateCategoryModal({ open, onOpenChange, familyId }: CreateCate
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const { addCategory } = useTasks();
+  const { user } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || loading) return;
+    if (!name.trim() || loading || !user) return;
 
     setLoading(true);
     try {
       const result = await addCategory({
         name: name.trim(),
         familyId,
+        userId: user.id, // Set user_id for user-owned category
         isHouseChores: false,
         isDefault: false,
         order: 0, // Will be computed by the hook
