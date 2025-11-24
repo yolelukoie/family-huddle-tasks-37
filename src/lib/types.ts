@@ -31,6 +31,7 @@ export interface UserFamily {
 export interface TaskCategory {
   id: string;
   familyId: string;
+  userId?: string | null; // For user-owned categories, null for shared/default
   name: string;
   isDefault: boolean;
   isHouseChores: boolean;
