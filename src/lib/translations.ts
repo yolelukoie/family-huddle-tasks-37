@@ -26,3 +26,19 @@ export function translateTaskName(taskName: string, t: TFunction): string {
 
   return taskMap[taskName] || taskName;
 }
+
+/**
+ * Translates default task descriptions to their localized versions
+ */
+export function translateTaskDescription(description: string | null, t: TFunction): string | null {
+  if (!description) return description;
+  
+  const descriptionMap: Record<string, string> = {
+    'Tidy up and organize the room': t('defaultTasks.cleanTheRoomDesc'),
+    'Wash, dry, and put away dishes': t('defaultTasks.doTheDishesDesc'),
+    'Collect and take out household trash': t('defaultTasks.takeOutTrashDesc'),
+    'Help prepare or cook a meal': t('defaultTasks.cookMealDesc'),
+  };
+
+  return descriptionMap[description] || description;
+}

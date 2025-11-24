@@ -202,8 +202,12 @@
   },
   "defaultTasks": {
     "cleanTheRoom": "Clean the room",
+    "cleanTheRoomDesc": "Tidy up and organize the room",
     "doTheDishes": "Do the dishes",
+    "doTheDishesDesc": "Wash, dry, and put away dishes",
     "takeOutTrash": "Take out trash",
-    "cookMeal": "Cook meal"
+    "takeOutTrashDesc": "Collect and take out household trash",
+    "cookMeal": "Cook meal",
+    "cookMealDesc": "Help prepare or cook a meal"
   }
 }

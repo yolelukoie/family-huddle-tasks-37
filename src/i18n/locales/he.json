@@ -202,8 +202,12 @@
   },
   "defaultTasks": {
     "cleanTheRoom": "נקה את החדר",
+    "cleanTheRoomDesc": "לנקות ולארגן את החדר",
     "doTheDishes": "שטוף כלים",
+    "doTheDishesDesc": "לשטוף, לייבש ולסדר כלים",
     "takeOutTrash": "הוצא אשפה",
-    "cookMeal": "בשל ארוחה"
+    "takeOutTrashDesc": "לאסוף ולהוציא את האשפה הביתית",
+    "cookMeal": "בשל ארוחה",
+    "cookMealDesc": "לעזור להכין או לבשל ארוחה"
   }
 }

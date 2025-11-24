@@ -202,8 +202,12 @@
   },
   "defaultTasks": {
     "cleanTheRoom": "कमरा साफ करें",
+    "cleanTheRoomDesc": "कमरे को साफ और व्यवस्थित करें",
     "doTheDishes": "बर्तन धोएं",
+    "doTheDishesDesc": "बर्तन धोएं, सुखाएं और रख दें",
     "takeOutTrash": "कूड़ा बाहर निकालें",
-    "cookMeal": "खाना बनाएं"
+    "takeOutTrashDesc": "घर का कचरा इकट्ठा करें और बाहर निकालें",
+    "cookMeal": "खाना बनाएं",
+    "cookMealDesc": "भोजन तैयार करने या पकाने में मदद करें"
   }
 }
