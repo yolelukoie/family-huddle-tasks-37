@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -7,6 +8,7 @@ import { Star, Calendar } from 'lucide-react';
 import { DraggableBadgeDisplay } from '@/components/badges/DraggableBadgeDisplay';
 import { getCurrentStageBadges } from '@/lib/badges';
 import { getCurrentStage, getStageProgress, getCharacterImagePath, getStageName } from '@/lib/character';
+import { translateTaskName } from '@/lib/translations';
 import { useTasks } from '@/hooks/useTasks';
 import { useGoals } from '@/hooks/useGoals';
 import { isToday } from '@/lib/utils';
@@ -21,6 +23,7 @@ interface MemberProfileModalProps {
 }
 
 export function MemberProfileModal({ open, onOpenChange, member, memberProfile, familyId }: MemberProfileModalProps) {
+  const { t } = useTranslation();
   const { tasks } = useTasks();
   const { goals } = useGoals();
   const totalStars = member.totalStars;
@@ -134,17 +137,20 @@ export function MemberProfileModal({ open, onOpenChange, member, memberProfile, 
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {todaysTasks.map(task => (
+                  {todaysTasks.map(task => {
+                    const translatedTaskName = translateTaskName(task.name, t);
+                    return (
                     <div key={task.id} className="flex items-center justify-between p-3 border rounded-lg">
                       <div className="flex-1">
-                        <div className="font-medium">{task.name}</div>
+                        <div className="font-medium">{translatedTaskName}</div>
                         {task.description && (
                           <div className="text-sm text-muted-foreground">{task.description}</div>
                         )}
                       </div>
                       <Badge variant="outline">{task.starValue} ⭐</Badge>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </CardContent>

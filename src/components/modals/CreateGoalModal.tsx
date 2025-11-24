@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -8,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useTasks } from '@/hooks/useTasks';
 import { useGoals } from '@/hooks/useGoals';
 import { useToast } from '@/hooks/use-toast';
+import { translateCategoryName } from '@/lib/translations';
 
 interface CreateGoalModalProps {
   open: boolean;
@@ -17,6 +19,7 @@ interface CreateGoalModalProps {
 }
 
 export function CreateGoalModal({ open, onOpenChange, familyId, userId }: CreateGoalModalProps) {
+  const { t } = useTranslation();
   const [targetStars, setTargetStars] = useState('');
   const [reward, setReward] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -107,7 +110,7 @@ export function CreateGoalModal({ open, onOpenChange, familyId, userId }: Create
                     checked={selectedCategories.includes(category.id)}
                     onCheckedChange={() => toggleCategory(category.id)}
                   />
-                  <Label htmlFor={`category-${category.id}`}>{category.name}</Label>
+                  <Label htmlFor={`category-${category.id}`}>{translateCategoryName(category.name, t)}</Label>
                 </div>
               ))}
             </div>
