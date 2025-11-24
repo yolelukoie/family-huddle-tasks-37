@@ -1,0 +1,49 @@
+{
+  "nav": {
+    "home": "होम",
+    "tasks": "कार्य",
+    "goals": "लक्ष्य",
+    "family": "परिवार",
+    "chat": "चैट",
+    "personal": "व्यक्तिगत सेटिंग्स"
+  },
+  "personal": {
+    "title": "व्यक्तिगत सेटिंग्स",
+    "profilePicture": "प्रोफ़ाइल चित्र",
+    "uploadPhoto": "फ़ोटो अपलोड करें",
+    "uploading": "अपलोड हो रहा है...",
+    "uploadHint": "नई प्रोफ़ाइल तस्वीर अपलोड करने के लिए अवतार या बटन पर क्लिक करें (अधिकतम 5MB)",
+    "userProfile": "उपयोगकर्ता प्रोफ़ाइल",
+    "displayName": "प्रदर्शन नाम",
+    "displayNamePlaceholder": "अपना प्रदर्शन नाम दर्ज करें",
+    "update": "अपडेट करें",
+    "profileUpdated": "प्रोफ़ाइल अपडेट की गई",
+    "profileUpdatedDesc": "आपका प्रदर्शन नाम सफलतापूर्वक अपडेट किया गया है।",
+    "avatarUpdated": "अवतार अपडेट किया गया",
+    "avatarUpdatedDesc": "आपकी प्रोफ़ाइल तस्वीर सफलतापूर्वक अपडेट की गई है।",
+    "uploadFailed": "अपलोड विफल",
+    "uploadFailedDesc": "आपके अवतार को अपलोड करते समय एक त्रुटि हुई। कृपया पुनः प्रयास करें।",
+    "invalidFileType": "अमान्य फ़ाइल प्रकार",
+    "invalidFileTypeDesc": "कृपया एक छवि फ़ाइल का चयन करें।",
+    "fileTooLarge": "फ़ाइल बहुत बड़ी है",
+    "fileTooLargeDesc": "कृपया 5MB से छोटी छवि चुनें।",
+    "language": "भाषा",
+    "preferredLanguage": "पसंदीदा भाषा",
+    "selectLanguage": "एक भाषा चुनें",
+    "languageUpdated": "भाषा अपडेट की गई",
+    "languageUpdatedDesc": "आपकी भाषा प्राथमिकता सहेजी गई है।",
+    "updateFailed": "अपडेट विफल",
+    "updateFailedDesc": "आपकी भाषा प्राथमिकता को अपडेट करते समय एक त्रुटि हुई।",
+    "subscription": "सदस्यता",
+    "subscriptionDesc": "आप वर्तमान में एक मुफ्त परीक्षण पर हैं। आप यहां अपनी सदस्यता प्रबंधित कर सकते हैं।",
+    "manageSubscription": "सदस्यता प्रबंधित करें"
+  },
+  "common": {
+    "loading": "लोड हो रहा है...",
+    "save": "सहेजें",
+    "cancel": "रद्द करें",
+    "delete": "हटाएं",
+    "edit": "संपादित करें",
+    "close": "बंद करें"
+  }
+}

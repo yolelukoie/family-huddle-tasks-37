@@ -1,0 +1,49 @@
+{
+  "nav": {
+    "home": "Home",
+    "tasks": "Tasks",
+    "goals": "Goals",
+    "family": "Family",
+    "chat": "Chat",
+    "personal": "Personal Settings"
+  },
+  "personal": {
+    "title": "Personal Settings",
+    "profilePicture": "Profile Picture",
+    "uploadPhoto": "Upload Photo",
+    "uploading": "Uploading...",
+    "uploadHint": "Click the avatar or button to upload a new profile picture (max 5MB)",
+    "userProfile": "User Profile",
+    "displayName": "Display Name",
+    "displayNamePlaceholder": "Enter your display name",
+    "update": "Update",
+    "profileUpdated": "Profile updated",
+    "profileUpdatedDesc": "Your display name has been updated successfully.",
+    "avatarUpdated": "Avatar updated",
+    "avatarUpdatedDesc": "Your profile picture has been updated successfully.",
+    "uploadFailed": "Upload failed",
+    "uploadFailedDesc": "There was an error uploading your avatar. Please try again.",
+    "invalidFileType": "Invalid file type",
+    "invalidFileTypeDesc": "Please select an image file.",
+    "fileTooLarge": "File too large",
+    "fileTooLargeDesc": "Please select an image smaller than 5MB.",
+    "language": "Language",
+    "preferredLanguage": "Preferred Language",
+    "selectLanguage": "Select a language",
+    "languageUpdated": "Language updated",
+    "languageUpdatedDesc": "Your language preference has been saved.",
+    "updateFailed": "Update failed",
+    "updateFailedDesc": "There was an error updating your language preference.",
+    "subscription": "Subscription",
+    "subscriptionDesc": "You're currently on a free trial. You can manage your subscription here.",
+    "manageSubscription": "Manage subscription"
+  },
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close"
+  }
+}

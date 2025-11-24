@@ -1,0 +1,49 @@
+{
+  "nav": {
+    "home": "Inicio",
+    "tasks": "Tareas",
+    "goals": "Objetivos",
+    "family": "Familia",
+    "chat": "Chat",
+    "personal": "Configuración Personal"
+  },
+  "personal": {
+    "title": "Configuración Personal",
+    "profilePicture": "Foto de Perfil",
+    "uploadPhoto": "Subir Foto",
+    "uploading": "Subiendo...",
+    "uploadHint": "Haz clic en el avatar o el botón para subir una nueva foto de perfil (máx 5MB)",
+    "userProfile": "Perfil de Usuario",
+    "displayName": "Nombre para Mostrar",
+    "displayNamePlaceholder": "Ingresa tu nombre para mostrar",
+    "update": "Actualizar",
+    "profileUpdated": "Perfil actualizado",
+    "profileUpdatedDesc": "Tu nombre para mostrar se ha actualizado correctamente.",
+    "avatarUpdated": "Avatar actualizado",
+    "avatarUpdatedDesc": "Tu foto de perfil se ha actualizado correctamente.",
+    "uploadFailed": "Error al subir",
+    "uploadFailedDesc": "Hubo un error al subir tu avatar. Por favor, inténtalo de nuevo.",
+    "invalidFileType": "Tipo de archivo no válido",
+    "invalidFileTypeDesc": "Por favor, selecciona un archivo de imagen.",
+    "fileTooLarge": "Archivo demasiado grande",
+    "fileTooLargeDesc": "Por favor, selecciona una imagen menor de 5MB.",
+    "language": "Idioma",
+    "preferredLanguage": "Idioma Preferido",
+    "selectLanguage": "Selecciona un idioma",
+    "languageUpdated": "Idioma actualizado",
+    "languageUpdatedDesc": "Tu preferencia de idioma se ha guardado.",
+    "updateFailed": "Error al actualizar",
+    "updateFailedDesc": "Hubo un error al actualizar tu preferencia de idioma.",
+    "subscription": "Suscripción",
+    "subscriptionDesc": "Actualmente estás en una prueba gratuita. Puedes gestionar tu suscripción aquí.",
+    "manageSubscription": "Gestionar suscripción"
+  },
+  "common": {
+    "loading": "Cargando...",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "close": "Cerrar"
+  }
+}
