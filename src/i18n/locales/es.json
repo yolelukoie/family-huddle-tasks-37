@@ -161,5 +161,27 @@
     "confirm": "Confirmar",
     "yes": "Sí",
     "no": "No"
+  },
+  "stages": {
+    "baby": "Bebé",
+    "child": "Niño",
+    "teen": "Adolescente",
+    "youngAdult": "Adulto Joven",
+    "onTheRise": "En Ascenso",
+    "adult": "Adulto",
+    "matureAdult": "Adulto Maduro",
+    "goldenChapter": "Capítulo Dorado",
+    "elder": "Anciano"
+  },
+  "defaultCategories": {
+    "houseChores": "Tareas del Hogar",
+    "personalGrowth": "Crecimiento Personal",
+    "happiness": "Felicidad"
+  },
+  "defaultTasks": {
+    "cleanTheRoom": "Limpiar la habitación",
+    "doTheDishes": "Lavar los platos",
+    "takeOutTrash": "Sacar la basura",
+    "cookMeal": "Cocinar comida"
   }
 }

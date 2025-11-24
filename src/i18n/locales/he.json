@@ -161,5 +161,27 @@
     "confirm": "אישור",
     "yes": "כן",
     "no": "לא"
+  },
+  "stages": {
+    "baby": "תינוק",
+    "child": "ילד",
+    "teen": "נער",
+    "youngAdult": "בוגר צעיר",
+    "onTheRise": "בעלייה",
+    "adult": "בוגר",
+    "matureAdult": "בוגר בוגר",
+    "goldenChapter": "פרק הזהב",
+    "elder": "זקן"
+  },
+  "defaultCategories": {
+    "houseChores": "מטלות בית",
+    "personalGrowth": "צמיחה אישית",
+    "happiness": "אושר"
+  },
+  "defaultTasks": {
+    "cleanTheRoom": "נקה את החדר",
+    "doTheDishes": "שטוף כלים",
+    "takeOutTrash": "הוצא אשפה",
+    "cookMeal": "בשל ארוחה"
   }
 }

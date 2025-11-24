@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
@@ -16,6 +17,7 @@ interface TaskCategorySectionProps {
 }
 
 export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCategorySectionProps) {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(category.isHouseChores); // House chores open by default
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const { toast } = useToast();
@@ -31,15 +33,15 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
     
     if (newTask) {
       toast({
-        title: "Added to Today",
-        description: `"${template.name}" has been added to today's tasks.`,
+        title: t('tasks.addToToday'),
+        description: `"${template.name}" ${t('tasks.addToTodayDesc')}`,
       });
       
       // Trigger refresh in parent component
       onTaskAdded?.();
     } else {
       toast({
-        title: "Error",
+        title: t('family.error'),
         description: "Failed to add task to today. Please try again.",
         variant: "destructive",
       });
@@ -54,7 +56,7 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
             <div className="flex items-center gap-3">
               {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
               <span className="font-medium">{category.name}</span>
-              <Badge variant="outline">{categoryTemplates.length} templates</Badge>
+              <Badge variant="outline">{categoryTemplates.length} {t('tasks.templates')}</Badge>
             </div>
             {!category.isDefault && !category.isHouseChores && (
               <Button
@@ -62,12 +64,12 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
                 size="sm"
                 onClick={async (e) => {
                   e.stopPropagation();
-                  if (confirm(`Delete "${category.name}" category? This will also delete all templates and tasks in this category.`)) {
+                  if (confirm(t('tasks.deleteCategory'))) {
                     const success = await deleteCategory(category.id);
                     if (success) {
                       toast({
-                        title: "Category deleted",
-                        description: `"${category.name}" and all its tasks have been deleted.`,
+                        title: t('tasks.categoryDeleted'),
+                        description: `"${category.name}" ${t('tasks.deleteCategorySuccess')}`,
                       });
                       onTaskAdded?.(); // Refresh parent
                     }
@@ -105,7 +107,7 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
                     <div
                       onClick={async (e) => {
                         e.stopPropagation();
-                        if (confirm('Delete this task template?')) {
+                        if (confirm(t('tasks.deleteTemplate'))) {
                           const success = await deleteTemplate(template.id);
                           if (success) {
                             onTaskAdded?.(); // Refresh parent
@@ -128,7 +130,7 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
               className="w-full"
             >
               <Plus className="h-3 w-3 mr-2" />
-              Add Task Template
+              {t('tasks.addTaskTemplate')}
             </Button>
           </div>
         </CollapsibleContent>

@@ -1,4 +1,5 @@
 import { useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -28,6 +29,7 @@ interface TaskTemplateModalProps {
 }
 
 export function TaskTemplateModal({ open, onOpenChange, category, familyId, onTemplateCreated }: TaskTemplateModalProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { toast } = useToast();
   const { addTemplate } = useTasks();
@@ -60,8 +62,8 @@ export function TaskTemplateModal({ open, onOpenChange, category, familyId, onTe
     
     if (result) {
       toast({
-        title: "Task template created!",
-        description: `"${data.name}" has been added to ${category.name}.`,
+        title: t('tasks.taskTemplateCreated'),
+        description: `"${data.name}" ${t('tasks.addedToCategory')} ${category.name}.`,
       });
 
       form.reset();
@@ -74,9 +76,9 @@ export function TaskTemplateModal({ open, onOpenChange, category, familyId, onTe
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Add Task Template</DialogTitle>
+          <DialogTitle>{t('tasks.addTaskTemplate')}</DialogTitle>
           <DialogDescription>
-            Create a reusable task template for {category.name}
+            {t('tasks.createTemplateFor')} {category.name}
           </DialogDescription>
         </DialogHeader>
 
@@ -87,9 +89,9 @@ export function TaskTemplateModal({ open, onOpenChange, category, familyId, onTe
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Task Name</FormLabel>
+                  <FormLabel>{t('tasks.taskName')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="What needs to be done?" {...field} />
+                    <Input placeholder={t('tasks.taskNamePlaceholder')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -101,10 +103,10 @@ export function TaskTemplateModal({ open, onOpenChange, category, familyId, onTe
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description (Optional)</FormLabel>
+                  <FormLabel>{t('tasks.description')}</FormLabel>
                   <FormControl>
                     <Textarea 
-                      placeholder="Additional details about the task..."
+                      placeholder={t('tasks.descriptionPlaceholder')}
                       rows={2}
                       {...field} 
                     />
@@ -119,7 +121,7 @@ export function TaskTemplateModal({ open, onOpenChange, category, familyId, onTe
               name="starValue"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Star Value (0-20)</FormLabel>
+                  <FormLabel>{t('tasks.starValue')}</FormLabel>
                   <FormControl>
                     <Input 
                       type="number" 
@@ -131,7 +133,7 @@ export function TaskTemplateModal({ open, onOpenChange, category, familyId, onTe
                   </FormControl>
                   {!canEditStars && (
                     <p className="text-xs text-muted-foreground">
-                      Only 18+ users can edit star values
+                      {t('tasks.starValueRestriction')}
                     </p>
                   )}
                   <FormMessage />
@@ -141,10 +143,10 @@ export function TaskTemplateModal({ open, onOpenChange, category, familyId, onTe
 
             <div className="flex gap-2">
               <Button type="submit" className="flex-1 bg-family-warm hover:bg-family-warm/90">
-                Create Template
+                {t('tasks.createTemplate')}
               </Button>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t('family.cancel')}
               </Button>
             </div>
           </form>

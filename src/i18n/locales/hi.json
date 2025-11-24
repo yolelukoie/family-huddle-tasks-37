@@ -161,5 +161,27 @@
     "confirm": "पुष्टि करें",
     "yes": "हां",
     "no": "नहीं"
+  },
+  "stages": {
+    "baby": "शिशु",
+    "child": "बच्चा",
+    "teen": "किशोर",
+    "youngAdult": "युवा वयस्क",
+    "onTheRise": "उभरते हुए",
+    "adult": "वयस्क",
+    "matureAdult": "परिपक्व वयस्क",
+    "goldenChapter": "स्वर्णिम अध्याय",
+    "elder": "बुजुर्ग"
+  },
+  "defaultCategories": {
+    "houseChores": "घरेलू काम",
+    "personalGrowth": "व्यक्तिगत विकास",
+    "happiness": "खुशी"
+  },
+  "defaultTasks": {
+    "cleanTheRoom": "कमरा साफ करें",
+    "doTheDishes": "बर्तन धोएं",
+    "takeOutTrash": "कूड़ा बाहर निकालें",
+    "cookMeal": "खाना बनाएं"
   }
 }

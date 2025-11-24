@@ -1,5 +1,6 @@
 import { CHARACTER_STAGES } from './constants';
 import type { User } from './types';
+import i18n from '@/i18n/config';
 
 export function getCurrentStage(totalStars: number): number {
   // Find the highest stage threshold that the user has reached
@@ -56,7 +57,23 @@ export function getCharacterImagePath(gender: 'male' | 'female' | 'other', stage
 
 export function getStageName(stage: number): string {
   const stageData = CHARACTER_STAGES.find(s => s.stage === stage);
-  return stageData?.name || 'Unknown';
+  if (!stageData) return 'Unknown';
+  
+  // Map stage to i18n key
+  const stageKeyMap: Record<string, string> = {
+    'Baby': 'stages.baby',
+    'Child': 'stages.child',
+    'Teen': 'stages.teen',
+    'Young Adult': 'stages.youngAdult',
+    'On the Rise': 'stages.onTheRise',
+    'Adult': 'stages.adult',
+    'Mature Adult': 'stages.matureAdult',
+    'Golden Chapter': 'stages.goldenChapter',
+    'Elder': 'stages.elder'
+  };
+  
+  const key = stageKeyMap[stageData.name];
+  return key ? i18n.t(key) : stageData.name;
 }
 
 export function getUnlockedBadges(totalStars: number): number[] {

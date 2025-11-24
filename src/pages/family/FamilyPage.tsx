@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -18,6 +19,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 
 export default function FamilyPage() {
+  const { t } = useTranslation();
   const { user, updateUser } = useAuth();
   const { activeFamilyId, userFamilies, families, setActiveFamilyId, createFamily, joinFamily, updateFamilyName, quitFamily, removeFamilyMember, getFamilyMembers, getUserProfile } = useApp();
   const { toast } = useToast();
@@ -57,20 +59,20 @@ export default function FamilyPage() {
         setInviteCode('');
         setShowJoinFamily(false);
         toast({
-          title: "Joined family successfully!",
-          description: `Welcome to ${family.name}`,
+          title: t('family.joinedSuccess'),
+          description: `${t('family.welcomeTo')} ${family.name}`,
         });
       } else {
         toast({
-          title: "Invalid invite code",
-          description: "The invite code you entered is not valid.",
+          title: t('family.invalidCode'),
+          description: t('family.invalidCodeDesc'),
           variant: "destructive",
         });
       }
     } catch (error) {
       toast({
-        title: "Error joining family",
-        description: "There was an error joining the family. Please try again.",
+        title: t('family.errorJoining'),
+        description: t('family.errorJoiningDesc'),
         variant: "destructive",
       });
     }
@@ -85,13 +87,13 @@ export default function FamilyPage() {
       setNewFamilyName('');
       setShowCreateFamily(false);
       toast({
-        title: "Family created successfully!",
-        description: `Welcome to ${newFamilyName.trim()}`,
+        title: t('family.createdSuccess'),
+        description: `${t('family.welcomeTo')} ${newFamilyName.trim()}`,
       });
     } catch (error) {
       toast({
-        title: "Error creating family",
-        description: "There was an error creating the family. Please try again.",
+        title: t('family.errorCreating'),
+        description: t('family.errorCreatingDesc'),
         variant: "destructive",
       });
     }
@@ -106,13 +108,13 @@ export default function FamilyPage() {
       setEditingFamilyId(null);
       setEditingFamilyName('');
       toast({
-        title: "Family name updated",
-        description: "The family name has been updated successfully.",
+        title: t('family.nameUpdated'),
+        description: t('family.nameUpdatedDesc'),
       });
     } catch (error) {
       toast({
-        title: "Error updating family name",
-        description: "There was an error updating the family name. Please try again.",
+        title: t('family.errorUpdatingName'),
+        description: t('family.errorUpdatingNameDesc'),
         variant: "destructive",
       });
     }
@@ -124,8 +126,8 @@ export default function FamilyPage() {
       
       if (!success) {
         toast({
-          title: "Cannot quit family",
-          description: "You must have at least one family. If you want to quit this family, create another one firstly.",
+          title: t('family.cannotQuit'),
+          description: t('family.cannotQuitDesc'),
           variant: "destructive",
         });
         return;
@@ -134,13 +136,13 @@ export default function FamilyPage() {
       setEditingFamilyId(null);
       setEditingFamilyName('');
       toast({
-        title: "Left family",
-        description: "You have successfully left the family.",
+        title: t('family.leftFamily'),
+        description: t('family.leftFamilyDesc'),
       });
     } catch (error) {
       toast({
-        title: "Error leaving family",
-        description: "There was an error leaving the family. Please try again.",
+        title: t('family.errorLeaving'),
+        description: t('family.errorLeavingDesc'),
         variant: "destructive",
       });
     }
@@ -149,8 +151,8 @@ export default function FamilyPage() {
   const copyInviteCode = (inviteCode: string) => {
     navigator.clipboard.writeText(inviteCode);
     toast({
-      title: "Invite code copied!",
-      description: "The invite code has been copied to your clipboard.",
+      title: t('family.inviteCodeCopied'),
+      description: t('family.inviteCodeCopiedDesc'),
     });
   };
 
@@ -162,20 +164,20 @@ export default function FamilyPage() {
       
       if (success) {
         toast({
-          title: "Member removed",
-          description: `${memberToRemove.displayName} has been removed from the family.`,
+          title: t('family.memberRemoved'),
+          description: `${memberToRemove.displayName} ${t('family.memberRemovedDesc')}`,
         });
       } else {
         toast({
-          title: "Error",
-          description: "Failed to remove member. Only family owners can remove members.",
+          title: t('family.error'),
+          description: t('family.failedToRemove'),
           variant: "destructive",
         });
       }
     } catch (error) {
       toast({
-        title: "Error removing member",
-        description: "There was an error removing the family member. Please try again.",
+        title: t('family.errorRemovingMember'),
+        description: t('family.errorRemovingMemberDesc'),
         variant: "destructive",
       });
     } finally {
@@ -214,8 +216,8 @@ export default function FamilyPage() {
 
         // Show notification
         toast({
-          title: "Removed from family",
-          description: `Sorry, you were excluded from the family "${familyName}".`,
+          title: t('family.removedFromFamily'),
+          description: `${t('family.removedFromFamilyDesc')} "${familyName}".`,
           variant: "destructive",
         });
 
@@ -243,7 +245,7 @@ export default function FamilyPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <NavigationHeader title="Family Settings" />
+      <NavigationHeader title={t('family.title')} />
       
       <div className="max-w-4xl mx-auto p-4 space-y-6">
         {/* Active Family */}
@@ -252,7 +254,7 @@ export default function FamilyPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Users className="h-5 w-5" />
-                Active Family
+                {t('family.activeFamily')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -260,12 +262,12 @@ export default function FamilyPage() {
                 <div>
                   <h3 className="font-medium">{activeFamily.name}</h3>
                   <p className="text-sm text-muted-foreground">
-                    Invite code: {activeFamily.inviteCode}
+                    {t('family.inviteCode')}: {activeFamily.inviteCode}
                   </p>
                 </div>
                 <Button variant="outline" onClick={() => copyInviteCode(activeFamily.inviteCode)}>
                   <Share className="h-4 w-4 mr-2" />
-                  Share Code
+                  {t('family.shareCode')}
                 </Button>
               </div>
             </CardContent>
@@ -275,12 +277,12 @@ export default function FamilyPage() {
         {/* All Families */}
         <Card>
           <CardHeader>
-            <CardTitle>Your Families</CardTitle>
+            <CardTitle>{t('family.yourFamilies')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {allUserFamilies.length === 0 ? (
               <p className="text-muted-foreground text-center py-4">
-                No families yet. Create or join a family to get started!
+                {t('family.noFamilies')}
               </p>
             ) : (
               allUserFamilies.map(family => (
@@ -289,14 +291,14 @@ export default function FamilyPage() {
                     <div className="space-y-2">
                       <div className="font-medium text-lg">{family.name}</div>
                       <div className="text-sm text-muted-foreground">
-                        Code: {family.inviteCode}
+                        {t('family.code')}: {family.inviteCode}
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {family.id === activeFamilyId && (
-                          <Badge variant="default">Active</Badge>
+                          <Badge variant="default">{t('family.active')}</Badge>
                         )}
                         {family.createdBy === user.id && (
-                          <Badge variant="secondary">Owner</Badge>
+                          <Badge variant="secondary">{t('family.owner')}</Badge>
                         )}
                       </div>
                     </div>
@@ -306,12 +308,12 @@ export default function FamilyPage() {
                       <DialogTrigger asChild>
                         <Button variant="outline" size="sm" className="flex-1 sm:flex-initial">
                           <Users className="h-4 w-4 mr-1" />
-                          <span className="sm:hidden">Members</span>
+                          <span className="sm:hidden">{t('family.members')}</span>
                         </Button>
                       </DialogTrigger>
                       <DialogContent className="max-w-md">
                         <DialogHeader>
-                          <DialogTitle>Family Members</DialogTitle>
+                          <DialogTitle>{t('family.familyMembers')}</DialogTitle>
                         </DialogHeader>
                         <div className="space-y-2">
                           {getFamilyMembers(family.id).map((member) => {
@@ -356,7 +358,7 @@ export default function FamilyPage() {
                                 </div>
                                 <div className="flex items-center gap-2">
                                   {isCurrentUser && (
-                                    <Badge variant="secondary">You</Badge>
+                                    <Badge variant="secondary">{t('family.you')}</Badge>
                                   )}
                                   {!isCurrentUser && family.createdBy === user.id && (
                                     <Button
@@ -388,16 +390,16 @@ export default function FamilyPage() {
                         <DialogTrigger asChild>
                           <Button variant="outline" size="sm" className="flex-1 sm:flex-initial">
                             <Settings className="h-4 w-4 mr-1" />
-                            <span className="sm:hidden">Edit</span>
+                            <span className="sm:hidden">{t('family.edit')}</span>
                           </Button>
                         </DialogTrigger>
                         <DialogContent>
                           <DialogHeader>
-                            <DialogTitle>Edit Family Name</DialogTitle>
+                            <DialogTitle>{t('family.editFamilyName')}</DialogTitle>
                           </DialogHeader>
                           <form onSubmit={handleUpdateFamilyName} className="space-y-4">
                             <div>
-                              <Label htmlFor="familyName">Family Name</Label>
+                              <Label htmlFor="familyName">{t('family.familyName')}</Label>
                               <Input
                                 id="familyName"
                                 value={editingFamilyId === family.id ? editingFamilyName : family.name}
@@ -405,13 +407,13 @@ export default function FamilyPage() {
                                   setEditingFamilyId(family.id);
                                   setEditingFamilyName(e.target.value);
                                 }}
-                                placeholder="Enter family name"
+                                placeholder={t('family.enterFamilyName')}
                                 required
                               />
                             </div>
                             <div className="flex flex-col gap-2">
                               <div className="flex gap-2">
-                                <Button type="submit" className="flex-1">Update</Button>
+                                <Button type="submit" className="flex-1">{t('family.update')}</Button>
                                 <Button 
                                   type="button" 
                                   variant="outline" 
@@ -420,7 +422,7 @@ export default function FamilyPage() {
                                     setEditingFamilyName('');
                                   }}
                                 >
-                                  Cancel
+                                  {t('family.cancel')}
                                 </Button>
                               </div>
                               <Button 
@@ -429,7 +431,7 @@ export default function FamilyPage() {
                                 onClick={() => handleQuitFamily(family.id)}
                                 className="w-full"
                               >
-                                Quit Family
+                                 Quit Family
                               </Button>
                             </div>
                           </form>

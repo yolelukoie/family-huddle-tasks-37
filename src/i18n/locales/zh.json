@@ -161,5 +161,27 @@
     "confirm": "确认",
     "yes": "是",
     "no": "否"
+  },
+  "stages": {
+    "baby": "婴儿",
+    "child": "儿童",
+    "teen": "青少年",
+    "youngAdult": "青年",
+    "onTheRise": "上升期",
+    "adult": "成人",
+    "matureAdult": "成熟成人",
+    "goldenChapter": "黄金时期",
+    "elder": "长者"
+  },
+  "defaultCategories": {
+    "houseChores": "家务",
+    "personalGrowth": "个人成长",
+    "happiness": "幸福"
+  },
+  "defaultTasks": {
+    "cleanTheRoom": "打扫房间",
+    "doTheDishes": "洗碗",
+    "takeOutTrash": "倒垃圾",
+    "cookMeal": "做饭"
   }
 }
