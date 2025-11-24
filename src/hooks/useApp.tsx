@@ -20,6 +20,7 @@ interface AppContextType {
   setActiveFamilyId: (familyId: string) => Promise<void>;
   updateFamilyName: (familyId: string, name: string) => Promise<void>;
   quitFamily: (familyId: string) => Promise<boolean>;
+  removeFamilyMember: (familyId: string, userId: string) => Promise<boolean>;
   
   // Utility
   getUserFamily: (familyId: string) => UserFamily | null;
@@ -606,6 +607,45 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const removeFamilyMember = async (familyId: string, memberUserId: string): Promise<boolean> => {
+    if (!user) return false;
+
+    try {
+      // Check if current user is the family owner
+      const family = families.find(f => f.id === familyId);
+      if (!family || family.createdBy !== user.id) {
+        console.error('Only family owner can remove members');
+        return false;
+      }
+
+      // Cannot remove yourself using this function (use quitFamily instead)
+      if (memberUserId === user.id) {
+        console.error('Cannot remove yourself, use quitFamily instead');
+        return false;
+      }
+
+      // Remove member from the family
+      const { error: removeError } = await supabase
+        .from('user_families')
+        .delete()
+        .eq('user_id', memberUserId)
+        .eq('family_id', familyId);
+
+      if (removeError) {
+        console.error('Error removing member from family:', removeError);
+        throw removeError;
+      }
+
+      // Refresh family members
+      await fetchFamilyMembers(familyId);
+
+      return true;
+    } catch (error) {
+      console.error('Failed to remove family member:', error);
+      throw error;
+    }
+  };
+
   const [allFamilyMembers, setAllFamilyMembers] = useState<Record<string, UserFamily[]>>({});
   const [userProfiles, setUserProfiles] = useState<Record<string, User>>({});
 
@@ -910,6 +950,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setActiveFamilyId,
       updateFamilyName,
       quitFamily,
+      removeFamilyMember,
       getUserFamily,
       getFamilyMembers,
       getUserProfile,
