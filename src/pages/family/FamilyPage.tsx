@@ -428,11 +428,11 @@ export default function FamilyPage() {
                               <Button 
                                 type="button" 
                                 variant="destructive" 
-                                onClick={() => handleQuitFamily(family.id)}
-                                className="w-full"
-                              >
-                                 Quit Family
-                              </Button>
+                                 onClick={() => handleQuitFamily(family.id)}
+                                 className="w-full"
+                               >
+                                 {t("family.quitFamily")}
+                               </Button>
                             </div>
                           </form>
                         </DialogContent>
@@ -446,7 +446,7 @@ export default function FamilyPage() {
                         onClick={() => setActiveFamilyId(family.id)}
                         className="flex-1 sm:flex-initial"
                       >
-                        Switch
+                        {t("family.switchTo")}
                       </Button>
                     )}
                   </div>
@@ -460,30 +460,30 @@ export default function FamilyPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Join Family</CardTitle>
+              <CardTitle className="text-lg">{t("family.joinFamily")}</CardTitle>
             </CardHeader>
             <CardContent>
               {!showJoinFamily ? (
                 <Button onClick={() => setShowJoinFamily(true)} className="w-full">
                   <Plus className="h-4 w-4 mr-2" />
-                  Join Existing Family
+                  {t("family.join")}
                 </Button>
               ) : (
                 <form onSubmit={handleJoinFamily} className="space-y-3">
                   <Input
                     value={inviteCode}
                     onChange={(e) => setInviteCode(e.target.value)}
-                    placeholder="Enter invite code"
+                    placeholder={t("family.enterInviteCode")}
                     required
                   />
                   <div className="flex gap-2">
-                    <Button type="submit" className="flex-1">Join</Button>
+                    <Button type="submit" className="flex-1">{t("family.join")}</Button>
                     <Button 
                       type="button" 
                       variant="outline" 
                       onClick={() => setShowJoinFamily(false)}
                     >
-                      Cancel
+                      {t("family.cancel")}
                     </Button>
                   </div>
                 </form>
@@ -493,30 +493,30 @@ export default function FamilyPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Create Family</CardTitle>
+              <CardTitle className="text-lg">{t("family.createFamily")}</CardTitle>
             </CardHeader>
             <CardContent>
               {!showCreateFamily ? (
                 <Button onClick={() => setShowCreateFamily(true)} className="w-full">
                   <Plus className="h-4 w-4 mr-2" />
-                  Create New Family
+                  {t("family.create")}
                 </Button>
               ) : (
                 <form onSubmit={handleCreateFamily} className="space-y-3">
                   <Input
                     value={newFamilyName}
                     onChange={(e) => setNewFamilyName(e.target.value)}
-                    placeholder="Enter family name"
+                    placeholder={t("family.enterFamilyName")}
                     required
                   />
                   <div className="flex gap-2">
-                    <Button type="submit" className="flex-1">Create</Button>
+                    <Button type="submit" className="flex-1">{t("family.create")}</Button>
                     <Button 
                       type="button" 
                       variant="outline" 
                       onClick={() => setShowCreateFamily(false)}
                     >
-                      Cancel
+                      {t("family.cancel")}
                     </Button>
                   </div>
                 </form>
@@ -541,15 +541,15 @@ export default function FamilyPage() {
       <AlertDialog open={!!memberToRemove} onOpenChange={(open) => !open && setMemberToRemove(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remove Family Member</AlertDialogTitle>
+            <AlertDialogTitle>{t("family.removeMember")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to remove <strong>{memberToRemove?.displayName}</strong> from the family? They will be notified and their active family will be changed.
+              {t("family.removeConfirm")} <strong>{memberToRemove?.displayName}</strong> {t("family.fromFamily")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("family.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={handleRemoveMember} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Remove Member
+              {t("family.remove")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

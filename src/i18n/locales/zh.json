@@ -39,7 +39,25 @@
     "addCategory": "添加类别",
     "enterCategoryName": "输入类别名称：",
     "loadingUserData": "加载用户数据...",
-    "settingUpFamily": "设置你的家庭..."
+    "settingUpFamily": "设置你的家庭...",
+    "addTaskTemplate": "添加任务模板",
+    "addToToday": "已添加到今天",
+    "addToTodayDesc": "已添加到今天的任务。",
+    "taskName": "任务名称",
+    "taskNamePlaceholder": "需要做什么？",
+    "description": "描述（可选）",
+    "descriptionPlaceholder": "关于任务的其他详细信息...",
+    "starValue": "星星值（0-20）",
+    "starValueRestriction": "只有18岁以上的用户可以编辑星星值",
+    "createTemplate": "创建模板",
+    "taskTemplateCreated": "任务模板已创建！",
+    "addedToCategory": "已添加到",
+    "createTemplateFor": "为以下创建可重用的任务模板",
+    "deleteCategory": "删除类别？这也将删除此类别中的所有模板和任务。",
+    "categoryDeleted": "类别已删除",
+    "deleteCategorySuccess": "及其所有任务已被删除。",
+    "deleteTemplate": "删除此任务模板？",
+    "templates": "模板"
   },
   "goals": {
     "title": "目标",
@@ -75,7 +93,7 @@
     "quitFamily": "退出家庭",
     "quitConfirm": "你确定要退出这个家庭吗？",
     "quit": "退出",
-    "switchTo": "切换到这个家庭",
+    "switchTo": "切换",
     "createFamily": "创建家庭",
     "joinFamily": "加入家庭",
     "create": "创建",
@@ -111,7 +129,11 @@
     "fromFamily": "从家庭中？",
     "remove": "移除",
     "removedFromFamily": "从家庭中移除",
-    "removedFromFamilyDesc": "抱歉，你被从家庭中排除了"
+    "removedFromFamilyDesc": "抱歉，你被从家庭中排除了",
+    "error": "错误",
+    "failedToRemove": "无法移除成员。只有家庭所有者可以移除成员。",
+    "edit": "编辑",
+    "settings": "设置"
   },
   "chat": {
     "title": "家庭聊天",
