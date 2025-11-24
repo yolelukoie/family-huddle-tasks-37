@@ -206,13 +206,18 @@ export default function FamilyPage() {
             variant: "destructive",
           });
 
+          // Refresh userFamilies from database to get current state
+          const { data: currentUserFamilies } = await supabase
+            .from('user_families')
+            .select('*')
+            .eq('user_id', user.id);
+
           // If this was the active family, switch to another or go to onboarding
           if (activeFamilyId === removedFamilyId) {
-            const remainingFamilies = userFamilies.filter(uf => uf.familyId !== removedFamilyId);
-            
-            if (remainingFamilies.length > 0) {
+            if (currentUserFamilies && currentUserFamilies.length > 0) {
               // Switch to the first remaining family
-              await updateUser({ activeFamilyId: remainingFamilies[0].familyId });
+              const nextFamilyId = currentUserFamilies[0].family_id;
+              await updateUser({ activeFamilyId: nextFamilyId });
             } else {
               // No families left, go to onboarding
               await updateUser({ activeFamilyId: undefined, profileComplete: false });
@@ -226,7 +231,7 @@ export default function FamilyPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user?.id, families, activeFamilyId, userFamilies, toast, navigate, updateUser]);
+  }, [user?.id, families, activeFamilyId, toast, navigate, updateUser]);
 
   return (
     <div className="min-h-screen bg-background">

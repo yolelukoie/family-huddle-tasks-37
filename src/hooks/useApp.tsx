@@ -624,7 +624,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         return false;
       }
 
-      // Remove member from the family
+      // Optimistic update: Remove from local state immediately
+      setUserFamilies(prev => prev.filter(uf => 
+        !(uf.userId === memberUserId && uf.familyId === familyId)
+      ));
+      setAllFamilyMembers(prev => ({
+        ...prev,
+        [familyId]: (prev[familyId] || []).filter(uf => uf.userId !== memberUserId)
+      }));
+
+      // Remove member from the family in database
       const { error: removeError } = await supabase
         .from('user_families')
         .delete()
@@ -633,10 +642,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       if (removeError) {
         console.error('Error removing member from family:', removeError);
+        // Rollback on error: refresh from database
+        await fetchFamilyMembers(familyId);
         throw removeError;
       }
 
-      // Refresh family members
+      // Refresh family members to get server truth
       await fetchFamilyMembers(familyId);
 
       return true;
