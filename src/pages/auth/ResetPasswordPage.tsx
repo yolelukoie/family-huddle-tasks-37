@@ -9,111 +9,124 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 export function ResetPasswordPage() {
-  const [isSessionReady, setIsSessionReady] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSessionReady, setIsSessionReady] = useState(false);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Handle both PKCE (?code=...) and hash (#access_token=&refresh_token=...) links
+  // 1) Prepare an authenticated session from the reset link.
   useEffect(() => {
     let cancelled = false;
 
-    (async () => {
+    const initFromLink = async () => {
       try {
+        // Handle both query (?code=...) and hash (#access_token=...&refresh_token=...)
         const hash = window.location.hash?.startsWith("#") ? window.location.hash.slice(1) : "";
-        const hp = new URLSearchParams(hash);
+        const hashParams = new URLSearchParams(hash);
 
         const code = searchParams.get("code");
-        const accessToken = searchParams.get("access_token") || hp.get("access_token") || undefined;
-        const refreshToken = searchParams.get("refresh_token") || hp.get("refresh_token") || undefined;
+        const accessToken = searchParams.get("access_token") || hashParams.get("access_token") || undefined;
+        const refreshToken = searchParams.get("refresh_token") || hashParams.get("refresh_token") || undefined;
 
         if (code) {
           const { error } = await supabase.auth.exchangeCodeForSession(code);
           if (error) throw error;
+          if (!cancelled) setIsSessionReady(true);
         } else if (accessToken && refreshToken) {
           const { error } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken,
           });
           if (error) throw error;
+          if (!cancelled) setIsSessionReady(true);
         } else {
-          // If we already have a session, great; otherwise bail.
+          // Maybe the user already has a session (e.g., clicked link while signed in)
           const { data } = await supabase.auth.getSession();
-          if (!data.session) throw new Error("Missing credentials in reset link.");
+          if (data.session) {
+            if (!cancelled) setIsSessionReady(true);
+          } else {
+            throw new Error("Missing password reset credentials");
+          }
         }
 
-        if (!cancelled) setIsSessionReady(true);
-
-        // Clean URL (remove query/hash) so reloads don’t re-run link handling
+        // Clean the URL (remove query + hash) so reloads don’t re-run the flow.
         window.history.replaceState({}, document.title, window.location.pathname);
       } catch (err) {
-        console.error("[reset-password] link handling failed:", err);
+        console.error("[reset-password] link processing failed:", err);
         toast({
           title: "Invalid or expired link",
-          description: "Please request a new password reset link.",
+          description: "Please request a new password reset email.",
           variant: "destructive",
         });
         navigate("/auth", { replace: true });
       }
-    })();
+    };
 
+    initFromLink();
     return () => {
       cancelled = true;
     };
-  }, [navigate, searchParams, toast]);
+  }, [searchParams, navigate, toast]);
 
-  const onSubmit = async (e: React.FormEvent) => {
+  // 2) Submit handler
+  const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitting) return;
+    if (isLoading) return;
 
+    if (password !== confirmPassword) {
+      toast({
+        title: "Passwords don’t match",
+        description: "Please make sure both passwords are the same.",
+        variant: "destructive",
+      });
+      return;
+    }
     if (password.length < 8) {
       toast({
         title: "Password too short",
-        description: "Use at least 8 characters.",
-        variant: "destructive",
-      });
-      return;
-    }
-    if (password !== confirm) {
-      toast({
-        title: "Passwords don’t match",
-        description: "Please re-enter them.",
+        description: "Password must be at least 8 characters long.",
         variant: "destructive",
       });
       return;
     }
 
-    setIsSubmitting(true);
+    setIsLoading(true);
     try {
       const { error } = await supabase.auth.updateUser({ password });
-
       if (error) {
-        // Common 422: “New password should be different from the old password.”
+        console.error("[reset-password] updateUser error:", error);
         toast({
-          title: "Couldn’t update password",
-          description: error.message,
+          title: "Could not update password",
+          description: error.message || "Please try again.",
           variant: "destructive",
         });
         return;
       }
 
+      // Best-effort refresh; don’t block the redirect on it.
+      void supabase.auth.refreshSession().catch(() => {});
+
       toast({
         title: "Password updated",
-        description: "You’re now signed in with the new password.",
+        description: "You’re now signed in with your new password.",
       });
 
-      // Soft navigate, then hard fallback to defeat any router state glitches
+      // Clean URL again (paranoia) and navigate.
+      try {
+        window.history.replaceState({}, "", "/");
+      } catch {}
       navigate("/", { replace: true });
+
+      // Fallback hard redirect if SPA navigation gets stuck (service worker, cache, etc.)
       setTimeout(() => {
-        if (window.location.hash || window.location.search) {
-          window.history.replaceState({}, document.title, "/");
+        // If we’re still on the reset route, force a hard navigation.
+        if (location.pathname.includes("reset-password")) {
+          window.location.replace("/");
         }
-        // Force a real navigation in case SPA state is stuck
-        window.location.replace("/");
-      }, 0);
+      }, 800);
     } catch (err: any) {
       console.error("[reset-password] unexpected error:", err);
       toast({
@@ -122,17 +135,18 @@ export function ResetPasswordPage() {
         variant: "destructive",
       });
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
 
+  // Loading guard while we establish a valid session from the link.
   if (!isSessionReady) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
           <CardHeader className="text-center">
-            <CardTitle>Validating reset link</CardTitle>
-            <CardDescription>Please wait…</CardDescription>
+            <CardTitle>Validating reset link…</CardTitle>
+            <CardDescription>Please wait</CardDescription>
           </CardHeader>
         </Card>
       </div>
@@ -143,35 +157,38 @@ export function ResetPasswordPage() {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted flex items-center justify-center p-4">
       <Card className="max-w-md w-full">
         <CardHeader className="text-center">
-          <CardTitle>Reset your password</CardTitle>
-          <CardDescription>Enter a new password below</CardDescription>
+          <CardTitle>Reset Your Password</CardTitle>
+          <CardDescription>Enter your new password below</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={onSubmit} className="space-y-4">
+          <form onSubmit={handleResetPassword} className="space-y-4">
             <div>
-              <Label htmlFor="pw">New password</Label>
+              <Label htmlFor="password">New Password</Label>
               <Input
-                id="pw"
+                id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your new password"
                 required
                 minLength={8}
+                autoFocus
               />
             </div>
             <div>
-              <Label htmlFor="pw2">Confirm new password</Label>
+              <Label htmlFor="confirm-password">Confirm New Password</Label>
               <Input
-                id="pw2"
+                id="confirm-password"
                 type="password"
-                value={confirm}
-                onChange={(e) => setConfirm(e.target.value)}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Confirm your new password"
                 required
                 minLength={8}
               />
             </div>
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? "Updating…" : "Update password"}
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? "Updating…" : "Update Password"}
             </Button>
           </form>
         </CardContent>
@@ -180,5 +197,5 @@ export function ResetPasswordPage() {
   );
 }
 
-// Export default too so both named and default imports work.
+// Export both ways to satisfy any import style
 export default ResetPasswordPage;
