@@ -1,18 +1,18 @@
-import { useEffect } from 'react';
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
-import { useApp } from '@/hooks/useApp';
-import { useAuth } from '@/hooks/useAuth';
-import { ROUTES } from '@/lib/constants';
-import MainPage from '@/pages/main/MainPage';
-import OnboardingPage from '@/pages/onboarding/OnboardingPage';
-import TasksPage from '@/pages/tasks/TasksPage';
-import GoalsPage from '@/pages/goals/GoalsPage';
-import ChatPage from '@/pages/chat/ChatPage';
-import FamilyPage from '@/pages/family/FamilyPage';
-import PersonalPage from '@/pages/personal/PersonalPage';
-import NotFound from '@/pages/NotFound';
-import { DevStatus } from '@/components/dev/DevStatus';
-import { DevTestButton } from '@/components/dev/DevTestButton';
+import { useEffect } from "react";
+import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
+import { useApp } from "@/hooks/useApp";
+import { useAuth } from "@/hooks/useAuth";
+import { ROUTES } from "@/lib/constants";
+import MainPage from "@/pages/main/MainPage";
+import OnboardingPage from "@/pages/onboarding/OnboardingPage";
+import TasksPage from "@/pages/tasks/TasksPage";
+import GoalsPage from "@/pages/goals/GoalsPage";
+import ChatPage from "@/pages/chat/ChatPage";
+import FamilyPage from "@/pages/family/FamilyPage";
+import PersonalPage from "@/pages/personal/PersonalPage";
+import NotFound from "@/pages/NotFound";
+import { DevStatus } from "@/components/dev/DevStatus";
+import { DevTestButton } from "@/components/dev/DevTestButton";
 
 export function AppLayout() {
   // Mount notifications hook globally for all authenticated users
@@ -22,11 +22,23 @@ export function AppLayout() {
   const location = useLocation();
 
   useEffect(() => {
+    if (isAuthenticated && location.pathname.includes("reset-password")) {
+      try {
+        window.history.replaceState({}, "", "/");
+      } catch {}
+      // Hard redirect avoids odd cases with ad-blockers/SW/router races
+      window.location.replace("/");
+      // If you prefer SPA navigation, you could do:
+      // navigate("/", { replace: true });
+    }
+  }, [isAuthenticated, location.pathname, navigate]);
+
+  useEffect(() => {
     if (authLoading || isLoading) return;
 
     // If not authenticated, redirect to auth page
     if (!isAuthenticated) {
-      navigate('/auth', { replace: true });
+      navigate("/auth", { replace: true });
       return;
     }
 
@@ -84,7 +96,7 @@ export function AppLayout() {
         <Route path="*" element={<NotFound />} />
       </Routes>
       <DevStatus />
-      {process.env.NODE_ENV === 'development' && <DevTestButton />}
+      {process.env.NODE_ENV === "development" && <DevTestButton />}
     </div>
   );
 }
