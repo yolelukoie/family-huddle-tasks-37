@@ -556,8 +556,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         return false; // Cannot quit last family
       }
 
+      // Calculate remaining families BEFORE state updates
+      const remainingFamilies = userFamilies.filter(uf => uf.familyId !== familyId);
+      
       // Get family members
       const members = getFamilyMembers(familyId);
+      
+      // Optimistic update: Remove from local state immediately
+      setUserFamilies(remainingFamilies);
+      setFamilies(prev => prev.filter(f => f.id !== familyId));
       
       // If user is the only member, delete the family
       if (members.length === 1 && members[0].userId === user.id) {
@@ -569,12 +576,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
         if (familyError) {
           console.error('Error deleting family:', familyError);
+          // Rollback optimistic update
+          await loadFamilyData();
           throw familyError;
         }
-
-        // Remove from local state
-        setFamilies(prev => prev.filter(f => f.id !== familyId));
-        setUserFamilies(prev => prev.filter(uf => uf.familyId !== familyId));
       } else {
         // Just remove user from the family
         const { error: userFamilyError } = await supabase
@@ -585,18 +590,28 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
         if (userFamilyError) {
           console.error('Error removing user from family:', userFamilyError);
+          // Rollback optimistic update
+          await loadFamilyData();
           throw userFamilyError;
         }
-
-        // Remove from local state
-        setUserFamilies(prev => prev.filter(uf => uf.familyId !== familyId));
       }
 
       // If the family being quit is the active family, switch to another one
       if (activeFamilyId === familyId) {
-        const remainingFamilies = userFamilies.filter(uf => uf.familyId !== familyId);
         if (remainingFamilies.length > 0) {
-          await setActiveFamilyId(remainingFamilies[0].familyId);
+          const nextFamilyId = remainingFamilies[0].familyId;
+          
+          // Update active_family_id in database
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ active_family_id: nextFamilyId })
+            .eq('id', user.id);
+
+          if (updateError) {
+            console.error('Error updating active family:', updateError);
+          }
+          
+          await setActiveFamilyId(nextFamilyId);
         }
       }
 
