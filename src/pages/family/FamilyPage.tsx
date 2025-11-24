@@ -196,34 +196,42 @@ export default function FamilyPage() {
         filter: `user_id=eq.${user.id}`,
       }, async (payload) => {
         const removedFamilyId = (payload.old as any).family_id;
-        const removedFamily = families.find(f => f.id === removedFamilyId);
         
-        if (removedFamily) {
-          // Show notification
-          toast({
-            title: "Removed from family",
-            description: `Sorry, you were excluded from the family "${removedFamily.name}".`,
-            variant: "destructive",
-          });
+        // Refresh userFamilies from database to get current state
+        const { data: currentUserFamilies } = await supabase
+          .from('user_families')
+          .select('*')
+          .eq('user_id', user.id);
 
-          // Refresh userFamilies from database to get current state
-          const { data: currentUserFamilies } = await supabase
-            .from('user_families')
-            .select('*')
-            .eq('user_id', user.id);
+        // Get the removed family details
+        const { data: removedFamilyData } = await supabase
+          .from('families')
+          .select('name')
+          .eq('id', removedFamilyId)
+          .single();
 
-          // If this was the active family, switch to another or go to onboarding
-          if (activeFamilyId === removedFamilyId) {
-            if (currentUserFamilies && currentUserFamilies.length > 0) {
-              // Switch to the first remaining family
-              const nextFamilyId = currentUserFamilies[0].family_id;
-              await updateUser({ activeFamilyId: nextFamilyId });
-            } else {
-              // No families left, go to onboarding
-              await updateUser({ activeFamilyId: undefined, profileComplete: false });
-              navigate('/onboarding');
-            }
-          }
+        const familyName = removedFamilyData?.name || 'the family';
+
+        // Show notification
+        toast({
+          title: "Removed from family",
+          description: `Sorry, you were excluded from the family "${familyName}".`,
+          variant: "destructive",
+        });
+
+        // Check if user has any remaining families
+        if (!currentUserFamilies || currentUserFamilies.length === 0) {
+          // No families left, go to onboarding
+          await updateUser({ activeFamilyId: undefined, profileComplete: false });
+          navigate('/onboarding');
+        } else if (activeFamilyId === removedFamilyId) {
+          // If this was the active family, switch to the first remaining family
+          const nextFamilyId = currentUserFamilies[0].family_id;
+          await updateUser({ activeFamilyId: nextFamilyId });
+          window.location.reload(); // Force reload to refresh all data
+        } else {
+          // User still has families but wasn't on the kicked family page
+          window.location.reload(); // Force reload to refresh family list
         }
       })
       .subscribe();
@@ -231,7 +239,7 @@ export default function FamilyPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user?.id, families, activeFamilyId, toast, navigate, updateUser]);
+  }, [user?.id, activeFamilyId, toast, navigate, updateUser]);
 
   return (
     <div className="min-h-screen bg-background">
