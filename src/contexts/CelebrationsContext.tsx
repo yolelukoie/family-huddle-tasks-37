@@ -24,21 +24,27 @@ export function CelebrationsProvider({ children }: { children: React.ReactNode }
   const [celebrationQueue, setCelebrationQueue] = useState<CelebrationItem[]>([]);
 
   const addCelebration = useCallback((item: CelebrationItem) => {
+    console.log('CelebrationsContext: Adding celebration:', item.type);
     setCelebrationQueue(prev => [...prev, item]);
   }, []);
 
   const processCelebrationQueue = useCallback(() => {
     if (celebrationQueue.length > 0 && !currentCelebration) {
       const nextItem = celebrationQueue[0];
+      console.log('CelebrationsContext: Processing celebration:', nextItem.type);
       setCelebrationQueue(prev => prev.slice(1));
       
       setCurrentCelebration({ item: nextItem, show: true });
       
       // Auto-dismiss after exactly 2 seconds
       setTimeout(() => {
+        console.log('CelebrationsContext: Hiding celebration');
         setCurrentCelebration(prev => prev ? { ...prev, show: false } : null);
         // Clear after fade animation
-        setTimeout(() => setCurrentCelebration(null), 300);
+        setTimeout(() => {
+          console.log('CelebrationsContext: Clearing celebration');
+          setCurrentCelebration(null);
+        }, 300);
       }, 2000);
     }
   }, [celebrationQueue, currentCelebration]);
