@@ -161,5 +161,27 @@
     "confirm": "Подтвердить",
     "yes": "Да",
     "no": "Нет"
+  },
+  "stages": {
+    "baby": "Младенец",
+    "child": "Ребенок",
+    "teen": "Подросток",
+    "youngAdult": "Молодой взрослый",
+    "onTheRise": "На подъёме",
+    "adult": "Взрослый",
+    "matureAdult": "Зрелый взрослый",
+    "goldenChapter": "Золотая глава",
+    "elder": "Старейшина"
+  },
+  "defaultCategories": {
+    "houseChores": "Домашние дела",
+    "personalGrowth": "Личностный рост",
+    "happiness": "Счастье"
+  },
+  "defaultTasks": {
+    "cleanTheRoom": "Убрать комнату",
+    "doTheDishes": "Помыть посуду",
+    "takeOutTrash": "Вынести мусор",
+    "cookMeal": "Приготовить еду"
   }
 }

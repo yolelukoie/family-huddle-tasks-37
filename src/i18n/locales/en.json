@@ -10,15 +10,15 @@
   "main": {
     "title": "Family Stars",
     "hello": "Hello",
-    "loading": "Loading…",
+    "loading": "Loading...",
     "progressToNext": "Progress to next stage",
     "stars": "stars",
     "activeGoal": "Active Goal",
     "reward": "Reward",
     "todayTasks": "Today's Tasks",
-    "noTasksToday": "No tasks for today! Great job staying on top of things! 🎉",
-    "goToTasks": "Go to Tasks Page",
-    "assignTask": "Assign a Task",
+    "noTasksToday": "No tasks for today! Great job! 🎉",
+    "goToTasks": "Go to Tasks",
+    "assignTask": "Assign Task",
     "resetCharacter": "Reset Character",
     "resetConfirm": "Are you sure? This will reset your character progress for this family only.",
     "completeTask": "Complete"
@@ -39,7 +39,25 @@
     "addCategory": "Add Category",
     "enterCategoryName": "Enter category name:",
     "loadingUserData": "Loading user data...",
-    "settingUpFamily": "Setting up your family..."
+    "settingUpFamily": "Setting up your family...",
+    "addTaskTemplate": "Add Task Template",
+    "addToToday": "Added to Today",
+    "addToTodayDesc": "has been added to today's tasks.",
+    "taskName": "Task Name",
+    "taskNamePlaceholder": "What needs to be done?",
+    "description": "Description (Optional)",
+    "descriptionPlaceholder": "Additional details about the task...",
+    "starValue": "Star Value (0-20)",
+    "starValueRestriction": "Only 18+ users can edit star values",
+    "createTemplate": "Create Template",
+    "taskTemplateCreated": "Task template created!",
+    "addedToCategory": "has been added to",
+    "createTemplateFor": "Create a reusable task template for",
+    "deleteCategory": "Delete category? This will also delete all templates and tasks in this category.",
+    "categoryDeleted": "Category deleted",
+    "deleteCategorySuccess": "and all its tasks have been deleted.",
+    "deleteTemplate": "Delete this task template?",
+    "templates": "templates"
   },
   "goals": {
     "title": "Goals",
@@ -76,8 +94,8 @@
     "quitConfirm": "Are you sure you want to quit this family?",
     "quit": "Quit",
     "switchTo": "Switch to this family",
-    "createFamily": "Create a Family",
-    "joinFamily": "Join a Family",
+    "createFamily": "Create Family",
+    "joinFamily": "Join Family",
     "create": "Create",
     "join": "Join",
     "enterInviteCode": "Enter invite code",
@@ -111,12 +129,16 @@
     "fromFamily": "from the family?",
     "remove": "Remove",
     "removedFromFamily": "Removed from family",
-    "removedFromFamilyDesc": "Sorry, you were excluded from the family"
+    "removedFromFamilyDesc": "Sorry, you were excluded from the family",
+    "error": "Error",
+    "failedToRemove": "Failed to remove member. Only family owners can remove members.",
+    "edit": "Edit",
+    "settings": "Settings"
   },
   "chat": {
     "title": "Family Chat",
     "clearChat": "Clear Chat",
-    "noMessages": "No messages yet. Start the conversation!",
+    "noMessages": "No messages yet. Start a conversation!",
     "typeMessage": "Type your message...",
     "send": "Send"
   },
@@ -125,7 +147,7 @@
     "profilePicture": "Profile Picture",
     "uploadPhoto": "Upload Photo",
     "uploading": "Uploading...",
-    "uploadHint": "Click the avatar or button to upload a new profile picture (max 5MB)",
+    "uploadHint": "Click on the avatar or button to upload a new profile picture (Max 5MB)",
     "userProfile": "User Profile",
     "displayName": "Display Name",
     "displayNamePlaceholder": "Enter your display name",
@@ -133,23 +155,23 @@
     "profileUpdated": "Profile updated",
     "profileUpdatedDesc": "Your display name has been updated successfully.",
     "avatarUpdated": "Avatar updated",
-    "avatarUpdatedDesc": "Your profile picture has been updated successfully.",
+    "avatarUpdatedDesc": "Your avatar has been updated successfully.",
     "uploadFailed": "Upload failed",
-    "uploadFailedDesc": "There was an error uploading your avatar. Please try again.",
+    "uploadFailedDesc": "There was an error uploading your avatar, please try again.",
     "invalidFileType": "Invalid file type",
     "invalidFileTypeDesc": "Please select an image file.",
     "fileTooLarge": "File too large",
     "fileTooLargeDesc": "Please select an image smaller than 5MB.",
     "language": "Language",
     "preferredLanguage": "Preferred Language",
-    "selectLanguage": "Select a language",
+    "selectLanguage": "Select language",
     "languageUpdated": "Language updated",
     "languageUpdatedDesc": "Your language preference has been saved.",
     "updateFailed": "Update failed",
     "updateFailedDesc": "There was an error updating your language preference.",
     "subscription": "Subscription",
-    "subscriptionDesc": "You're currently on a free trial. You can manage your subscription here.",
-    "manageSubscription": "Manage subscription"
+    "subscriptionDesc": "You're currently on a free trial. Manage your subscription here.",
+    "manageSubscription": "Manage Subscription"
   },
   "common": {
     "loading": "Loading...",
@@ -161,5 +183,27 @@
     "confirm": "Confirm",
     "yes": "Yes",
     "no": "No"
+  },
+  "stages": {
+    "baby": "Baby",
+    "child": "Child",
+    "teen": "Teen",
+    "youngAdult": "Young Adult",
+    "onTheRise": "On the Rise",
+    "adult": "Adult",
+    "matureAdult": "Mature Adult",
+    "goldenChapter": "Golden Chapter",
+    "elder": "Elder"
+  },
+  "defaultCategories": {
+    "houseChores": "House Chores",
+    "personalGrowth": "Personal Growth",
+    "happiness": "Happiness"
+  },
+  "defaultTasks": {
+    "cleanTheRoom": "Clean the room",
+    "doTheDishes": "Do the dishes",
+    "takeOutTrash": "Take out trash",
+    "cookMeal": "Cook meal"
   }
 }
