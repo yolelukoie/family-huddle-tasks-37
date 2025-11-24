@@ -161,7 +161,8 @@ export function useBadges() {
       for (const b of newBadges) {
         const ex = existingMap.get(b.id);
         if (!ex) {
-          toInsert.push({ user_id: user.id, family_id: activeFamilyId, badge_id: b.id, seen: true });
+          // Insert as unseen so celebration triggers
+          toInsert.push({ user_id: user.id, family_id: activeFamilyId, badge_id: b.id, seen: false });
           celebrate.push(b);
         } else if (!ex.seen) {
           toMarkSeen.push(b.id);
@@ -172,19 +173,27 @@ export function useBadges() {
       if (toInsert.length > 0) {
         const { error } = await supabase.from('user_badges').insert(toInsert);
         if (error) console.error('Failed to insert user_badges:', error);
+        else console.log('useBadges: Inserted new badges:', toInsert.map(b => b.badge_id));
       }
 
-      if (toMarkSeen.length > 0) {
+      // Queue celebrations first
+      if (celebrate.length > 0) {
+        console.log('useBadges: Queueing celebrations for badges:', celebrate.map(b => b.id));
+        celebrate.forEach(badge => addCelebration({ type: 'badge', badge }));
+      }
+
+      // Mark as seen after celebrations are queued (including newly inserted ones)
+      const allToMarkSeen = [...toMarkSeen, ...toInsert.map(b => b.badge_id)];
+      if (allToMarkSeen.length > 0) {
         const { error } = await supabase
           .from('user_badges')
           .update({ seen: true })
           .eq('user_id', user.id)
           .eq('family_id', activeFamilyId)
-          .in('badge_id', toMarkSeen);
+          .in('badge_id', allToMarkSeen);
         if (error) console.error('Failed to mark badges as seen:', error);
+        else console.log('useBadges: Marked badges as seen:', allToMarkSeen);
       }
-
-      celebrate.forEach(badge => addCelebration({ type: 'badge', badge }));
       
       // Emit event for badge displays to refresh
       window.dispatchEvent(new CustomEvent('badges:changed'));

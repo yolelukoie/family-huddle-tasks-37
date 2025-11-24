@@ -7,6 +7,8 @@ interface BadgeCelebrationProps {
 }
 
 export function BadgeCelebration({ badge, show, onComplete }: BadgeCelebrationProps) {
+  console.log('BadgeCelebration: Rendering', { badge: badge.name, show });
+  
   if (!show) return null;
 
   return (
