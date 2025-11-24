@@ -1,0 +1,49 @@
+{
+  "nav": {
+    "home": "主页",
+    "tasks": "任务",
+    "goals": "目标",
+    "family": "家庭",
+    "chat": "聊天",
+    "personal": "个人设置"
+  },
+  "personal": {
+    "title": "个人设置",
+    "profilePicture": "头像",
+    "uploadPhoto": "上传照片",
+    "uploading": "上传中...",
+    "uploadHint": "点击头像或按钮上传新头像（最大5MB）",
+    "userProfile": "用户资料",
+    "displayName": "显示名称",
+    "displayNamePlaceholder": "输入你的显示名称",
+    "update": "更新",
+    "profileUpdated": "资料已更新",
+    "profileUpdatedDesc": "你的显示名称已成功更新。",
+    "avatarUpdated": "头像已更新",
+    "avatarUpdatedDesc": "你的头像已成功更新。",
+    "uploadFailed": "上传失败",
+    "uploadFailedDesc": "上传头像时出错，请重试。",
+    "invalidFileType": "无效的文件类型",
+    "invalidFileTypeDesc": "请选择图片文件。",
+    "fileTooLarge": "文件太大",
+    "fileTooLargeDesc": "请选择小于5MB的图片。",
+    "language": "语言",
+    "preferredLanguage": "首选语言",
+    "selectLanguage": "选择语言",
+    "languageUpdated": "语言已更新",
+    "languageUpdatedDesc": "你的语言偏好已保存。",
+    "updateFailed": "更新失败",
+    "updateFailedDesc": "更新语言偏好时出错。",
+    "subscription": "订阅",
+    "subscriptionDesc": "你目前处于免费试用期。你可以在这里管理订阅。",
+    "manageSubscription": "管理订阅"
+  },
+  "common": {
+    "loading": "加载中...",
+    "save": "保存",
+    "cancel": "取消",
+    "delete": "删除",
+    "edit": "编辑",
+    "close": "关闭"
+  }
+}

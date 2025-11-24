@@ -1,4 +1,5 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -24,10 +25,31 @@ const LANGUAGES = [
 export default function PersonalPage() {
   const { user, updateUser } = useAuth();
   const { toast } = useToast();
+  const { t, i18n } = useTranslation();
   const [newDisplayName, setNewDisplayName] = useState(user?.displayName || '');
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState<string>('en');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Load user's saved language preference
+  useEffect(() => {
+    const loadLanguagePreference = async () => {
+      if (!user?.id) return;
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('preferred_language')
+        .eq('id', user.id)
+        .single();
+
+      if (data?.preferred_language && !error) {
+        setSelectedLanguage(data.preferred_language);
+        i18n.changeLanguage(data.preferred_language);
+      }
+    };
+
+    loadLanguagePreference();
+  }, [user?.id, i18n]);
 
   if (!user) return null;
 
@@ -36,8 +58,8 @@ export default function PersonalPage() {
     if (newDisplayName.trim() && newDisplayName !== user.displayName) {
       updateUser({ displayName: newDisplayName.trim() });
       toast({
-        title: "Profile updated",
-        description: "Your display name has been updated successfully.",
+        title: t('personal.profileUpdated'),
+        description: t('personal.profileUpdatedDesc'),
       });
     }
   };
@@ -53,8 +75,8 @@ export default function PersonalPage() {
     // Validate file type
     if (!file.type.startsWith('image/')) {
       toast({
-        title: "Invalid file type",
-        description: "Please select an image file.",
+        title: t('personal.invalidFileType'),
+        description: t('personal.invalidFileTypeDesc'),
         variant: "destructive",
       });
       return;
@@ -63,8 +85,8 @@ export default function PersonalPage() {
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       toast({
-        title: "File too large",
-        description: "Please select an image smaller than 5MB.",
+        title: t('personal.fileTooLarge'),
+        description: t('personal.fileTooLargeDesc'),
         variant: "destructive",
       });
       return;
@@ -102,14 +124,14 @@ export default function PersonalPage() {
       await updateUser({ ...user, avatar_url: publicUrl } as any);
 
       toast({
-        title: "Avatar updated",
-        description: "Your profile picture has been updated successfully.",
+        title: t('personal.avatarUpdated'),
+        description: t('personal.avatarUpdatedDesc'),
       });
     } catch (error) {
       console.error('Error uploading avatar:', error);
       toast({
-        title: "Upload failed",
-        description: "There was an error uploading your avatar. Please try again.",
+        title: t('personal.uploadFailed'),
+        description: t('personal.uploadFailedDesc'),
         variant: "destructive",
       });
     } finally {
@@ -122,6 +144,7 @@ export default function PersonalPage() {
 
   const handleLanguageChange = async (language: string) => {
     setSelectedLanguage(language);
+    i18n.changeLanguage(language);
     
     try {
       const { error } = await supabase
@@ -132,14 +155,14 @@ export default function PersonalPage() {
       if (error) throw error;
 
       toast({
-        title: "Language updated",
-        description: "Your language preference has been saved.",
+        title: t('personal.languageUpdated'),
+        description: t('personal.languageUpdatedDesc'),
       });
     } catch (error) {
       console.error('Error updating language:', error);
       toast({
-        title: "Update failed",
-        description: "There was an error updating your language preference.",
+        title: t('personal.updateFailed'),
+        description: t('personal.updateFailedDesc'),
         variant: "destructive",
       });
     }
@@ -156,7 +179,7 @@ export default function PersonalPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <NavigationHeader title="Personal Settings" showBackButton />
+      <NavigationHeader title={t('personal.title')} showBackButton />
       
       <div className="max-w-4xl mx-auto p-4 space-y-6">
         {/* Avatar Upload */}
@@ -164,7 +187,7 @@ export default function PersonalPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Upload className="h-5 w-5" />
-              Profile Picture
+              {t('personal.profilePicture')}
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col items-center gap-4">
@@ -194,10 +217,10 @@ export default function PersonalPage() {
               disabled={isUploadingAvatar}
             >
               <Upload className="h-4 w-4 mr-2" />
-              {isUploadingAvatar ? 'Uploading...' : 'Upload Photo'}
+              {isUploadingAvatar ? t('personal.uploading') : t('personal.uploadPhoto')}
             </Button>
             <p className="text-sm text-muted-foreground text-center">
-              Click the avatar or button to upload a new profile picture (max 5MB)
+              {t('personal.uploadHint')}
             </p>
           </CardContent>
         </Card>
@@ -207,22 +230,22 @@ export default function PersonalPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Edit className="h-5 w-5" />
-              User Profile
+              {t('personal.userProfile')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleUpdateDisplayName} className="space-y-4">
               <div>
-                <Label htmlFor="displayName">Display Name</Label>
+                <Label htmlFor="displayName">{t('personal.displayName')}</Label>
                 <div className="flex gap-2">
                   <Input
                     id="displayName"
                     value={newDisplayName}
                     onChange={(e) => setNewDisplayName(e.target.value)}
-                    placeholder="Enter your display name"
+                    placeholder={t('personal.displayNamePlaceholder')}
                   />
                   <Button type="submit" variant="outline">
-                    Update
+                    {t('personal.update')}
                   </Button>
                 </div>
               </div>
@@ -235,15 +258,15 @@ export default function PersonalPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Languages className="h-5 w-5" />
-              Language
+              {t('personal.language')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              <Label htmlFor="language">Preferred Language</Label>
+              <Label htmlFor="language">{t('personal.preferredLanguage')}</Label>
               <Select value={selectedLanguage} onValueChange={handleLanguageChange}>
                 <SelectTrigger id="language">
-                  <SelectValue placeholder="Select a language" />
+                  <SelectValue placeholder={t('personal.selectLanguage')} />
                 </SelectTrigger>
                 <SelectContent>
                   {LANGUAGES.map((lang) => (
@@ -262,18 +285,18 @@ export default function PersonalPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Settings className="h-5 w-5" />
-              Subscription
+              {t('personal.subscription')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground mb-4">
-              You're currently on a free trial. You can manage your subscription here.
+              {t('personal.subscriptionDesc')}
             </p>
             <Button 
               variant="secondary" 
               onClick={() => window.location.href = LEMON_CHECKOUT_URL}
             >
-              Manage subscription
+              {t('personal.manageSubscription')}
             </Button>
           </CardContent>
         </Card>

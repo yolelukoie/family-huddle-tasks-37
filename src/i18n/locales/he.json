@@ -1,0 +1,49 @@
+{
+  "nav": {
+    "home": "בית",
+    "tasks": "משימות",
+    "goals": "מטרות",
+    "family": "משפחה",
+    "chat": "צ'אט",
+    "personal": "הגדרות אישיות"
+  },
+  "personal": {
+    "title": "הגדרות אישיות",
+    "profilePicture": "תמונת פרופיל",
+    "uploadPhoto": "העלה תמונה",
+    "uploading": "מעלה...",
+    "uploadHint": "לחץ על האווטאר או הכפתור כדי להעלות תמונת פרופיל חדשה (מקסימום 5MB)",
+    "userProfile": "פרופיל משתמש",
+    "displayName": "שם תצוגה",
+    "displayNamePlaceholder": "הזן את שם התצוגה שלך",
+    "update": "עדכן",
+    "profileUpdated": "הפרופיל עודכן",
+    "profileUpdatedDesc": "שם התצוגה שלך עודכן בהצלחה.",
+    "avatarUpdated": "האווטאר עודכן",
+    "avatarUpdatedDesc": "תמונת הפרופיל שלך עודכנה בהצלחה.",
+    "uploadFailed": "ההעלאה נכשלה",
+    "uploadFailedDesc": "אירעה שגיאה בהעלאת האווטאר שלך. אנא נסה שוב.",
+    "invalidFileType": "סוג קובץ לא חוקי",
+    "invalidFileTypeDesc": "אנא בחר קובץ תמונה.",
+    "fileTooLarge": "הקובץ גדול מדי",
+    "fileTooLargeDesc": "אנא בחר תמונה קטנה מ-5MB.",
+    "language": "שפה",
+    "preferredLanguage": "שפה מועדפת",
+    "selectLanguage": "בחר שפה",
+    "languageUpdated": "השפה עודכנה",
+    "languageUpdatedDesc": "העדפת השפה שלך נשמרה.",
+    "updateFailed": "העדכון נכשל",
+    "updateFailedDesc": "אירעה שגיאה בעדכון העדפת השפה שלך.",
+    "subscription": "מנוי",
+    "subscriptionDesc": "אתה כרגע בתקופת ניסיון חינם. אתה יכול לנהל את המנוי שלך כאן.",
+    "manageSubscription": "ניהול מנוי"
+  },
+  "common": {
+    "loading": "טוען...",
+    "save": "שמור",
+    "cancel": "ביטול",
+    "delete": "מחק",
+    "edit": "ערוך",
+    "close": "סגור"
+  }
+}
