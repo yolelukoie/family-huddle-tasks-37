@@ -134,7 +134,7 @@ export default function PersonalPage() {
           <CardContent className="flex flex-col items-center gap-4">
             <div className="relative">
               <Avatar className="h-32 w-32 cursor-pointer" onClick={handleAvatarClick}>
-                <AvatarImage src={(user as any).avatar_url} alt={user.displayName} />
+                <AvatarImage src={user.avatar_url} alt={user.displayName} />
                 <AvatarFallback className="text-3xl">
                   {getInitials(user.displayName)}
                 </AvatarFallback>
