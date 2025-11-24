@@ -205,8 +205,8 @@ export default function MainPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {/* Main draggable container - matches red rectangle area */}
-            <div ref={badgeContainerRef} className="relative">
+            {/* Draggable area wrapper - extends up to cover CardHeader visually */}
+            <div ref={badgeContainerRef} className="relative -mt-[72px] pt-[72px] pb-4">
               {/* Character Image and Badges */}
               <div className="flex justify-center mb-6 px-4">
                 <div className="relative w-full max-w-80 h-40">
@@ -225,7 +225,7 @@ export default function MainPage() {
               </div>
 
               {/* Progress Bar */}
-              <div className="space-y-2 mb-4">
+              <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span>Progress to next stage</span>
                   <span>{stageProgress.current}/{stageProgress.target} stars</span>
@@ -233,18 +233,7 @@ export default function MainPage() {
                 <Progress value={stageProgress.percentage} className="h-3" />
               </div>
 
-              {/* Category Breakdown */}
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-4">
-                {categoryStars.map(({
-                category,
-                stars
-              }) => <div key={category} className="text-center p-2 bg-white/50 rounded-lg">
-                    <div className="text-sm font-medium">{category}</div>
-                    <div className="text-lg font-bold text-family-star">{stars} ⭐</div>
-                  </div>)}
-              </div>
-
-              {/* Draggable Badges overlaying entire card area */}
+              {/* Draggable Badges overlaying the ref container */}
               {showBadges && !!user?.id && !!activeFamilyId && (
                 <DraggableBadgeDisplay
                   badges={unlockedBadges}
@@ -256,7 +245,18 @@ export default function MainPage() {
               )}
             </div>
 
-            {/* Active Goal */}
+            {/* Category Breakdown - OUTSIDE draggable area */}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-4">
+              {categoryStars.map(({
+              category,
+              stars
+            }) => <div key={category} className="text-center p-2 bg-white/50 rounded-lg">
+                  <div className="text-sm font-medium">{category}</div>
+                  <div className="text-lg font-bold text-family-star">{stars} ⭐</div>
+                </div>)}
+            </div>
+
+            {/* Active Goal - OUTSIDE draggable area */}
             {activeGoal && <div className="p-3 bg-family-success/10 rounded-lg border border-family-success/20">
                 <div className="text-sm font-medium text-family-success">Active Goal</div>
                 <div className="text-sm">{activeGoal.current_stars}/{activeGoal.target_stars} stars</div>
