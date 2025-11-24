@@ -7,6 +7,7 @@ export const ROUTES = {
   goals: '/goals',
   chat: '/chat',
   family: '/family',
+  personal: '/personal',
 } as const;
 
 export const CHARACTER_STAGES: CharacterStage[] = [

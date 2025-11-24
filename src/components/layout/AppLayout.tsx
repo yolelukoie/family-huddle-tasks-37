@@ -9,6 +9,7 @@ import TasksPage from '@/pages/tasks/TasksPage';
 import GoalsPage from '@/pages/goals/GoalsPage';
 import ChatPage from '@/pages/chat/ChatPage';
 import FamilyPage from '@/pages/family/FamilyPage';
+import PersonalPage from '@/pages/personal/PersonalPage';
 import NotFound from '@/pages/NotFound';
 import { DevStatus } from '@/components/dev/DevStatus';
 import { DevTestButton } from '@/components/dev/DevTestButton';
@@ -79,6 +80,7 @@ export function AppLayout() {
         <Route path={ROUTES.goals.slice(1)} element={<GoalsPage />} />
         <Route path={ROUTES.chat.slice(1)} element={<ChatPage />} />
         <Route path={ROUTES.family.slice(1)} element={<FamilyPage />} />
+        <Route path={ROUTES.personal.slice(1)} element={<PersonalPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <DevStatus />

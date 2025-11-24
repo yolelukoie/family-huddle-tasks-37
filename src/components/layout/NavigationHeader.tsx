@@ -60,7 +60,10 @@ export function NavigationHeader({ title, showBackButton = true }: NavigationHea
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="end" forceMount>
-              <DropdownMenuItem className="font-normal">
+              <DropdownMenuItem 
+                className="font-medium cursor-pointer"
+                onClick={() => navigate(ROUTES.personal)}
+              >
                 <div className="flex flex-col space-y-1">
                   <p className="text-sm font-medium leading-none">{user?.displayName}</p>
                   <p className="text-xs leading-none text-muted-foreground">

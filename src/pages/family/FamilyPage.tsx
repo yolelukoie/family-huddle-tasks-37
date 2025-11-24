@@ -4,21 +4,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useAuth } from '@/hooks/useAuth';
 import { useApp } from '@/hooks/useApp';
 import { NavigationHeader } from '@/components/layout/NavigationHeader';
 import { MemberProfileModal } from '@/components/modals/MemberProfileModal';
-import { Users, Share, Plus, Edit, Settings, Star } from 'lucide-react';
+import { Users, Share, Plus, Edit, Star, Settings } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getCurrentStage, getStageName } from '@/lib/character';
-import { LEMON_CHECKOUT_URL } from '@/config/subscription';
 
 export default function FamilyPage() {
-  const { user, updateUser } = useAuth();
+  const { user } = useAuth();
   const { activeFamilyId, userFamilies, families, setActiveFamilyId, createFamily, joinFamily, updateFamilyName, quitFamily, getFamilyMembers, getUserProfile } = useApp();
   const { toast } = useToast();
-  const [newDisplayName, setNewDisplayName] = useState(user?.displayName || '');
   const [showJoinFamily, setShowJoinFamily] = useState(false);
   const [inviteCode, setInviteCode] = useState('');
   const [showCreateFamily, setShowCreateFamily] = useState(false);
@@ -34,15 +33,13 @@ export default function FamilyPage() {
   const userFamilyIds = userFamilies.map(uf => uf.familyId);
   const allUserFamilies = families.filter(f => userFamilyIds.includes(f.id));
 
-  const handleUpdateDisplayName = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newDisplayName.trim() && newDisplayName !== user.displayName) {
-      updateUser({ displayName: newDisplayName.trim() });
-      toast({
-        title: "Profile updated",
-        description: "Your display name has been updated successfully.",
-      });
-    }
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
   };
 
   const handleJoinFamily = async (e: React.FormEvent) => {
@@ -157,55 +154,6 @@ export default function FamilyPage() {
       <NavigationHeader title="Family Settings" />
       
       <div className="max-w-4xl mx-auto p-4 space-y-6">
-        {/* User Profile */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Edit className="h-5 w-5" />
-              User Profile
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleUpdateDisplayName} className="space-y-4">
-              <div>
-                <Label htmlFor="displayName">Display Name</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="displayName"
-                    value={newDisplayName}
-                    onChange={(e) => setNewDisplayName(e.target.value)}
-                    placeholder="Enter your display name"
-                  />
-                  <Button type="submit" variant="outline">
-                    Update
-                  </Button>
-                </div>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-
-        {/* Subscription */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Settings className="h-5 w-5" />
-              Subscription
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              You're currently on a free trial. You can manage your subscription here.
-            </p>
-            <Button 
-              variant="secondary" 
-              onClick={() => window.location.href = LEMON_CHECKOUT_URL}
-            >
-              Manage subscription
-            </Button>
-          </CardContent>
-        </Card>
-
         {/* Active Family */}
         {activeFamily && (
           <Card>
@@ -294,6 +242,12 @@ export default function FamilyPage() {
                                 }}
                               >
                                 <div className="flex items-center gap-3">
+                                  <Avatar className="h-10 w-10">
+                                    <AvatarImage src={(memberProfile as any)?.avatar_url} alt={memberProfile?.displayName} />
+                                    <AvatarFallback>
+                                      {getInitials(memberProfile?.displayName || 'FM')}
+                                    </AvatarFallback>
+                                  </Avatar>
                                   <div className="flex flex-col">
                                     <span className="font-medium">
                                       {memberProfile?.displayName || 'Family Member'}
