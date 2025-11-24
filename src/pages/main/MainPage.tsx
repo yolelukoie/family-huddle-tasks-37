@@ -205,53 +205,55 @@ export default function MainPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-             {/* Character Image and Badges */}
-            <div className="flex justify-center mb-6 px-4">
-              <div ref={badgeContainerRef} className="relative w-full max-w-80 h-40 overflow-hidden">
-                {/* Character Image Container */}
-                <div className="absolute left-1/2 transform -translate-x-1/2 w-40 h-40">
-                  <img src={characterImagePath} alt={`${user?.gender || 'character'} character at ${stageName} stage`} className="w-40 h-40 object-contain" onError={e => {
-                  // Fallback to emoji if image fails to load
-                  const img = e.currentTarget;
-                  const fallback = img.nextElementSibling as HTMLElement;
-                  img.style.display = 'none';
-                  if (fallback) fallback.style.display = 'block';
-                }} />
-                  <span className="text-4xl hidden">👤</span>
+            {/* Main draggable container - matches red rectangle area */}
+            <div ref={badgeContainerRef} className="relative">
+              {/* Character Image and Badges */}
+              <div className="flex justify-center mb-6 px-4">
+                <div className="relative w-full max-w-80 h-40">
+                  {/* Character Image Container */}
+                  <div className="absolute left-1/2 transform -translate-x-1/2 w-40 h-40">
+                    <img src={characterImagePath} alt={`${user?.gender || 'character'} at ${stageName} stage`} className="w-40 h-40 object-contain" onError={e => {
+                    // Fallback to emoji if image fails to load
+                    const img = e.currentTarget;
+                    const fallback = img.nextElementSibling as HTMLElement;
+                    img.style.display = 'none';
+                    if (fallback) fallback.style.display = 'block';
+                  }} />
+                    <span className="text-4xl hidden">👤</span>
+                  </div>
                 </div>
-                 
-                  {/* Draggable Badges overlaying character */}
-                  {showBadges && !!user?.id && !!activeFamilyId && (
-                    <DraggableBadgeDisplay
-                      badges={unlockedBadges}
-                      familyId={activeFamilyId}
-                      userId={user.id}
-                      containerBounds={containerDimensions}
-                      className="absolute inset-0 z-0"
-                    />
-                  )}
-
               </div>
-            </div>
 
-            {/* Progress Bar */}
-            <div className="space-y-2 mb-4">
-              <div className="flex justify-between text-sm">
-                <span>Progress to next stage</span>
-                <span>{stageProgress.current}/{stageProgress.target} stars</span>
+              {/* Progress Bar */}
+              <div className="space-y-2 mb-4">
+                <div className="flex justify-between text-sm">
+                  <span>Progress to next stage</span>
+                  <span>{stageProgress.current}/{stageProgress.target} stars</span>
+                </div>
+                <Progress value={stageProgress.percentage} className="h-3" />
               </div>
-              <Progress value={stageProgress.percentage} className="h-3" />
-            </div>
 
-            {/* Category Breakdown */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-4">
-              {categoryStars.map(({
-              category,
-              stars
-            }) => <div key={category} className="text-center p-2 bg-white/50 rounded-lg">
-                  <div className="text-sm font-medium">{category}</div>
-                  <div className="text-lg font-bold text-family-star">{stars} ⭐</div>
-                </div>)}
+              {/* Category Breakdown */}
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-4">
+                {categoryStars.map(({
+                category,
+                stars
+              }) => <div key={category} className="text-center p-2 bg-white/50 rounded-lg">
+                    <div className="text-sm font-medium">{category}</div>
+                    <div className="text-lg font-bold text-family-star">{stars} ⭐</div>
+                  </div>)}
+              </div>
+
+              {/* Draggable Badges overlaying entire card area */}
+              {showBadges && !!user?.id && !!activeFamilyId && (
+                <DraggableBadgeDisplay
+                  badges={unlockedBadges}
+                  familyId={activeFamilyId}
+                  userId={user.id}
+                  containerBounds={containerDimensions}
+                  className="absolute inset-0 pointer-events-none [&>*]:pointer-events-auto"
+                />
+              )}
             </div>
 
             {/* Active Goal */}
