@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -6,18 +6,22 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useAuth } from '@/hooks/useAuth';
 import { useApp } from '@/hooks/useApp';
 import { NavigationHeader } from '@/components/layout/NavigationHeader';
 import { MemberProfileModal } from '@/components/modals/MemberProfileModal';
-import { Users, Share, Plus, Edit, Star, Settings } from 'lucide-react';
+import { Users, Share, Plus, Edit, Star, Settings, UserMinus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getCurrentStage, getStageName } from '@/lib/character';
+import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 
 export default function FamilyPage() {
-  const { user } = useAuth();
-  const { activeFamilyId, userFamilies, families, setActiveFamilyId, createFamily, joinFamily, updateFamilyName, quitFamily, getFamilyMembers, getUserProfile } = useApp();
+  const { user, updateUser } = useAuth();
+  const { activeFamilyId, userFamilies, families, setActiveFamilyId, createFamily, joinFamily, updateFamilyName, quitFamily, removeFamilyMember, getFamilyMembers, getUserProfile } = useApp();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [showJoinFamily, setShowJoinFamily] = useState(false);
   const [inviteCode, setInviteCode] = useState('');
   const [showCreateFamily, setShowCreateFamily] = useState(false);
@@ -26,6 +30,7 @@ export default function FamilyPage() {
   const [editingFamilyName, setEditingFamilyName] = useState('');
   const [selectedMember, setSelectedMember] = useState<any>(null);
   const [showMemberProfile, setShowMemberProfile] = useState(false);
+  const [memberToRemove, setMemberToRemove] = useState<{ userId: string; displayName: string; familyId: string } | null>(null);
 
   if (!user) return null;
 
@@ -149,6 +154,80 @@ export default function FamilyPage() {
     });
   };
 
+  const handleRemoveMember = async () => {
+    if (!memberToRemove) return;
+
+    try {
+      const success = await removeFamilyMember(memberToRemove.familyId, memberToRemove.userId);
+      
+      if (success) {
+        toast({
+          title: "Member removed",
+          description: `${memberToRemove.displayName} has been removed from the family.`,
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to remove member. Only family owners can remove members.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error removing member",
+        description: "There was an error removing the family member. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setMemberToRemove(null);
+    }
+  };
+
+  // Listen for when user is kicked from a family
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel('user-family-changes')
+      .on('postgres_changes', {
+        event: 'DELETE',
+        schema: 'public',
+        table: 'user_families',
+        filter: `user_id=eq.${user.id}`,
+      }, async (payload) => {
+        const removedFamilyId = (payload.old as any).family_id;
+        const removedFamily = families.find(f => f.id === removedFamilyId);
+        
+        if (removedFamily) {
+          // Show notification
+          toast({
+            title: "Removed from family",
+            description: `Sorry, you were excluded from the family "${removedFamily.name}".`,
+            variant: "destructive",
+          });
+
+          // If this was the active family, switch to another or go to onboarding
+          if (activeFamilyId === removedFamilyId) {
+            const remainingFamilies = userFamilies.filter(uf => uf.familyId !== removedFamilyId);
+            
+            if (remainingFamilies.length > 0) {
+              // Switch to the first remaining family
+              await updateUser({ activeFamilyId: remainingFamilies[0].familyId });
+            } else {
+              // No families left, go to onboarding
+              await updateUser({ activeFamilyId: undefined, profileComplete: false });
+              navigate('/onboarding');
+            }
+          }
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, families, activeFamilyId, userFamilies, toast, navigate, updateUser]);
+
   return (
     <div className="min-h-screen bg-background">
       <NavigationHeader title="Family Settings" />
@@ -241,9 +320,9 @@ export default function FamilyPage() {
                                   }
                                 }}
                               >
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-3 flex-1">
                                   <Avatar className="h-10 w-10">
-                                    <AvatarImage src={(memberProfile as any)?.avatar_url} alt={memberProfile?.displayName} />
+                                    <AvatarImage src={memberProfile?.avatar_url} alt={memberProfile?.displayName} />
                                     <AvatarFallback>
                                       {getInitials(memberProfile?.displayName || 'FM')}
                                     </AvatarFallback>
@@ -260,9 +339,28 @@ export default function FamilyPage() {
                                     </div>
                                   </div>
                                 </div>
-                                {isCurrentUser && (
-                                  <Badge variant="secondary">You</Badge>
-                                )}
+                                <div className="flex items-center gap-2">
+                                  {isCurrentUser && (
+                                    <Badge variant="secondary">You</Badge>
+                                  )}
+                                  {!isCurrentUser && family.createdBy === user.id && (
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setMemberToRemove({
+                                          userId: member.userId,
+                                          displayName: memberProfile?.displayName || 'Family Member',
+                                          familyId: family.id
+                                        });
+                                      }}
+                                      className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                    >
+                                      <UserMinus className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                </div>
                               </div>
                             );
                           })}
@@ -421,6 +519,24 @@ export default function FamilyPage() {
           familyId={activeFamilyId!}
         />
       )}
+
+      {/* Remove Member Confirmation Dialog */}
+      <AlertDialog open={!!memberToRemove} onOpenChange={(open) => !open && setMemberToRemove(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Family Member</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove <strong>{memberToRemove?.displayName}</strong> from the family? They will be notified and their active family will be changed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRemoveMember} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Remove Member
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
