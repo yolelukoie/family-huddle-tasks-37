@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -25,9 +26,10 @@ import { useTaskAssignments } from '@/hooks/useTaskAssignments';
 import { Star, Calendar, Plus, RotateCcw, CheckCircle } from 'lucide-react';
 export default function MainPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
+  const { t } = useTranslation();
 
   if (isLoading) {
-    return <div className="p-6">Loading…</div>;
+    return <div className="p-6">{t('main.loading')}</div>;
   }
 
   if (!isAuthenticated) {
@@ -177,7 +179,7 @@ export default function MainPage() {
     setRefreshKey(prev => prev + 1);
   };
   const handleResetCharacter = async () => {
-    if (window.confirm('Are you sure? This will reset your character progress for this family only.')) {
+    if (window.confirm(t('main.resetConfirm'))) {
       await resetCharacterProgress(activeFamilyId);
       resetBadgeProgress();
       setPreviousStars(0);
@@ -186,13 +188,13 @@ export default function MainPage() {
   const currentFamily = activeFamilyId ? families.find(f => f.id === activeFamilyId) : null;
 
   return <div className="min-h-screen bg-background">
-      <NavigationHeader title={currentFamily?.name || "Family Stars"} showBackButton={false} />
+      <NavigationHeader title={currentFamily?.name || t('main.title')} showBackButton={false} />
       
       <div className="max-w-4xl mx-auto p-4 space-y-6">
         {/* Greeting */}
         <div className="text-center">
           <h1 className="text-3xl font-bold text-family-warm mb-2">
-            Hello, {user?.displayName}! ✨
+            {t('main.hello')}, {user?.displayName}! ✨
           </h1>
         </div>
 
@@ -227,8 +229,8 @@ export default function MainPage() {
               {/* Progress Bar */}
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span>Progress to next stage</span>
-                  <span>{stageProgress.current}/{stageProgress.target} stars</span>
+                  <span>{t('main.progressToNext')}</span>
+                  <span>{stageProgress.current}/{stageProgress.target} {t('main.stars')}</span>
                 </div>
                 <Progress value={stageProgress.percentage} className="h-3" />
               </div>
@@ -258,10 +260,10 @@ export default function MainPage() {
 
             {/* Active Goal - OUTSIDE draggable area */}
             {activeGoal && <div className="p-3 bg-family-success/10 rounded-lg border border-family-success/20">
-                <div className="text-sm font-medium text-family-success">Active Goal</div>
-                <div className="text-sm">{activeGoal.current_stars}/{activeGoal.target_stars} stars</div>
+                <div className="text-sm font-medium text-family-success">{t('main.activeGoal')}</div>
+                <div className="text-sm">{activeGoal.current_stars}/{activeGoal.target_stars} {t('main.stars')}</div>
                 <Progress value={activeGoal.current_stars / activeGoal.target_stars * 100} className="h-2 mt-1" />
-                {activeGoal.reward && <div className="text-xs text-muted-foreground mt-1">Reward: {activeGoal.reward}</div>}
+                {activeGoal.reward && <div className="text-xs text-muted-foreground mt-1">{t('main.reward')}: {activeGoal.reward}</div>}
               </div>}
           </CardContent>
         </Card>
@@ -271,13 +273,13 @@ export default function MainPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Calendar className="h-5 w-5" />
-              Today's Tasks
+              {t('main.todayTasks')}
               <Badge variant="secondary">{todaysTasks.length}</Badge>
             </CardTitle>
           </CardHeader>
           <CardContent>
             {todaysTasks.length === 0 ? <div className="text-center py-8 text-muted-foreground">
-                No tasks for today! Great job staying on top of things! 🎉
+                {t('main.noTasksToday')}
               </div> : <div className="space-y-2">
                 {todaysTasks.map(task => <div key={`${task.id}-${refreshKey}`} className="flex items-center justify-between p-3 border rounded-lg">
                     <div className="flex-1">
@@ -298,11 +300,11 @@ export default function MainPage() {
         {/* Action Buttons */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Button onClick={() => navigate(ROUTES.tasks)} className="bg-primary hover:bg-primary/90 h-14">
-            Go to Tasks Page
+            {t('main.goToTasks')}
           </Button>
           <Button onClick={() => setShowAssignTask(true)} variant="outline" className="h-14">
             <Plus className="h-5 w-5 mr-2" />
-            Assign a Task
+            {t('main.assignTask')}
           </Button>
         </div>
 
@@ -310,7 +312,7 @@ export default function MainPage() {
         <div className="text-center">
           <Button onClick={handleResetCharacter} variant="destructive" size="sm" className="opacity-70">
             <RotateCcw className="h-4 w-4 mr-2" />
-            Reset Character
+            {t('main.resetCharacter')}
           </Button>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +19,7 @@ export default function GoalsPage() {
   const { activeFamilyId } = useApp();
   const { activeGoal, completedGoals, deleteGoal } = useGoals();
   const { categories } = useTasks();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [showCreateGoal, setShowCreateGoal] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -28,7 +30,7 @@ export default function GoalsPage() {
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading user data...</p>
+          <p className="text-muted-foreground">{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -41,28 +43,28 @@ export default function GoalsPage() {
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Setting up your family...</p>
+          <p className="text-muted-foreground">{t('tasks.settingUpFamily')}</p>
         </div>
       </div>
     );
   }
 
   const handleDeleteGoal = async (goalId: string) => {
-    if (confirm('Are you sure you want to delete this goal?')) {
+    if (confirm(t('goals.deleteConfirm'))) {
       await deleteGoal(goalId);
     }
   };
 
   return (
     <div className="min-h-screen bg-background">
-      <NavigationHeader title="Goals" />
+      <NavigationHeader title={t('goals.title')} />
       
       <div className="max-w-4xl mx-auto p-4 space-y-6">
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold">Personal Goals</h1>
-            <p className="text-muted-foreground">Set and track your star-earning goals</p>
+            <h1 className="text-2xl font-bold">{t('goals.personalGoals')}</h1>
+            <p className="text-muted-foreground">{t('goals.trackGoals')}</p>
           </div>
           <Button 
             variant="outline" 
@@ -70,7 +72,7 @@ export default function GoalsPage() {
             className="flex items-center gap-2"
           >
             <History className="h-4 w-4" />
-            History
+            {t('goals.history')}
           </Button>
         </div>
 
@@ -79,7 +81,7 @@ export default function GoalsPage() {
           <Card>
             <CardHeader>
               <div className="flex justify-between items-center">
-                <CardTitle>Active Goal</CardTitle>
+                <CardTitle>{t('goals.activeGoal')}</CardTitle>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -93,8 +95,8 @@ export default function GoalsPage() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span>Progress</span>
-                  <span>{activeGoal.currentStars}/{activeGoal.targetStars} stars</span>
+                  <span>{t('goals.progress')}</span>
+                  <span>{activeGoal.currentStars}/{activeGoal.targetStars} {t('main.stars')}</span>
                 </div>
                 <Progress 
                   value={(activeGoal.currentStars / activeGoal.targetStars) * 100} 
@@ -104,7 +106,7 @@ export default function GoalsPage() {
               
               {activeGoal.targetCategories && activeGoal.targetCategories.length > 0 && (
                 <div>
-                  <h4 className="font-medium mb-2">Target Categories:</h4>
+                  <h4 className="font-medium mb-2">{t('goals.targetCategories')}</h4>
                   <div className="flex flex-wrap gap-2">
                     {activeGoal.targetCategories.map(categoryId => {
                       const category = categories.find(c => c.id === categoryId);
@@ -118,7 +120,7 @@ export default function GoalsPage() {
               
               {activeGoal.reward && (
                 <div>
-                  <h4 className="font-medium mb-1">Reward:</h4>
+                  <h4 className="font-medium mb-1">{t('goals.reward')}</h4>
                   <p className="text-muted-foreground">{activeGoal.reward}</p>
                 </div>
               )}
@@ -127,10 +129,10 @@ export default function GoalsPage() {
         ) : (
           <Card>
             <CardContent className="text-center py-8">
-              <p className="text-muted-foreground mb-4">No active goal set</p>
+              <p className="text-muted-foreground mb-4">{t('goals.noActiveGoal')}</p>
               <Button onClick={() => setShowCreateGoal(true)}>
                 <Plus className="h-4 w-4 mr-2" />
-                Create Goal
+                {t('goals.createGoal')}
               </Button>
             </CardContent>
           </Card>

@@ -3,6 +3,7 @@ import { ArrowLeft, Home, CheckSquare, Target, MessageCircle, Users, LogOut, Use
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { ROUTES } from '@/lib/constants';
+import { useTranslation } from 'react-i18next';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,6 +20,7 @@ interface NavigationHeaderProps {
 export function NavigationHeader({ title, showBackButton = true }: NavigationHeaderProps) {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const { t } = useTranslation();
 
   const handleSignOut = async () => {
     await signOut();
@@ -26,11 +28,11 @@ export function NavigationHeader({ title, showBackButton = true }: NavigationHea
   };
 
   const navigationItems = [
-    { icon: Home, label: 'Main', route: ROUTES.main },
-    { icon: CheckSquare, label: 'Tasks', route: ROUTES.tasks },
-    { icon: Target, label: 'Goals', route: ROUTES.goals },
-    { icon: MessageCircle, label: 'Chat', route: ROUTES.chat },
-    { icon: Users, label: 'Family', route: ROUTES.family },
+    { icon: Home, label: t('nav.home'), route: ROUTES.main },
+    { icon: CheckSquare, label: t('nav.tasks'), route: ROUTES.tasks },
+    { icon: Target, label: t('nav.goals'), route: ROUTES.goals },
+    { icon: MessageCircle, label: t('nav.chat'), route: ROUTES.chat },
+    { icon: Users, label: t('nav.family'), route: ROUTES.family },
   ];
 
   return (
@@ -74,7 +76,7 @@ export function NavigationHeader({ title, showBackButton = true }: NavigationHea
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleSignOut}>
                 <LogOut className="mr-2 h-4 w-4" />
-                <span>Log out</span>
+                <span>{t('common.logOut', 'Log out')}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

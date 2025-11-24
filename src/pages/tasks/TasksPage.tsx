@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -24,6 +25,7 @@ export default function TasksPage() {
   const { updateGoalProgress } = useGoals();
   const { tasks, categories, updateTask, addCategory } = useTasks();
   const { currentCelebration, completeCelebration } = useCelebrations();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [showHistory, setShowHistory] = useState(false);
   const [showAssignTask, setShowAssignTask] = useState(false);
@@ -34,7 +36,7 @@ export default function TasksPage() {
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading user data...</p>
+          <p className="text-muted-foreground">{t('tasks.loadingUserData')}</p>
         </div>
       </div>
     );
@@ -47,7 +49,7 @@ export default function TasksPage() {
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Setting up your family...</p>
+          <p className="text-muted-foreground">{t('tasks.settingUpFamily')}</p>
         </div>
       </div>
     );
@@ -76,14 +78,14 @@ export default function TasksPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <NavigationHeader title="Tasks" />
+      <NavigationHeader title={t('tasks.title')} />
       
       <div className="max-w-4xl mx-auto p-4 space-y-6">
         {/* Header with History Button */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold">Family Tasks</h1>
-            <p className="text-muted-foreground">Manage and complete your family tasks</p>
+            <h1 className="text-2xl font-bold">{t('tasks.familyTasks')}</h1>
+            <p className="text-muted-foreground">{t('tasks.manageTasks')}</p>
           </div>
           <Button 
             variant="outline" 
@@ -91,7 +93,7 @@ export default function TasksPage() {
             className="flex items-center gap-2"
           >
             <History className="h-4 w-4" />
-            History
+            {t('tasks.history')}
           </Button>
         </div>
 
@@ -99,11 +101,11 @@ export default function TasksPage() {
         <Tabs defaultValue="today" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="today" className="flex items-center gap-2">
-              Today
+              {t('tasks.today')}
               <Badge variant="secondary">{todaysTasks.length}</Badge>
             </TabsTrigger>
             <TabsTrigger value="upcoming" className="flex items-center gap-2">
-              Upcoming
+              {t('tasks.upcoming')}
               <Badge variant="secondary">{upcomingTasks.length}</Badge>
             </TabsTrigger>
           </TabsList>
@@ -112,7 +114,7 @@ export default function TasksPage() {
             {todaysTasks.length === 0 ? (
               <Card>
                 <CardContent className="text-center py-8">
-                  <p className="text-muted-foreground">No tasks due today! 🎉</p>
+                  <p className="text-muted-foreground">{t('tasks.noTasksToday')}</p>
                 </CardContent>
               </Card>
             ) : (
@@ -133,7 +135,7 @@ export default function TasksPage() {
             {upcomingTasks.length === 0 ? (
               <Card>
                 <CardContent className="text-center py-8">
-                  <p className="text-muted-foreground">No upcoming tasks</p>
+                  <p className="text-muted-foreground">{t('tasks.noUpcomingTasks')}</p>
                 </CardContent>
               </Card>
             ) : (
@@ -157,10 +159,10 @@ export default function TasksPage() {
         <Card>
           <CardHeader>
             <div className="flex justify-between items-center">
-              <CardTitle>Task Categories</CardTitle>
+              <CardTitle>{t('tasks.categories')}</CardTitle>
               <Button
                 onClick={async () => {
-                  const name = prompt('Enter category name:');
+                  const name = prompt(t('tasks.enterCategoryName'));
                   if (name && name.trim() && activeFamilyId) {
                     await addCategory({
                       name: name.trim(),
@@ -175,7 +177,7 @@ export default function TasksPage() {
                 size="sm"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Add Category
+                {t('tasks.addCategory')}
               </Button>
             </div>
           </CardHeader>
@@ -200,7 +202,7 @@ export default function TasksPage() {
             size="lg"
           >
             <Plus className="h-5 w-5 mr-2" />
-            Assign a Task
+            {t('main.assignTask')}
           </Button>
         </div>
       </div>
@@ -243,6 +245,7 @@ interface TaskItemProps {
 
 function TaskItem({ task, onComplete, currentUserId }: TaskItemProps) {
   const { categories } = useTasks();
+  const { t } = useTranslation();
   const category = categories.find(c => c.id === task.categoryId);
   
   return (
@@ -262,10 +265,10 @@ function TaskItem({ task, onComplete, currentUserId }: TaskItemProps) {
             )}
             
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span>Due: {formatDate(task.dueDate)}</span>
-              <span>⭐ {task.starValue} stars</span>
+              <span>{t('tasks.due')}: {formatDate(task.dueDate)}</span>
+              <span>⭐ {task.starValue} {t('main.stars')}</span>
               <span>
-                {task.assignedTo === currentUserId ? 'Assigned to you' : 'Assigned to family member'}
+                {task.assignedTo === currentUserId ? t('tasks.assignedToYou') : t('tasks.assignedToMember')}
               </span>
             </div>
           </div>

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -14,6 +15,7 @@ export default function ChatPage() {
   const { user } = useAuth();
   const { activeFamilyId } = useApp();
   const { messages, sendMessage: sendChatMessage, clearChat } = useChat();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [message, setMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -29,7 +31,7 @@ export default function ChatPage() {
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading user data...</p>
+          <p className="text-muted-foreground">{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -42,7 +44,7 @@ export default function ChatPage() {
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Setting up your family...</p>
+          <p className="text-muted-foreground">{t('tasks.settingUpFamily')}</p>
         </div>
       </div>
     );
@@ -60,12 +62,12 @@ export default function ChatPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <NavigationHeader title="Family Chat" />
+      <NavigationHeader title={t('chat.title')} />
       
       <div className="max-w-4xl mx-auto p-4 h-[calc(100vh-80px)] flex flex-col">
         <Card className="flex-1 flex flex-col">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Family Chat</CardTitle>
+            <CardTitle>{t('chat.title')}</CardTitle>
             <Button
               variant="ghost"
               size="sm"
@@ -73,7 +75,7 @@ export default function ChatPage() {
               className="text-muted-foreground hover:text-destructive"
             >
               <Trash2 className="h-4 w-4 mr-2" />
-              Clear Chat
+              {t('chat.clearChat')}
             </Button>
           </CardHeader>
           <CardContent className="flex-1 flex flex-col space-y-4">
@@ -81,7 +83,7 @@ export default function ChatPage() {
             <div className="flex-1 overflow-y-auto space-y-3 max-h-[60vh]">
               {messages.length === 0 ? (
                 <div className="text-center text-muted-foreground py-8">
-                  No messages yet. Start the conversation!
+                  {t('chat.noMessages')}
                 </div>
               ) : (
                 messages.map(msg => (
@@ -116,7 +118,7 @@ export default function ChatPage() {
               <Input
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder="Type your message..."
+                placeholder={t('chat.typeMessage')}
                 className="flex-1"
               />
               <Button type="submit" size="icon">
