@@ -17,6 +17,7 @@ import { BadgeCelebration } from '@/components/badges/BadgeCelebration';
 import { GoalCelebration } from '@/components/celebrations/GoalCelebration';
 import { ROUTES } from '@/lib/constants';
 import { getCurrentStage, getStageProgress, getCharacterImagePath, getStageName } from '@/lib/character';
+import { translateTaskName, translateCategoryName } from '@/lib/translations';
 import { supabase } from '@/integrations/supabase/client';
 import { isToday } from '@/lib/utils';
 import { AssignTaskModal } from '@/components/modals/AssignTaskModal';
@@ -155,7 +156,7 @@ export default function MainPage() {
     const categoryTasks = completedTasks.filter(task => task.categoryId === category.id);
     const stars = categoryTasks.reduce((sum, task) => sum + task.starValue, 0);
     return {
-      category: category.name,
+      category: translateCategoryName(category.name, t),
       stars
     };
   });
@@ -281,9 +282,12 @@ export default function MainPage() {
             {todaysTasks.length === 0 ? <div className="text-center py-8 text-muted-foreground">
                 {t('main.noTasksToday')}
               </div> : <div className="space-y-2">
-                {todaysTasks.map(task => <div key={`${task.id}-${refreshKey}`} className="flex items-center justify-between p-3 border rounded-lg">
+                {todaysTasks.map(task => {
+                  const translatedTaskName = translateTaskName(task.name, t);
+                  return (
+                  <div key={`${task.id}-${refreshKey}`} className="flex items-center justify-between p-3 border rounded-lg">
                     <div className="flex-1">
-                      <div className="font-medium">{task.name}</div>
+                      <div className="font-medium">{translatedTaskName}</div>
                       {task.description && <div className="text-sm text-muted-foreground">{task.description}</div>}
                     </div>
                      <div className="flex items-center gap-2">
@@ -292,7 +296,9 @@ export default function MainPage() {
                            <CheckCircle className="h-5 w-5" />
                          </Button>}
                      </div>
-                  </div>)}
+                  </div>
+                  );
+                })}
               </div>}
           </CardContent>
         </Card>

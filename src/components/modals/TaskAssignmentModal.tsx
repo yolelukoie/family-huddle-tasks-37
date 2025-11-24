@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useApp } from '@/hooks/useApp';
 import { useTasks } from '@/hooks/useTasks';
 import { useToast } from '@/hooks/use-toast';
+import { translateTaskName } from '@/lib/translations';
 import { Task } from '@/lib/types';
 import { format, isToday, isFuture } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,6 +21,7 @@ interface TaskAssignmentModalProps {
 }
 
 export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }: TaskAssignmentModalProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { getUserProfile } = useApp();
   const { updateTask, deleteTask, ensureCategoryByName } = useTasks();
@@ -70,7 +73,7 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
 
       toast({
         title: "Task accepted!",
-        description: `"${task.name}" has been added to your tasks.`,
+        description: `"${translateTaskName(task.name, t)}" has been added to your tasks.`,
       });
 
       onTaskResponse?.(task.id, true);
@@ -112,7 +115,7 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
 
       toast({
         title: "Task rejected",
-        description: `"${task.name}" has been rejected.`,
+        description: `"${translateTaskName(task.name, t)}" has been rejected.`,
       });
 
       onTaskResponse?.(task.id, false);
@@ -145,7 +148,7 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
           {/* Task Details */}
           <div className="p-4 border rounded-lg space-y-3">
             <div>
-              <h3 className="font-semibold text-lg">{task.name}</h3>
+              <h3 className="font-semibold text-lg">{translateTaskName(task.name, t)}</h3>
               {task.description && (
                 <p className="text-muted-foreground text-sm mt-1">{task.description}</p>
               )}

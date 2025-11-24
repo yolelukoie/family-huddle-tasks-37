@@ -8,6 +8,7 @@ import { TaskTemplateModal } from './TaskTemplateModal';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useTasks } from '@/hooks/useTasks';
+import { translateCategoryName, translateTaskName } from '@/lib/translations';
 import type { TaskCategory, TaskTemplate } from '@/lib/types';
 
 interface TaskCategorySectionProps {
@@ -25,16 +26,20 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
   const { templates, addTodayTaskFromTemplate, deleteCategory, deleteTemplate } = useTasks();
 
   const categoryTemplates = templates.filter(t => t.categoryId === category.id);
+  
+  // Translate category name
+  const translatedCategoryName = translateCategoryName(category.name, t);
 
   const handleAddToToday = async (template: TaskTemplate) => {
     if (!user) return;
     
+    const translatedTaskName = translateTaskName(template.name, t);
     const newTask = await addTodayTaskFromTemplate(template.id);
     
     if (newTask) {
       toast({
         title: t('tasks.addToToday'),
-        description: `"${template.name}" ${t('tasks.addToTodayDesc')}`,
+        description: `"${translatedTaskName}" ${t('tasks.addToTodayDesc')}`,
       });
       
       // Trigger refresh in parent component
@@ -55,7 +60,7 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
           <Button variant="ghost" className="w-full justify-between p-3 h-auto">
             <div className="flex items-center gap-3">
               {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-              <span className="font-medium">{category.name}</span>
+              <span className="font-medium">{translatedCategoryName}</span>
               <Badge variant="outline">{categoryTemplates.length} {t('tasks.templates')}</Badge>
             </div>
             {!category.isDefault && !category.isHouseChores && (
@@ -69,7 +74,7 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
                     if (success) {
                       toast({
                         title: t('tasks.categoryDeleted'),
-                        description: `"${category.name}" ${t('tasks.deleteCategorySuccess')}`,
+                        description: `"${translatedCategoryName}" ${t('tasks.deleteCategorySuccess')}`,
                       });
                       onTaskAdded?.(); // Refresh parent
                     }
@@ -87,14 +92,16 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
           <div className="ml-7 space-y-2">
             {categoryTemplates
               .filter(template => template.name !== 'test') // Filter out the test task
-              .map(template => (
+              .map(template => {
+                const translatedTaskName = translateTaskName(template.name, t);
+                return (
               <div 
                 key={template.id} 
                 className="flex items-center justify-between p-2 border rounded cursor-pointer hover:bg-accent transition-colors"
                 onClick={() => handleAddToToday(template)}
               >
                 <div className="flex-1">
-                  <div className="font-medium text-sm">{template.name}</div>
+                  <div className="font-medium text-sm">{translatedTaskName}</div>
                   {template.description && (
                   <div className="text-xs text-muted-foreground">{template.description}</div>
                   )}
@@ -121,7 +128,8 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
                   )}
                 </div>
               </div>
-            ))}
+                );
+              })}
             
             <Button
               variant="outline"

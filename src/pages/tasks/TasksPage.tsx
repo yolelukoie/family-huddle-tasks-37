@@ -11,6 +11,7 @@ import { useGoals } from '@/hooks/useGoals';
 import { useTasks } from '@/hooks/useTasks';
 import { useCelebrations } from '@/hooks/useCelebrations';
 import { isToday, isFuture, formatDate } from '@/lib/utils';
+import { translateTaskName, translateCategoryName } from '@/lib/translations';
 import { TaskHistoryModal } from '@/components/modals/TaskHistoryModal';
 import { AssignTaskModal } from '@/components/modals/AssignTaskModal';
 import { TaskCategorySection } from '@/components/tasks/TaskCategorySection';
@@ -248,15 +249,18 @@ function TaskItem({ task, onComplete, currentUserId }: TaskItemProps) {
   const { t } = useTranslation();
   const category = categories.find(c => c.id === task.categoryId);
   
+  const translatedTaskName = translateTaskName(task.name, t);
+  const translatedCategoryName = category ? translateCategoryName(category.name, t) : '';
+  
   return (
     <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-medium">{task.name}</h3>
+              <h3 className="font-medium">{translatedTaskName}</h3>
               <Badge variant="outline" className="text-xs">
-                {category?.name}
+                {translatedCategoryName}
               </Badge>
             </div>
             

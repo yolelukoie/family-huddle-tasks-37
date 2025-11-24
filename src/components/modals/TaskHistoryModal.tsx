@@ -1,9 +1,11 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useApp } from '@/hooks/useApp';
 import { useTasks } from '@/hooks/useTasks';
 import { formatDate } from '@/lib/utils';
+import { translateTaskName } from '@/lib/translations';
 
 interface TaskHistoryModalProps {
   open: boolean;
@@ -11,6 +13,7 @@ interface TaskHistoryModalProps {
 }
 
 export function TaskHistoryModal({ open, onOpenChange }: TaskHistoryModalProps) {
+  const { t } = useTranslation();
   const { activeFamilyId } = useApp();
   const { tasks, categories } = useTasks();
 
@@ -39,10 +42,11 @@ export function TaskHistoryModal({ open, onOpenChange }: TaskHistoryModalProps) 
             <div className="space-y-3">
               {completedTasks.map(task => {
                 const category = categories.find(c => c.id === task.categoryId);
+                const translatedTaskName = translateTaskName(task.name, t);
                 return (
                   <div key={task.id} className="p-3 border rounded-lg">
                     <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-medium">{task.name}</h4>
+                      <h4 className="font-medium">{translatedTaskName}</h4>
                       <Badge variant="secondary">⭐ {task.starValue}</Badge>
                     </div>
                     
