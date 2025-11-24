@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -72,21 +72,34 @@ export default function MainPage() {
   const characterImagePath = getCharacterImagePath(user?.gender || 'male', currentStage);
 
   const [previousStars, setPreviousStars] = useState(totalStars);
-  const [containerWidth, setContainerWidth] = useState(320);
+  const badgeContainerRef = useRef<HTMLDivElement>(null);
+  const [containerDimensions, setContainerDimensions] = useState({ width: 320, height: 160 });
 
-  // Update container width based on screen size
+  // Measure actual container dimensions
   useEffect(() => {
-    const updateWidth = () => {
-      const screenWidth = window.innerWidth;
-      // Account for padding (16px on each side = 32px total)
-      const availableWidth = screenWidth - 32;
-      // Cap at 320px, but allow shrinking on smaller screens
-      setContainerWidth(Math.min(320, availableWidth));
+    const updateDimensions = () => {
+      if (badgeContainerRef.current) {
+        const rect = badgeContainerRef.current.getBoundingClientRect();
+        setContainerDimensions({
+          width: Math.floor(rect.width),
+          height: Math.floor(rect.height)
+        });
+      }
     };
     
-    updateWidth();
-    window.addEventListener('resize', updateWidth);
-    return () => window.removeEventListener('resize', updateWidth);
+    // Initial measurement
+    updateDimensions();
+    
+    // Measure on resize
+    window.addEventListener('resize', updateDimensions);
+    
+    // Also measure after a short delay to ensure styles are applied
+    const timeout = setTimeout(updateDimensions, 100);
+    
+    return () => {
+      window.removeEventListener('resize', updateDimensions);
+      clearTimeout(timeout);
+    };
   }, []);
 
   // Check for newly unlocked badges and milestone when stars change
@@ -194,7 +207,7 @@ export default function MainPage() {
           <CardContent>
              {/* Character Image and Badges */}
             <div className="flex justify-center mb-6 px-4">
-              <div className="relative w-full max-w-80 h-40 overflow-hidden">
+              <div ref={badgeContainerRef} className="relative w-full max-w-80 h-40 overflow-hidden">
                 {/* Character Image Container */}
                 <div className="absolute left-1/2 transform -translate-x-1/2 w-40 h-40">
                   <img src={characterImagePath} alt={`${user?.gender || 'character'} character at ${stageName} stage`} className="w-40 h-40 object-contain" onError={e => {
@@ -213,7 +226,7 @@ export default function MainPage() {
                       badges={unlockedBadges}
                       familyId={activeFamilyId}
                       userId={user.id}
-                      containerBounds={{ width: containerWidth, height: 160 }}
+                      containerBounds={containerDimensions}
                       className="absolute inset-0 z-0"
                     />
                   )}
