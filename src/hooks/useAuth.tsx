@@ -100,6 +100,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         age: profile.age,
         profileComplete: profile.profile_complete,
         activeFamilyId: profile.active_family_id,
+        avatar_url: profile.avatar_url,
       };
       setUser(mapped);
     } catch (err) {
@@ -304,6 +305,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           age: updatedUser.age,
           profile_complete: updatedUser.profileComplete,
           active_family_id: updatedUser.activeFamilyId ?? null,
+          avatar_url: updatedUser.avatar_url ?? null,
         })
         .eq('id', uid);
   
