@@ -1,3 +1,4 @@
+// src/pages/auth/ResetPasswordPage.tsx
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -7,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
-export default function ResetPasswordPage() {
+export function ResetPasswordPage() {
   const [isSessionReady, setIsSessionReady] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [password, setPassword] = useState("");
@@ -16,7 +17,7 @@ export default function ResetPasswordPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // 1) Consume the email link (supports ?code=... PKCE OR #access_token=&refresh_token=...)
+  // Consume the email link (?code=… or #access_token/&refresh_token=…)
   useEffect(() => {
     let cancelled = false;
 
@@ -32,7 +33,10 @@ export default function ResetPasswordPage() {
           const { error } = await supabase.auth.exchangeCodeForSession(code);
           if (error) throw error;
         } else if (accessToken && refreshToken) {
-          const { error } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
           if (error) throw error;
         } else {
           const { data } = await supabase.auth.getSession();
@@ -40,8 +44,7 @@ export default function ResetPasswordPage() {
         }
 
         if (!cancelled) setIsSessionReady(true);
-
-        // Clean URL so refresh/reloads don’t re-run link handling
+        // Clean URL so refresh doesn’t re-run link handling
         window.history.replaceState({}, document.title, window.location.pathname);
       } catch (err) {
         console.error("[reset-password] link handling failed:", err);
@@ -59,7 +62,6 @@ export default function ResetPasswordPage() {
     };
   }, [navigate, searchParams, toast]);
 
-  // 2) Submit new password
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
@@ -78,12 +80,8 @@ export default function ResetPasswordPage() {
       const { error } = await supabase.auth.updateUser({ password });
 
       if (error) {
-        // Surface the useful 422 message from Supabase
-        if ((error as any).status === 422) {
-          toast({ title: "Couldn’t update password", description: error.message, variant: "destructive" });
-        } else {
-          toast({ title: "Error updating password", description: error.message, variant: "destructive" });
-        }
+        // 422: “New password should be different from the old password.”
+        toast({ title: "Couldn’t update password", description: error.message, variant: "destructive" });
         return;
       }
 
@@ -150,3 +148,6 @@ export default function ResetPasswordPage() {
     </div>
   );
 }
+
+// Export default too, so both `import ResetPasswordPage` and `import { ResetPasswordPage }` work.
+export default ResetPasswordPage;
