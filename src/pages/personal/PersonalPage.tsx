@@ -44,12 +44,12 @@ export default function PersonalPage() {
 
       if (data?.preferred_language && !error) {
         setSelectedLanguage(data.preferred_language);
-        i18n.changeLanguage(data.preferred_language);
+        await i18n.changeLanguage(data.preferred_language);
       }
     };
 
     loadLanguagePreference();
-  }, [user?.id, i18n]);
+  }, [user?.id]);
 
   if (!user) return null;
 
@@ -144,7 +144,7 @@ export default function PersonalPage() {
 
   const handleLanguageChange = async (language: string) => {
     setSelectedLanguage(language);
-    i18n.changeLanguage(language);
+    await i18n.changeLanguage(language);
     
     try {
       const { error } = await supabase

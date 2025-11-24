@@ -7,21 +7,26 @@ import hi from './locales/hi.json';
 import ru from './locales/ru.json';
 import he from './locales/he.json';
 
+const resources = {
+  en: { translation: en },
+  es: { translation: es },
+  zh: { translation: zh },
+  hi: { translation: hi },
+  ru: { translation: ru },
+  he: { translation: he },
+};
+
 i18n
   .use(initReactI18next)
   .init({
-    resources: {
-      en: { translation: en },
-      es: { translation: es },
-      zh: { translation: zh },
-      hi: { translation: hi },
-      ru: { translation: ru },
-      he: { translation: he },
-    },
+    resources,
     lng: 'en',
     fallbackLng: 'en',
     interpolation: {
       escapeValue: false,
+    },
+    react: {
+      useSuspense: false,
     },
   });
 
