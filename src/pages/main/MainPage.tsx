@@ -72,6 +72,22 @@ export default function MainPage() {
   const characterImagePath = getCharacterImagePath(user?.gender || 'male', currentStage);
 
   const [previousStars, setPreviousStars] = useState(totalStars);
+  const [containerWidth, setContainerWidth] = useState(320);
+
+  // Update container width based on screen size
+  useEffect(() => {
+    const updateWidth = () => {
+      const screenWidth = window.innerWidth;
+      // Account for padding (16px on each side = 32px total)
+      const availableWidth = screenWidth - 32;
+      // Cap at 320px, but allow shrinking on smaller screens
+      setContainerWidth(Math.min(320, availableWidth));
+    };
+    
+    updateWidth();
+    window.addEventListener('resize', updateWidth);
+    return () => window.removeEventListener('resize', updateWidth);
+  }, []);
 
   // Check for newly unlocked badges and milestone when stars change
   useEffect(() => {
@@ -177,8 +193,8 @@ export default function MainPage() {
           </CardHeader>
           <CardContent>
              {/* Character Image and Badges */}
-            <div className="flex justify-center mb-6">
-              <div className="relative w-80 h-40 overflow-hidden">
+            <div className="flex justify-center mb-6 px-4">
+              <div className="relative w-full max-w-80 h-40 overflow-hidden">
                 {/* Character Image Container */}
                 <div className="absolute left-1/2 transform -translate-x-1/2 w-40 h-40">
                   <img src={characterImagePath} alt={`${user?.gender || 'character'} character at ${stageName} stage`} className="w-40 h-40 object-contain" onError={e => {
@@ -197,7 +213,7 @@ export default function MainPage() {
                       badges={unlockedBadges}
                       familyId={activeFamilyId}
                       userId={user.id}
-                      containerBounds={{ width: 320, height: 160 }}
+                      containerBounds={{ width: containerWidth, height: 160 }}
                       className="absolute inset-0 z-0"
                     />
                   )}
