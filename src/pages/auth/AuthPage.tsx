@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Star, Users, Trophy } from 'lucide-react';
+
 import { useToast } from '@/hooks/use-toast';
 
 export function AuthPage() {
@@ -118,7 +118,7 @@ export function AuthPage() {
       <div className="max-w-4xl w-full">
         <div className="text-center mb-8">
           <h1 className="text-5xl font-bold bg-gradient-to-r from-primary via-primary to-primary-foreground bg-clip-text text-transparent mb-4">
-            TaskHuddle ⭐
+            Family Huddle ⭐
           </h1>
           <p className="text-xl text-muted-foreground mb-6">
             Create families with relatives or friends, assign tasks to each other, and earn stars to level up your characters. Build real habits—and tighter bonds—through play.
@@ -128,41 +128,9 @@ export function AuthPage() {
           </Badge>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-4 mb-6">
-          <Card className="p-4">
-            <div className="flex items-center gap-3">
-              <Star className="h-6 w-6 text-primary flex-shrink-0" />
-              <div>
-                <h3 className="font-semibold text-sm">Earn Stars</h3>
-                <p className="text-xs text-muted-foreground">Complete tasks and earn rewards</p>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-4">
-            <div className="flex items-center gap-3">
-              <Users className="h-6 w-6 text-primary flex-shrink-0" />
-              <div>
-                <h3 className="font-semibold text-sm">Family Teamwork</h3>
-                <p className="text-xs text-muted-foreground">Achieve shared goals together</p>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-4">
-            <div className="flex items-center gap-3">
-              <Trophy className="h-6 w-6 text-primary flex-shrink-0" />
-              <div>
-                <h3 className="font-semibold text-sm">Level Up</h3>
-                <p className="text-xs text-muted-foreground">Watch your character grow</p>
-              </div>
-            </div>
-          </Card>
-        </div>
-
         <Card className="max-w-md mx-auto">
           <CardHeader className="text-center">
-            <CardTitle>Join TaskHuddle</CardTitle>
+            <CardTitle>Join Family Huddle</CardTitle>
             <CardDescription>
               Sign in to your account or create a new one
             </CardDescription>
