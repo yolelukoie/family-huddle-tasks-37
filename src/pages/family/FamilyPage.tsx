@@ -310,17 +310,19 @@ export default function FamilyPage() {
                             return (
                               <div 
                                 key={member.userId}
-                                className={`flex items-center justify-between p-3 border rounded-lg transition-colors ${
-                                  !isCurrentUser ? 'cursor-pointer hover:bg-muted/50' : ''
-                                }`}
-                                onClick={() => {
-                                  if (!isCurrentUser) {
-                                    setSelectedMember({ member, memberProfile });
-                                    setShowMemberProfile(true);
-                                  }
-                                }}
+                                className="flex items-center justify-between p-3 border rounded-lg"
                               >
-                                <div className="flex items-center gap-3 flex-1">
+                                <div 
+                                  className={`flex items-center gap-3 flex-1 ${
+                                    !isCurrentUser ? 'cursor-pointer hover:opacity-80' : ''
+                                  }`}
+                                  onClick={() => {
+                                    if (!isCurrentUser) {
+                                      setSelectedMember({ member, memberProfile });
+                                      setShowMemberProfile(true);
+                                    }
+                                  }}
+                                >
                                   <Avatar className="h-10 w-10">
                                     <AvatarImage src={memberProfile?.avatar_url} alt={memberProfile?.displayName} />
                                     <AvatarFallback>
@@ -345,10 +347,10 @@ export default function FamilyPage() {
                                   )}
                                   {!isCurrentUser && family.createdBy === user.id && (
                                     <Button
+                                      type="button"
                                       variant="ghost"
                                       size="icon"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
+                                      onClick={() => {
                                         setMemberToRemove({
                                           userId: member.userId,
                                           displayName: memberProfile?.displayName || 'Family Member',
