@@ -69,7 +69,7 @@ export function DraggableBadgeDisplay({
     y: clamp(y, 0, maxY),
   });
 
-  // Load saved positions from localStorage on mount
+  // Load saved positions from localStorage on mount or when bounds change
   useEffect(() => {
     const key = `badge-positions-${familyId}-${userId}`;
     const saved = localStorage.getItem(key);
@@ -80,24 +80,61 @@ export function DraggableBadgeDisplay({
       return { id: badge.id, x: clamped.x, y: clamped.y };
     });
 
-    if (saved) {
-      try {
-        const parsed: BadgePosition[] = JSON.parse(saved);
-        setBadgePositions(parsed.map(p => ({ id: p.id, ...clampPosition(p.x, p.y) })));
-      } catch {
-        setBadgePositions(buildInitial());
+    try {
+      if (saved) {
+        const parsed = JSON.parse(saved) as
+          | BadgePosition[]
+          | { width: number; height: number; positions: BadgePosition[] };
+
+        let savedWidth = w;
+        let savedHeight = h;
+        let positions: BadgePosition[] | null = null;
+
+        if (Array.isArray(parsed)) {
+          // Legacy format: plain array of positions saved when container was 320x160
+          savedWidth = 320;
+          savedHeight = 160;
+          positions = parsed;
+        } else if (parsed && Array.isArray(parsed.positions)) {
+          savedWidth = parsed.width || w;
+          savedHeight = parsed.height || h;
+          positions = parsed.positions;
+        }
+
+        if (positions) {
+          const scaleX = savedWidth ? w / savedWidth : 1;
+          const scaleY = savedHeight ? h / savedHeight : 1;
+
+          const scaled = positions.map((p) => {
+            const scaledX = p.x * scaleX;
+            const scaledY = p.y * scaleY;
+            const clamped = clampPosition(scaledX, scaledY);
+            return { id: p.id, x: clamped.x, y: clamped.y };
+          });
+
+          setBadgePositions(scaled);
+          return;
+        }
       }
-    } else {
+
+      // Fallback: build fresh positions
+      setBadgePositions(buildInitial());
+    } catch {
       setBadgePositions(buildInitial());
     }
   }, [badges, familyId, userId, w, h]);
 
-  // Save positions to localStorage whenever they change
+  // Save positions (with bounds metadata) to localStorage whenever they change
   useEffect(() => {
     if (badgePositions.length > 0) {
-      localStorage.setItem(`badge-positions-${familyId}-${userId}`, JSON.stringify(badgePositions));
+      const payload = {
+        width: w,
+        height: h,
+        positions: badgePositions,
+      };
+      localStorage.setItem(`badge-positions-${familyId}-${userId}`, JSON.stringify(payload));
     }
-  }, [badgePositions, familyId, userId]);
+  }, [badgePositions, familyId, userId, w, h]);
 
   const getBadgePosition = (badgeId: string) => {
     const position = badgePositions.find(p => p.id === badgeId);
