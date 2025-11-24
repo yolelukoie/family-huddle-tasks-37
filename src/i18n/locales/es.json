@@ -202,8 +202,12 @@
   },
   "defaultTasks": {
     "cleanTheRoom": "Limpiar la habitación",
+    "cleanTheRoomDesc": "Ordenar y organizar la habitación",
     "doTheDishes": "Lavar los platos",
+    "doTheDishesDesc": "Lavar, secar y guardar los platos",
     "takeOutTrash": "Sacar la basura",
-    "cookMeal": "Cocinar comida"
+    "takeOutTrashDesc": "Recoger y sacar la basura del hogar",
+    "cookMeal": "Cocinar comida",
+    "cookMealDesc": "Ayudar a preparar o cocinar una comida"
   }
 }

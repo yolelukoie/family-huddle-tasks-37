@@ -8,7 +8,7 @@ import { TaskTemplateModal } from './TaskTemplateModal';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useTasks } from '@/hooks/useTasks';
-import { translateCategoryName, translateTaskName } from '@/lib/translations';
+import { translateCategoryName, translateTaskName, translateTaskDescription } from '@/lib/translations';
 import type { TaskCategory, TaskTemplate } from '@/lib/types';
 
 interface TaskCategorySectionProps {
@@ -94,6 +94,7 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
               .filter(template => template.name !== 'test') // Filter out the test task
               .map(template => {
                 const translatedTaskName = translateTaskName(template.name, t);
+                const translatedDescription = translateTaskDescription(template.description, t);
                 return (
               <div 
                 key={template.id} 
@@ -102,8 +103,8 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
               >
                 <div className="flex-1">
                   <div className="font-medium text-sm">{translatedTaskName}</div>
-                  {template.description && (
-                  <div className="text-xs text-muted-foreground">{template.description}</div>
+                  {translatedDescription && (
+                  <div className="text-xs text-muted-foreground">{translatedDescription}</div>
                   )}
                 </div>
                 <div className="flex items-center gap-2">

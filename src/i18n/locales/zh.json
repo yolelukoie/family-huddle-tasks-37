@@ -202,8 +202,12 @@
   },
   "defaultTasks": {
     "cleanTheRoom": "打扫房间",
+    "cleanTheRoomDesc": "整理和收拾房间",
     "doTheDishes": "洗碗",
+    "doTheDishesDesc": "清洗、擦干并收好餐具",
     "takeOutTrash": "倒垃圾",
-    "cookMeal": "做饭"
+    "takeOutTrashDesc": "收集并倒掉家庭垃圾",
+    "cookMeal": "做饭",
+    "cookMealDesc": "帮助准备或烹饪餐食"
   }
 }

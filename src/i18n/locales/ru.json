@@ -202,8 +202,12 @@
   },
   "defaultTasks": {
     "cleanTheRoom": "Убрать комнату",
+    "cleanTheRoomDesc": "Навести порядок и организовать пространство в комнате",
     "doTheDishes": "Помыть посуду",
+    "doTheDishesDesc": "Помыть, высушить и убрать посуду",
     "takeOutTrash": "Вынести мусор",
-    "cookMeal": "Приготовить еду"
+    "takeOutTrashDesc": "Собрать и вынести бытовой мусор",
+    "cookMeal": "Приготовить еду",
+    "cookMealDesc": "Помочь приготовить или сделать блюдо"
   }
 }
