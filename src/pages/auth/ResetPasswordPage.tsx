@@ -17,7 +17,7 @@ export function ResetPasswordPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Consume the email link (?code=… or #access_token/&refresh_token=…)
+  // Handle both PKCE (?code=...) and hash (#access_token=&refresh_token=...) links
   useEffect(() => {
     let cancelled = false;
 
@@ -25,9 +25,10 @@ export function ResetPasswordPage() {
       try {
         const hash = window.location.hash?.startsWith("#") ? window.location.hash.slice(1) : "";
         const hp = new URLSearchParams(hash);
+
+        const code = searchParams.get("code");
         const accessToken = searchParams.get("access_token") || hp.get("access_token") || undefined;
         const refreshToken = searchParams.get("refresh_token") || hp.get("refresh_token") || undefined;
-        const code = searchParams.get("code");
 
         if (code) {
           const { error } = await supabase.auth.exchangeCodeForSession(code);
@@ -39,12 +40,14 @@ export function ResetPasswordPage() {
           });
           if (error) throw error;
         } else {
+          // If we already have a session, great; otherwise bail.
           const { data } = await supabase.auth.getSession();
           if (!data.session) throw new Error("Missing credentials in reset link.");
         }
 
         if (!cancelled) setIsSessionReady(true);
-        // Clean URL so refresh doesn’t re-run link handling
+
+        // Clean URL (remove query/hash) so reloads don’t re-run link handling
         window.history.replaceState({}, document.title, window.location.pathname);
       } catch (err) {
         console.error("[reset-password] link handling failed:", err);
@@ -67,11 +70,19 @@ export function ResetPasswordPage() {
     if (isSubmitting) return;
 
     if (password.length < 8) {
-      toast({ title: "Password too short", description: "Use at least 8 characters.", variant: "destructive" });
+      toast({
+        title: "Password too short",
+        description: "Use at least 8 characters.",
+        variant: "destructive",
+      });
       return;
     }
     if (password !== confirm) {
-      toast({ title: "Passwords don’t match", description: "Please re-enter them.", variant: "destructive" });
+      toast({
+        title: "Passwords don’t match",
+        description: "Please re-enter them.",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -80,16 +91,36 @@ export function ResetPasswordPage() {
       const { error } = await supabase.auth.updateUser({ password });
 
       if (error) {
-        // 422: “New password should be different from the old password.”
-        toast({ title: "Couldn’t update password", description: error.message, variant: "destructive" });
+        // Common 422: “New password should be different from the old password.”
+        toast({
+          title: "Couldn’t update password",
+          description: error.message,
+          variant: "destructive",
+        });
         return;
       }
 
-      toast({ title: "Password updated", description: "You’re now signed in with the new password." });
+      toast({
+        title: "Password updated",
+        description: "You’re now signed in with the new password.",
+      });
+
+      // Soft navigate, then hard fallback to defeat any router state glitches
       navigate("/", { replace: true });
+      setTimeout(() => {
+        if (window.location.hash || window.location.search) {
+          window.history.replaceState({}, document.title, "/");
+        }
+        // Force a real navigation in case SPA state is stuck
+        window.location.replace("/");
+      }, 0);
     } catch (err: any) {
       console.error("[reset-password] unexpected error:", err);
-      toast({ title: "Unexpected error", description: String(err?.message || err), variant: "destructive" });
+      toast({
+        title: "Unexpected error",
+        description: String(err?.message || err),
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -149,5 +180,5 @@ export function ResetPasswordPage() {
   );
 }
 
-// Export default too, so both `import ResetPasswordPage` and `import { ResetPasswordPage }` work.
+// Export default too so both named and default imports work.
 export default ResetPasswordPage;

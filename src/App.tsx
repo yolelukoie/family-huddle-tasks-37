@@ -8,7 +8,7 @@ import { TasksProvider } from "@/contexts/TasksContext";
 import { CelebrationsProvider } from "@/contexts/CelebrationsContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthPage } from "@/pages/auth/AuthPage";
-import { ResetPasswordPage } from "@/pages/auth/ResetPasswordPage";
+import ResetPasswordPage from "@/pages/auth/ResetPasswordPage";
 import { DevStatus } from "@/components/dev/DevStatus";
 import { ROUTES } from "@/lib/constants";
 import MainPage from "./pages/main/MainPage";
@@ -35,18 +35,21 @@ const App = () => (
         <Routes>
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
-          <Route path="/*" element={
-            <CelebrationsProvider>
-              <AppProvider>
-                <TasksProvider>
-                  <AssignmentModalProvider>
-                    <RealtimeRoot />
-                    <AppLayout />
-                  </AssignmentModalProvider>
-                </TasksProvider>
-              </AppProvider>
-            </CelebrationsProvider>
-          } />
+          <Route
+            path="/*"
+            element={
+              <CelebrationsProvider>
+                <AppProvider>
+                  <TasksProvider>
+                    <AssignmentModalProvider>
+                      <RealtimeRoot />
+                      <AppLayout />
+                    </AssignmentModalProvider>
+                  </TasksProvider>
+                </AppProvider>
+              </CelebrationsProvider>
+            }
+          />
         </Routes>
       </AuthProvider>
     </BrowserRouter>
