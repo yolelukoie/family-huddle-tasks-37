@@ -11,7 +11,7 @@ import { useGoals } from '@/hooks/useGoals';
 import { useTasks } from '@/hooks/useTasks';
 import { useCelebrations } from '@/hooks/useCelebrations';
 import { isToday, isFuture, formatDate } from '@/lib/utils';
-import { translateTaskName, translateCategoryName } from '@/lib/translations';
+import { translateTaskName, translateCategoryName, translateTaskDescription } from '@/lib/translations';
 import { TaskHistoryModal } from '@/components/modals/TaskHistoryModal';
 import { AssignTaskModal } from '@/components/modals/AssignTaskModal';
 import { TaskCategorySection } from '@/components/tasks/TaskCategorySection';
@@ -251,6 +251,7 @@ function TaskItem({ task, onComplete, currentUserId }: TaskItemProps) {
   
   const translatedTaskName = translateTaskName(task.name, t);
   const translatedCategoryName = category ? translateCategoryName(category.name, t) : '';
+  const translatedDescription = translateTaskDescription(task.description, t);
   
   return (
     <Card className="hover:shadow-lg hover:border-[hsl(var(--card-accent))]/30 transition-all group">
@@ -264,8 +265,8 @@ function TaskItem({ task, onComplete, currentUserId }: TaskItemProps) {
               </Badge>
             </div>
             
-            {task.description && (
-              <p className="text-sm text-muted-foreground mb-2">{task.description}</p>
+            {translatedDescription && (
+              <p className="text-sm text-muted-foreground mb-2">{translatedDescription}</p>
             )}
             
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
