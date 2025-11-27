@@ -199,7 +199,11 @@
     "updateFailedDesc": "אירעה שגיאה בעדכון העדפת השפה שלך.",
     "subscription": "מנוי",
     "subscriptionDesc": "אתה כרגע בתקופת ניסיון חינם. נהל את המנוי שלך כאן.",
-    "manageSubscription": "נהל מנוי"
+    "manageSubscription": "נהל מנוי",
+    "resetCharacter": "אפס דמות",
+    "resetCharacterDesc": "זה יאפס את ההתקדמות של הדמות שלך רק עבור משפחה זו. כל התגים והכוכבים שלך יימחקו.",
+    "characterReset": "הדמות אופסה",
+    "characterResetDesc": "ההתקדמות של הדמות שלך אופסה בהצלחה."
   },
   "common": {
     "loading": "טוען...",

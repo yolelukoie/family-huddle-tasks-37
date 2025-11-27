@@ -54,8 +54,8 @@ export function GoalCelebration({ goal, show, onComplete }: GoalCelebrationProps
             style={{
               left: `${Math.random() * 100}%`,
               top: '-12px',
-              animation: `fallingStar ${2 + Math.random() * 3}s linear infinite`,
-              animationDelay: `${Math.random() * 2}s`
+              animation: `fallingStar ${(2 + Math.random() * 3) / 1.5}s linear infinite`,
+              animationDelay: `${Math.random() * 2 / 1.5}s`
             }}
           />
         ))}

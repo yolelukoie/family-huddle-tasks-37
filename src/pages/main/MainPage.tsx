@@ -314,14 +314,6 @@ export default function MainPage() {
             {t('main.assignTask')}
           </Button>
         </div>
-
-        {/* Reset Button */}
-        <div className="text-center">
-          <Button onClick={handleResetCharacter} variant="destructive" size="sm" className="opacity-70">
-            <RotateCcw className="h-4 w-4 mr-2" />
-            {t('main.resetCharacter')}
-          </Button>
-        </div>
       </div>
 
       <AssignTaskModal open={showAssignTask} onOpenChange={setShowAssignTask} />

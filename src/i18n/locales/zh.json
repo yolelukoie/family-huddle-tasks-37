@@ -199,7 +199,11 @@
     "updateFailedDesc": "更新语言偏好时出错。",
     "subscription": "订阅",
     "subscriptionDesc": "你目前处于免费试用期。你可以在这里管理订阅。",
-    "manageSubscription": "管理订阅"
+    "manageSubscription": "管理订阅",
+    "resetCharacter": "重置角色",
+    "resetCharacterDesc": "这将仅重置此家庭的角色进度。你所有的徽章和星星将被清除。",
+    "characterReset": "角色已重置",
+    "characterResetDesc": "你的角色进度已成功重置。"
   },
   "common": {
     "loading": "加载中...",

@@ -9,7 +9,6 @@ import { CelebrationsProvider } from "@/contexts/CelebrationsContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthPage } from "@/pages/auth/AuthPage";
 import ResetPasswordPage from "@/pages/auth/ResetPasswordPage";
-import { DevStatus } from "@/components/dev/DevStatus";
 import { ROUTES } from "@/lib/constants";
 import MainPage from "./pages/main/MainPage";
 import OnboardingPage from "./pages/onboarding/OnboardingPage";

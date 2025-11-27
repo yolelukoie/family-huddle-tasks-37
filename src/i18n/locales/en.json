@@ -199,7 +199,11 @@
     "updateFailedDesc": "There was an error updating your language preference.",
     "subscription": "Subscription",
     "subscriptionDesc": "You're currently on a free trial. Manage your subscription here.",
-    "manageSubscription": "Manage Subscription"
+    "manageSubscription": "Manage Subscription",
+    "resetCharacter": "Reset Character",
+    "resetCharacterDesc": "This will reset your character progress for this family only. All your badges and stars will be cleared.",
+    "characterReset": "Character reset",
+    "characterResetDesc": "Your character progress has been reset successfully."
   },
   "common": {
     "loading": "Loading...",
