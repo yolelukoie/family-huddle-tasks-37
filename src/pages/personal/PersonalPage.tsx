@@ -322,7 +322,7 @@ export default function PersonalPage() {
               {t('personal.subscriptionDesc')}
             </p>
             <Button 
-              variant="secondary" 
+              variant="theme" 
               onClick={() => window.location.href = LEMON_CHECKOUT_URL}
             >
               {t('personal.manageSubscription')}

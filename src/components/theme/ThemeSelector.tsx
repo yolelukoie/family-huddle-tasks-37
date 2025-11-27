@@ -19,9 +19,11 @@ export const ThemeSelector = () => {
         <Button variant="ghost" className="w-full justify-between p-3 h-auto">
           <div className="flex items-center gap-3">
             {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-            <Label className="cursor-pointer">{t('personal.selectTheme')}</Label>
+            <div className="flex flex-col items-start gap-1">
+              <Label className="cursor-pointer">{t('personal.selectTheme')}</Label>
+              <span className="text-sm text-muted-foreground font-normal">{t(currentTheme.name)}</span>
+            </div>
           </div>
-          <span className="text-sm text-muted-foreground">{t(currentTheme.name)}</span>
         </Button>
       </CollapsibleTrigger>
       <CollapsibleContent className="pt-4">
