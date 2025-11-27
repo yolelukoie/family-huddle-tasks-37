@@ -309,7 +309,7 @@ export default function MainPage() {
           <Button onClick={() => navigate(ROUTES.tasks)} variant="theme" className="h-14">
             {t('main.goToTasks')}
           </Button>
-          <Button onClick={() => setShowAssignTask(true)} variant="outline" className="h-14 border-[hsl(var(--card-accent))]/30 hover:bg-[hsl(var(--gradient-start))]/10">
+          <Button onClick={() => setShowAssignTask(true)} variant="theme" className="h-14">
             <Plus className="h-5 w-5 mr-2" />
             {t('main.assignTask')}
           </Button>
