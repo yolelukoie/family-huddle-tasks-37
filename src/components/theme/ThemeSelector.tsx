@@ -17,10 +17,26 @@ export const ThemeSelector = () => {
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <CollapsibleTrigger asChild>
         <Button variant="ghost" className="w-full justify-between p-3 h-auto">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 w-full">
             {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-            <div className="flex flex-col items-start gap-1">
-              <Label className="cursor-pointer">{t('personal.selectTheme')}</Label>
+            <div className="flex flex-col items-start gap-1 flex-1">
+              <div className="flex items-center gap-2 w-full">
+                <Label className="cursor-pointer">{t('personal.selectTheme')}</Label>
+                <div className="flex gap-1 ml-auto">
+                  <div
+                    className="w-4 h-4 rounded-full border border-border"
+                    style={{ backgroundColor: `hsl(${currentTheme.colors.light.primary})` }}
+                  />
+                  <div
+                    className="w-4 h-4 rounded-full border border-border"
+                    style={{ backgroundColor: `hsl(${currentTheme.colors.light.secondary})` }}
+                  />
+                  <div
+                    className="w-4 h-4 rounded-full border border-border"
+                    style={{ backgroundColor: `hsl(${currentTheme.colors.light.familyWarm})` }}
+                  />
+                </div>
+              </div>
               <span className="text-sm text-muted-foreground font-normal">{t(currentTheme.name)}</span>
             </div>
           </div>
