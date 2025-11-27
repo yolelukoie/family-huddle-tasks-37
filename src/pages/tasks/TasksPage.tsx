@@ -270,7 +270,7 @@ function TaskItem({ task, onComplete, currentUserId }: TaskItemProps) {
             
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <span>{t('tasks.due')}: {formatDate(task.dueDate)}</span>
-              <span className="text-[hsl(var(--family-star))]">⭐ {task.starValue} {t('main.stars')}</span>
+              <span className="text-family-warm font-semibold">⭐ {task.starValue} {t('main.stars')}</span>
               <span>
                 {task.assignedTo === currentUserId ? t('tasks.assignedToYou') : t('tasks.assignedToMember')}
               </span>
