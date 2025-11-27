@@ -20,6 +20,7 @@ import FamilyPage from "./pages/family/FamilyPage";
 import NotFound from "./pages/NotFound";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import { AssignmentModalProvider } from "@/contexts/AssignmentModalContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
 function RealtimeRoot() {
   useRealtimeNotifications();
@@ -31,27 +32,29 @@ const App = () => (
     <Toaster />
     <Sonner />
     <BrowserRouter>
-      <AuthProvider>
-        <Routes>
-          <Route path="/auth" element={<AuthPage />} />
-          <Route path="/reset-password" element={<ResetPasswordPage />} />
-          <Route
-            path="/*"
-            element={
-              <CelebrationsProvider>
-                <AppProvider>
-                  <TasksProvider>
-                    <AssignmentModalProvider>
-                      <RealtimeRoot />
-                      <AppLayout />
-                    </AssignmentModalProvider>
-                  </TasksProvider>
-                </AppProvider>
-              </CelebrationsProvider>
-            }
-          />
-        </Routes>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <Routes>
+            <Route path="/auth" element={<AuthPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route
+              path="/*"
+              element={
+                <CelebrationsProvider>
+                  <AppProvider>
+                    <TasksProvider>
+                      <AssignmentModalProvider>
+                        <RealtimeRoot />
+                        <AppLayout />
+                      </AssignmentModalProvider>
+                    </TasksProvider>
+                  </AppProvider>
+                </CelebrationsProvider>
+              }
+            />
+          </Routes>
+        </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   </TooltipProvider>
 );

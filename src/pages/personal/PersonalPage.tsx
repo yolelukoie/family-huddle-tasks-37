@@ -8,7 +8,8 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/hooks/useAuth';
 import { NavigationHeader } from '@/components/layout/NavigationHeader';
-import { Edit, Settings, Upload, Loader2, Languages } from 'lucide-react';
+import { Edit, Settings, Upload, Loader2, Languages, Palette } from 'lucide-react';
+import { ThemeSelector } from '@/components/theme/ThemeSelector';
 import { useToast } from '@/hooks/use-toast';
 import { LEMON_CHECKOUT_URL } from '@/config/subscription';
 import { supabase } from '@/integrations/supabase/client';
@@ -277,6 +278,19 @@ export default function PersonalPage() {
                 </SelectContent>
               </Select>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Theme Selection */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Palette className="h-5 w-5" />
+              {t('personal.theme')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ThemeSelector />
           </CardContent>
         </Card>
 
