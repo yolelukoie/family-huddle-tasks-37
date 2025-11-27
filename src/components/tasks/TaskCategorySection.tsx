@@ -108,10 +108,10 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge variant="theme" className="text-xs">
+                  <Badge variant="warm" className="text-xs">
                     {template.starValue} ⭐
                   </Badge>
-                  {!category.isHouseChores && template.isDeletable && (
+                  {template.isDeletable && !template.isDefault && (
                     <div
                       onClick={async (e) => {
                         e.stopPropagation();
