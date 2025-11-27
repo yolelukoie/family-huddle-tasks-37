@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Home, CheckSquare, Target, MessageCircle, Users, LogOut, User } from 'lucide-react';
+import { ArrowLeft, Home, CheckSquare, Target, MessageCircle, Users, LogOut, User, Edit } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { ROUTES } from '@/lib/constants';
@@ -68,11 +68,14 @@ export function NavigationHeader({ title, showBackButton = true }: NavigationHea
                 className="font-medium cursor-pointer"
                 onClick={() => navigate(ROUTES.personal)}
               >
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{user?.displayName}</p>
-                  <p className="text-xs leading-none text-muted-foreground">
-                    Age: {user?.age}
-                  </p>
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{user?.displayName}</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      Age: {user?.age}
+                    </p>
+                  </div>
+                  <Edit className="h-4 w-4 text-muted-foreground" />
                 </div>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleSignOut}>

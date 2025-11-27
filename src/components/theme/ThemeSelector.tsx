@@ -1,19 +1,32 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useTheme } from '@/contexts/ThemeContext';
-import { Check } from 'lucide-react';
+import { Check, ChevronDown, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export const ThemeSelector = () => {
   const { t } = useTranslation();
   const { currentTheme, setTheme, availableThemes } = useTheme();
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="space-y-4">
-      <Label>{t('personal.selectTheme')}</Label>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {availableThemes.map((theme) => (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <CollapsibleTrigger asChild>
+        <Button variant="ghost" className="w-full justify-between p-3 h-auto">
+          <div className="flex items-center gap-3">
+            {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+            <Label className="cursor-pointer">{t('personal.selectTheme')}</Label>
+          </div>
+          <span className="text-sm text-muted-foreground">{t(currentTheme.name)}</span>
+        </Button>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="pt-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {availableThemes.map((theme) => (
           <Card
             key={theme.id}
             className={cn(
@@ -59,6 +72,7 @@ export const ThemeSelector = () => {
           </Card>
         ))}
       </div>
-    </div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 };
