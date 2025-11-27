@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Badge } from '@/lib/types';
 
 interface BadgeCelebrationProps {
@@ -7,6 +8,7 @@ interface BadgeCelebrationProps {
 }
 
 export function BadgeCelebration({ badge, show, onComplete }: BadgeCelebrationProps) {
+  const { t } = useTranslation();
   console.log('BadgeCelebration: Rendering', { badge: badge.name, show });
   
   if (!show) return null;
@@ -53,7 +55,7 @@ export function BadgeCelebration({ badge, show, onComplete }: BadgeCelebrationPr
         </div>
         
         <h3 className="text-2xl font-bold text-family-celebration mb-2">
-          Badge Unlocked!
+          {t('celebrations.badgeUnlocked')}
         </h3>
         
         <h4 className="text-xl font-semibold text-gray-800 mb-2">

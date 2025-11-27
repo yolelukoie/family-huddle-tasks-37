@@ -209,5 +209,37 @@
     "takeOutTrashDesc": "Collect and take out household trash",
     "cookMeal": "Cook meal",
     "cookMealDesc": "Help prepare or cook a meal"
+  },
+  "celebrations": {
+    "goalReached": "The goal is reached",
+    "youAreAmazing": "You are amazing!",
+    "thanksForEfforts": "Thanks for your efforts,\nnow it's time to reward yourself.",
+    "target": "Target",
+    "yourReward": "Your reward",
+    "badgeUnlocked": "Badge Unlocked!"
+  },
+  "goalModal": {
+    "createNewGoal": "Create New Goal",
+    "targetStars": "Target Stars",
+    "enterNumberOfStars": "Enter number of stars",
+    "targetCategories": "Target Categories (optional)",
+    "leaveEmptyHint": "Leave empty to count all categories",
+    "reward": "Reward (optional)",
+    "rewardPlaceholder": "What will you reward yourself with?",
+    "creating": "Creating...",
+    "createGoal": "Create Goal",
+    "success": "Success",
+    "goalCreated": "Goal created successfully!",
+    "error": "Error",
+    "failedToCreate": "Failed to create goal. Please try again."
+  },
+  "goalHistory": {
+    "title": "Goal History",
+    "noCompletedGoals": "No completed goals yet",
+    "target": "Target",
+    "stars": "stars",
+    "completed": "Completed",
+    "reward": "Reward",
+    "completedOn": "Completed"
   }
 }

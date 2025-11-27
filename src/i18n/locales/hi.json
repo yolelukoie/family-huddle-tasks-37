@@ -209,5 +209,37 @@
     "takeOutTrashDesc": "घर का कचरा इकट्ठा करें और बाहर निकालें",
     "cookMeal": "खाना बनाएं",
     "cookMealDesc": "भोजन तैयार करने या पकाने में मदद करें"
+  },
+  "celebrations": {
+    "goalReached": "लक्ष्य प्राप्त हो गया",
+    "youAreAmazing": "आप अद्भुत हैं!",
+    "thanksForEfforts": "आपके प्रयासों के लिए धन्यवाद,\nअब खुद को पुरस्कृत करने का समय है।",
+    "target": "लक्ष्य",
+    "yourReward": "आपका पुरस्कार",
+    "badgeUnlocked": "बैज अनलॉक हो गया!"
+  },
+  "goalModal": {
+    "createNewGoal": "नया लक्ष्य बनाएं",
+    "targetStars": "लक्ष्य सितारे",
+    "enterNumberOfStars": "सितारों की संख्या दर्ज करें",
+    "targetCategories": "लक्ष्य श्रेणियाँ (वैकल्पिक)",
+    "leaveEmptyHint": "सभी श्रेणियों को गिनने के लिए खाली छोड़ दें",
+    "reward": "पुरस्कार (वैकल्पिक)",
+    "rewardPlaceholder": "आप खुद को क्या पुरस्कार देंगे?",
+    "creating": "बनाया जा रहा है...",
+    "createGoal": "लक्ष्य बनाएं",
+    "success": "सफलता",
+    "goalCreated": "लक्ष्य सफलतापूर्वक बनाया गया!",
+    "error": "त्रुटि",
+    "failedToCreate": "लक्ष्य बनाने में विफल। कृपया पुनः प्रयास करें।"
+  },
+  "goalHistory": {
+    "title": "लक्ष्य इतिहास",
+    "noCompletedGoals": "अभी तक कोई पूर्ण लक्ष्य नहीं",
+    "target": "लक्ष्य",
+    "stars": "सितारे",
+    "completed": "पूर्ण",
+    "reward": "पुरस्कार",
+    "completedOn": "पूर्ण हुआ"
   }
 }

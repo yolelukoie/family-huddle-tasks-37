@@ -209,5 +209,37 @@
     "takeOutTrashDesc": "לאסוף ולהוציא את האשפה הביתית",
     "cookMeal": "בשל ארוחה",
     "cookMealDesc": "לעזור להכין או לבשל ארוחה"
+  },
+  "celebrations": {
+    "goalReached": "המטרה הושגה",
+    "youAreAmazing": "אתה מדהים!",
+    "thanksForEfforts": "תודה על המאמצים שלך,\nעכשיו הגיע הזמן לתגמל את עצמך.",
+    "target": "מטרה",
+    "yourReward": "הפרס שלך",
+    "badgeUnlocked": "תג נפתח!"
+  },
+  "goalModal": {
+    "createNewGoal": "צור מטרה חדשה",
+    "targetStars": "כוכבי יעד",
+    "enterNumberOfStars": "הזן מספר כוכבים",
+    "targetCategories": "קטגוריות יעד (אופציונלי)",
+    "leaveEmptyHint": "השאר ריק כדי לספור את כל הקטגוריות",
+    "reward": "פרס (אופציונלי)",
+    "rewardPlaceholder": "במה תתגמל את עצמך?",
+    "creating": "יוצר...",
+    "createGoal": "צור מטרה",
+    "success": "הצלחה",
+    "goalCreated": "המטרה נוצרה בהצלחה!",
+    "error": "שגיאה",
+    "failedToCreate": "נכשל ביצירת המטרה. אנא נסה שוב."
+  },
+  "goalHistory": {
+    "title": "היסטוריית מטרות",
+    "noCompletedGoals": "אין עדיין מטרות שהושלמו",
+    "target": "מטרה",
+    "stars": "כוכבים",
+    "completed": "הושלם",
+    "reward": "פרס",
+    "completedOn": "הושלם"
   }
 }
