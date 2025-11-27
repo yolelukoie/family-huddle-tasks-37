@@ -5,7 +5,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useApp } from '@/hooks/useApp';
 import { useTasks } from '@/hooks/useTasks';
 import { formatDate } from '@/lib/utils';
-import { translateTaskName } from '@/lib/translations';
+import { translateTaskName, translateCategoryName, translateTaskDescription } from '@/lib/translations';
 
 interface TaskHistoryModalProps {
   open: boolean;
@@ -27,22 +27,24 @@ export function TaskHistoryModal({ open, onOpenChange }: TaskHistoryModalProps) 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[80vh]">
         <DialogHeader>
-          <DialogTitle>Completed Tasks History</DialogTitle>
+          <DialogTitle>{t('taskHistory.title')}</DialogTitle>
           <DialogDescription>
-            All tasks that have been completed in this family
+            {t('taskHistory.description')}
           </DialogDescription>
         </DialogHeader>
 
         <ScrollArea className="h-[400px] pr-4">
           {completedTasks.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              No completed tasks yet. Get started by completing some tasks!
+              {t('taskHistory.noTasks')}
             </div>
           ) : (
             <div className="space-y-3">
               {completedTasks.map(task => {
                 const category = categories.find(c => c.id === task.categoryId);
                 const translatedTaskName = translateTaskName(task.name, t);
+                const translatedCategoryName = category ? translateCategoryName(category.name, t) : '';
+                const translatedDescription = translateTaskDescription(task.description, t);
                 return (
                   <div key={task.id} className="p-3 border rounded-lg">
                     <div className="flex items-center justify-between mb-2">
@@ -50,14 +52,14 @@ export function TaskHistoryModal({ open, onOpenChange }: TaskHistoryModalProps) 
                       <Badge variant="secondary">⭐ {task.starValue}</Badge>
                     </div>
                     
-                    {task.description && (
-                      <p className="text-sm text-muted-foreground mb-2">{task.description}</p>
+                    {translatedDescription && (
+                      <p className="text-sm text-muted-foreground mb-2">{translatedDescription}</p>
                     )}
                     
                     <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                      <span>Category: {category?.name}</span>
-                      <span>Completed: {task.completedAt ? formatDate(task.completedAt) : 'Unknown'}</span>
-                      <span>Due: {formatDate(task.dueDate)}</span>
+                      <span>{t('taskHistory.category')}: {translatedCategoryName}</span>
+                      <span>{t('taskHistory.completed')}: {task.completedAt ? formatDate(task.completedAt) : t('taskHistory.unknown')}</span>
+                      <span>{t('taskHistory.due')}: {formatDate(task.dueDate)}</span>
                     </div>
                   </div>
                 );
