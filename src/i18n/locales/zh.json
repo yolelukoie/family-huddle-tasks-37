@@ -142,8 +142,36 @@
     "typeMessage": "输入你的消息...",
     "send": "发送"
   },
+  "themes": {
+    "oceanCalm": {
+      "name": "海洋平静",
+      "emotion": "平和、专注、宁静"
+    },
+    "sunsetEnergy": {
+      "name": "日落能量",
+      "emotion": "温暖、充满活力、积极"
+    },
+    "forestGrowth": {
+      "name": "森林成长",
+      "emotion": "自然、平衡、成长"
+    },
+    "lavenderDreams": {
+      "name": "薰衣草之梦",
+      "emotion": "创意、温柔、富有想象力"
+    },
+    "roseGarden": {
+      "name": "玫瑰花园",
+      "emotion": "快乐、充满爱、富有同情心"
+    },
+    "midnightFocus": {
+      "name": "午夜专注",
+      "emotion": "冷静、高效、集中"
+    }
+  },
   "personal": {
     "title": "个人设置",
+    "theme": "主题",
+    "selectTheme": "选择您的颜色主题",
     "profilePicture": "头像",
     "uploadPhoto": "上传照片",
     "uploading": "上传中...",

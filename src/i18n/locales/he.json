@@ -142,8 +142,36 @@
     "typeMessage": "הקלד את ההודעה שלך...",
     "send": "שלח"
   },
+  "themes": {
+    "oceanCalm": {
+      "name": "רוגע אוקיינוס",
+      "emotion": "שליו, ממוקד, שלו"
+    },
+    "sunsetEnergy": {
+      "name": "אנרגיית שקיעה",
+      "emotion": "חם, אנרגטי, מוטיבציה"
+    },
+    "forestGrowth": {
+      "name": "צמיחת יער",
+      "emotion": "טבעי, מאוזן, צומח"
+    },
+    "lavenderDreams": {
+      "name": "חלומות לבנדר",
+      "emotion": "יצירתי, עדין, דמיוני"
+    },
+    "roseGarden": {
+      "name": "גן ורדים",
+      "emotion": "שמח, אוהב, חומל"
+    },
+    "midnightFocus": {
+      "name": "מיקוד חצות",
+      "emotion": "רגוע, פרודוקטיבי, מרוכז"
+    }
+  },
   "personal": {
     "title": "הגדרות אישיות",
+    "theme": "ערכת נושא",
+    "selectTheme": "בחר ערכת צבעים",
     "profilePicture": "תמונת פרופיל",
     "uploadPhoto": "העלה תמונה",
     "uploading": "מעלה...",

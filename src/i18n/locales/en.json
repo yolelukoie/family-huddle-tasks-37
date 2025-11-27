@@ -142,8 +142,36 @@
     "typeMessage": "Type your message...",
     "send": "Send"
   },
+  "themes": {
+    "oceanCalm": {
+      "name": "Ocean Calm",
+      "emotion": "Peaceful, focused, serene"
+    },
+    "sunsetEnergy": {
+      "name": "Sunset Energy",
+      "emotion": "Warm, energetic, motivated"
+    },
+    "forestGrowth": {
+      "name": "Forest Growth",
+      "emotion": "Natural, balanced, growing"
+    },
+    "lavenderDreams": {
+      "name": "Lavender Dreams",
+      "emotion": "Creative, gentle, imaginative"
+    },
+    "roseGarden": {
+      "name": "Rose Garden",
+      "emotion": "Joyful, loving, compassionate"
+    },
+    "midnightFocus": {
+      "name": "Midnight Focus",
+      "emotion": "Calm, productive, concentrated"
+    }
+  },
   "personal": {
     "title": "Personal Settings",
+    "theme": "Theme",
+    "selectTheme": "Choose your color theme",
     "profilePicture": "Profile Picture",
     "uploadPhoto": "Upload Photo",
     "uploading": "Uploading...",
