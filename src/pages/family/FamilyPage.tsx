@@ -265,7 +265,7 @@ export default function FamilyPage() {
                     {t('family.inviteCode')}: {activeFamily.inviteCode}
                   </p>
                 </div>
-                <Button variant="outline" onClick={() => copyInviteCode(activeFamily.inviteCode)}>
+                <Button variant="theme" onClick={() => copyInviteCode(activeFamily.inviteCode)}>
                   <Share className="h-4 w-4 mr-2" />
                   {t('family.shareCode')}
                 </Button>
@@ -306,7 +306,7 @@ export default function FamilyPage() {
                   <div className="flex flex-wrap gap-2 pt-2 border-t">
                     <Dialog>
                       <DialogTrigger asChild>
-                        <Button variant="outline" size="sm" className="flex-1 sm:flex-initial">
+                        <Button variant="theme" size="sm" className="flex-1 sm:flex-initial">
                           <Users className="h-4 w-4 mr-1" />
                           <span className="sm:hidden">{t('family.members')}</span>
                         </Button>
@@ -388,7 +388,7 @@ export default function FamilyPage() {
                     {family.createdBy === user.id && (
                       <Dialog>
                         <DialogTrigger asChild>
-                          <Button variant="outline" size="sm" className="flex-1 sm:flex-initial">
+                          <Button variant="theme" size="sm" className="flex-1 sm:flex-initial">
                             <Settings className="h-4 w-4 mr-1" />
                             <span className="sm:hidden">{t('family.edit')}</span>
                           </Button>

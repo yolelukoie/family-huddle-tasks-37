@@ -174,7 +174,7 @@ export default function TasksPage() {
                     });
                   }
                 }}
-                variant="outline"
+                variant="theme"
                 size="sm"
               >
                 <Plus className="h-4 w-4 mr-2" />

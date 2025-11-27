@@ -108,7 +108,7 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="text-xs">
+                  <Badge variant="theme" className="text-xs">
                     {template.starValue} ⭐
                   </Badge>
                   {!category.isHouseChores && template.isDeletable && (
@@ -133,7 +133,7 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
               })}
             
             <Button
-              variant="outline"
+              variant="theme"
               size="sm"
               onClick={() => setShowTemplateModal(true)}
               className="w-full"

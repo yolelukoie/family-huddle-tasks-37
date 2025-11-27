@@ -228,7 +228,7 @@ export default function PersonalPage() {
               className="hidden"
             />
             <Button 
-              variant="outline" 
+              variant="theme" 
               onClick={handleAvatarClick}
               disabled={isUploadingAvatar}
             >
@@ -260,7 +260,7 @@ export default function PersonalPage() {
                     onChange={(e) => setNewDisplayName(e.target.value)}
                     placeholder={t('personal.displayNamePlaceholder')}
                   />
-                  <Button type="submit" variant="outline">
+                  <Button type="submit" variant="theme">
                     {t('personal.update')}
                   </Button>
                 </div>
