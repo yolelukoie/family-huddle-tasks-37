@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { ROUTES } from '@/lib/constants';
 import { useTranslation } from 'react-i18next';
+import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,7 +37,7 @@ export function NavigationHeader({ title, showBackButton = true }: NavigationHea
   ];
 
   return (
-    <div className="bg-white border-b border-border sticky top-0 z-10">
+    <div className="bg-gradient-to-r from-[hsl(var(--gradient-start))]/30 to-[hsl(var(--gradient-end))]/30 border-b border-[hsl(var(--card-accent))]/20 sticky top-0 z-10 backdrop-blur-sm">
       <div className="max-w-4xl mx-auto px-4 py-3">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
@@ -84,18 +85,24 @@ export function NavigationHeader({ title, showBackButton = true }: NavigationHea
 
         {/* Navigation Pills */}
         <div className="flex gap-2 overflow-x-auto pb-2">
-          {navigationItems.map(({ icon: Icon, label, route }) => (
-            <Button
-              key={route}
-              variant={window.location.pathname === route ? "default" : "outline"}
-              size="sm"
-              onClick={() => navigate(route)}
-              className="flex items-center gap-2 whitespace-nowrap"
-            >
-              <Icon className="h-4 w-4" />
-              {label}
-            </Button>
-          ))}
+          {navigationItems.map(({ icon: Icon, label, route }) => {
+            const isActive = window.location.pathname === route;
+            return (
+              <Button
+                key={route}
+                variant={isActive ? "default" : "outline"}
+                size="sm"
+                onClick={() => navigate(route)}
+                className={cn(
+                  "flex items-center gap-2 whitespace-nowrap transition-all",
+                  isActive && "shadow-md bg-gradient-to-br from-primary to-[hsl(var(--icon-tint))]"
+                )}
+              >
+                <Icon className="h-4 w-4" />
+                {label}
+              </Button>
+            );
+          })}
         </div>
       </div>
     </div>

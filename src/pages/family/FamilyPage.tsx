@@ -244,13 +244,13 @@ export default function FamilyPage() {
   }, [user?.id, activeFamilyId, toast, navigate, updateUser]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-b from-[hsl(var(--section-tint))] to-background">
       <NavigationHeader title={t('family.title')} />
       
       <div className="max-w-4xl mx-auto p-4 space-y-6">
         {/* Active Family */}
         {activeFamily && (
-          <Card>
+          <Card accent>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Users className="h-5 w-5" />
@@ -275,7 +275,7 @@ export default function FamilyPage() {
         )}
 
         {/* All Families */}
-        <Card>
+        <Card accent>
           <CardHeader>
             <CardTitle>{t('family.yourFamilies')}</CardTitle>
           </CardHeader>

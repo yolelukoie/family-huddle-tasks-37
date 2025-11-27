@@ -56,7 +56,7 @@ export default function GoalsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-b from-[hsl(var(--section-tint))] to-background">
       <NavigationHeader title={t('goals.title')} />
       
       <div className="max-w-4xl mx-auto p-4 space-y-6">
@@ -78,7 +78,7 @@ export default function GoalsPage() {
 
         {/* Active Goal */}
         {activeGoal ? (
-          <Card>
+          <Card accent>
             <CardHeader>
               <div className="flex justify-between items-center">
                 <CardTitle>{t('goals.activeGoal')}</CardTitle>
@@ -127,10 +127,10 @@ export default function GoalsPage() {
             </CardContent>
           </Card>
         ) : (
-          <Card>
+          <Card accent>
             <CardContent className="text-center py-8">
               <p className="text-muted-foreground mb-4">{t('goals.noActiveGoal')}</p>
-              <Button onClick={() => setShowCreateGoal(true)}>
+              <Button onClick={() => setShowCreateGoal(true)} variant="theme">
                 <Plus className="h-4 w-4 mr-2" />
                 {t('goals.createGoal')}
               </Button>

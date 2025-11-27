@@ -61,11 +61,11 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-b from-[hsl(var(--section-tint))] to-background">
       <NavigationHeader title={t('chat.title')} />
       
       <div className="max-w-4xl mx-auto p-4 h-[calc(100vh-80px)] flex flex-col">
-        <Card className="flex-1 flex flex-col">
+        <Card accent className="flex-1 flex flex-col">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>{t('chat.title')}</CardTitle>
             <Button
@@ -97,7 +97,7 @@ export default function ChatPage() {
                       <div
                         className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
                           msg.userId === user.id
-                            ? 'bg-primary text-primary-foreground'
+                            ? 'bg-gradient-to-br from-primary to-[hsl(var(--icon-tint))] text-primary-foreground shadow-md'
                             : 'bg-muted'
                         }`}
                       >
