@@ -78,7 +78,7 @@ export default function TasksPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-b from-[hsl(var(--section-tint))] to-background">
       <NavigationHeader title={t('tasks.title')} />
       
       <div className="max-w-4xl mx-auto p-4 space-y-6">
@@ -100,20 +100,20 @@ export default function TasksPage() {
 
         {/* Task Tabs */}
         <Tabs defaultValue="today" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-2 bg-gradient-to-r from-[hsl(var(--gradient-start))]/10 to-[hsl(var(--gradient-end))]/10">
             <TabsTrigger value="today" className="flex items-center gap-2">
               {t('tasks.today')}
-              <Badge variant="secondary">{todaysTasks.length}</Badge>
+              <Badge variant="theme">{todaysTasks.length}</Badge>
             </TabsTrigger>
             <TabsTrigger value="upcoming" className="flex items-center gap-2">
               {t('tasks.upcoming')}
-              <Badge variant="secondary">{upcomingTasks.length}</Badge>
+              <Badge variant="theme">{upcomingTasks.length}</Badge>
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="today" className="space-y-4">
             {todaysTasks.length === 0 ? (
-              <Card>
+              <Card accent>
                 <CardContent className="text-center py-8">
                   <p className="text-muted-foreground">{t('tasks.noTasksToday')}</p>
                 </CardContent>
@@ -134,7 +134,7 @@ export default function TasksPage() {
 
           <TabsContent value="upcoming" className="space-y-4">
             {upcomingTasks.length === 0 ? (
-              <Card>
+              <Card accent>
                 <CardContent className="text-center py-8">
                   <p className="text-muted-foreground">{t('tasks.noUpcomingTasks')}</p>
                 </CardContent>
@@ -157,7 +157,7 @@ export default function TasksPage() {
         </Tabs>
 
         {/* Categories Section */}
-        <Card>
+        <Card accent>
           <CardHeader>
             <div className="flex justify-between items-center">
               <CardTitle>{t('tasks.categories')}</CardTitle>
@@ -199,7 +199,7 @@ export default function TasksPage() {
         <div className="text-center">
           <Button 
             onClick={() => setShowAssignTask(true)}
-            className="bg-family-warm hover:bg-family-warm/90"
+            variant="theme"
             size="lg"
           >
             <Plus className="h-5 w-5 mr-2" />
@@ -253,13 +253,13 @@ function TaskItem({ task, onComplete, currentUserId }: TaskItemProps) {
   const translatedCategoryName = category ? translateCategoryName(category.name, t) : '';
   
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className="hover:shadow-lg hover:border-[hsl(var(--card-accent))]/30 transition-all group">
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-medium">{translatedTaskName}</h3>
-              <Badge variant="outline" className="text-xs">
+              <h3 className="font-medium group-hover:text-[hsl(var(--icon-tint))] transition-colors">{translatedTaskName}</h3>
+              <Badge variant="theme" className="text-xs">
                 {translatedCategoryName}
               </Badge>
             </div>
@@ -270,7 +270,7 @@ function TaskItem({ task, onComplete, currentUserId }: TaskItemProps) {
             
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <span>{t('tasks.due')}: {formatDate(task.dueDate)}</span>
-              <span>⭐ {task.starValue} {t('main.stars')}</span>
+              <span className="text-[hsl(var(--family-star))]">⭐ {task.starValue} {t('main.stars')}</span>
               <span>
                 {task.assignedTo === currentUserId ? t('tasks.assignedToYou') : t('tasks.assignedToMember')}
               </span>

@@ -188,22 +188,22 @@ export default function MainPage() {
   };
   const currentFamily = activeFamilyId ? families.find(f => f.id === activeFamilyId) : null;
 
-  return <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-gradient-to-b from-[hsl(var(--section-tint))] to-background">
       <NavigationHeader title={currentFamily?.name || t('main.title')} showBackButton={false} />
       
       <div className="max-w-4xl mx-auto p-4 space-y-6">
         {/* Greeting */}
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-family-warm mb-2">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-[hsl(var(--icon-tint))] to-[hsl(var(--family-celebration))] bg-clip-text text-transparent mb-2">
             {t('main.hello')}, {user?.displayName}! ✨
           </h1>
         </div>
 
         {/* Character Block */}
-        <Card className="bg-gradient-to-br from-family-warm/10 to-family-celebration/10">
+        <Card accent className="bg-gradient-to-br from-[hsl(var(--gradient-start))]/20 to-[hsl(var(--gradient-end))]/20">
           <CardHeader>
-            <CardTitle className="flex items-center justify-center gap-2">
-              <Star className="h-5 w-5 text-family-star" />
+            <CardTitle className="flex items-center justify-center gap-2 text-[hsl(var(--icon-tint))]">
+              <Star className="h-5 w-5 text-[hsl(var(--family-star))]" />
               {stageName}
             </CardTitle>
           </CardHeader>
@@ -253,15 +253,15 @@ export default function MainPage() {
               {categoryStars.map(({
               category,
               stars
-            }) => <div key={category} className="text-center p-2 bg-white/50 rounded-lg">
+            }) => <div key={category} className="text-center p-2 bg-gradient-to-br from-[hsl(var(--gradient-start))]/20 to-[hsl(var(--gradient-end))]/10 rounded-lg border border-[hsl(var(--card-accent))]/20">
                   <div className="text-sm font-medium">{category}</div>
-                  <div className="text-lg font-bold text-family-star">{stars} ⭐</div>
+                  <div className="text-lg font-bold text-[hsl(var(--family-star))]">{stars} ⭐</div>
                 </div>)}
             </div>
 
             {/* Active Goal - OUTSIDE draggable area */}
-            {activeGoal && <div className="p-3 bg-family-success/10 rounded-lg border border-family-success/20">
-                <div className="text-sm font-medium text-family-success">{t('main.activeGoal')}</div>
+            {activeGoal && <div className="p-3 bg-gradient-to-br from-[hsl(var(--family-success))]/10 to-[hsl(var(--family-success))]/5 rounded-lg border border-[hsl(var(--family-success))]/20">
+                <div className="text-sm font-medium text-[hsl(var(--family-success))]">{t('main.activeGoal')}</div>
                 <div className="text-sm">{activeGoal.current_stars}/{activeGoal.target_stars} {t('main.stars')}</div>
                 <Progress value={activeGoal.current_stars / activeGoal.target_stars * 100} className="h-2 mt-1" />
                 {activeGoal.reward && <div className="text-xs text-muted-foreground mt-1">{t('main.reward')}: {activeGoal.reward}</div>}
@@ -270,12 +270,12 @@ export default function MainPage() {
         </Card>
 
         {/* Today's Tasks */}
-        <Card>
+        <Card accent>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-[hsl(var(--icon-tint))]">
               <Calendar className="h-5 w-5" />
               {t('main.todayTasks')}
-              <Badge variant="secondary">{todaysTasks.length}</Badge>
+              <Badge variant="theme">{todaysTasks.length}</Badge>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -286,13 +286,13 @@ export default function MainPage() {
                   const translatedTaskName = translateTaskName(task.name, t);
                   const translatedTaskDescription = translateTaskDescription(task.description, t);
                   return (
-                  <div key={`${task.id}-${refreshKey}`} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div key={`${task.id}-${refreshKey}`} className="flex items-center justify-between p-3 border rounded-lg hover:border-[hsl(var(--card-accent))]/40 transition-colors">
                     <div className="flex-1">
                       <div className="font-medium">{translatedTaskName}</div>
                       {translatedTaskDescription && <div className="text-sm text-muted-foreground">{translatedTaskDescription}</div>}
                     </div>
                      <div className="flex items-center gap-2">
-                       <Badge variant="outline">{task.starValue} ⭐</Badge>
+                       <Badge variant="theme">{task.starValue} ⭐</Badge>
                        {task.assignedTo === user?.id && <Button onClick={() => handleCompleteTask(task.id)} size="sm" variant="ghost" className="p-2 h-8 w-8 text-family-success hover:text-family-success hover:bg-family-success/10">
                            <CheckCircle className="h-5 w-5" />
                          </Button>}
@@ -306,10 +306,10 @@ export default function MainPage() {
 
         {/* Action Buttons */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Button onClick={() => navigate(ROUTES.tasks)} className="bg-primary hover:bg-primary/90 h-14">
+          <Button onClick={() => navigate(ROUTES.tasks)} variant="theme" className="h-14">
             {t('main.goToTasks')}
           </Button>
-          <Button onClick={() => setShowAssignTask(true)} variant="outline" className="h-14">
+          <Button onClick={() => setShowAssignTask(true)} variant="outline" className="h-14 border-[hsl(var(--card-accent))]/30 hover:bg-[hsl(var(--gradient-start))]/10">
             <Plus className="h-5 w-5 mr-2" />
             {t('main.assignTask')}
           </Button>

@@ -28,7 +28,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const isDark = root.classList.contains('dark');
     const colors = isDark ? currentTheme.colors.dark : currentTheme.colors.light;
 
-    // Apply all color variables
+    // Apply all base color variables
     root.style.setProperty('--background', colors.background);
     root.style.setProperty('--foreground', colors.foreground);
     root.style.setProperty('--card', colors.card);
@@ -49,7 +49,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     root.style.setProperty('--input', colors.input);
     root.style.setProperty('--ring', colors.ring);
 
-    // Apply family-specific colors (only available in light mode)
+    // Apply family-specific colors and theme emotion colors (only available in light mode)
     if (!isDark) {
       const lightColors = currentTheme.colors.light;
       root.style.setProperty('--family-warm', lightColors.familyWarm);
@@ -58,6 +58,14 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       root.style.setProperty('--family-success-foreground', lightColors.familySuccessForeground);
       root.style.setProperty('--family-star', lightColors.familyStar);
       root.style.setProperty('--family-celebration', lightColors.familyCelebration);
+      
+      // Apply theme emotion colors
+      root.style.setProperty('--gradient-start', lightColors.gradientStart);
+      root.style.setProperty('--gradient-end', lightColors.gradientEnd);
+      root.style.setProperty('--card-accent', lightColors.cardAccent);
+      root.style.setProperty('--card-shadow', lightColors.cardShadow);
+      root.style.setProperty('--section-tint', lightColors.sectionTint);
+      root.style.setProperty('--icon-tint', lightColors.iconTint);
     }
   }, [currentTheme]);
 
