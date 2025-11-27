@@ -203,7 +203,7 @@ export default function MainPage() {
         <Card accent className="bg-gradient-to-br from-[hsl(var(--gradient-start))]/20 to-[hsl(var(--gradient-end))]/20">
           <CardHeader>
             <CardTitle className="flex items-center justify-center gap-2 text-[hsl(var(--icon-tint))]">
-              <Star className="h-5 w-5 text-[hsl(var(--family-star))]" />
+              <Star className="h-5 w-5 text-family-warm" />
               {stageName}
             </CardTitle>
           </CardHeader>
@@ -255,7 +255,7 @@ export default function MainPage() {
               stars
             }) => <div key={category} className="text-center p-2 bg-gradient-to-br from-[hsl(var(--gradient-start))]/20 to-[hsl(var(--gradient-end))]/10 rounded-lg border border-[hsl(var(--card-accent))]/20">
                   <div className="text-sm font-medium">{category}</div>
-                  <div className="text-lg font-bold text-[hsl(var(--family-star))]">{stars} ⭐</div>
+                  <div className="text-lg font-bold text-family-warm">{stars} ⭐</div>
                 </div>)}
             </div>
 
@@ -292,7 +292,7 @@ export default function MainPage() {
                       {translatedTaskDescription && <div className="text-sm text-muted-foreground">{translatedTaskDescription}</div>}
                     </div>
                      <div className="flex items-center gap-2">
-                       <Badge variant="theme">{task.starValue} ⭐</Badge>
+                       <Badge variant="warm">{task.starValue} ⭐</Badge>
                        {task.assignedTo === user?.id && <Button onClick={() => handleCompleteTask(task.id)} size="sm" variant="ghost" className="p-2 h-8 w-8 text-family-success hover:text-family-success hover:bg-family-success/10">
                            <CheckCircle className="h-5 w-5" />
                          </Button>}

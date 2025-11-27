@@ -130,7 +130,7 @@ export default function GoalsPage() {
           <Card accent>
             <CardContent className="text-center py-8">
               <p className="text-muted-foreground mb-4">{t('goals.noActiveGoal')}</p>
-              <Button onClick={() => setShowCreateGoal(true)} variant="theme">
+              <Button onClick={() => setShowCreateGoal(true)} variant="warm">
                 <Plus className="h-4 w-4 mr-2" />
                 {t('goals.createGoal')}
               </Button>

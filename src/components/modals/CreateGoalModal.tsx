@@ -131,7 +131,7 @@ export function CreateGoalModal({ open, onOpenChange, familyId, userId }: Create
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               {t('common.cancel')}
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" variant="warm" disabled={loading}>
               {loading ? t('goalModal.creating') : t('goalModal.createGoal')}
             </Button>
           </div>

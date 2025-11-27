@@ -17,6 +17,8 @@ const badgeVariants = cva(
         outline: "text-foreground",
         theme:
           "border-transparent bg-gradient-to-br from-[hsl(var(--icon-tint))]/20 to-[hsl(var(--icon-tint))]/10 text-[hsl(var(--icon-tint))] border-[hsl(var(--icon-tint))]/30",
+        warm:
+          "border-transparent bg-family-warm/10 text-family-warm border-family-warm/30 font-semibold",
       },
     },
     defaultVariants: {
