@@ -7,8 +7,10 @@ import { Label } from '@/components/ui/label';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/hooks/useAuth';
+import { useApp } from '@/hooks/useApp';
+import { useBadges } from '@/hooks/useBadges';
 import { NavigationHeader } from '@/components/layout/NavigationHeader';
-import { Edit, Settings, Upload, Loader2, Languages, Palette } from 'lucide-react';
+import { Edit, Settings, Upload, Loader2, Languages, Palette, RotateCcw } from 'lucide-react';
 import { ThemeSelector } from '@/components/theme/ThemeSelector';
 import { useToast } from '@/hooks/use-toast';
 import { LEMON_CHECKOUT_URL } from '@/config/subscription';
@@ -25,6 +27,8 @@ const LANGUAGES = [
 
 export default function PersonalPage() {
   const { user, updateUser } = useAuth();
+  const { activeFamilyId, resetCharacterProgress } = useApp();
+  const { resetBadgeProgress } = useBadges();
   const { toast } = useToast();
   const { t, i18n } = useTranslation();
   const [newDisplayName, setNewDisplayName] = useState(user?.displayName || '');
@@ -165,6 +169,17 @@ export default function PersonalPage() {
         title: t('personal.updateFailed'),
         description: t('personal.updateFailedDesc'),
         variant: "destructive",
+      });
+    }
+  };
+
+  const handleResetCharacter = async () => {
+    if (window.confirm(t('main.resetConfirm'))) {
+      await resetCharacterProgress(activeFamilyId);
+      resetBadgeProgress();
+      toast({
+        title: t('personal.characterReset'),
+        description: t('personal.characterResetDesc'),
       });
     }
   };
@@ -311,6 +326,29 @@ export default function PersonalPage() {
               onClick={() => window.location.href = LEMON_CHECKOUT_URL}
             >
               {t('personal.manageSubscription')}
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Reset Character */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <RotateCcw className="h-5 w-5" />
+              {t('personal.resetCharacter')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              {t('personal.resetCharacterDesc')}
+            </p>
+            <Button 
+              onClick={handleResetCharacter}
+              variant="destructive"
+              size="sm"
+            >
+              <RotateCcw className="h-4 w-4 mr-2" />
+              {t('personal.resetCharacter')}
             </Button>
           </CardContent>
         </Card>

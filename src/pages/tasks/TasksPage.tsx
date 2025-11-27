@@ -85,7 +85,7 @@ export default function TasksPage() {
         {/* Header with History Button */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold">{t('tasks.familyTasks')}</h1>
+            <h1 className="text-2xl font-bold">{t('tasks.title')}</h1>
             <p className="text-muted-foreground">{t('tasks.manageTasks')}</p>
           </div>
           <Button 

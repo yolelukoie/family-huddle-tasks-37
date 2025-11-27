@@ -199,7 +199,11 @@
     "updateFailedDesc": "Hubo un error al actualizar tu preferencia de idioma.",
     "subscription": "Suscripción",
     "subscriptionDesc": "Actualmente estás en una prueba gratuita. Gestiona tu suscripción aquí.",
-    "manageSubscription": "Gestionar Suscripción"
+    "manageSubscription": "Gestionar Suscripción",
+    "resetCharacter": "Restablecer Personaje",
+    "resetCharacterDesc": "Esto restablecerá el progreso de tu personaje solo para esta familia. Todas tus insignias y estrellas se borrarán.",
+    "characterReset": "Personaje restablecido",
+    "characterResetDesc": "El progreso de tu personaje se ha restablecido exitosamente."
   },
   "common": {
     "loading": "Cargando...",
