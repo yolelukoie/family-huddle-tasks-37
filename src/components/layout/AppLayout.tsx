@@ -94,7 +94,6 @@ export function AppLayout() {
         <Route path={ROUTES.personal.slice(1)} element={<PersonalPage />} />
       <Route path="*" element={<NotFound />} />
       </Routes>
-      {process.env.NODE_ENV === "development" && <DevTestButton />}
     </div>
   );
 }
