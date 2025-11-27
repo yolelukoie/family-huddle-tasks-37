@@ -42,3 +42,27 @@ export function translateTaskDescription(description: string | null | undefined,
 
   return descriptionMap[description] || description;
 }
+
+/**
+ * Translates badge names to their localized versions using badge ID
+ */
+export function translateBadgeName(badgeName: string, t: TFunction, badgeId?: string): string {
+  if (badgeId) {
+    const translationKey = `badges.${badgeId}.name`;
+    const translated = t(translationKey);
+    if (translated !== translationKey) return translated;
+  }
+  return badgeName;
+}
+
+/**
+ * Translates badge descriptions to their localized versions using badge ID
+ */
+export function translateBadgeDescription(badgeDescription: string, t: TFunction, badgeId?: string): string {
+  if (badgeId) {
+    const translationKey = `badges.${badgeId}.description`;
+    const translated = t(translationKey);
+    if (translated !== translationKey) return translated;
+  }
+  return badgeDescription;
+}

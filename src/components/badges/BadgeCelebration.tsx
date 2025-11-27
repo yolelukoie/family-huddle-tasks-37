@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/lib/types';
+import { translateBadgeName, translateBadgeDescription } from '@/lib/translations';
 
 interface BadgeCelebrationProps {
   badge: Badge;
@@ -9,6 +10,9 @@ interface BadgeCelebrationProps {
 
 export function BadgeCelebration({ badge, show, onComplete }: BadgeCelebrationProps) {
   const { t } = useTranslation();
+  const translatedName = translateBadgeName(badge.name, t, badge.id);
+  const translatedDescription = translateBadgeDescription(badge.description, t, badge.id);
+  
   console.log('BadgeCelebration: Rendering', { badge: badge.name, show });
   
   if (!show) return null;
@@ -59,11 +63,11 @@ export function BadgeCelebration({ badge, show, onComplete }: BadgeCelebrationPr
         </h3>
         
         <h4 className="text-xl font-semibold text-gray-800 mb-2">
-          {badge.name}
+          {translatedName}
         </h4>
         
         <p className="text-gray-600 text-lg">
-          {badge.description}
+          {translatedDescription}
         </p>
       </div>
     </div>
