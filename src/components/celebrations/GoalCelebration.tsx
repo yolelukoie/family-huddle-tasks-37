@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Goal } from '@/lib/types';
 
 interface GoalCelebrationProps {
@@ -7,6 +8,8 @@ interface GoalCelebrationProps {
 }
 
 export function GoalCelebration({ goal, show, onComplete }: GoalCelebrationProps) {
+  const { t } = useTranslation();
+  
   if (!show) return null;
 
   return (
@@ -63,22 +66,21 @@ export function GoalCelebration({ goal, show, onComplete }: GoalCelebrationProps
         <div className="space-y-6">
           {/* Celebration Text */}
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold text-gray-900">The goal is reached</h1>
-            <h2 className="text-2xl font-semibold text-family-celebration">You are amazing!</h2>
-            <p className="text-gray-600">
-              Thanks for your efforts,<br />
-              now it's time to reward yourself.
+            <h1 className="text-3xl font-bold text-gray-900">{t('celebrations.goalReached')}</h1>
+            <h2 className="text-2xl font-semibold text-family-celebration">{t('celebrations.youAreAmazing')}</h2>
+            <p className="text-gray-600" style={{ whiteSpace: 'pre-line' }}>
+              {t('celebrations.thanksForEfforts')}
             </p>
           </div>
 
           {/* Goal Details */}
           <div className="bg-family-warm/10 rounded-lg p-4 space-y-2">
             <p className="text-sm text-gray-700">
-              <span className="font-medium">Target:</span> {goal.targetStars} stars
+              <span className="font-medium">{t('celebrations.target')}:</span> {goal.targetStars} {t('main.stars')}
             </p>
             {goal.reward && (
               <p className="text-sm text-gray-700">
-                <span className="font-medium">Your reward:</span> {goal.reward}
+                <span className="font-medium">{t('celebrations.yourReward')}:</span> {goal.reward}
               </p>
             )}
           </div>

@@ -209,5 +209,37 @@
     "takeOutTrashDesc": "收集并倒掉家庭垃圾",
     "cookMeal": "做饭",
     "cookMealDesc": "帮助准备或烹饪餐食"
+  },
+  "celebrations": {
+    "goalReached": "目标已达成",
+    "youAreAmazing": "你太棒了！",
+    "thanksForEfforts": "感谢你的努力，\n现在是时候奖励自己了。",
+    "target": "目标",
+    "yourReward": "你的奖励",
+    "badgeUnlocked": "徽章已解锁！"
+  },
+  "goalModal": {
+    "createNewGoal": "创建新目标",
+    "targetStars": "目标星星",
+    "enterNumberOfStars": "输入星星数量",
+    "targetCategories": "目标类别（可选）",
+    "leaveEmptyHint": "留空以计算所有类别",
+    "reward": "奖励（可选）",
+    "rewardPlaceholder": "你想要什么奖励？",
+    "creating": "创建中...",
+    "createGoal": "创建目标",
+    "success": "成功",
+    "goalCreated": "目标创建成功！",
+    "error": "错误",
+    "failedToCreate": "创建目标失败。请重试。"
+  },
+  "goalHistory": {
+    "title": "目标历史",
+    "noCompletedGoals": "还没有完成的目标",
+    "target": "目标",
+    "stars": "星星",
+    "completed": "已完成",
+    "reward": "奖励",
+    "completedOn": "完成时间"
   }
 }

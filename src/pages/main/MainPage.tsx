@@ -17,7 +17,7 @@ import { BadgeCelebration } from '@/components/badges/BadgeCelebration';
 import { GoalCelebration } from '@/components/celebrations/GoalCelebration';
 import { ROUTES } from '@/lib/constants';
 import { getCurrentStage, getStageProgress, getCharacterImagePath, getStageName } from '@/lib/character';
-import { translateTaskName, translateCategoryName } from '@/lib/translations';
+import { translateTaskName, translateCategoryName, translateTaskDescription } from '@/lib/translations';
 import { supabase } from '@/integrations/supabase/client';
 import { isToday } from '@/lib/utils';
 import { AssignTaskModal } from '@/components/modals/AssignTaskModal';
@@ -284,11 +284,12 @@ export default function MainPage() {
               </div> : <div className="space-y-2">
                 {todaysTasks.map(task => {
                   const translatedTaskName = translateTaskName(task.name, t);
+                  const translatedTaskDescription = translateTaskDescription(task.description, t);
                   return (
                   <div key={`${task.id}-${refreshKey}`} className="flex items-center justify-between p-3 border rounded-lg">
                     <div className="flex-1">
                       <div className="font-medium">{translatedTaskName}</div>
-                      {task.description && <div className="text-sm text-muted-foreground">{task.description}</div>}
+                      {translatedTaskDescription && <div className="text-sm text-muted-foreground">{translatedTaskDescription}</div>}
                     </div>
                      <div className="flex items-center gap-2">
                        <Badge variant="outline">{task.starValue} ⭐</Badge>

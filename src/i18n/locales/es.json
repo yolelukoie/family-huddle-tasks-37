@@ -209,5 +209,37 @@
     "takeOutTrashDesc": "Recoger y sacar la basura del hogar",
     "cookMeal": "Cocinar comida",
     "cookMealDesc": "Ayudar a preparar o cocinar una comida"
+  },
+  "celebrations": {
+    "goalReached": "¡Se alcanzó el objetivo!",
+    "youAreAmazing": "¡Eres increíble!",
+    "thanksForEfforts": "Gracias por tus esfuerzos,\nahora es momento de recompensarte.",
+    "target": "Objetivo",
+    "yourReward": "Tu recompensa",
+    "badgeUnlocked": "¡Insignia Desbloqueada!"
+  },
+  "goalModal": {
+    "createNewGoal": "Crear Nuevo Objetivo",
+    "targetStars": "Estrellas Objetivo",
+    "enterNumberOfStars": "Ingresa el número de estrellas",
+    "targetCategories": "Categorías Objetivo (opcional)",
+    "leaveEmptyHint": "Dejar vacío para contar todas las categorías",
+    "reward": "Recompensa (opcional)",
+    "rewardPlaceholder": "¿Con qué te recompensarás?",
+    "creating": "Creando...",
+    "createGoal": "Crear Objetivo",
+    "success": "Éxito",
+    "goalCreated": "¡Objetivo creado exitosamente!",
+    "error": "Error",
+    "failedToCreate": "No se pudo crear el objetivo. Por favor, inténtalo de nuevo."
+  },
+  "goalHistory": {
+    "title": "Historial de Objetivos",
+    "noCompletedGoals": "Aún no hay objetivos completados",
+    "target": "Objetivo",
+    "stars": "estrellas",
+    "completed": "Completado",
+    "reward": "Recompensa",
+    "completedOn": "Completado"
   }
 }

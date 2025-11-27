@@ -30,8 +30,8 @@ export function translateTaskName(taskName: string, t: TFunction): string {
 /**
  * Translates default task descriptions to their localized versions
  */
-export function translateTaskDescription(description: string | null, t: TFunction): string | null {
-  if (!description) return description;
+export function translateTaskDescription(description: string | null | undefined, t: TFunction): string | null {
+  if (!description) return null;
   
   const descriptionMap: Record<string, string> = {
     'Tidy up and organize the room': t('defaultTasks.cleanTheRoomDesc'),

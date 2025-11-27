@@ -209,5 +209,37 @@
     "takeOutTrashDesc": "Собрать и вынести бытовой мусор",
     "cookMeal": "Приготовить еду",
     "cookMealDesc": "Помочь приготовить или сделать блюдо"
+  },
+  "celebrations": {
+    "goalReached": "Цель достигнута",
+    "youAreAmazing": "Ты потрясающий!",
+    "thanksForEfforts": "Спасибо за твои усилия,\nтеперь пришло время вознаградить себя.",
+    "target": "Цель",
+    "yourReward": "Твоя награда",
+    "badgeUnlocked": "Значок разблокирован!"
+  },
+  "goalModal": {
+    "createNewGoal": "Создать новую цель",
+    "targetStars": "Целевые звезды",
+    "enterNumberOfStars": "Введите количество звезд",
+    "targetCategories": "Целевые категории (необязательно)",
+    "leaveEmptyHint": "Оставьте пустым, чтобы учитывать все категории",
+    "reward": "Награда (необязательно)",
+    "rewardPlaceholder": "Чем ты себя наградишь?",
+    "creating": "Создание...",
+    "createGoal": "Создать цель",
+    "success": "Успех",
+    "goalCreated": "Цель успешно создана!",
+    "error": "Ошибка",
+    "failedToCreate": "Не удалось создать цель. Попробуйте снова."
+  },
+  "goalHistory": {
+    "title": "История целей",
+    "noCompletedGoals": "Пока нет завершенных целей",
+    "target": "Цель",
+    "stars": "звезд",
+    "completed": "Завершено",
+    "reward": "Награда",
+    "completedOn": "Завершено"
   }
 }

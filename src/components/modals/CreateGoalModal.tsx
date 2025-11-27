@@ -49,21 +49,21 @@ export function CreateGoalModal({ open, onOpenChange, familyId, userId }: Create
         setSelectedCategories([]);
         onOpenChange(false);
         toast({
-          title: "Success",
-          description: "Goal created successfully!",
+          title: t('goalModal.success'),
+          description: t('goalModal.goalCreated'),
         });
       } else {
         toast({
-          title: "Error",
-          description: "Failed to create goal. Please try again.",
+          title: t('goalModal.error'),
+          description: t('goalModal.failedToCreate'),
           variant: "destructive",
         });
       }
     } catch (error) {
       console.error('Failed to create goal:', error);
       toast({
-        title: "Error",
-        description: "Failed to create goal. Please try again.",
+        title: t('goalModal.error'),
+        description: t('goalModal.failedToCreate'),
         variant: "destructive",
       });
     } finally {
@@ -83,25 +83,25 @@ export function CreateGoalModal({ open, onOpenChange, familyId, userId }: Create
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Create New Goal</DialogTitle>
+          <DialogTitle>{t('goalModal.createNewGoal')}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="targetStars">Target Stars</Label>
+            <Label htmlFor="targetStars">{t('goalModal.targetStars')}</Label>
             <Input
               id="targetStars"
               type="number"
               min="1"
               value={targetStars}
               onChange={(e) => setTargetStars(e.target.value)}
-              placeholder="Enter number of stars"
+              placeholder={t('goalModal.enterNumberOfStars')}
               required
             />
           </div>
 
           <div>
-            <Label>Target Categories (optional)</Label>
-            <p className="text-sm text-muted-foreground mb-2">Leave empty to count all categories</p>
+            <Label>{t('goalModal.targetCategories')}</Label>
+            <p className="text-sm text-muted-foreground mb-2">{t('goalModal.leaveEmptyHint')}</p>
             <div className="space-y-2">
               {categories.map(category => (
                 <div key={category.id} className="flex items-center space-x-2">
@@ -117,22 +117,22 @@ export function CreateGoalModal({ open, onOpenChange, familyId, userId }: Create
           </div>
 
           <div>
-            <Label htmlFor="reward">Reward (optional)</Label>
+            <Label htmlFor="reward">{t('goalModal.reward')}</Label>
             <Textarea
               id="reward"
               value={reward}
               onChange={(e) => setReward(e.target.value)}
-              placeholder="What will you reward yourself with?"
+              placeholder={t('goalModal.rewardPlaceholder')}
               rows={3}
             />
           </div>
 
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? 'Creating...' : 'Create Goal'}
+              {loading ? t('goalModal.creating') : t('goalModal.createGoal')}
             </Button>
           </div>
         </form>
