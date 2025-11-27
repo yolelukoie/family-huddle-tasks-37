@@ -262,6 +262,7 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
       .insert([{
         name,
         family_id: activeFamilyId,
+        user_id: user?.id || null,
         is_default: name.toLowerCase() === 'assigned',
         is_house_chores: !!opts?.isHouseChores,
         order_index: nextOrder,
