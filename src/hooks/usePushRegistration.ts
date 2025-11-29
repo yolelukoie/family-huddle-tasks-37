@@ -47,7 +47,7 @@ export function usePushRegistration(userId?: string, familyId?: string) {
 
         // Store (or refresh) token in Supabase
         await supabase
-          .from<any>("device_tokens" as any) // 👈 cast to bypass TS table check
+          .from("device_tokens")
           .upsert(
             {
               user_id: userId,
