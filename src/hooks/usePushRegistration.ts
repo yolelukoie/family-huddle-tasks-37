@@ -46,16 +46,18 @@ export function usePushRegistration(userId?: string, familyId?: string) {
         if (!token) return;
 
         // Store (or refresh) token in Supabase
-        await supabase.from("device_tokens").upsert(
-          {
-            user_id: userId,
-            family_id: familyId ?? null,
-            platform: "web",
-            token,
-            last_seen_at: new Date().toISOString(),
-          },
-          { onConflict: "user_id,platform,token" },
-        );
+        await supabase
+          .from<any>("device_tokens" as any) // 👈 cast to bypass TS table check
+          .upsert(
+            {
+              user_id: userId,
+              family_id: familyId ?? null,
+              platform: "web",
+              token,
+              last_seen_at: new Date().toISOString(),
+            },
+            { onConflict: "user_id,platform,token" },
+          );
 
         // Foreground handler (optional)
         onMessage(messaging, (payload) => {

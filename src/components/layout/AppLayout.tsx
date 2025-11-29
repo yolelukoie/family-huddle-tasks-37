@@ -17,6 +17,7 @@ import { DevTestButton } from "@/components/dev/DevTestButton";
 export function AppLayout() {
   // Mount notifications hook globally for all authenticated users
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { activeFamilyId } = useApp();
   const { isLoading } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
