@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { useApp } from "@/hooks/useApp";
 import { useAuth } from "@/hooks/useAuth";
+import { usePushRegistration } from "@/hooks/usePushRegistration";
 import { ROUTES } from "@/lib/constants";
 import MainPage from "@/pages/main/MainPage";
 import OnboardingPage from "@/pages/onboarding/OnboardingPage";
@@ -19,6 +20,7 @@ export function AppLayout() {
   const { isLoading } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
+  usePushRegistration(user?.id, activeFamilyId);
 
   useEffect(() => {
     if (isAuthenticated && location.pathname.includes("reset-password")) {
@@ -92,7 +94,7 @@ export function AppLayout() {
         <Route path={ROUTES.chat.slice(1)} element={<ChatPage />} />
         <Route path={ROUTES.family.slice(1)} element={<FamilyPage />} />
         <Route path={ROUTES.personal.slice(1)} element={<PersonalPage />} />
-      <Route path="*" element={<NotFound />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </div>
   );
