@@ -1,25 +1,24 @@
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
-import { useAuth } from '@/hooks/useAuth';
-import { useApp } from '@/hooks/useApp';
-import { useTasks } from '@/hooks/useTasks';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
+import { useApp } from "@/hooks/useApp";
+import { useTasks } from "@/hooks/useTasks";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const assignTaskSchema = z.object({
-  name: z.string().min(1, 'Task name is required'),
+  name: z.string().min(1, "Task name is required"),
   description: z.string().optional(),
-  assignedTo: z.string().min(1, 'Please select who to assign this task to'),
-  dueDate: z.string().min(1, 'Due date is required'),
-  starValue: z.coerce.number().min(0).max(20, 'Star value must be between 0 and 20'),
+  assignedTo: z.string().min(1, "Please select who to assign this task to"),
+  dueDate: z.string().min(1, "Due date is required"),
+  starValue: z.coerce.number().min(0).max(20, "Star value must be between 0 and 20"),
 });
 
 type AssignTaskForm = z.infer<typeof assignTaskSchema>;
@@ -46,19 +45,19 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
   if (!user || !activeFamilyId) return null;
 
   const members = activeFamilyId ? getFamilyMembers(activeFamilyId) : [];
-  const otherMembers = members.filter(m => m.userId !== user.id);
+  const otherMembers = members.filter((m) => m.userId !== user.id);
 
   // Check if user is 18+ for star value editing
   const canEditStars = user.age >= 18;
 
   const onSubmit = async (data: AssignTaskForm) => {
     // Ensure "Assigned" category exists
-    const assignedCategory = await ensureCategoryByName('Assigned');
+    const assignedCategory = await ensureCategoryByName("Assigned");
     if (!assignedCategory) return;
 
     const result = await addTask({
       name: data.name,
-      description: data.description || '',
+      description: data.description || "",
       assignedTo: data.assignedTo,
       assignedBy: user.id,
       dueDate: data.dueDate,
@@ -70,58 +69,55 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
 
     try {
       // Accept BOTH shapes: { id, ... } OR { task: { id, ... }, ... }
-      const createdId =
-        (result as any)?.id ??
-        (result as any)?.task?.id;
-    
-      const familyId =
-        (result as any)?.familyId ??
-        (result as any)?.family_id ??
-        activeFamilyId;
-    
-      const assignedTo =
-        (result as any)?.assignedTo ??
-        (result as any)?.assigned_to ??
-        form.getValues().assignedTo;
-    
-      const createdName =
-        (result as any)?.name ??
-        (result as any)?.task?.name ??
-        form.getValues().name;
-    
-      const createdDue =
-        (result as any)?.dueDate ??
-        (result as any)?.due_date ??
-        form.getValues().dueDate ??
-        null;
-    
+      const createdId = (result as any)?.id ?? (result as any)?.task?.id;
+
+      const familyId = (result as any)?.familyId ?? (result as any)?.family_id ?? activeFamilyId;
+
+      const assignedTo = (result as any)?.assignedTo ?? (result as any)?.assigned_to ?? form.getValues().assignedTo;
+
+      const createdName = (result as any)?.name ?? (result as any)?.task?.name ?? form.getValues().name;
+
+      const createdDue = (result as any)?.dueDate ?? (result as any)?.due_date ?? form.getValues().dueDate ?? null;
+
       if (!createdId || !familyId || !assignedTo) {
-        console.error('[task_events] missing fields', { createdId, familyId, assignedTo, result });
+        console.error("[task_events] missing fields", { createdId, familyId, assignedTo, result });
       } else {
         const { data, error: evErr } = await supabase
-          .from('task_events')
+          .from("task_events")
           .insert({
             task_id: createdId,
             family_id: familyId,
             recipient_id: assignedTo,
             actor_id: user.id,
-            event_type: 'assigned',
+            event_type: "assigned",
             payload: {
               name: createdName,
               due_date: createdDue ? new Date(createdDue).toISOString() : null,
-              actor_name: (user as any)?.displayName ?? 'Someone',
+              actor_name: (user as any)?.displayName ?? "Someone",
             },
           })
-          .select('id')  // helpful while testing
+          .select("id") // helpful while testing
           .single();
-    
-        if (evErr) console.error('[task_events] insert failed (assigned):', evErr);
-        else console.log('[task_events] insert ok (assigned), id=', data?.id);
+
+        if (evErr) console.error("[task_events] insert failed (assigned):", evErr);
+        else console.log("[task_events] insert ok (assigned), id=", data?.id);
       }
     } catch (e) {
-      console.error('[task_events] insert threw (assigned):', e);
+      console.error("[task_events] insert threw (assigned):", e);
     } finally {
       onOpenChange(false);
+    }
+    if (!evErr) {
+      await supabase.functions
+        .invoke("push-notify", {
+          body: {
+            recipientId: assignedTo, // who should receive the push
+            title: "New task assigned",
+            body: `${(user as any)?.displayName ?? "Someone"} assigned “${createdName}” to you`,
+            data: { type: "assigned", taskId: createdId },
+          },
+        })
+        .catch((e) => console.error("[push-notify] invoke failed:", e));
     }
 
     if (result) {
@@ -141,14 +137,11 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Assign a Task</DialogTitle>
-          <DialogDescription>
-            Create and assign a new task to a family member
-          </DialogDescription>
+          <DialogDescription>Create and assign a new task to a family member</DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            
             <FormField
               control={form.control}
               name="name"
@@ -170,11 +163,7 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
                 <FormItem>
                   <FormLabel>Description (Optional)</FormLabel>
                   <FormControl>
-                    <Textarea 
-                      placeholder="Additional details about the task..."
-                      rows={2}
-                      {...field} 
-                    />
+                    <Textarea placeholder="Additional details about the task..." rows={2} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -194,16 +183,18 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
                           <SelectValue placeholder="Select person" />
                         </SelectTrigger>
                       </FormControl>
-                       <SelectContent>
-                         <SelectItem value={user.id}>
-                           {getUserProfile(user.id)?.displayName ?? 'Myself'}
-                         </SelectItem>
-                         {otherMembers.map(m => {
-                           const p = getUserProfile(m.userId);
-                           const label = p?.displayName ?? `Member ${m.userId.slice(-4)}`;
-                           return <SelectItem key={m.userId} value={m.userId}>{label}</SelectItem>;
-                         })}
-                       </SelectContent>
+                      <SelectContent>
+                        <SelectItem value={user.id}>{getUserProfile(user.id)?.displayName ?? "Myself"}</SelectItem>
+                        {otherMembers.map((m) => {
+                          const p = getUserProfile(m.userId);
+                          const label = p?.displayName ?? `Member ${m.userId.slice(-4)}`;
+                          return (
+                            <SelectItem key={m.userId} value={m.userId}>
+                              {label}
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
                     </Select>
                     <FormMessage />
                   </FormItem>
@@ -233,18 +224,10 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
                   <FormItem>
                     <FormLabel>Stars (0-20)</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
-                        min="0" 
-                        max="20"
-                        disabled={!canEditStars}
-                        {...field} 
-                      />
+                      <Input type="number" min="0" max="20" disabled={!canEditStars} {...field} />
                     </FormControl>
                     {!canEditStars && (
-                      <p className="text-xs text-muted-foreground">
-                        Only 18+ users can edit star values
-                      </p>
+                      <p className="text-xs text-muted-foreground">Only 18+ users can edit star values</p>
                     )}
                     <FormMessage />
                   </FormItem>
