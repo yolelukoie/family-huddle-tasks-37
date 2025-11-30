@@ -3,6 +3,8 @@ import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { useApp } from "@/hooks/useApp";
 import { useAuth } from "@/hooks/useAuth";
 import { usePushRegistration } from "@/hooks/usePushRegistration";
+import { requestAndSaveFcmToken, listenForegroundMessages } from "@/lib/fcm";
+import { useToast } from "@/hooks/use-toast";
 import { ROUTES } from "@/lib/constants";
 import MainPage from "@/pages/main/MainPage";
 import OnboardingPage from "@/pages/onboarding/OnboardingPage";
@@ -21,7 +23,46 @@ export function AppLayout() {
   const { isLoading } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
+  const { toast } = useToast();
   usePushRegistration(user?.id, activeFamilyId);
+
+  /** 1) Register the FCM service worker once */
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!("serviceWorker" in navigator)) return;
+      try {
+        // Ensure the SW at the site root is registered (file must be in /public/)
+        const reg = await navigator.serviceWorker.register("/firebase-messaging-sw.js", { scope: "/" });
+        if (!cancelled) {
+          // Wait until it's active so getToken can attach to it
+          await navigator.serviceWorker.ready;
+          // optional log
+          console.log("[FCM] SW registered:", reg.scope);
+        }
+      } catch (e) {
+        console.error("[FCM] SW register failed:", e);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  /** 2) After login, request permission, get token, save to Supabase, and listen in-foreground */
+  useEffect(() => {
+    if (!isAuthenticated || !user?.id) return;
+
+    // Save (upsert) the token — idempotent because of unique(user_id, token)
+    requestAndSaveFcmToken(user.id);
+
+    // Optional: show a toast when a push arrives while the tab is open
+    listenForegroundMessages((p) => {
+      const title = p?.notification?.title || p?.data?.title || "Family Huddle";
+      const body = p?.notification?.body || p?.data?.body || "";
+      toast({ title, description: body });
+    });
+  }, [isAuthenticated, user?.id, toast]);
 
   useEffect(() => {
     if (isAuthenticated && location.pathname.includes("reset-password")) {
