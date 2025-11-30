@@ -4,11 +4,11 @@ importScripts("https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js
 importScripts("https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging-compat.js");
 
 firebase.initializeApp({
-  apiKey: "AIzaSyC3gtPDwXXiSwTelOBuTp6P6pIUpE_xY48",
-  authDomain: "family-huddle-15398.firebaseapp.com",
-  projectId: "family-huddle-15398",
-  messagingSenderId: "926874914730",
-  appId: "1:926874914730:web:7b9ec4525a2ce0e48d25d3",
+  apiKey: "AIzaSyAlhcCtBwCb2yQA7eoo1d_6o4ZStiZxFjQ",
+  authDomain: "family-huddle-2062.firebaseapp.com",
+  projectId: "family-huddle-2062",
+  messagingSenderId: "897887762238",
+  appId: "1:897887762238:web:7e8a5677529e040ccbde6f",
 });
 
 const messaging = firebase.messaging();
