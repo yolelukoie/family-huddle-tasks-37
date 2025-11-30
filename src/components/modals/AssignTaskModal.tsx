@@ -73,21 +73,21 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
 
       const familyId = (result as any)?.familyId ?? (result as any)?.family_id ?? activeFamilyId;
 
-      const assignedTo = (result as any)?.assignedTo ?? (result as any)?.assigned_to ?? form.getValues().assignedTo;
+      const assignedToVal = (result as any)?.assignedTo ?? (result as any)?.assigned_to ?? form.getValues().assignedTo;
 
       const createdName = (result as any)?.name ?? (result as any)?.task?.name ?? form.getValues().name;
 
       const createdDue = (result as any)?.dueDate ?? (result as any)?.due_date ?? form.getValues().dueDate ?? null;
 
-      if (!createdId || !familyId || !assignedTo) {
-        console.error("[task_events] missing fields", { createdId, familyId, assignedTo, result });
+      if (!createdId || !familyId || !assignedToVal) {
+        console.error("[task_events] missing fields", { createdId, familyId, assignedToVal, result });
       } else {
-        const { data, error: evErr } = await supabase
+        const { data: evRow, error: evErr } = await supabase
           .from("task_events")
           .insert({
             task_id: createdId,
             family_id: familyId,
-            recipient_id: assignedTo,
+            recipient_id: assignedToVal,
             actor_id: user.id,
             event_type: "assigned",
             payload: {
@@ -96,28 +96,33 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
               actor_name: (user as any)?.displayName ?? "Someone",
             },
           })
-          .select("id") // helpful while testing
+          .select("id")
           .single();
 
-        if (evErr) console.error("[task_events] insert failed (assigned):", evErr);
-        else console.log("[task_events] insert ok (assigned), id=", data?.id);
+        if (evErr) {
+          console.error("[task_events] insert failed (assigned):", evErr);
+        } else {
+          console.log("[task_events] insert ok (assigned), id=", evRow?.id);
+
+          // 🔔 push notify — keep it in the same scope so variables exist
+          try {
+            await supabase.functions.invoke("push-notify", {
+              body: {
+                recipientId: assignedToVal,
+                title: "New task assigned",
+                body: `${(user as any)?.displayName ?? "Someone"} assigned “${createdName}” to you`,
+                data: { type: "assigned", taskId: createdId },
+              },
+            });
+          } catch (pushErr) {
+            console.error("[push-notify] invoke failed:", pushErr);
+          }
+        }
       }
     } catch (e) {
       console.error("[task_events] insert threw (assigned):", e);
     } finally {
       onOpenChange(false);
-    }
-    if (!evErr) {
-      await supabase.functions
-        .invoke("push-notify", {
-          body: {
-            recipientId: assignedTo, // who should receive the push
-            title: "New task assigned",
-            body: `${(user as any)?.displayName ?? "Someone"} assigned “${createdName}” to you`,
-            data: { type: "assigned", taskId: createdId },
-          },
-        })
-        .catch((e) => console.error("[push-notify] invoke failed:", e));
     }
 
     if (result) {
