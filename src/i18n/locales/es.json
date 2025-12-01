@@ -212,12 +212,22 @@
     "notificationsActive": "Activas"
   },
   "notifications": {
+    "title": "Notificaciones",
     "enableTitle": "Habilitar Notificaciones Push",
     "enableDesc": "Recibe notificaciones cuando los miembros de la familia asignan tareas o envían mensajes",
-    "enable": "Habilitar",
+    "enable": "Habilitar Notificaciones",
     "later": "Tal vez más tarde",
-    "enabled": "Notificaciones habilitadas con éxito",
-    "enableFailed": "No se pudieron habilitar las notificaciones"
+    "enabled": "Notificaciones habilitadas",
+    "enabledDesc": "Recibirás notificaciones push",
+    "error": "Error al habilitar notificaciones",
+    "errorDesc": "Por favor revisa la configuración de tu navegador",
+    "statusEnabled": "Notificaciones push habilitadas",
+    "statusDenied": "Notificaciones push bloqueadas",
+    "statusDefault": "Notificaciones push no habilitadas",
+    "statusEnabledDesc": "Recibirás notificaciones de tareas y mensajes",
+    "statusDeniedDesc": "Habilita las notificaciones en la configuración de tu navegador para recibir actualizaciones",
+    "statusDefaultDesc": "Habilita para recibir asignaciones de tareas y mensajes",
+    "blockedInBrowser": "Bloqueado en el Navegador"
   },
   "common": {
     "loading": "Cargando...",
