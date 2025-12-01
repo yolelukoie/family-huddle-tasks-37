@@ -47,12 +47,14 @@ export function AppLayout() {
     };
   }, []);
 
-  /** 2) After login, request permission, get token, save to Supabase, and listen in-foreground */
+  /** 2) Listen for foreground messages (token registration now triggered by user gesture) */
   useEffect(() => {
     if (!isAuthenticated || !user?.id) return;
 
-    // Save (upsert) the token — idempotent because of unique(user_id, token)
-    requestAndSaveFcmToken(user.id);
+    // Check if already granted and silently register token
+    if ('Notification' in window && Notification.permission === 'granted') {
+      requestAndSaveFcmToken(user.id);
+    }
 
     // Optional: show a toast when a push arrives while the tab is open
     listenForegroundMessages((p) => {
