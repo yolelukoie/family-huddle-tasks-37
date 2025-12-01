@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { useApp } from "@/hooks/useApp";
 import { useAuth } from "@/hooks/useAuth";
-import { usePushRegistration } from "@/hooks/usePushRegistration";
 import { requestAndSaveFcmToken, listenForegroundMessages } from "@/lib/fcm";
 import { useToast } from "@/hooks/use-toast";
 import { ROUTES } from "@/lib/constants";
@@ -24,7 +23,6 @@ export function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  usePushRegistration(user?.id, activeFamilyId);
 
   /** 1) Register the FCM service worker once */
   useEffect(() => {
