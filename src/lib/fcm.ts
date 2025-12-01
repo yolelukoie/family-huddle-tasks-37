@@ -3,6 +3,23 @@ import { initializeApp, getApps } from 'firebase/app';
 import { getMessaging, getToken, onMessage, isSupported, Messaging } from 'firebase/messaging';
 import { supabase } from '@/integrations/supabase/client';
 
+// Utility functions for iOS/PWA detection
+export function isIOS(): boolean {
+  if (typeof window === 'undefined') return false;
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+export function isStandalone(): boolean {
+  if (typeof window === 'undefined') return false;
+  return (window.navigator as any).standalone === true || 
+    window.matchMedia('(display-mode: standalone)').matches;
+}
+
+export function isIOSSafari(): boolean {
+  return isIOS() && !isStandalone();
+}
+
 const firebaseConfig = {
   apiKey: 'AIzaSyAlhcCtBwCb2yQA7eoo1d_6o4ZStiZxFjQ',
   authDomain: 'family-huddle-2062.firebaseapp.com',
@@ -37,6 +54,19 @@ export async function ensureMessaging(): Promise<Messaging | null> {
 /** Ask permission, get FCM token, upsert into Supabase */
 export async function requestAndSaveFcmToken(userId: string): Promise<{ success: boolean; error?: string }> {
   console.log('[FCM] Starting token registration for user:', userId);
+  console.log('[FCM] Device info:', {
+    isIOS: isIOS(),
+    isStandalone: isStandalone(),
+    isIOSSafari: isIOSSafari(),
+    userAgent: navigator.userAgent,
+  });
+  
+  // Check iOS Safari limitation
+  if (isIOSSafari()) {
+    const error = 'To enable notifications on iPhone, first install this app to your home screen (Share → Add to Home Screen)';
+    console.warn('[FCM] ❌ iOS Safari detected, PWA installation required');
+    return { success: false, error };
+  }
   
   const m = await ensureMessaging();
   if (!m) {

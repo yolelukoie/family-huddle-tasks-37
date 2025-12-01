@@ -227,7 +227,10 @@
     "statusEnabledDesc": "您将收到任务和消息通知",
     "statusDeniedDesc": "在浏览器设置中启用通知以接收更新",
     "statusDefaultDesc": "启用以接收任务分配和消息",
-    "blockedInBrowser": "已在浏览器中阻止"
+    "blockedInBrowser": "已在浏览器中阻止",
+    "enabling": "启用中...",
+    "iosInstallRequired": "要在iPhone上启用通知，请先将此应用安装到主屏幕",
+    "iosInstallSteps": "点击分享 → 添加到主屏幕"
   },
   "assignTask": {
     "title": "分配任务",

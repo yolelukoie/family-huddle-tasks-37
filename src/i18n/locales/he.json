@@ -227,7 +227,10 @@
     "statusEnabledDesc": "תקבל התראות על משימות והודעות",
     "statusDeniedDesc": "הפעל התראות בהגדרות הדפדפן שלך כדי לקבל עדכונים",
     "statusDefaultDesc": "הפעל כדי לקבל הקצאות משימות והודעות",
-    "blockedInBrowser": "חסום בדפדפן"
+    "blockedInBrowser": "חסום בדפדפן",
+    "enabling": "מפעיל...",
+    "iosInstallRequired": "כדי להפעיל התראות באייפון, תחילה התקן את האפליקציה על המסך הראשי",
+    "iosInstallSteps": "הקש על שתף → הוסף למסך הבית"
   },
   "assignTask": {
     "title": "הקצה משימה",
