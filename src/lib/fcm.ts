@@ -1,86 +1,115 @@
 // src/lib/fcm.ts
-import { supabase } from "@/integrations/supabase/client";
-import { initializeApp, getApps } from "firebase/app";
-import { getMessaging, isSupported, getToken, onMessage, Messaging, MessagePayload } from "firebase/messaging";
+import { initializeApp, getApps } from 'firebase/app';
+import { getMessaging, getToken, onMessage, isSupported, Messaging } from 'firebase/messaging';
+import { supabase } from '@/integrations/supabase/client';
+
+const firebaseConfig = {
+  apiKey: 'AIzaSyAlhcCtBwCb2yQA7eoo1d_6o4ZStiZxFjQ',
+  authDomain: 'family-huddle-2062.firebaseapp.com',
+  projectId: 'family-huddle-2062',
+  messagingSenderId: '897887762238',
+  appId: '1:897887762238:web:7e8a5677529e040ccbde6f',
+};
+
+// Public VAPID key from Firebase → Cloud Messaging → Web configuration
+const VAPID_PUBLIC_KEY = 'BKa4ylqpcOvhXB1gGFOgZ9Yr_tr1MSZE06j6LdtJJAB4jdLuQzBD20B0ScpePv4IpweSKsQHk369PUO79xpRdm8';
 
 let messaging: Messaging | null = null;
 
-function ensureFirebase(): Messaging | null {
-  if (messaging) return messaging;
-  if (!("serviceWorker" in navigator)) return null;
+export async function ensureMessaging(): Promise<Messaging | null> {
+  if (typeof window === 'undefined') return null;
+  if (!(await isSupported())) {
+    console.warn('[FCM] Messaging not supported in this browser');
+    return null;
+  }
 
-  // Your Firebase Web config (project: family-huddle-2062)
-  const firebaseConfig = {
-    apiKey: "AIzaSyAlhcCtBwCb2yQA7eoo1d_6o4ZStiZxFjQ",
-    authDomain: "family-huddle-2062.firebaseapp.com",
-    projectId: "family-huddle-2062",
-    messagingSenderId: "897887762238",
-    appId: "1:897887762238:web:7e8a5677529e040ccbde6f",
-  };
-
-  if (!getApps().length) initializeApp(firebaseConfig);
-  return (messaging = getMessaging());
+  if (!getApps().length) {
+    console.log('[FCM] Initializing Firebase app...');
+    initializeApp(firebaseConfig);
+  }
+  if (!messaging) {
+    console.log('[FCM] Getting messaging instance...');
+    messaging = getMessaging();
+  }
+  return messaging;
 }
 
-/** Ask for permission, get a token via the SW, and upsert into Supabase. */
+/** Ask permission, get FCM token, upsert into Supabase */
 export async function requestAndSaveFcmToken(userId: string) {
+  console.log('[FCM] Starting token registration for user:', userId);
+  
+  const m = await ensureMessaging();
+  if (!m) {
+    console.warn('[FCM] ❌ Messaging not supported in this browser');
+    return;
+  }
+
+  // 1) permission
+  console.log('[FCM] Requesting notification permission...');
+  let permission: NotificationPermission;
   try {
-    if (!userId) return; // must be authenticated for RLS
-
-    const supported = await isSupported();
-    if (!supported) {
-      console.warn("[FCM] Not supported in this browser.");
-      return;
-    }
-
-    const perm = await Notification.requestPermission();
-    if (perm !== "granted") {
-      console.info("[FCM] Permission not granted.");
-      return;
-    }
-
-    const msg = ensureFirebase();
-    if (!msg) {
-      console.error("[FCM] Messaging not initialized.");
-      return;
-    }
-
-    // Ensure SW is ready
-    const reg = await navigator.serviceWorker.ready;
-
-    // Use env if present, else fallback to your hard-coded VAPID key
-    const vapidKey =
-      import.meta.env.VITE_FIREBASE_VAPID_KEY ??
-      "BKa4ylqpcOvhXB1gGFOgZ9Yr_tr1MSZE06j6LdtJJAB4jdLuQzBD20B0ScpePv4IpweSKsQHk369PUO79xpRdm8";
-
-    const token = await getToken(msg, { vapidKey, serviceWorkerRegistration: reg });
-    if (!token) {
-      console.warn("[FCM] getToken returned empty token.");
-      return;
-    }
-    console.log("[FCM] Token:", token.slice(0, 10) + "…");
-
-    // Save token (idempotent via unique(user_id, token))
-    const { error } = await supabase
-      .from("user_fcm_tokens")
-      .insert({ user_id: userId, token, platform: "web" })
-      .select("id")
-      .single();
-
-    if (error && error.code !== "23505") {
-      console.error("[FCM] Failed to save token:", error);
-    } else {
-      console.log("[FCM] Token saved (or already present).");
-    }
+    permission = await Notification.requestPermission();
+    console.log('[FCM] Permission result:', permission);
   } catch (e) {
-    console.error("[FCM] Token request failed:", e);
+    // Safari <16 fallback
+    console.warn('[FCM] requestPermission() not available, using Notification.permission', e);
+    permission = Notification.permission;
+  }
+  if (permission !== 'granted') {
+    console.log('[FCM] ❌ Notifications permission not granted:', permission);
+    return;
+  }
+  console.log('[FCM] ✓ Permission granted');
+
+  // 2) token
+  console.log('[FCM] Getting FCM token...');
+  let token: string | null = null;
+  try {
+    const swReg = await navigator.serviceWorker.ready;
+    console.log('[FCM] Service Worker ready, scope:', swReg.scope);
+    
+    token = await getToken(m, {
+      vapidKey: VAPID_PUBLIC_KEY,
+      serviceWorkerRegistration: swReg,
+    });
+    console.log('[FCM] ✓ Token received:', token ? `${token.slice(0, 10)}...` : 'null');
+  } catch (e) {
+    console.error('[FCM] ❌ getToken failed:', e);
+    return;
+  }
+  if (!token) {
+    console.warn('[FCM] ❌ No token returned from getToken()');
+    return;
+  }
+
+  // 3) upsert to Supabase
+  console.log('[FCM] Upserting token to Supabase...', { userId, tokenPreview: token.slice(0, 10) + '...' });
+  
+  const { error } = await supabase
+    .from('user_fcm_tokens')
+    .upsert(
+      { user_id: userId, token, platform: 'web' },
+      { onConflict: 'user_id,token' }
+    );
+
+  if (error) {
+    console.error('[FCM] ❌ upsert token failed:', error);
+  } else {
+    console.log('[FCM] ✓ Token saved successfully to user_fcm_tokens');
   }
 }
 
-/** Foreground push handler (tab is focused). */
-export function listenForegroundMessages(cb: (p: MessagePayload) => void) {
-  const msg = ensureFirebase();
-  if (!msg) return () => {};
-  const unsub = onMessage(msg, (payload) => cb(payload));
-  return unsub;
+/** Foreground message hook (optional): call once to handle toasts, etc. */
+export async function listenForegroundMessages(onPayload: (p: any) => void) {
+  const m = await ensureMessaging();
+  if (!m) return;
+  console.log('[FCM] Setting up foreground message listener...');
+  onMessage(m, (payload) => {
+    console.log('[FCM] Foreground message received:', payload);
+    try { 
+      onPayload(payload); 
+    } catch (e) {
+      console.error('[FCM] Error in foreground message handler:', e);
+    }
+  });
 }
