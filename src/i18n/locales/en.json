@@ -205,6 +205,26 @@
     "characterReset": "Character reset",
     "characterResetDesc": "Your character progress has been reset successfully."
   },
+  "notifications": {
+    "title": "Notifications",
+    "enableTitle": "Enable Push Notifications",
+    "enableDesc": "Get notified when family members assign tasks or send messages",
+    "enable": "Enable",
+    "later": "Maybe Later",
+    "enabled": "Notifications Enabled",
+    "enabledDesc": "You will now receive push notifications",
+    "denied": "Permission Denied",
+    "deniedDesc": "Please enable notifications in your browser settings",
+    "error": "Error",
+    "errorDesc": "Failed to enable notifications",
+    "statusEnabled": "Push notifications enabled",
+    "statusDenied": "Push notifications blocked",
+    "statusDefault": "Push notifications not enabled",
+    "statusEnabledDesc": "You will receive task and message notifications",
+    "statusDeniedDesc": "Enable notifications in your browser settings to receive updates",
+    "statusDefaultDesc": "Enable to receive task assignments and messages",
+    "blockedInBrowser": "Blocked in Browser"
+  },
   "common": {
     "loading": "Loading...",
     "save": "Save",

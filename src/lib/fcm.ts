@@ -44,17 +44,23 @@ export async function requestAndSaveFcmToken(userId: string) {
     return;
   }
 
-  // 1) permission
-  console.log('[FCM] Requesting notification permission...');
-  let permission: NotificationPermission;
-  try {
-    permission = await Notification.requestPermission();
-    console.log('[FCM] Permission result:', permission);
-  } catch (e) {
-    // Safari <16 fallback
-    console.warn('[FCM] requestPermission() not available, using Notification.permission', e);
-    permission = Notification.permission;
+  // 1) Check current permission state
+  console.log('[FCM] Current permission:', Notification.permission);
+  let permission: NotificationPermission = Notification.permission;
+
+  // If permission is default (never asked), request it now (must be from user gesture!)
+  if (permission === 'default') {
+    console.log('[FCM] Requesting notification permission...');
+    try {
+      permission = await Notification.requestPermission();
+      console.log('[FCM] Permission result:', permission);
+    } catch (e) {
+      // Safari <16 fallback
+      console.warn('[FCM] requestPermission() not available, using Notification.permission', e);
+      permission = Notification.permission;
+    }
   }
+
   if (permission !== 'granted') {
     console.log('[FCM] ❌ Notifications permission not granted:', permission);
     return;

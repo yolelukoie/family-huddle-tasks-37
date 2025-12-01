@@ -10,7 +10,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useApp } from '@/hooks/useApp';
 import { useBadges } from '@/hooks/useBadges';
 import { NavigationHeader } from '@/components/layout/NavigationHeader';
-import { Edit, Settings, Upload, Loader2, Languages, Palette, RotateCcw } from 'lucide-react';
+import { Edit, Settings, Upload, Loader2, Languages, Palette, RotateCcw, Bell, BellOff } from 'lucide-react';
+import { requestAndSaveFcmToken } from '@/lib/fcm';
 import { ThemeSelector } from '@/components/theme/ThemeSelector';
 import { useToast } from '@/hooks/use-toast';
 import { LEMON_CHECKOUT_URL } from '@/config/subscription';
@@ -34,7 +35,15 @@ export default function PersonalPage() {
   const [newDisplayName, setNewDisplayName] = useState(user?.displayName || '');
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState<string>('en');
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Check notification permission status
+  useEffect(() => {
+    if ('Notification' in window) {
+      setNotificationPermission(Notification.permission);
+    }
+  }, []);
 
   // Load user's saved language preference
   useEffect(() => {
@@ -184,6 +193,33 @@ export default function PersonalPage() {
     }
   };
 
+  const handleEnableNotifications = async () => {
+    try {
+      await requestAndSaveFcmToken(user.id);
+      setNotificationPermission(Notification.permission);
+      
+      if (Notification.permission === 'granted') {
+        toast({
+          title: t('notifications.enabled') || 'Notifications Enabled',
+          description: t('notifications.enabledDesc') || 'You will now receive push notifications',
+        });
+      } else if (Notification.permission === 'denied') {
+        toast({
+          title: t('notifications.denied') || 'Permission Denied',
+          description: t('notifications.deniedDesc') || 'Please enable notifications in your browser settings',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error('Error enabling notifications:', error);
+      toast({
+        title: t('notifications.error') || 'Error',
+        description: t('notifications.errorDesc') || 'Failed to enable notifications',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -306,6 +342,61 @@ export default function PersonalPage() {
           </CardHeader>
           <CardContent>
             <ThemeSelector />
+          </CardContent>
+        </Card>
+
+        {/* Notifications */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Bell className="h-5 w-5" />
+              {t('notifications.title') || 'Notifications'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-start gap-3">
+                <div className={`rounded-full p-2 ${
+                  notificationPermission === 'granted' 
+                    ? 'bg-green-500/10' 
+                    : notificationPermission === 'denied'
+                    ? 'bg-destructive/10'
+                    : 'bg-muted'
+                }`}>
+                  {notificationPermission === 'granted' ? (
+                    <Bell className="h-4 w-4 text-green-500" />
+                  ) : (
+                    <BellOff className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium mb-1">
+                    {notificationPermission === 'granted' && (t('notifications.statusEnabled') || 'Push notifications enabled')}
+                    {notificationPermission === 'denied' && (t('notifications.statusDenied') || 'Push notifications blocked')}
+                    {notificationPermission === 'default' && (t('notifications.statusDefault') || 'Push notifications not enabled')}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {notificationPermission === 'granted' && (t('notifications.statusEnabledDesc') || 'You will receive task and message notifications')}
+                    {notificationPermission === 'denied' && (t('notifications.statusDeniedDesc') || 'Enable notifications in your browser settings to receive updates')}
+                    {notificationPermission === 'default' && (t('notifications.statusDefaultDesc') || 'Enable to receive task assignments and messages')}
+                  </p>
+                </div>
+              </div>
+              
+              {notificationPermission !== 'granted' && (
+                <Button 
+                  variant={notificationPermission === 'denied' ? 'outline' : 'theme'}
+                  onClick={handleEnableNotifications}
+                  disabled={notificationPermission === 'denied'}
+                >
+                  <Bell className="h-4 w-4 mr-2" />
+                  {notificationPermission === 'denied' 
+                    ? (t('notifications.blockedInBrowser') || 'Blocked in Browser') 
+                    : (t('notifications.enable') || 'Enable Notifications')
+                  }
+                </Button>
+              )}
+            </div>
           </CardContent>
         </Card>
 
