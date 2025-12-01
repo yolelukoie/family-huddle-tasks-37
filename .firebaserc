@@ -1,5 +1,15 @@
 {
   "projects": {
     "default": "family-huddle-2062"
-  }
+  },
+  "targets": {
+    "family-huddle-2062": {
+      "hosting": {
+        "family-huddle-2062": [
+          "family-huddle-2062"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }
