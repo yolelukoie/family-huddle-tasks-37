@@ -203,7 +203,21 @@
     "resetCharacter": "重置角色",
     "resetCharacterDesc": "这将仅重置此家庭的角色进度。你所有的徽章和星星将被清除。",
     "characterReset": "角色已重置",
-    "characterResetDesc": "你的角色进度已成功重置。"
+    "characterResetDesc": "你的角色进度已成功重置。",
+    "notifications": "通知",
+    "pushNotifications": "推送通知",
+    "notificationsEnabled": "已启用",
+    "notificationsBlocked": "已阻止 - 在浏览器设置中启用",
+    "notificationsNotEnabled": "尚未启用",
+    "notificationsActive": "活跃"
+  },
+  "notifications": {
+    "enableTitle": "启用推送通知",
+    "enableDesc": "当家庭成员分配任务或发送消息时接收通知",
+    "enable": "启用",
+    "later": "稍后再说",
+    "enabled": "通知已成功启用",
+    "enableFailed": "无法启用通知"
   },
   "common": {
     "loading": "加载中...",

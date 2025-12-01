@@ -35,13 +35,14 @@ export async function ensureMessaging(): Promise<Messaging | null> {
 }
 
 /** Ask permission, get FCM token, upsert into Supabase */
-export async function requestAndSaveFcmToken(userId: string) {
+export async function requestAndSaveFcmToken(userId: string): Promise<{ success: boolean; error?: string }> {
   console.log('[FCM] Starting token registration for user:', userId);
   
   const m = await ensureMessaging();
   if (!m) {
-    console.warn('[FCM] ❌ Messaging not supported in this browser');
-    return;
+    const error = 'Push notifications are not supported in this browser';
+    console.warn('[FCM] ❌', error);
+    return { success: false, error };
   }
 
   // 1) Check current permission state
@@ -55,40 +56,57 @@ export async function requestAndSaveFcmToken(userId: string) {
       permission = await Notification.requestPermission();
       console.log('[FCM] Permission result:', permission);
     } catch (e) {
-      // Safari <16 fallback
-      console.warn('[FCM] requestPermission() not available, using Notification.permission', e);
-      permission = Notification.permission;
+      console.error('[FCM] ❌ Permission request error:', e);
+      return { success: false, error: 'Failed to request notification permission' };
     }
   }
 
   if (permission !== 'granted') {
-    console.log('[FCM] ❌ Notifications permission not granted:', permission);
-    return;
+    const error = permission === 'denied' 
+      ? 'Notifications are blocked. Please enable them in your browser settings.'
+      : 'Notification permission was not granted';
+    console.log('[FCM] ❌', error);
+    return { success: false, error };
   }
   console.log('[FCM] ✓ Permission granted');
 
-  // 2) token
+  // 2) Wait for service worker to be ready
+  console.log('[FCM] Waiting for service worker...');
+  let swReg;
+  try {
+    swReg = await Promise.race([
+      navigator.serviceWorker.ready,
+      new Promise<never>((_, reject) => 
+        setTimeout(() => reject(new Error('Service worker timeout')), 10000)
+      )
+    ]);
+    console.log('[FCM] Service Worker ready, scope:', swReg.scope);
+  } catch (e) {
+    console.error('[FCM] ❌ Service worker error:', e);
+    return { success: false, error: 'Service worker not ready. Please refresh the page.' };
+  }
+
+  // 3) Get FCM token
   console.log('[FCM] Getting FCM token...');
   let token: string | null = null;
   try {
-    const swReg = await navigator.serviceWorker.ready;
-    console.log('[FCM] Service Worker ready, scope:', swReg.scope);
-    
     token = await getToken(m, {
       vapidKey: VAPID_PUBLIC_KEY,
       serviceWorkerRegistration: swReg,
     });
     console.log('[FCM] ✓ Token received:', token ? `${token.slice(0, 10)}...` : 'null');
-  } catch (e) {
+  } catch (e: any) {
     console.error('[FCM] ❌ getToken failed:', e);
-    return;
+    const errorMsg = e?.message || 'Failed to get notification token';
+    return { success: false, error: errorMsg };
   }
+  
   if (!token) {
     console.warn('[FCM] ❌ No token returned from getToken()');
-    return;
+    return { success: false, error: 'Failed to generate notification token' };
   }
 
-  // 3) upsert to Supabase
+  // 4) upsert to Supabase
   console.log('[FCM] Upserting token to Supabase...', { userId, tokenPreview: token.slice(0, 10) + '...' });
   
   const { error } = await supabase
@@ -100,9 +118,11 @@ export async function requestAndSaveFcmToken(userId: string) {
 
   if (error) {
     console.error('[FCM] ❌ upsert token failed:', error);
-  } else {
-    console.log('[FCM] ✓ Token saved successfully to user_fcm_tokens');
+    return { success: false, error: 'Failed to save notification token' };
   }
+  
+  console.log('[FCM] ✓ Token saved successfully to user_fcm_tokens');
+  return { success: true };
 }
 
 /** Foreground message hook (optional): call once to handle toasts, etc. */

@@ -203,7 +203,21 @@
     "resetCharacter": "Restablecer Personaje",
     "resetCharacterDesc": "Esto restablecerá el progreso de tu personaje solo para esta familia. Todas tus insignias y estrellas se borrarán.",
     "characterReset": "Personaje restablecido",
-    "characterResetDesc": "El progreso de tu personaje se ha restablecido exitosamente."
+    "characterResetDesc": "El progreso de tu personaje se ha restablecido exitosamente.",
+    "notifications": "Notificaciones",
+    "pushNotifications": "Notificaciones Push",
+    "notificationsEnabled": "Habilitadas",
+    "notificationsBlocked": "Bloqueadas - Habilitar en la configuración del navegador",
+    "notificationsNotEnabled": "Aún no habilitadas",
+    "notificationsActive": "Activas"
+  },
+  "notifications": {
+    "enableTitle": "Habilitar Notificaciones Push",
+    "enableDesc": "Recibe notificaciones cuando los miembros de la familia asignan tareas o envían mensajes",
+    "enable": "Habilitar",
+    "later": "Tal vez más tarde",
+    "enabled": "Notificaciones habilitadas con éxito",
+    "enableFailed": "No se pudieron habilitar las notificaciones"
   },
   "common": {
     "loading": "Cargando...",

@@ -194,27 +194,21 @@ export default function PersonalPage() {
   };
 
   const handleEnableNotifications = async () => {
-    try {
-      await requestAndSaveFcmToken(user.id);
+    if (!user?.id) return;
+    
+    const { success, error } = await requestAndSaveFcmToken(user.id);
+    
+    if (success) {
       setNotificationPermission(Notification.permission);
-      
-      if (Notification.permission === 'granted') {
-        toast({
-          title: t('notifications.enabled') || 'Notifications Enabled',
-          description: t('notifications.enabledDesc') || 'You will now receive push notifications',
-        });
-      } else if (Notification.permission === 'denied') {
-        toast({
-          title: t('notifications.denied') || 'Permission Denied',
-          description: t('notifications.deniedDesc') || 'Please enable notifications in your browser settings',
-          variant: 'destructive',
-        });
-      }
-    } catch (error) {
-      console.error('Error enabling notifications:', error);
       toast({
-        title: t('notifications.error') || 'Error',
-        description: t('notifications.errorDesc') || 'Failed to enable notifications',
+        title: t('notifications.enabled'),
+        description: t('notifications.enabledDesc'),
+      });
+    } else {
+      setNotificationPermission(Notification.permission);
+      toast({
+        title: t('notifications.error'),
+        description: error || t('notifications.errorDesc'),
         variant: 'destructive',
       });
     }

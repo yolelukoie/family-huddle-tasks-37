@@ -203,7 +203,21 @@
     "resetCharacter": "אפס דמות",
     "resetCharacterDesc": "זה יאפס את ההתקדמות של הדמות שלך רק עבור משפחה זו. כל התגים והכוכבים שלך יימחקו.",
     "characterReset": "הדמות אופסה",
-    "characterResetDesc": "ההתקדמות של הדמות שלך אופסה בהצלחה."
+    "characterResetDesc": "ההתקדמות של הדמות שלך אופסה בהצלחה.",
+    "notifications": "התראות",
+    "pushNotifications": "התראות דחיפה",
+    "notificationsEnabled": "מופעל",
+    "notificationsBlocked": "חסום - הפעל בהגדרות הדפדפן",
+    "notificationsNotEnabled": "עדיין לא הופעל",
+    "notificationsActive": "פעיל"
+  },
+  "notifications": {
+    "enableTitle": "הפעל התראות דחיפה",
+    "enableDesc": "קבל התראות כאשר בני משפחה מקצים משימות או שולחים הודעות",
+    "enable": "הפעל",
+    "later": "אולי מאוחר יותר",
+    "enabled": "התראות הופעלו בהצלחה",
+    "enableFailed": "נכשל בהפעלת התראות"
   },
   "common": {
     "loading": "טוען...",
