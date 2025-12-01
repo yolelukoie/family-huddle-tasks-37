@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { requestAndSaveFcmToken } from '@/lib/fcm';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 
 export function NotificationPrompt() {
   const { user } = useAuth();
@@ -28,8 +29,13 @@ export function NotificationPrompt() {
 
   const handleEnable = async () => {
     if (!user?.id) return;
-    await requestAndSaveFcmToken(user.id);
-    setShow(false);
+    const { success, error } = await requestAndSaveFcmToken(user.id);
+    if (success) {
+      setShow(false);
+      toast.success(t('notifications.enabled') || 'Notifications enabled successfully');
+    } else {
+      toast.error(error || t('notifications.enableFailed') || 'Failed to enable notifications');
+    }
   };
 
   const handleDismiss = () => {

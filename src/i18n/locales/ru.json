@@ -203,7 +203,21 @@
     "resetCharacter": "Сбросить персонажа",
     "resetCharacterDesc": "Это сбросит прогресс вашего персонажа только для этой семьи. Все ваши значки и звезды будут удалены.",
     "characterReset": "Персонаж сброшен",
-    "characterResetDesc": "Прогресс вашего персонажа успешно сброшен."
+    "characterResetDesc": "Прогресс вашего персонажа успешно сброшен.",
+    "notifications": "Уведомления",
+    "pushNotifications": "Push-уведомления",
+    "notificationsEnabled": "Включено",
+    "notificationsBlocked": "Заблокировано - Включите в настройках браузера",
+    "notificationsNotEnabled": "Еще не включено",
+    "notificationsActive": "Активно"
+  },
+  "notifications": {
+    "enableTitle": "Включить Push-уведомления",
+    "enableDesc": "Получайте уведомления, когда члены семьи назначают задачи или отправляют сообщения",
+    "enable": "Включить",
+    "later": "Может быть позже",
+    "enabled": "Уведомления успешно включены",
+    "enableFailed": "Не удалось включить уведомления"
   },
   "common": {
     "loading": "Загрузка...",

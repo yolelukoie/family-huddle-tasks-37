@@ -203,7 +203,21 @@
     "resetCharacter": "चरित्र रीसेट करें",
     "resetCharacterDesc": "यह केवल इस परिवार के लिए आपके चरित्र की प्रगति को रीसेट करेगा। आपके सभी बैज और सितारे साफ हो जाएंगे।",
     "characterReset": "चरित्र रीसेट हो गया",
-    "characterResetDesc": "आपके चरित्र की प्रगति सफलतापूर्वक रीसेट हो गई है।"
+    "characterResetDesc": "आपके चरित्र की प्रगति सफलतापूर्वक रीसेट हो गई है।",
+    "notifications": "सूचनाएं",
+    "pushNotifications": "पुश सूचनाएं",
+    "notificationsEnabled": "सक्षम",
+    "notificationsBlocked": "अवरुद्ध - ब्राउज़र सेटिंग्स में सक्षम करें",
+    "notificationsNotEnabled": "अभी सक्षम नहीं",
+    "notificationsActive": "सक्रिय"
+  },
+  "notifications": {
+    "enableTitle": "पुश सूचनाएं सक्षम करें",
+    "enableDesc": "परिवार के सदस्य कार्य असाइन करते हैं या संदेश भेजते हैं तो सूचना प्राप्त करें",
+    "enable": "सक्षम करें",
+    "later": "शायद बाद में",
+    "enabled": "सूचनाएं सफलतापूर्वक सक्षम हो गईं",
+    "enableFailed": "सूचनाएं सक्षम करने में विफल"
   },
   "common": {
     "loading": "लोड हो रहा है...",
