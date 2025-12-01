@@ -36,6 +36,7 @@ export default function PersonalPage() {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState<string>('en');
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
+  const [isEnablingNotifications, setIsEnablingNotifications] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Check notification permission status
@@ -196,7 +197,11 @@ export default function PersonalPage() {
   const handleEnableNotifications = async () => {
     if (!user?.id) return;
     
+    setIsEnablingNotifications(true);
+    
     const { success, error } = await requestAndSaveFcmToken(user.id);
+    
+    setIsEnablingNotifications(false);
     
     if (success) {
       setNotificationPermission(Notification.permission);
@@ -381,13 +386,22 @@ export default function PersonalPage() {
                 <Button 
                   variant={notificationPermission === 'denied' ? 'outline' : 'theme'}
                   onClick={handleEnableNotifications}
-                  disabled={notificationPermission === 'denied'}
+                  disabled={notificationPermission === 'denied' || isEnablingNotifications}
                 >
-                  <Bell className="h-4 w-4 mr-2" />
-                  {notificationPermission === 'denied' 
-                    ? (t('notifications.blockedInBrowser') || 'Blocked in Browser') 
-                    : (t('notifications.enable') || 'Enable Notifications')
-                  }
+                  {isEnablingNotifications ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      {t('notifications.enabling') || 'Enabling...'}
+                    </>
+                  ) : (
+                    <>
+                      <Bell className="h-4 w-4 mr-2" />
+                      {notificationPermission === 'denied' 
+                        ? (t('notifications.blockedInBrowser') || 'Blocked in Browser') 
+                        : (t('notifications.enable') || 'Enable Notifications')
+                      }
+                    </>
+                  )}
                 </Button>
               )}
             </div>

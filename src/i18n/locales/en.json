@@ -223,7 +223,10 @@
     "statusEnabledDesc": "You will receive task and message notifications",
     "statusDeniedDesc": "Enable notifications in your browser settings to receive updates",
     "statusDefaultDesc": "Enable to receive task assignments and messages",
-    "blockedInBrowser": "Blocked in Browser"
+    "blockedInBrowser": "Blocked in Browser",
+    "enabling": "Enabling...",
+    "iosInstallRequired": "To enable notifications on iPhone, first install this app to your home screen",
+    "iosInstallSteps": "Tap Share → Add to Home Screen"
   },
   "assignTask": {
     "title": "Assign a Task",

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Bell, X } from 'lucide-react';
+import { Bell, X, Loader2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { requestAndSaveFcmToken } from '@/lib/fcm';
@@ -12,6 +12,7 @@ export function NotificationPrompt() {
   const { t } = useTranslation();
   const [show, setShow] = useState(false);
   const [dismissed, setDismissed] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     // Check if we should show the prompt
@@ -29,7 +30,12 @@ export function NotificationPrompt() {
 
   const handleEnable = async () => {
     if (!user?.id) return;
+    setIsLoading(true);
+    
     const { success, error } = await requestAndSaveFcmToken(user.id);
+    
+    setIsLoading(false);
+    
     if (success) {
       setShow(false);
       toast.success(t('notifications.enabled') || 'Notifications enabled successfully');
@@ -60,11 +66,20 @@ export function NotificationPrompt() {
               {t('notifications.enableDesc') || 'Get notified when family members assign tasks or send messages'}
             </p>
             <div className="flex gap-2">
-              <Button size="sm" variant="theme" onClick={handleEnable}>
-                <Bell className="h-3 w-3 mr-1" />
-                {t('notifications.enable') || 'Enable'}
+              <Button size="sm" variant="theme" onClick={handleEnable} disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                    {t('notifications.enabling') || 'Enabling...'}
+                  </>
+                ) : (
+                  <>
+                    <Bell className="h-3 w-3 mr-1" />
+                    {t('notifications.enable') || 'Enable'}
+                  </>
+                )}
               </Button>
-              <Button size="sm" variant="ghost" onClick={handleDismiss}>
+              <Button size="sm" variant="ghost" onClick={handleDismiss} disabled={isLoading}>
                 {t('notifications.later') || 'Maybe Later'}
               </Button>
             </div>

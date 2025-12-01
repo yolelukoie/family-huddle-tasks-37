@@ -227,7 +227,10 @@
     "statusEnabledDesc": "Recibirás notificaciones de tareas y mensajes",
     "statusDeniedDesc": "Habilita las notificaciones en la configuración de tu navegador para recibir actualizaciones",
     "statusDefaultDesc": "Habilita para recibir asignaciones de tareas y mensajes",
-    "blockedInBrowser": "Bloqueado en el Navegador"
+    "blockedInBrowser": "Bloqueado en el Navegador",
+    "enabling": "Habilitando...",
+    "iosInstallRequired": "Para habilitar notificaciones en iPhone, primero instala esta aplicación en tu pantalla de inicio",
+    "iosInstallSteps": "Toca Compartir → Añadir a pantalla de inicio"
   },
   "assignTask": {
     "title": "Asignar una Tarea",
