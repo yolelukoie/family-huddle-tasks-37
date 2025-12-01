@@ -264,8 +264,8 @@ export default function MainPage() {
             </div>
 
             {/* Active Goal - OUTSIDE draggable area */}
-            {activeGoal && <div className="p-3 bg-gradient-to-br from-[hsl(var(--family-success))]/10 to-[hsl(var(--family-success))]/5 rounded-lg border border-[hsl(var(--family-success))]/20">
-                <div className="text-sm font-medium text-[hsl(var(--family-success))]">{t('main.activeGoal')}</div>
+            {activeGoal && <div className="p-3 bg-gradient-to-br from-[hsl(var(--gradient-start))]/20 to-[hsl(var(--gradient-end))]/10 rounded-lg border border-[hsl(var(--card-accent))]/30">
+                <div className="text-sm font-medium text-[hsl(var(--icon-tint))]">{t('main.activeGoal')}</div>
                 <div className="text-sm">{activeGoal.current_stars}/{activeGoal.target_stars} {t('main.stars')}</div>
                 <Progress value={activeGoal.current_stars / activeGoal.target_stars * 100} className="h-2 mt-1" />
                 {activeGoal.reward && <div className="text-xs text-muted-foreground mt-1">{t('main.reward')}: {activeGoal.reward}</div>}
