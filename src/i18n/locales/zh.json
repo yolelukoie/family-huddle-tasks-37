@@ -212,12 +212,22 @@
     "notificationsActive": "活跃"
   },
   "notifications": {
+    "title": "通知",
     "enableTitle": "启用推送通知",
     "enableDesc": "当家庭成员分配任务或发送消息时接收通知",
-    "enable": "启用",
+    "enable": "启用通知",
     "later": "稍后再说",
-    "enabled": "通知已成功启用",
-    "enableFailed": "无法启用通知"
+    "enabled": "通知已启用",
+    "enabledDesc": "您将收到推送通知",
+    "error": "启用通知失败",
+    "errorDesc": "请检查您的浏览器设置",
+    "statusEnabled": "推送通知已启用",
+    "statusDenied": "推送通知已被阻止",
+    "statusDefault": "推送通知未启用",
+    "statusEnabledDesc": "您将收到任务和消息通知",
+    "statusDeniedDesc": "在浏览器设置中启用通知以接收更新",
+    "statusDefaultDesc": "启用以接收任务分配和消息",
+    "blockedInBrowser": "已在浏览器中阻止"
   },
   "common": {
     "loading": "加载中...",

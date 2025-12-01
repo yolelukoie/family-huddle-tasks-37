@@ -212,12 +212,22 @@
     "notificationsActive": "פעיל"
   },
   "notifications": {
+    "title": "התראות",
     "enableTitle": "הפעל התראות דחיפה",
     "enableDesc": "קבל התראות כאשר בני משפחה מקצים משימות או שולחים הודעות",
-    "enable": "הפעל",
+    "enable": "הפעל התראות",
     "later": "אולי מאוחר יותר",
-    "enabled": "התראות הופעלו בהצלחה",
-    "enableFailed": "נכשל בהפעלת התראות"
+    "enabled": "התראות מופעלות",
+    "enabledDesc": "תקבל התראות דחיפה",
+    "error": "נכשל להפעיל התראות",
+    "errorDesc": "אנא בדוק את הגדרות הדפדפן שלך",
+    "statusEnabled": "התראות דחיפה מופעלות",
+    "statusDenied": "התראות דחיפה חסומות",
+    "statusDefault": "התראות דחיפה לא מופעלות",
+    "statusEnabledDesc": "תקבל התראות על משימות והודעות",
+    "statusDeniedDesc": "הפעל התראות בהגדרות הדפדפן שלך כדי לקבל עדכונים",
+    "statusDefaultDesc": "הפעל כדי לקבל הקצאות משימות והודעות",
+    "blockedInBrowser": "חסום בדפדפן"
   },
   "common": {
     "loading": "טוען...",
