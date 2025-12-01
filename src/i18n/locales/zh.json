@@ -229,6 +229,19 @@
     "statusDefaultDesc": "启用以接收任务分配和消息",
     "blockedInBrowser": "已在浏览器中阻止"
   },
+  "assignTask": {
+    "title": "分配任务",
+    "description": "创建并分配新任务给家庭成员",
+    "assignTo": "分配给",
+    "selectPerson": "选择人员",
+    "myself": "自己",
+    "member": "成员",
+    "dueDate": "截止日期",
+    "stars": "星星 (0-20)",
+    "assignTask": "分配任务",
+    "taskAssigned": "任务已分配！",
+    "taskAssignedDesc": "\"{{taskName}}\" 已成功分配。"
+  },
   "common": {
     "loading": "加载中...",
     "save": "保存",

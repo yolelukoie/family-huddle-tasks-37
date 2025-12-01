@@ -1,6 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useTranslation } from "react-i18next";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -30,6 +31,7 @@ interface AssignTaskModalProps {
 }
 
 export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTaskModalProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { activeFamilyId, getFamilyMembers, getUserProfile } = useApp();
   const { toast } = useToast();
@@ -127,8 +129,8 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
 
     if (result) {
       toast({
-        title: "Task assigned!",
-        description: `"${data.name}" has been assigned successfully.`,
+        title: t("assignTask.taskAssigned"),
+        description: t("assignTask.taskAssignedDesc", { taskName: data.name }),
       });
 
       form.reset();
@@ -141,8 +143,8 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Assign a Task</DialogTitle>
-          <DialogDescription>Create and assign a new task to a family member</DialogDescription>
+          <DialogTitle>{t("assignTask.title")}</DialogTitle>
+          <DialogDescription>{t("assignTask.description")}</DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
@@ -152,9 +154,9 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Task Name</FormLabel>
+                  <FormLabel>{t("tasks.taskName")}</FormLabel>
                   <FormControl>
-                    <Input placeholder="What needs to be done?" {...field} />
+                    <Input placeholder={t("tasks.taskNamePlaceholder")} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -166,9 +168,9 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description (Optional)</FormLabel>
+                  <FormLabel>{t("tasks.description")}</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Additional details about the task..." rows={2} {...field} />
+                    <Textarea placeholder={t("tasks.descriptionPlaceholder")} rows={2} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -181,18 +183,18 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
                 name="assignedTo"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Assign To</FormLabel>
+                    <FormLabel>{t("assignTask.assignTo")}</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select person" />
+                          <SelectValue placeholder={t("assignTask.selectPerson")} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value={user.id}>{getUserProfile(user.id)?.displayName ?? "Myself"}</SelectItem>
+                        <SelectItem value={user.id}>{getUserProfile(user.id)?.displayName ?? t("assignTask.myself")}</SelectItem>
                         {otherMembers.map((m) => {
                           const p = getUserProfile(m.userId);
-                          const label = p?.displayName ?? `Member ${m.userId.slice(-4)}`;
+                          const label = p?.displayName ?? `${t("assignTask.member")} ${m.userId.slice(-4)}`;
                           return (
                             <SelectItem key={m.userId} value={m.userId}>
                               {label}
@@ -211,7 +213,7 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
                 name="dueDate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Due Date</FormLabel>
+                    <FormLabel>{t("assignTask.dueDate")}</FormLabel>
                     <FormControl>
                       <Input type="date" {...field} />
                     </FormControl>
@@ -227,12 +229,12 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
                 name="starValue"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Stars (0-20)</FormLabel>
+                    <FormLabel>{t("assignTask.stars")}</FormLabel>
                     <FormControl>
                       <Input type="number" min="0" max="20" disabled={!canEditStars} {...field} />
                     </FormControl>
                     {!canEditStars && (
-                      <p className="text-xs text-muted-foreground">Only 18+ users can edit star values</p>
+                      <p className="text-xs text-muted-foreground">{t("tasks.starValueRestriction")}</p>
                     )}
                     <FormMessage />
                   </FormItem>
@@ -242,10 +244,10 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
 
             <div className="flex gap-2">
               <Button type="submit" className="flex-1 bg-family-warm hover:bg-family-warm/90">
-                Assign Task
+                {t("assignTask.assignTask")}
               </Button>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("common.cancel")}
               </Button>
             </div>
           </form>

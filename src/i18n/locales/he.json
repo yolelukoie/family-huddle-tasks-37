@@ -229,6 +229,19 @@
     "statusDefaultDesc": "הפעל כדי לקבל הקצאות משימות והודעות",
     "blockedInBrowser": "חסום בדפדפן"
   },
+  "assignTask": {
+    "title": "הקצה משימה",
+    "description": "צור והקצה משימה חדשה לבן משפחה",
+    "assignTo": "הקצה ל",
+    "selectPerson": "בחר אדם",
+    "myself": "לעצמי",
+    "member": "חבר",
+    "dueDate": "תאריך יעד",
+    "stars": "כוכבים (0-20)",
+    "assignTask": "הקצה משימה",
+    "taskAssigned": "המשימה הוקצתה!",
+    "taskAssignedDesc": "\"{{taskName}}\" הוקצתה בהצלחה."
+  },
   "common": {
     "loading": "טוען...",
     "save": "שמור",
