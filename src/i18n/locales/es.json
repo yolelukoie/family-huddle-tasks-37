@@ -229,6 +229,19 @@
     "statusDefaultDesc": "Habilita para recibir asignaciones de tareas y mensajes",
     "blockedInBrowser": "Bloqueado en el Navegador"
   },
+  "assignTask": {
+    "title": "Asignar una Tarea",
+    "description": "Crear y asignar una nueva tarea a un miembro de la familia",
+    "assignTo": "Asignar a",
+    "selectPerson": "Seleccionar persona",
+    "myself": "A mí mismo",
+    "member": "Miembro",
+    "dueDate": "Fecha de Vencimiento",
+    "stars": "Estrellas (0-20)",
+    "assignTask": "Asignar Tarea",
+    "taskAssigned": "¡Tarea asignada!",
+    "taskAssignedDesc": "\"{{taskName}}\" se ha asignado exitosamente."
+  },
   "common": {
     "loading": "Cargando...",
     "save": "Guardar",
