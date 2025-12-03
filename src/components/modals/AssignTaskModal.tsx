@@ -108,16 +108,16 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
 
           // 🔔 push notify — keep it in the same scope so variables exist
           try {
-            await supabase.functions.invoke("push-notify", {
+            await supabase.functions.invoke("send-push", {
               body: {
                 recipientId: assignedToVal,
                 title: "New task assigned",
-                body: `${(user as any)?.displayName ?? "Someone"} assigned “${createdName}” to you`,
+                body: `${(user as any)?.displayName ?? "Someone"} assigned "${createdName}" to you`,
                 data: { type: "assigned", taskId: createdId },
               },
             });
           } catch (pushErr) {
-            console.error("[push-notify] invoke failed:", pushErr);
+            console.error("[send-push] invoke failed:", pushErr);
           }
         }
       }
