@@ -12,7 +12,6 @@ import { useGoals } from '@/hooks/useGoals';
 import { useCelebrations } from '@/hooks/useCelebrations';
 import { useTasks } from '@/hooks/useTasks';
 import { NavigationHeader } from '@/components/layout/NavigationHeader';
-import { NotificationPrompt } from '@/components/notifications/NotificationPrompt';
 import { DraggableBadgeDisplay } from '@/components/badges/DraggableBadgeDisplay';
 import { BadgeCelebration } from '@/components/badges/BadgeCelebration';
 import { GoalCelebration } from '@/components/celebrations/GoalCelebration';
@@ -193,9 +192,6 @@ export default function MainPage() {
       <NavigationHeader title={currentFamily?.name || t('main.title')} showBackButton={false} />
       
       <div className="max-w-4xl mx-auto p-4 space-y-6">
-        {/* Notification Prompt */}
-        <NotificationPrompt />
-        
         {/* Greeting */}
         <div className="text-center">
           <h1 className="text-3xl font-bold bg-gradient-to-r from-[hsl(var(--icon-tint))] to-[hsl(var(--family-celebration))] bg-clip-text text-transparent mb-2">
