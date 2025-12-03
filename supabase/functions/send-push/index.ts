@@ -1,7 +1,9 @@
 // deno-lint-ignore-file no-explicit-any
-// Supabase Edge Function (Deno) to send FCM v1 notifications without Firebase Blaze plan.
+// Supabase Edge Function (Deno) to send FCM v1 notifications.
+// Accepts either a direct FCM token OR a recipientId to look up the token.
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 // Build a Google OAuth2 access token using a service account JSON
 async function getAccessToken(saJson: any): Promise<string> {
@@ -23,7 +25,6 @@ async function getAccessToken(saJson: any): Promise<string> {
 
   const key = await crypto.subtle.importKey(
     "pkcs8",
-    // Convert PEM private key to ArrayBuffer
     (() => {
       const pem = saJson.private_key as string;
       const raw = pem.replace("-----BEGIN PRIVATE KEY-----", "")
@@ -57,7 +58,7 @@ async function getAccessToken(saJson: any): Promise<string> {
   if (!resp.ok) {
     const txt = await resp.text();
     throw new Error(`OAuth token error: ${resp.status} ${txt}`);
-    }
+  }
 
   const json = await resp.json();
   return json.access_token as string;
@@ -65,7 +66,7 @@ async function getAccessToken(saJson: any): Promise<string> {
 
 function cors(req: Request, resHeaders = new Headers()) {
   resHeaders.set("Access-Control-Allow-Origin", "*");
-  resHeaders.set("Access-Control-Allow-Headers", "content-type, x-push-secret");
+  resHeaders.set("Access-Control-Allow-Headers", "authorization, x-client-info, apikey, content-type, x-push-secret");
   resHeaders.set("Access-Control-Allow-Methods", "POST, OPTIONS");
   if (req.method === "OPTIONS") {
     return new Response("", { status: 204, headers: resHeaders });
@@ -89,20 +90,70 @@ serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}));
-    const { token, title, body: text, data, image } = body || {};
-    if (!token || !title || !text) {
-      return new Response(JSON.stringify({ error: "token, title, body are required" }), {
+    const { token, recipientId, title, body: text, data, image } = body || {};
+    
+    console.log("[send-push] Request received:", { recipientId, title, hasToken: !!token });
+
+    if (!title || !text) {
+      console.error("[send-push] Missing title or body");
+      return new Response(JSON.stringify({ error: "title and body are required" }), {
         status: 400, headers: h,
       });
+    }
+
+    // Either token or recipientId must be provided
+    if (!token && !recipientId) {
+      console.error("[send-push] Missing token and recipientId");
+      return new Response(JSON.stringify({ error: "token or recipientId is required" }), {
+        status: 400, headers: h,
+      });
+    }
+
+    let fcmToken = token;
+
+    // If recipientId provided, look up FCM token from database
+    if (!fcmToken && recipientId) {
+      console.log("[send-push] Looking up FCM token for user:", recipientId);
+      
+      const supabaseUrl = Deno.env.get("SUPABASE_URL");
+      const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      
+      if (!supabaseUrl || !serviceRoleKey) {
+        console.error("[send-push] Missing Supabase config");
+        return new Response(JSON.stringify({ error: "Server config missing" }), { status: 500, headers: h });
+      }
+
+      const supabase = createClient(supabaseUrl, serviceRoleKey);
+      
+      // Get the most recently updated token for this user
+      const { data: tokenData, error: tokenError } = await supabase
+        .from("user_fcm_tokens")
+        .select("token")
+        .eq("user_id", recipientId)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (tokenError || !tokenData?.token) {
+        console.log("[send-push] No FCM token found for user:", recipientId, tokenError?.message);
+        return new Response(JSON.stringify({ ok: false, reason: "no_token", message: "User has no FCM token registered" }), {
+          status: 200, headers: h, // Return 200 so client doesn't retry
+        });
+      }
+
+      fcmToken = tokenData.token;
+      console.log("[send-push] Found FCM token for user");
     }
 
     const saJsonRaw = Deno.env.get("FCM_SA_JSON");
     const projectId = Deno.env.get("FCM_PROJECT_ID");
     if (!saJsonRaw || !projectId) {
+      console.error("[send-push] Missing FCM config (FCM_SA_JSON or FCM_PROJECT_ID)");
       return new Response(JSON.stringify({ error: "FCM config missing" }), { status: 500, headers: h });
     }
     const saJson = JSON.parse(saJsonRaw);
 
+    console.log("[send-push] Getting access token...");
     const accessToken = await getAccessToken(saJson);
 
     // FCM v1 endpoint
@@ -110,7 +161,7 @@ serve(async (req) => {
 
     const payload = {
       message: {
-        token,
+        token: fcmToken,
         notification: { title, body: text, image },
         data: data
           ? Object.fromEntries(
@@ -122,6 +173,7 @@ serve(async (req) => {
       },
     };
 
+    console.log("[send-push] Sending to FCM...");
     const resp = await fetch(url, {
       method: "POST",
       headers: {
@@ -132,15 +184,21 @@ serve(async (req) => {
     });
 
     const out = await resp.text();
+    console.log("[send-push] FCM response:", resp.status, out);
+    
     if (!resp.ok) {
+      // Check if token is invalid/expired
+      if (out.includes("UNREGISTERED") || out.includes("INVALID_ARGUMENT")) {
+        console.log("[send-push] Token invalid, should be cleaned up");
+      }
       return new Response(JSON.stringify({ ok: false, status: resp.status, error: out }), {
         status: 500, headers: h,
       });
     }
 
-    return new Response(out, { status: 200, headers: h });
+    return new Response(JSON.stringify({ ok: true, response: out }), { status: 200, headers: h });
   } catch (e) {
-    console.error("send-push error:", e);
+    console.error("[send-push] error:", e);
     return new Response(JSON.stringify({ error: String(e?.message || e) }), { status: 500, headers: h });
   }
 });

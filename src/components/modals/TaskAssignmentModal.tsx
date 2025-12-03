@@ -72,15 +72,15 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
 
       if (!evErr) {
         await supabase.functions
-          .invoke("push-notify", {
+          .invoke("send-push", {
             body: {
               recipientId: task.assignedBy, // notify assigner
               title: "Task accepted",
-              body: `${(user as any)?.displayName ?? "Someone"} accepted “${task.name}”`,
+              body: `${(user as any)?.displayName ?? "Someone"} accepted "${task.name}"`,
               data: { type: "accepted", taskId: task.id },
             },
           })
-          .catch((e) => console.error("[push-notify] invoke failed:", e));
+          .catch((e) => console.error("[send-push] invoke failed:", e));
       }
 
       toast({
@@ -125,15 +125,15 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
 
       if (!evErr) {
         await supabase.functions
-          .invoke("push-notify", {
+          .invoke("send-push", {
             body: {
               recipientId: task.assignedBy, // notify assigner
               title: "Task rejected",
-              body: `${(user as any)?.displayName ?? "Someone"} rejected “${task.name}”`,
+              body: `${(user as any)?.displayName ?? "Someone"} rejected "${task.name}"`,
               data: { type: "rejected", taskId: task.id },
             },
           })
-          .catch((e) => console.error("[push-notify] invoke failed:", e));
+          .catch((e) => console.error("[send-push] invoke failed:", e));
       }
 
       toast({
