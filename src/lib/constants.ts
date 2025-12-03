@@ -8,6 +8,8 @@ export const ROUTES = {
   chat: '/chat',
   family: '/family',
   personal: '/personal',
+  privacy: '/privacy',
+  terms: '/terms',
 } as const;
 
 export const CHARACTER_STAGES: CharacterStage[] = [
