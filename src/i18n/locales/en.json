@@ -203,7 +203,15 @@
     "resetCharacter": "Reset Character",
     "resetCharacterDesc": "This will reset your character progress for this family only. All your badges and stars will be cleared.",
     "characterReset": "Character reset",
-    "characterResetDesc": "Your character progress has been reset successfully."
+    "characterResetDesc": "Your character progress has been reset successfully.",
+    "customizeCharacter": "Customize Character",
+    "customizeCharacterDesc": "Upload custom images for each character stage. Click the upload button to set a custom image, or reset to use the default.",
+    "customImageUploaded": "Custom image uploaded",
+    "customImageUploadedDesc": "Your custom character image has been saved.",
+    "customImageReset": "Image reset to default",
+    "customImageResetDesc": "The default character image will now be used.",
+    "resetFailed": "Reset failed",
+    "resetFailedDesc": "There was an error resetting the image. Please try again."
   },
   "notifications": {
     "title": "Notifications",

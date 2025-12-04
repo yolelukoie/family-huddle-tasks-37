@@ -204,7 +204,16 @@
     "resetCharacterDesc": "यह केवल इस परिवार के लिए आपके चरित्र की प्रगति को रीसेट करेगा। आपके सभी बैज और सितारे साफ हो जाएंगे।",
     "characterReset": "चरित्र रीसेट हो गया",
     "characterResetDesc": "आपके चरित्र की प्रगति सफलतापूर्वक रीसेट हो गई है।",
-    "notifications": "सूचनाएं",
+    "customizeCharacter": "चरित्र को अनुकूलित करें",
+    "customizeCharacterDesc": "प्रत्येक चरित्र चरण के लिए कस्टम छवियां अपलोड करें। कस्टम छवि सेट करने के लिए अपलोड बटन पर क्लिक करें, या डिफ़ॉल्ट उपयोग करने के लिए रीसेट करें।",
+    "customImageUploaded": "कस्टम छवि अपलोड हो गई",
+    "customImageUploadedDesc": "आपकी कस्टम चरित्र छवि सहेजी गई है।",
+    "customImageReset": "छवि डिफ़ॉल्ट पर रीसेट",
+    "customImageResetDesc": "अब डिफ़ॉल्ट चरित्र छवि का उपयोग किया जाएगा।",
+    "resetFailed": "रीसेट विफल",
+    "resetFailedDesc": "छवि रीसेट करने में एक त्रुटि हुई। कृपया पुनः प्रयास करें।"
+  },
+  "notifications": {
     "pushNotifications": "पुश सूचनाएं",
     "notificationsEnabled": "सक्षम",
     "notificationsBlocked": "अवरुद्ध - ब्राउज़र सेटिंग्स में सक्षम करें",

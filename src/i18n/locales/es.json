@@ -204,7 +204,16 @@
     "resetCharacterDesc": "Esto restablecerá el progreso de tu personaje solo para esta familia. Todas tus insignias y estrellas se borrarán.",
     "characterReset": "Personaje restablecido",
     "characterResetDesc": "El progreso de tu personaje se ha restablecido exitosamente.",
-    "notifications": "Notificaciones",
+    "customizeCharacter": "Personalizar Personaje",
+    "customizeCharacterDesc": "Sube imágenes personalizadas para cada etapa del personaje. Haz clic en el botón de subir para establecer una imagen personalizada, o restablece para usar la predeterminada.",
+    "customImageUploaded": "Imagen personalizada subida",
+    "customImageUploadedDesc": "Tu imagen de personaje personalizada ha sido guardada.",
+    "customImageReset": "Imagen restablecida a predeterminada",
+    "customImageResetDesc": "Ahora se usará la imagen de personaje predeterminada.",
+    "resetFailed": "Error al restablecer",
+    "resetFailedDesc": "Hubo un error al restablecer la imagen. Por favor inténtalo de nuevo."
+  },
+  "notifications": {
     "pushNotifications": "Notificaciones Push",
     "notificationsEnabled": "Habilitadas",
     "notificationsBlocked": "Bloqueadas - Habilitar en la configuración del navegador",

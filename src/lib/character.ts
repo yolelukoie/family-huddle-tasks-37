@@ -44,7 +44,16 @@ export function getStageProgress(totalStars: number): { current: number; target:
   };
 }
 
-export function getCharacterImagePath(gender: 'male' | 'female' | 'other', stage: number): string {
+export function getCharacterImagePath(
+  gender: 'male' | 'female' | 'other', 
+  stage: number,
+  customImageUrl?: string | null
+): string {
+  // If custom image exists, use it
+  if (customImageUrl) {
+    return customImageUrl;
+  }
+  
   // For 'other', default to female images
   const effectiveGender = gender === 'other' ? 'female' : gender;
   

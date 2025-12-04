@@ -13,6 +13,7 @@ import { NavigationHeader } from '@/components/layout/NavigationHeader';
 import { Edit, Settings, Upload, Loader2, Languages, Palette, RotateCcw, Bell, BellOff } from 'lucide-react';
 import { requestAndSaveFcmToken } from '@/lib/fcm';
 import { ThemeSelector } from '@/components/theme/ThemeSelector';
+import { CharacterImageCustomizer } from '@/components/character/CharacterImageCustomizer';
 import { useToast } from '@/hooks/use-toast';
 import { LEMON_CHECKOUT_URL } from '@/config/subscription';
 import { supabase } from '@/integrations/supabase/client';
@@ -343,6 +344,9 @@ export default function PersonalPage() {
             <ThemeSelector />
           </CardContent>
         </Card>
+
+        {/* Character Image Customization */}
+        <CharacterImageCustomizer />
 
         {/* Notifications */}
         <Card>
