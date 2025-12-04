@@ -297,7 +297,10 @@
     "thanksForEfforts": "感谢你的努力，\n现在是时候奖励自己了。",
     "target": "目标",
     "yourReward": "你的奖励",
-    "badgeUnlocked": "徽章已解锁！"
+    "badgeUnlocked": "徽章已解锁！",
+    "amazingJob": "太棒了！",
+    "characterCompleted": "你的角色已经完成了完整的故事。",
+    "newChapter": "现在是庆祝你进步的时候了——也许可以开始一个新角色的新篇章。"
   },
   "goalModal": {
     "createNewGoal": "创建新目标",

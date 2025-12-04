@@ -292,7 +292,10 @@
     "thanksForEfforts": "Thanks for your efforts,\nnow it's time to reward yourself.",
     "target": "Target",
     "yourReward": "Your reward",
-    "badgeUnlocked": "Badge Unlocked!"
+    "badgeUnlocked": "Badge Unlocked!",
+    "amazingJob": "Amazing job!",
+    "characterCompleted": "Your character has completed their full story.",
+    "newChapter": "Now it's time to celebrate your progress — and maybe begin a new chapter with another character."
   },
   "goalModal": {
     "createNewGoal": "Create New Goal",

@@ -297,7 +297,10 @@
     "thanksForEfforts": "תודה על המאמצים שלך,\nעכשיו הגיע הזמן לתגמל את עצמך.",
     "target": "מטרה",
     "yourReward": "הפרס שלך",
-    "badgeUnlocked": "תג נפתח!"
+    "badgeUnlocked": "תג נפתח!",
+    "amazingJob": "עבודה מדהימה!",
+    "characterCompleted": "הדמות שלך השלימה את הסיפור המלא שלה.",
+    "newChapter": "עכשיו הגיע הזמן לחגוג את ההתקדמות שלך — ואולי להתחיל פרק חדש עם דמות אחרת."
   },
   "goalModal": {
     "createNewGoal": "צור מטרה חדשה",
