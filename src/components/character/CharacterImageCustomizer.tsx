@@ -1,17 +1,19 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useCustomCharacterImages } from '@/hooks/useCustomCharacterImages';
 import { useAuth } from '@/hooks/useAuth';
 import { getStageName, getCharacterImagePath } from '@/lib/character';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, RotateCcw, Loader2, ImageIcon } from 'lucide-react';
+import { Upload, RotateCcw, Loader2, ImageIcon, ChevronDown } from 'lucide-react';
 
 export function CharacterImageCustomizer() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { toast } = useToast();
+  const [isOpen, setIsOpen] = useState(false);
   const {
     allStages,
     isLoading,
@@ -94,98 +96,120 @@ export function CharacterImageCustomizer() {
 
   const gender = user.gender as 'male' | 'female' | 'other';
 
+  // Available stage images (Elder/1000 doesn't have images yet, use 800 as fallback)
+  const getStageImagePath = (stage: number) => {
+    const customUrl = getCustomImageUrl(stage);
+    // If stage is 1000 (Elder) and no custom image, fallback to 800
+    const effectiveStage = stage === 1000 ? 800 : stage;
+    return getCharacterImagePath(gender, effectiveStage, customUrl);
+  };
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <ImageIcon className="h-5 w-5" />
-          {t('personal.customizeCharacter')}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm text-muted-foreground mb-4">
-          {t('personal.customizeCharacterDesc')}
-        </p>
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <Card>
+        <CollapsibleTrigger asChild>
+          <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ImageIcon className="h-5 w-5" />
+                {t('personal.customizeCharacter')}
+              </div>
+              <ChevronDown className={`h-5 w-5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+            </CardTitle>
+          </CardHeader>
+        </CollapsibleTrigger>
         
-        {isLoading ? (
-          <div className="flex justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        ) : (
-          <div className="grid grid-cols-3 gap-4">
-            {allStages.map((stageData) => {
-              const customUrl = getCustomImageUrl(stageData.stage);
-              const imagePath = getCharacterImagePath(gender, stageData.stage, customUrl);
-              const hasCustom = hasCustomImage(stageData.stage);
-              const isUploadingThis = isUploading === stageData.stage;
+        <CollapsibleContent>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              {t('personal.customizeCharacterDesc')}
+            </p>
+            
+            {isLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-4">
+                {allStages.map((stageData) => {
+                  const imagePath = getStageImagePath(stageData.stage);
+                  const hasCustom = hasCustomImage(stageData.stage);
+                  const isUploadingThis = isUploading === stageData.stage;
+                  // Elder stage uses fallback image
+                  const isElderFallback = stageData.stage === 1000 && !hasCustom;
 
-              return (
-                <div 
-                  key={stageData.stage} 
-                  className="flex flex-col items-center gap-2 p-2 rounded-lg border border-border bg-card"
-                >
-                  {/* Stage image */}
-                  <div className="relative w-16 h-16">
-                    <img
-                      src={imagePath}
-                      alt={getStageName(stageData.stage)}
-                      className="w-full h-full object-contain rounded-lg"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = getCharacterImagePath(gender, stageData.stage);
-                      }}
-                    />
-                    {hasCustom && (
-                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full border-2 border-background" />
-                    )}
-                    {isUploadingThis && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-background/80 rounded-lg">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Stage name */}
-                  <span className="text-xs font-medium text-center truncate w-full">
-                    {getStageName(stageData.stage)}
-                  </span>
-
-                  {/* Actions */}
-                  <div className="flex gap-1">
-                    <input
-                      ref={(el) => { fileInputRefs.current[stageData.stage] = el; }}
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handleFileChange(stageData.stage, e)}
-                      className="hidden"
-                    />
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-7 w-7"
-                      onClick={() => handleUploadClick(stageData.stage)}
-                      disabled={isUploadingThis}
+                  return (
+                    <div 
+                      key={stageData.stage} 
+                      className="flex flex-col items-center gap-2 p-2 rounded-lg border border-border bg-card"
                     >
-                      <Upload className="h-3 w-3" />
-                    </Button>
-                    {hasCustom && (
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={() => handleResetToDefault(stageData.stage)}
-                        disabled={isUploadingThis}
-                      >
-                        <RotateCcw className="h-3 w-3" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+                      {/* Stage image */}
+                      <div className="relative w-16 h-16">
+                        <img
+                          src={imagePath}
+                          alt={getStageName(stageData.stage)}
+                          className={`w-full h-full object-contain rounded-lg ${isElderFallback ? 'opacity-60' : ''}`}
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            // Fallback to stage 800 if image doesn't exist
+                            if (!target.src.includes('stage_800')) {
+                              target.src = getCharacterImagePath(gender, 800);
+                            }
+                          }}
+                        />
+                        {hasCustom && (
+                          <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full border-2 border-background" />
+                        )}
+                        {isUploadingThis && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-background/80 rounded-lg">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Stage name */}
+                      <span className="text-xs font-medium text-center truncate w-full">
+                        {getStageName(stageData.stage)}
+                      </span>
+
+                      {/* Actions */}
+                      <div className="flex gap-1">
+                        <input
+                          ref={(el) => { fileInputRefs.current[stageData.stage] = el; }}
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleFileChange(stageData.stage, e)}
+                          className="hidden"
+                        />
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => handleUploadClick(stageData.stage)}
+                          disabled={isUploadingThis}
+                        >
+                          <Upload className="h-3 w-3" />
+                        </Button>
+                        {hasCustom && (
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => handleResetToDefault(stageData.stage)}
+                            disabled={isUploadingThis}
+                          >
+                            <RotateCcw className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
   );
 }

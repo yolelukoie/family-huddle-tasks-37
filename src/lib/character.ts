@@ -57,8 +57,11 @@ export function getCharacterImagePath(
   // For 'other', default to female images
   const effectiveGender = gender === 'other' ? 'female' : gender;
   
+  // Elder stage (1000) doesn't have images yet, use 800 as fallback
+  const effectiveStage = stage === 1000 ? 800 : stage;
+  
   // Format stage number with leading zeros (000, 050, 200, etc.)
-  const stageStr = stage.toString().padStart(3, '0');
+  const stageStr = effectiveStage.toString().padStart(3, '0');
   
   // Use public folder images
   return `/${effectiveGender}_stage_${stageStr}.png`;
