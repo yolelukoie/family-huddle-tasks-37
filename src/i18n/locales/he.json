@@ -313,5 +313,24 @@
     "completed": "הושלם",
     "reward": "פרס",
     "completedOn": "הושלם"
+  },
+  "taskAssignment": {
+    "title": "הקצאת משימה חדשה",
+    "assignedBy": "{{name}} הקצה לך משימה חדשה",
+    "from": "מאת",
+    "stars": "כוכבים",
+    "dueToday": "נדרש היום",
+    "accept": "קבל",
+    "reject": "דחה",
+    "acceptHint": "קבלה תוסיף את המשימה לרשימה שלך. דחייה תסרב להקצאה.",
+    "accepted": "המשימה התקבלה!",
+    "acceptedDesc": "\"{{taskName}}\" נוספה למשימות שלך.",
+    "rejected": "המשימה נדחתה",
+    "rejectedDesc": "\"{{taskName}}\" נדחתה.",
+    "error": "שגיאה",
+    "acceptError": "לא ניתן לקבל את המשימה. נסה שוב.",
+    "rejectError": "לא ניתן לדחות את המשימה. נסה שוב.",
+    "cannotNotify": "לא ניתן להודיע",
+    "familyNotLoaded": "המשפחה עדיין לא נטענה. נסה שוב בעוד רגע."
   }
 }

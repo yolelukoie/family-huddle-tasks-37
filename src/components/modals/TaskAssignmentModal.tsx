@@ -30,14 +30,14 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
   if (!task || !user) return null;
 
   const assignerProfile = getUserProfile(task.assignedBy);
-  const assignerName = assignerProfile?.displayName || "Someone";
+  const assignerName = assignerProfile?.displayName || t('common.someone', 'Someone');
 
   const familyId = task.familyId;
   if (!familyId) {
     console.error("Missing familyId for task_events insert");
     toast({
-      title: "Cannot notify",
-      description: "Family is not loaded yet. Try again in a moment.",
+      title: t('taskAssignment.cannotNotify'),
+      description: t('taskAssignment.familyNotLoaded'),
       variant: "destructive",
     });
     return null;
@@ -84,8 +84,8 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
       }
 
       toast({
-        title: "Task accepted!",
-        description: `"${translateTaskName(task.name, t)}" has been added to your tasks.`,
+        title: t('taskAssignment.accepted'),
+        description: t('taskAssignment.acceptedDesc', { taskName: translateTaskName(task.name, t) }),
       });
 
       onTaskResponse?.(task.id, true);
@@ -93,8 +93,8 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
     } catch (error) {
       console.error("Error accepting task:", error);
       toast({
-        title: "Error",
-        description: "Failed to accept the task. Please try again.",
+        title: t('taskAssignment.error'),
+        description: t('taskAssignment.acceptError'),
         variant: "destructive",
       });
     }
@@ -137,8 +137,8 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
       }
 
       toast({
-        title: "Task rejected",
-        description: `"${translateTaskName(task.name, t)}" has been rejected.`,
+        title: t('taskAssignment.rejected'),
+        description: t('taskAssignment.rejectedDesc', { taskName: translateTaskName(task.name, t) }),
       });
 
       onTaskResponse?.(task.id, false);
@@ -146,8 +146,8 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
     } catch (error) {
       console.error("Error rejecting task:", error);
       toast({
-        title: "Error",
-        description: "Failed to reject the task. Please try again.",
+        title: t('taskAssignment.error'),
+        description: t('taskAssignment.rejectError'),
         variant: "destructive",
       });
     }
@@ -159,9 +159,9 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <User className="h-5 w-5" />
-            New Task Assignment
+            {t('taskAssignment.title')}
           </DialogTitle>
-          <DialogDescription>{assignerName} has assigned you a new task</DialogDescription>
+          <DialogDescription>{t('taskAssignment.assignedBy', { name: assignerName })}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -175,7 +175,7 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
             <div className="flex items-center gap-4 text-sm">
               <div className="flex items-center gap-1">
                 <Star className="h-4 w-4 text-yellow-500" />
-                <span className="font-medium">{task.starValue} stars</span>
+                <span className="font-medium">{task.starValue} {t('taskAssignment.stars')}</span>
               </div>
 
               <div className="flex items-center gap-1">
@@ -186,26 +186,26 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
               {isToday(new Date(task.dueDate)) && (
                 <Badge variant="secondary" className="text-xs">
                   <Clock className="h-3 w-3 mr-1" />
-                  Due Today
+                  {t('taskAssignment.dueToday')}
                 </Badge>
               )}
             </div>
 
-            <div className="text-xs text-muted-foreground">From: {assignerName}</div>
+            <div className="text-xs text-muted-foreground">{t('taskAssignment.from')}: {assignerName}</div>
           </div>
 
           {/* Action Buttons */}
           <div className="flex gap-2">
             <Button onClick={handleAccept} className="flex-1 bg-green-600 hover:bg-green-700 text-white">
-              Accept
+              {t('taskAssignment.accept')}
             </Button>
             <Button onClick={handleReject} variant="destructive" className="flex-1">
-              Reject
+              {t('taskAssignment.reject')}
             </Button>
           </div>
 
           <p className="text-xs text-muted-foreground text-center">
-            Accepting will add this task to your task list. Rejecting will decline the assignment.
+            {t('taskAssignment.acceptHint')}
           </p>
         </div>
       </DialogContent>

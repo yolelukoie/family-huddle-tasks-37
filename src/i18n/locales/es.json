@@ -313,5 +313,24 @@
     "completed": "Completado",
     "reward": "Recompensa",
     "completedOn": "Completado"
+  },
+  "taskAssignment": {
+    "title": "Nueva Asignación de Tarea",
+    "assignedBy": "{{name}} te ha asignado una nueva tarea",
+    "from": "De",
+    "stars": "estrellas",
+    "dueToday": "Vence Hoy",
+    "accept": "Aceptar",
+    "reject": "Rechazar",
+    "acceptHint": "Aceptar añadirá esta tarea a tu lista. Rechazar declinará la asignación.",
+    "accepted": "¡Tarea aceptada!",
+    "acceptedDesc": "\"{{taskName}}\" ha sido añadida a tus tareas.",
+    "rejected": "Tarea rechazada",
+    "rejectedDesc": "\"{{taskName}}\" ha sido rechazada.",
+    "error": "Error",
+    "acceptError": "No se pudo aceptar la tarea. Inténtalo de nuevo.",
+    "rejectError": "No se pudo rechazar la tarea. Inténtalo de nuevo.",
+    "cannotNotify": "No se puede notificar",
+    "familyNotLoaded": "La familia aún no está cargada. Inténtalo en un momento."
   }
 }
