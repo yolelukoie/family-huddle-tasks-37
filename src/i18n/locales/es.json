@@ -297,7 +297,10 @@
     "thanksForEfforts": "Gracias por tus esfuerzos,\nahora es momento de recompensarte.",
     "target": "Objetivo",
     "yourReward": "Tu recompensa",
-    "badgeUnlocked": "¡Insignia Desbloqueada!"
+    "badgeUnlocked": "¡Insignia Desbloqueada!",
+    "amazingJob": "¡Increíble trabajo!",
+    "characterCompleted": "Tu personaje ha completado su historia completa.",
+    "newChapter": "Ahora es momento de celebrar tu progreso — y quizás comenzar un nuevo capítulo con otro personaje."
   },
   "goalModal": {
     "createNewGoal": "Crear Nuevo Objetivo",

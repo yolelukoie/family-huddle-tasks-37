@@ -96,12 +96,12 @@ export function CharacterImageCustomizer() {
 
   const gender = user.gender as 'male' | 'female' | 'other';
 
-  // Available stage images (Elder/1000 doesn't have images yet, use 800 as fallback)
+  // Filter out Elder stage (1000) - it doesn't have editable images, it shows a celebration instead
+  const editableStages = allStages.filter(stage => stage.stage !== 1000);
+
   const getStageImagePath = (stage: number) => {
     const customUrl = getCustomImageUrl(stage);
-    // If stage is 1000 (Elder) and no custom image, fallback to 800
-    const effectiveStage = stage === 1000 ? 800 : stage;
-    return getCharacterImagePath(gender, effectiveStage, customUrl);
+    return getCharacterImagePath(gender, stage, customUrl);
   };
 
   return (
@@ -131,12 +131,10 @@ export function CharacterImageCustomizer() {
               </div>
             ) : (
               <div className="grid grid-cols-3 gap-4">
-                {allStages.map((stageData) => {
+                {editableStages.map((stageData) => {
                   const imagePath = getStageImagePath(stageData.stage);
                   const hasCustom = hasCustomImage(stageData.stage);
                   const isUploadingThis = isUploading === stageData.stage;
-                  // Elder stage uses fallback image
-                  const isElderFallback = stageData.stage === 1000 && !hasCustom;
 
                   return (
                     <div 
@@ -148,12 +146,12 @@ export function CharacterImageCustomizer() {
                         <img
                           src={imagePath}
                           alt={getStageName(stageData.stage)}
-                          className={`w-full h-full object-contain rounded-lg ${isElderFallback ? 'opacity-60' : ''}`}
+                          className="w-full h-full object-contain rounded-lg"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
-                            // Fallback to stage 800 if image doesn't exist
-                            if (!target.src.includes('stage_800')) {
-                              target.src = getCharacterImagePath(gender, 800);
+                            // Fallback to stage 0 if image doesn't exist
+                            if (!target.src.includes('stage_000')) {
+                              target.src = getCharacterImagePath(gender, 0);
                             }
                           }}
                         />
