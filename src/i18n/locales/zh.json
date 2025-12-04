@@ -204,7 +204,16 @@
     "resetCharacterDesc": "这将仅重置此家庭的角色进度。你所有的徽章和星星将被清除。",
     "characterReset": "角色已重置",
     "characterResetDesc": "你的角色进度已成功重置。",
-    "notifications": "通知",
+    "customizeCharacter": "自定义角色",
+    "customizeCharacterDesc": "为每个角色阶段上传自定义图片。点击上传按钮设置自定义图片，或重置使用默认图片。",
+    "customImageUploaded": "自定义图片已上传",
+    "customImageUploadedDesc": "你的自定义角色图片已保存。",
+    "customImageReset": "图片已重置为默认",
+    "customImageResetDesc": "现在将使用默认角色图片。",
+    "resetFailed": "重置失败",
+    "resetFailedDesc": "重置图片时出错。请重试。"
+  },
+  "notifications": {
     "pushNotifications": "推送通知",
     "notificationsEnabled": "已启用",
     "notificationsBlocked": "已阻止 - 在浏览器设置中启用",

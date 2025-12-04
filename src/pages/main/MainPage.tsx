@@ -11,12 +11,13 @@ import { useBadges } from '@/hooks/useBadges';
 import { useGoals } from '@/hooks/useGoals';
 import { useCelebrations } from '@/hooks/useCelebrations';
 import { useTasks } from '@/hooks/useTasks';
+import { useCustomCharacterImages } from '@/hooks/useCustomCharacterImages';
 import { NavigationHeader } from '@/components/layout/NavigationHeader';
 import { DraggableBadgeDisplay } from '@/components/badges/DraggableBadgeDisplay';
 import { BadgeCelebration } from '@/components/badges/BadgeCelebration';
 import { GoalCelebration } from '@/components/celebrations/GoalCelebration';
 import { ROUTES } from '@/lib/constants';
-import { getCurrentStage, getStageProgress, getCharacterImagePath, getStageName } from '@/lib/character';
+import { getCurrentStage, getStageProgress, getStageName } from '@/lib/character';
 import { translateTaskName, translateCategoryName, translateTaskDescription } from '@/lib/translations';
 import { supabase } from '@/integrations/supabase/client';
 import { isToday } from '@/lib/utils';
@@ -58,6 +59,7 @@ export default function MainPage() {
   } = useGoals();
   const { currentCelebration, completeCelebration, addCelebration } = useCelebrations();
   const { tasks, categories, updateTask } = useTasks();
+  const { getImagePath } = useCustomCharacterImages();
   const { 
     currentAssignment, 
     showAssignmentModal, 
@@ -72,7 +74,7 @@ export default function MainPage() {
   const currentStage = getCurrentStage(totalStars);
   const stageProgress = getStageProgress(totalStars);
   const stageName = getStageName(currentStage);
-  const characterImagePath = getCharacterImagePath(user?.gender || 'male', currentStage);
+  const characterImagePath = getImagePath(user?.gender || 'male', currentStage);
 
   const [previousStars, setPreviousStars] = useState(totalStars);
   const badgeContainerRef = useRef<HTMLDivElement>(null);

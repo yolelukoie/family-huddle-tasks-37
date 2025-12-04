@@ -555,6 +555,33 @@ export type Database = {
           },
         ]
       }
+      user_character_images: {
+        Row: {
+          created_at: string | null
+          id: string
+          image_url: string
+          stage: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          image_url: string
+          stage: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          image_url?: string
+          stage?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_families: {
         Row: {
           chat_cleared_at: string | null

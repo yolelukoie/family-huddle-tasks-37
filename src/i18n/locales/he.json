@@ -204,7 +204,16 @@
     "resetCharacterDesc": "זה יאפס את ההתקדמות של הדמות שלך רק עבור משפחה זו. כל התגים והכוכבים שלך יימחקו.",
     "characterReset": "הדמות אופסה",
     "characterResetDesc": "ההתקדמות של הדמות שלך אופסה בהצלחה.",
-    "notifications": "התראות",
+    "customizeCharacter": "התאמה אישית של דמות",
+    "customizeCharacterDesc": "העלה תמונות מותאמות אישית לכל שלב של הדמות. לחץ על כפתור ההעלאה להגדרת תמונה מותאמת, או אפס לשימוש בברירת המחדל.",
+    "customImageUploaded": "התמונה המותאמת הועלתה",
+    "customImageUploadedDesc": "תמונת הדמות המותאמת שלך נשמרה.",
+    "customImageReset": "התמונה אופסה לברירת מחדל",
+    "customImageResetDesc": "תמונת הדמות המוגדרת כברירת מחדל תשמש כעת.",
+    "resetFailed": "האיפוס נכשל",
+    "resetFailedDesc": "אירעה שגיאה באיפוס התמונה. אנא נסה שוב."
+  },
+  "notifications": {
     "pushNotifications": "התראות דחיפה",
     "notificationsEnabled": "מופעל",
     "notificationsBlocked": "חסום - הפעל בהגדרות הדפדפן",
