@@ -35,7 +35,14 @@ export default function PersonalPage() {
   const { t, i18n } = useTranslation();
   const [newDisplayName, setNewDisplayName] = useState(user?.displayName || '');
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
-  const [selectedLanguage, setSelectedLanguage] = useState<string>('en');
+  const [selectedLanguage, setSelectedLanguage] = useState<string>(() => {
+    // Initialize from cache for immediate UI consistency
+    try {
+      return localStorage.getItem('app-language') || i18n.language || 'en';
+    } catch {
+      return 'en';
+    }
+  });
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
   const [isEnablingNotifications, setIsEnablingNotifications] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -47,7 +54,7 @@ export default function PersonalPage() {
     }
   }, []);
 
-  // Load user's saved language preference
+  // Load user's saved language preference and sync with cache
   useEffect(() => {
     const loadLanguagePreference = async () => {
       if (!user?.id) return;
@@ -61,6 +68,12 @@ export default function PersonalPage() {
       if (data?.preferred_language && !error) {
         setSelectedLanguage(data.preferred_language);
         await i18n.changeLanguage(data.preferred_language);
+        // Update cache to match DB
+        try {
+          localStorage.setItem('app-language', data.preferred_language);
+        } catch (e) {
+          console.warn('Failed to cache language preference:', e);
+        }
       }
     };
 
@@ -161,6 +174,13 @@ export default function PersonalPage() {
   const handleLanguageChange = async (language: string) => {
     setSelectedLanguage(language);
     await i18n.changeLanguage(language);
+    
+    // Cache in localStorage for immediate use on next page load
+    try {
+      localStorage.setItem('app-language', language);
+    } catch (e) {
+      console.warn('Failed to cache language preference:', e);
+    }
     
     try {
       const { error } = await supabase

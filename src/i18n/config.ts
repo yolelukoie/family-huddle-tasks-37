@@ -16,11 +16,20 @@ const resources = {
   he: { translation: he },
 };
 
+// Get cached language from localStorage
+const getCachedLanguage = (): string => {
+  try {
+    return localStorage.getItem('app-language') || 'en';
+  } catch {
+    return 'en';
+  }
+};
+
 i18n
   .use(initReactI18next)
   .init({
     resources,
-    lng: 'en',
+    lng: getCachedLanguage(),
     fallbackLng: 'en',
     interpolation: {
       escapeValue: false,
