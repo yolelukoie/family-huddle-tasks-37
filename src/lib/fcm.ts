@@ -155,12 +155,13 @@ export async function requestAndSaveFcmToken(userId: string): Promise<{ success:
   return { success: true };
 }
 
-/** Foreground message hook (optional): call once to handle toasts, etc. */
-export async function listenForegroundMessages(onPayload: (p: any) => void) {
+/** Foreground message hook (optional): call once to handle toasts, etc. 
+ * Returns unsubscribe function for cleanup */
+export async function listenForegroundMessages(onPayload: (p: any) => void): Promise<(() => void) | null> {
   const m = await ensureMessaging();
-  if (!m) return;
+  if (!m) return null;
   console.log('[FCM] Setting up foreground message listener...');
-  onMessage(m, (payload) => {
+  const unsubscribe = onMessage(m, (payload) => {
     console.log('[FCM] Foreground message received:', payload);
     try { 
       onPayload(payload); 
@@ -168,4 +169,5 @@ export async function listenForegroundMessages(onPayload: (p: any) => void) {
       console.error('[FCM] Error in foreground message handler:', e);
     }
   });
+  return unsubscribe;
 }

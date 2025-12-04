@@ -59,11 +59,18 @@ export function AppLayout() {
     }
 
     // Optional: show a toast when a push arrives while the tab is open
+    let unsubscribe: (() => void) | null = null;
     listenForegroundMessages((p) => {
       const title = p?.notification?.title || p?.data?.title || "Family Huddle";
       const body = p?.notification?.body || p?.data?.body || "";
       toast({ title, description: body });
+    }).then((unsub) => {
+      unsubscribe = unsub;
     });
+
+    return () => {
+      unsubscribe?.();
+    };
   }, [isAuthenticated, user?.id, toast]);
 
   useEffect(() => {

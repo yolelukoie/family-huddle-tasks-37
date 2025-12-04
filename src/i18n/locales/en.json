@@ -412,5 +412,24 @@
     "golden_camera": { "name": "Camera", "description": "Every wrinkle tells a story." },
     "golden_calendar": { "name": "Calendar", "description": "Birthday parties never stop." },
     "golden_champagne": { "name": "Champagne", "description": "Cheers to the best years!" }
+  },
+  "taskAssignment": {
+    "title": "New Task Assignment",
+    "assignedBy": "{{name}} has assigned you a new task",
+    "from": "From",
+    "stars": "stars",
+    "dueToday": "Due Today",
+    "accept": "Accept",
+    "reject": "Reject",
+    "acceptHint": "Accepting will add this task to your task list. Rejecting will decline the assignment.",
+    "accepted": "Task accepted!",
+    "acceptedDesc": "\"{{taskName}}\" has been added to your tasks.",
+    "rejected": "Task rejected",
+    "rejectedDesc": "\"{{taskName}}\" has been rejected.",
+    "error": "Error",
+    "acceptError": "Failed to accept the task. Please try again.",
+    "rejectError": "Failed to reject the task. Please try again.",
+    "cannotNotify": "Cannot notify",
+    "familyNotLoaded": "Family is not loaded yet. Try again in a moment."
   }
 }

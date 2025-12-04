@@ -313,5 +313,24 @@
     "completed": "已完成",
     "reward": "奖励",
     "completedOn": "完成时间"
+  },
+  "taskAssignment": {
+    "title": "新任务分配",
+    "assignedBy": "{{name}} 给你分配了一个新任务",
+    "from": "来自",
+    "stars": "星星",
+    "dueToday": "今天到期",
+    "accept": "接受",
+    "reject": "拒绝",
+    "acceptHint": "接受将把此任务添加到你的列表。拒绝将拒绝此分配。",
+    "accepted": "任务已接受！",
+    "acceptedDesc": "\"{{taskName}}\" 已添加到你的任务中。",
+    "rejected": "任务已拒绝",
+    "rejectedDesc": "\"{{taskName}}\" 已被拒绝。",
+    "error": "错误",
+    "acceptError": "无法接受任务。请重试。",
+    "rejectError": "无法拒绝任务。请重试。",
+    "cannotNotify": "无法通知",
+    "familyNotLoaded": "家庭尚未加载。请稍后再试。"
   }
 }
