@@ -1,6 +1,7 @@
 {
   "projects": {
-    "default": "family-huddle-2062"
+    "default": "family-huddle-2062",
+    "prod": "family-huddle-app"
   },
   "targets": {
     "family-huddle-2062": {
