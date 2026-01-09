@@ -1,19 +1,19 @@
 // src/lib/fcm.ts
-import { initializeApp, getApps } from 'firebase/app';
-import { getMessaging, getToken, onMessage, isSupported, Messaging } from 'firebase/messaging';
-import { supabase } from '@/integrations/supabase/client';
+import { initializeApp, getApps } from "firebase/app";
+import { getMessaging, getToken, onMessage, isSupported, Messaging } from "firebase/messaging";
+import { supabase } from "@/integrations/supabase/client";
 
 // Utility functions for iOS/PWA detection
 export function isIOS(): boolean {
-  if (typeof window === 'undefined') return false;
-  return /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (typeof window === "undefined") return false;
+  return (
+    /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
+  );
 }
 
 export function isStandalone(): boolean {
-  if (typeof window === 'undefined') return false;
-  return (window.navigator as any).standalone === true || 
-    window.matchMedia('(display-mode: standalone)').matches;
+  if (typeof window === "undefined") return false;
+  return (window.navigator as any).standalone === true || window.matchMedia("(display-mode: standalone)").matches;
 }
 
 export function isIOSSafari(): boolean {
@@ -21,31 +21,32 @@ export function isIOSSafari(): boolean {
 }
 
 const firebaseConfig = {
-  apiKey: 'AIzaSyAlhcCtBwCb2yQA7eoo1d_6o4ZStiZxFjQ',
-  authDomain: 'family-huddle-2062.firebaseapp.com',
-  projectId: 'family-huddle-2062',
-  messagingSenderId: '897887762238',
-  appId: '1:897887762238:web:7e8a5677529e040ccbde6f',
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY as string,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN as string,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID as string,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET as string,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID as string,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID as string,
 };
 
 // Public VAPID key from Firebase → Cloud Messaging → Web configuration
-const VAPID_PUBLIC_KEY = 'BKa4ylqpcOvhXB1gGFOgZ9Yr_tr1MSZE06j6LdtJJAB4jdLuQzBD20B0ScpePv4IpweSKsQHk369PUO79xpRdm8';
+const VAPID_PUBLIC_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY as string;
 
 let messaging: Messaging | null = null;
 
 export async function ensureMessaging(): Promise<Messaging | null> {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === "undefined") return null;
   if (!(await isSupported())) {
-    console.warn('[FCM] Messaging not supported in this browser');
+    console.warn("[FCM] Messaging not supported in this browser");
     return null;
   }
 
   if (!getApps().length) {
-    console.log('[FCM] Initializing Firebase app...');
+    console.log("[FCM] Initializing Firebase app...");
     initializeApp(firebaseConfig);
   }
   if (!messaging) {
-    console.log('[FCM] Getting messaging instance...');
+    console.log("[FCM] Getting messaging instance...");
     messaging = getMessaging();
   }
   return messaging;
@@ -53,120 +54,117 @@ export async function ensureMessaging(): Promise<Messaging | null> {
 
 /** Ask permission, get FCM token, upsert into Supabase */
 export async function requestAndSaveFcmToken(userId: string): Promise<{ success: boolean; error?: string }> {
-  console.log('[FCM] Starting token registration for user:', userId);
-  console.log('[FCM] Device info:', {
+  console.log("[FCM] Starting token registration for user:", userId);
+  console.log("[FCM] Device info:", {
     isIOS: isIOS(),
     isStandalone: isStandalone(),
     isIOSSafari: isIOSSafari(),
     userAgent: navigator.userAgent,
   });
-  
+
   // Check iOS Safari limitation
   if (isIOSSafari()) {
-    const error = 'To enable notifications on iPhone, first install this app to your home screen (Share → Add to Home Screen)';
-    console.warn('[FCM] ❌ iOS Safari detected, PWA installation required');
+    const error =
+      "To enable notifications on iPhone, first install this app to your home screen (Share → Add to Home Screen)";
+    console.warn("[FCM] ❌ iOS Safari detected, PWA installation required");
     return { success: false, error };
   }
-  
+
   const m = await ensureMessaging();
   if (!m) {
-    const error = 'Push notifications are not supported in this browser';
-    console.warn('[FCM] ❌', error);
+    const error = "Push notifications are not supported in this browser";
+    console.warn("[FCM] ❌", error);
     return { success: false, error };
   }
 
   // 1) Check current permission state
-  console.log('[FCM] Current permission:', Notification.permission);
+  console.log("[FCM] Current permission:", Notification.permission);
   let permission: NotificationPermission = Notification.permission;
 
   // If permission is default (never asked), request it now (must be from user gesture!)
-  if (permission === 'default') {
-    console.log('[FCM] Requesting notification permission...');
+  if (permission === "default") {
+    console.log("[FCM] Requesting notification permission...");
     try {
       permission = await Notification.requestPermission();
-      console.log('[FCM] Permission result:', permission);
+      console.log("[FCM] Permission result:", permission);
     } catch (e) {
-      console.error('[FCM] ❌ Permission request error:', e);
-      return { success: false, error: 'Failed to request notification permission' };
+      console.error("[FCM] ❌ Permission request error:", e);
+      return { success: false, error: "Failed to request notification permission" };
     }
   }
 
-  if (permission !== 'granted') {
-    const error = permission === 'denied' 
-      ? 'Notifications are blocked. Please enable them in your browser settings.'
-      : 'Notification permission was not granted';
-    console.log('[FCM] ❌', error);
+  if (permission !== "granted") {
+    const error =
+      permission === "denied"
+        ? "Notifications are blocked. Please enable them in your browser settings."
+        : "Notification permission was not granted";
+    console.log("[FCM] ❌", error);
     return { success: false, error };
   }
-  console.log('[FCM] ✓ Permission granted');
+  console.log("[FCM] ✓ Permission granted");
 
   // 2) Wait for service worker to be ready
-  console.log('[FCM] Waiting for service worker...');
+  console.log("[FCM] Waiting for service worker...");
   let swReg;
   try {
     swReg = await Promise.race([
       navigator.serviceWorker.ready,
-      new Promise<never>((_, reject) => 
-        setTimeout(() => reject(new Error('Service worker timeout')), 10000)
-      )
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Service worker timeout")), 10000)),
     ]);
-    console.log('[FCM] Service Worker ready, scope:', swReg.scope);
+    console.log("[FCM] Service Worker ready, scope:", swReg.scope);
   } catch (e) {
-    console.error('[FCM] ❌ Service worker error:', e);
-    return { success: false, error: 'Service worker not ready. Please refresh the page.' };
+    console.error("[FCM] ❌ Service worker error:", e);
+    return { success: false, error: "Service worker not ready. Please refresh the page." };
   }
 
   // 3) Get FCM token
-  console.log('[FCM] Getting FCM token...');
+  console.log("[FCM] Getting FCM token...");
   let token: string | null = null;
   try {
     token = await getToken(m, {
       vapidKey: VAPID_PUBLIC_KEY,
       serviceWorkerRegistration: swReg,
     });
-    console.log('[FCM] ✓ Token received:', token ? `${token.slice(0, 10)}...` : 'null');
+    console.log("[FCM] ✓ Token received:", token ? `${token.slice(0, 10)}...` : "null");
   } catch (e: any) {
-    console.error('[FCM] ❌ getToken failed:', e);
-    const errorMsg = e?.message || 'Failed to get notification token';
+    console.error("[FCM] ❌ getToken failed:", e);
+    const errorMsg = e?.message || "Failed to get notification token";
     return { success: false, error: errorMsg };
   }
-  
+
   if (!token) {
-    console.warn('[FCM] ❌ No token returned from getToken()');
-    return { success: false, error: 'Failed to generate notification token' };
+    console.warn("[FCM] ❌ No token returned from getToken()");
+    return { success: false, error: "Failed to generate notification token" };
   }
 
   // 4) upsert to Supabase
-  console.log('[FCM] Upserting token to Supabase...', { userId, tokenPreview: token.slice(0, 10) + '...' });
-  
+  console.log("[FCM] Upserting token to Supabase...", { userId, tokenPreview: token.slice(0, 10) + "..." });
+
   const { error } = await supabase
-    .from('user_fcm_tokens')
-    .upsert(
-      { user_id: userId, token, platform: 'web' },
-      { onConflict: 'user_id,token' }
-    );
+    .from("user_fcm_tokens")
+    .upsert({ user_id: userId, token, platform: "web" }, { onConflict: "user_id,token" });
 
   if (error) {
-    console.error('[FCM] ❌ upsert token failed:', error);
-    return { success: false, error: 'Failed to save notification token' };
+    console.error("[FCM] ❌ upsert token failed:", error);
+    return { success: false, error: "Failed to save notification token" };
   }
-  
-  console.log('[FCM] ✓ Token saved successfully to user_fcm_tokens');
+
+  console.log("[FCM] ✓ Token saved successfully to user_fcm_tokens");
   return { success: true };
 }
 
-/** Foreground message hook (optional): call once to handle toasts, etc. 
+/** Foreground message hook (optional): call once to handle toasts, etc.
  * Returns unsubscribe function for cleanup */
 export async function listenForegroundMessages(onPayload: (p: any) => void): Promise<(() => void) | null> {
   const m = await ensureMessaging();
   if (!m) return null;
-  console.log('[FCM] Setting up foreground message listener...');
+  console.log("[FCM] Setting up foreground message listener...");
   const unsubscribe = onMessage(m, (payload) => {
-    console.log('[FCM] Foreground message received:', payload);
-    try { 
-      onPayload(payload); 
+    console.log("[FCM] Foreground message received:", payload);
+    try {
+      onPayload(payload);
     } catch (e) {
-      console.error('[FCM] Error in foreground message handler:', e);
+      console.error("[FCM] Error in foreground message handler:", e);
     }
   });
   return unsubscribe;
