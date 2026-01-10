@@ -21,18 +21,18 @@ export function isIOSSafari(): boolean {
 }
 
 // Firebase config - these are PUBLIC/PUBLISHABLE values, safe to include in code
-// Get these from Firebase Console → Project Settings → General → Your apps → Web app
 const firebaseConfig = {
-  apiKey: "YOUR_FIREBASE_API_KEY",
+  apiKey: "AIzaSyBES2a1nZEqfBKk7GkNc5nkFACOe60JV8E",
   authDomain: "family-huddle-app.firebaseapp.com",
   projectId: "family-huddle-app",
   storageBucket: "family-huddle-app.firebasestorage.app",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_FIREBASE_APP_ID",
+  messagingSenderId: "508239163662",
+  appId: "1:508239163662:web:4192a2e3ca9746bcdea75f",
+  measurementId: "G-598JQT461W",
 };
 
 // Public VAPID key from Firebase → Cloud Messaging → Web configuration
-const VAPID_PUBLIC_KEY = "YOUR_VAPID_PUBLIC_KEY";
+const VAPID_PUBLIC_KEY = "BKH7SmPFC-v8tg9qKIYyRL5dyFCdiHYXzsVnjgmcOppIqeUBTZwe8OyA2YhOYzusp6ryOk4UNqwI9hNz34J19O0";
 
 let messaging: Messaging | null = null;
 
