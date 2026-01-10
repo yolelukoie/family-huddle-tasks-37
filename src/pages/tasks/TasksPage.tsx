@@ -22,7 +22,7 @@ import { History, Plus, CheckCircle } from 'lucide-react';
 
 export default function TasksPage() {
   const { user } = useAuth();
-  const { activeFamilyId, addStars } = useApp();
+  const { activeFamilyId } = useApp();
   const { updateGoalProgress } = useGoals();
   const { tasks, categories, updateTask, addCategory } = useTasks();
   const { currentCelebration, completeCelebration } = useCelebrations();
@@ -68,11 +68,9 @@ export default function TasksPage() {
       completedAt: new Date().toISOString(),
     });
 
-    // Add stars if it's the user's task
+    // Stars are already updated by updateTask (via applyStarsDelta)
+    // Only update goal progress here
     if (task.assignedTo === user.id && activeFamilyId) {
-      addStars(activeFamilyId, task.starValue);
-      
-      // Update goal progress (await to ensure proper execution order)
       await updateGoalProgress(task.categoryId, task.starValue);
     }
   };

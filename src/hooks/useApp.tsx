@@ -957,12 +957,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         console.error('Failed to delete badges:', badgesError);
       }
 
-      // Reset active goals (set current_stars to 0) instead of deleting them
+      // Reset only ACTIVE (non-completed) goals - preserve completed goal history
       const { error: goalsError } = await supabase
         .from('goals')
-        .update({ current_stars: 0, completed: false, completed_at: null })
+        .update({ current_stars: 0 })
         .eq('user_id', user.id)
-        .eq('family_id', familyId);
+        .eq('family_id', familyId)
+        .eq('completed', false);
 
       if (goalsError) {
         console.error('Failed to reset goals:', goalsError);

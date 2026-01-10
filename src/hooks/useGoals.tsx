@@ -204,7 +204,21 @@ export function useGoals() {
       // Check if this task's category should count towards the goal
       let shouldCount = true;
       if (activeGoal.target_categories && activeGoal.target_categories.length > 0) {
-        shouldCount = activeGoal.target_categories.includes(taskCategoryId);
+        // Validate that target categories still exist in the database
+        const { data: existingCategories } = await supabase
+          .from('task_categories')
+          .select('id')
+          .eq('family_id', activeFamilyId)
+          .in('id', activeGoal.target_categories);
+        
+        const validCategoryIds = (existingCategories || []).map(c => c.id);
+        
+        // If no valid categories remain, treat as "all categories" (no filter)
+        if (validCategoryIds.length === 0) {
+          shouldCount = true;
+        } else {
+          shouldCount = validCategoryIds.includes(taskCategoryId);
+        }
       }
 
       if (!shouldCount) return;
