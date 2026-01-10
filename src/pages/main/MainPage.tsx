@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useApp } from '@/hooks/useApp';
 import { useBadges } from '@/hooks/useBadges';
-import { useGoals } from '@/hooks/useGoals';
+// useGoals is used for goal state but goal updates happen via TasksPage
 import { useCelebrations } from '@/hooks/useCelebrations';
 import { useTasks } from '@/hooks/useTasks';
 import { useCustomCharacterImages } from '@/hooks/useCustomCharacterImages';
@@ -48,7 +48,7 @@ export default function MainPage() {
     resetBadgeProgress
   } = useBadges();
   
-  const { updateGoalProgress } = useGoals();
+  // Note: Goal progress is handled by TasksPage, not here (to avoid duplicate celebrations)
   const { currentCelebration, completeCelebration, addCelebration } = useCelebrations();
   const { tasks, categories, updateTask } = useTasks();
   const { getImagePath } = useCustomCharacterImages();
@@ -114,27 +114,39 @@ export default function MainPage() {
     }
   }, [previousStars, totalStars]);
 
+  // Track if we're currently resetting to prevent double-reset
+  const isResettingRef = useRef(false);
+
   // Check for newly unlocked badges and milestone when stars change
   useEffect(() => {
     if (previousStars !== totalStars && previousStars !== 0) {
       // Check for 1000 star milestone celebration
-      if (previousStars < 1000 && totalStars >= 1000) {
+      if (previousStars < 1000 && totalStars >= 1000 && !isResettingRef.current) {
+        // Set flag to prevent double-reset
+        isResettingRef.current = true;
+        
         // Add milestone celebration to queue
-        setTimeout(() => {
-          addCelebration({ type: 'milestone', milestone: { stars: 1000 } });
-          // Reset character after celebration is shown
-          setTimeout(async () => {
-            await resetCharacterProgress(activeFamilyId || '');
-            resetBadgeProgress();
-            setPreviousStars(0);
-          }, 3500); // Wait for celebration to complete (3s) + buffer
-        }, 100);
-      } else {
+        addCelebration({ type: 'milestone', milestone: { stars: 1000 } });
+      } else if (!isResettingRef.current) {
         checkForNewBadges(previousStars, totalStars);
       }
     }
     setPreviousStars(totalStars);
-  }, [totalStars, previousStars, checkForNewBadges, addCelebration, resetCharacterProgress, resetBadgeProgress, activeFamilyId]);
+  }, [totalStars, previousStars, checkForNewBadges, addCelebration]);
+
+  // Handle milestone celebration completion - reset character when milestone celebration finishes
+  useEffect(() => {
+    if (currentCelebration?.item.type === 'milestone' && !currentCelebration.show && isResettingRef.current) {
+      // Celebration just finished, now reset
+      const performReset = async () => {
+        await resetCharacterProgress(activeFamilyId || '');
+        resetBadgeProgress();
+        setPreviousStars(0);
+        isResettingRef.current = false;
+      };
+      performReset();
+    }
+  }, [currentCelebration, resetCharacterProgress, resetBadgeProgress, activeFamilyId]);
 
   // Get active goal (fetch from Supabase)
   useEffect(() => {
@@ -192,10 +204,8 @@ export default function MainPage() {
       completedAt: new Date().toISOString()
     });
 
-    // Update goal progress if it's the user's task (stars are handled by TasksContext)
-    if (task.assignedTo === user?.id) {
-      await updateGoalProgress(task.categoryId, task.starValue);
-    }
+    // Goal progress is handled by TasksPage when the task is completed
+    // Do NOT call updateGoalProgress here to avoid duplicate celebrations
 
     // Refresh component to show updated goal progress
     setRefreshKey(prev => prev + 1);

@@ -102,35 +102,45 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
 
   const handleReject = async () => {
     try {
-      // Delete the task since it was rejected
-      await deleteTask(task.id);
+      // Store task details BEFORE deletion for the event payload
+      const taskDetails = {
+        id: task.id,
+        name: task.name,
+        starValue: task.starValue,
+        dueDate: task.dueDate,
+        assignedBy: task.assignedBy,
+      };
 
-      // INSERT a notification event for the assigner
+      // INSERT a notification event for the assigner BEFORE deleting the task
+      // This ensures the event is created with proper task reference
       const { error: evErr } = await supabase.from("task_events").insert({
-        task_id: task.id,
+        task_id: taskDetails.id,
         family_id: familyId,
-        recipient_id: task.assignedBy, // notify the assigner
-        actor_id: user!.id, // me, the acceptor/rejector
-        event_type: "rejected", // or 'rejected' in the reject handler
+        recipient_id: taskDetails.assignedBy, // notify the assigner
+        actor_id: user!.id, // me, the rejector
+        event_type: "rejected",
         payload: {
-          name: task.name,
-          stars: task.starValue,
-          due_date: task.dueDate,
-          actor_name: user!.displayName, // avoid undefined
+          name: taskDetails.name,
+          stars: taskDetails.starValue,
+          due_date: taskDetails.dueDate,
+          actor_name: user!.displayName || 'Someone',
         },
       });
       if (evErr) {
         console.error("task_events insert failed", evErr);
       }
 
+      // Now delete the task since it was rejected
+      await deleteTask(taskDetails.id);
+
       if (!evErr) {
         await supabase.functions
           .invoke("send-push", {
             body: {
-              recipientId: task.assignedBy, // notify assigner
+              recipientId: taskDetails.assignedBy, // notify assigner
               title: "Task rejected",
-              body: `${(user as any)?.displayName ?? "Someone"} rejected "${task.name}"`,
-              data: { type: "rejected", taskId: task.id },
+              body: `${user?.displayName ?? "Someone"} rejected "${taskDetails.name}"`,
+              data: { type: "rejected", taskId: taskDetails.id },
             },
           })
           .catch((e) => console.error("[send-push] invoke failed:", e));
@@ -138,10 +148,10 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
 
       toast({
         title: t('taskAssignment.rejected'),
-        description: t('taskAssignment.rejectedDesc', { taskName: translateTaskName(task.name, t) }),
+        description: t('taskAssignment.rejectedDesc', { taskName: translateTaskName(taskDetails.name, t) }),
       });
 
-      onTaskResponse?.(task.id, false);
+      onTaskResponse?.(taskDetails.id, false);
       onOpenChange(false);
     } catch (error) {
       console.error("Error rejecting task:", error);

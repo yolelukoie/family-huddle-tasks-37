@@ -72,8 +72,8 @@ export default function TasksPage() {
     if (task.assignedTo === user.id && activeFamilyId) {
       addStars(activeFamilyId, task.starValue);
       
-      // Update goal progress
-      updateGoalProgress(task.categoryId, task.starValue);
+      // Update goal progress (await to ensure proper execution order)
+      await updateGoalProgress(task.categoryId, task.starValue);
     }
   };
 
