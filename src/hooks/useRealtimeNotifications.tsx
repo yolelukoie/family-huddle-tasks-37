@@ -73,10 +73,14 @@ export function useRealtimeNotifications() {
 
   // CHAT NOTIFICATIONS - Global listener for chat messages (NO filter, manual check)
   useEffect(() => {
-    if (!user?.id || !activeFamilyId) return;
+    if (!user?.id || !activeFamilyId) {
+      console.log('[chat-notifications] Skipping - no user or family', { userId: user?.id, familyId: activeFamilyId });
+      return;
+    }
 
-    const channelName = `chat-notifications:${user.id}:${activeFamilyId}`;
-    console.log(`[chat-notifications] Setting up subscription for channel: ${channelName}`);
+    // Use a unique channel name with "global" prefix to avoid conflicts with page-level subscriptions
+    const channelName = `global-chat-notifications:${user.id}:${activeFamilyId}:${Date.now()}`;
+    console.log(`[chat-notifications] Setting up GLOBAL subscription for channel: ${channelName}`);
     
     const ch = supabase
       .channel(channelName)
@@ -128,11 +132,11 @@ export function useRealtimeNotifications() {
         }
       )
       .subscribe((status, err) => {
-        console.log(`[chat-notifications] Subscription status: ${status}`, err || '');
+        console.log(`[chat-notifications] GLOBAL Subscription status: ${status}`, err || '');
       });
 
     return () => { 
-      console.log(`[chat-notifications] Cleaning up channel: ${channelName}`);
+      console.log(`[chat-notifications] Cleaning up GLOBAL channel: ${channelName}`);
       supabase.removeChannel(ch); 
     };
   }, [user?.id, activeFamilyId]);
@@ -140,10 +144,14 @@ export function useRealtimeNotifications() {
   // TASK EVENTS (recipient only) — open modal immediately on "assigned", with de-dupe
   // NO filter - manual check for recipient_id
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      console.log('[task-events] Skipping - no user');
+      return;
+    }
   
-    const chan = `task-events:${user.id}`;
-    console.log(`[task-events] Setting up subscription for channel: ${chan}`);
+    // Use unique channel name with timestamp to avoid conflicts
+    const chan = `global-task-events:${user.id}:${Date.now()}`;
+    console.log(`[task-events] Setting up GLOBAL subscription for channel: ${chan}`);
     
     const ch = supabase
       .channel(chan)
@@ -227,11 +235,11 @@ export function useRealtimeNotifications() {
         }
       )
       .subscribe((status, err) => {
-        console.log(`[task-events] Subscription status: ${status}`, err || '');
+        console.log(`[task-events] GLOBAL Subscription status: ${status}`, err || '');
       });
   
     return () => { 
-      console.log(`[task-events] Cleaning up channel: ${chan}`);
+      console.log(`[task-events] Cleaning up GLOBAL channel: ${chan}`);
       supabase.removeChannel(ch); 
     };
   }, [user?.id, activeFamilyId]);
