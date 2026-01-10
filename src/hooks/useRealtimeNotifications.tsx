@@ -78,8 +78,8 @@ export function useRealtimeNotifications() {
       return;
     }
 
-    // Use a unique channel name with "global" prefix to avoid conflicts with page-level subscriptions
-    const channelName = `global-chat-notifications:${user.id}:${activeFamilyId}:${Date.now()}`;
+    // Use a stable channel name with "global" prefix to avoid conflicts with page-level subscriptions
+    const channelName = `global-chat-notifications:${user.id}:${activeFamilyId}`;
     console.log(`[chat-notifications] Setting up GLOBAL subscription for channel: ${channelName}`);
     
     const ch = supabase
@@ -149,8 +149,8 @@ export function useRealtimeNotifications() {
       return;
     }
   
-    // Use unique channel name with timestamp to avoid conflicts
-    const chan = `global-task-events:${user.id}:${Date.now()}`;
+    // Use stable channel name to avoid conflicts
+    const chan = `global-task-events:${user.id}`;
     console.log(`[task-events] Setting up GLOBAL subscription for channel: ${chan}`);
     
     const ch = supabase
@@ -242,7 +242,7 @@ export function useRealtimeNotifications() {
       console.log(`[task-events] Cleaning up GLOBAL channel: ${chan}`);
       supabase.removeChannel(ch); 
     };
-  }, [user?.id, activeFamilyId]);
+  }, [user?.id]); // Only depend on user.id - task events are filtered by recipient_id, not family
 
   // FAMILY SYNC (categories/templates) — silent refresh
   useEffect(() => {
