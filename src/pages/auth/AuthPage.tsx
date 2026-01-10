@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { useToast } from '@/hooks/use-toast';
-import familyHuddleLogo from '@/assets/family-huddle-logo.png';
+import familyHuddleIcon from '@/assets/family-huddle-icon.png';
 
 export function AuthPage() {
   const [email, setEmail] = useState('');
@@ -118,10 +118,10 @@ export function AuthPage() {
       <div className="max-w-4xl w-full">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <img src={familyHuddleLogo} alt="Family Huddle" className="w-14 h-14" />
             <h1 className="text-5xl font-bold bg-gradient-to-r from-primary via-primary to-primary-foreground bg-clip-text text-transparent">
               Family Huddle
             </h1>
+            <img src={familyHuddleIcon} alt="" className="w-12 h-12" />
           </div>
           <p className="text-xl text-muted-foreground">
             Create families with relatives or friends, assign tasks to each other, and earn stars to level up your characters. Build real habits—and tighter bonds—through play.
