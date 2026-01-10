@@ -6,9 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
 
 import { useToast } from '@/hooks/use-toast';
+import familyHuddleLogo from '@/assets/family-huddle-logo.png';
 
 export function AuthPage() {
   const [email, setEmail] = useState('');
@@ -117,15 +117,15 @@ export function AuthPage() {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted flex items-center justify-center p-4">
       <div className="max-w-4xl w-full">
         <div className="text-center mb-8">
-          <h1 className="text-5xl font-bold bg-gradient-to-r from-primary via-primary to-primary-foreground bg-clip-text text-transparent mb-4">
-            Family Huddle ⭐
-          </h1>
-          <p className="text-xl text-muted-foreground mb-6">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <img src={familyHuddleLogo} alt="Family Huddle" className="w-14 h-14" />
+            <h1 className="text-5xl font-bold bg-gradient-to-r from-primary via-primary to-primary-foreground bg-clip-text text-transparent">
+              Family Huddle
+            </h1>
+          </div>
+          <p className="text-xl text-muted-foreground">
             Create families with relatives or friends, assign tasks to each other, and earn stars to level up your characters. Build real habits—and tighter bonds—through play.
           </p>
-          <Badge variant="secondary" className="text-lg px-4 py-2">
-            🚀 Ready to Get Started?
-          </Badge>
         </div>
 
         <Card className="max-w-md mx-auto">
