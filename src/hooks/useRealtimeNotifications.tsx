@@ -71,17 +71,21 @@ export function useRealtimeNotifications() {
     }, 150);
   };
 
-  // CHAT NOTIFICATIONS - Global listener for chat messages
+  // CHAT NOTIFICATIONS - Global listener for chat messages (NO filter, manual check)
   useEffect(() => {
     if (!user?.id || !activeFamilyId) return;
 
     const channelName = `chat-notifications:${user.id}:${activeFamilyId}`;
+    console.log(`[chat-notifications] Setting up subscription for channel: ${channelName}`);
+    
     const ch = supabase
       .channel(channelName)
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `family_id=eq.${activeFamilyId}` },
+        { event: 'INSERT', schema: 'public', table: 'chat_messages' }, // No filter - manual check below
         (e) => {
+          console.log('[chat-notifications] Received realtime event:', e);
+          
           const row = (e as any).new as {
             id: string;
             family_id: string;
@@ -90,50 +94,88 @@ export function useRealtimeNotifications() {
             created_at: string;
           } | undefined;
 
-          if (!row || row.user_id === user.id) return; // Ignore own messages
+          if (!row) {
+            console.warn('[chat-notifications] Missing row data in event');
+            return;
+          }
+
+          // Manual filter: check family and ignore own messages
+          if (row.family_id !== activeFamilyId) {
+            console.log('[chat-notifications] Ignoring - different family', { rowFamily: row.family_id, activeFamily: activeFamilyId });
+            return;
+          }
+          if (row.user_id === user.id) {
+            console.log('[chat-notifications] Ignoring - own message');
+            return;
+          }
 
           // De-duplicate
-          if (handledEventIds.current.has(`chat-${row.id}`)) return;
+          if (handledEventIds.current.has(`chat-${row.id}`)) {
+            console.log('[chat-notifications] Ignoring - duplicate event');
+            return;
+          }
           handledEventIds.current.add(`chat-${row.id}`);
 
           // Get sender name
           const senderProfile = getUserProfileRef.current(row.user_id);
           const senderName = senderProfile?.displayName || 'Family Member';
 
+          console.log('[chat-notifications] Showing toast for message from:', senderName);
           toastRef.current({
             title: 'New chat message',
             description: `${senderName}: ${row.content.substring(0, 50)}${row.content.length > 50 ? '...' : ''}`,
           });
         }
       )
-      .subscribe((status) => {
-        if (status !== 'SUBSCRIBED') console.warn(`[chat-notifications] Channel status: ${status}`);
+      .subscribe((status, err) => {
+        console.log(`[chat-notifications] Subscription status: ${status}`, err || '');
       });
 
-    return () => { supabase.removeChannel(ch); };
+    return () => { 
+      console.log(`[chat-notifications] Cleaning up channel: ${channelName}`);
+      supabase.removeChannel(ch); 
+    };
   }, [user?.id, activeFamilyId]);
 
   // TASK EVENTS (recipient only) — open modal immediately on "assigned", with de-dupe
+  // NO filter - manual check for recipient_id
   useEffect(() => {
     if (!user?.id) return;
   
     const chan = `task-events:${user.id}`;
+    console.log(`[task-events] Setting up subscription for channel: ${chan}`);
+    
     const ch = supabase
       .channel(chan)
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'task_events', filter: `recipient_id=eq.${user.id}` },
+        { event: 'INSERT', schema: 'public', table: 'task_events' }, // No filter - manual check below
         async (e) => {
+          console.log('[task-events] Received realtime event:', e);
+          
           const row = (e as any).new as TaskEvent | undefined;
-          if (!row) return;
+          if (!row) {
+            console.warn('[task-events] Missing row data in event');
+            return;
+          }
+
+          // Manual filter: check recipient_id
+          if (row.recipient_id !== user.id) {
+            console.log('[task-events] Ignoring - not for current user', { recipient: row.recipient_id, me: user.id });
+            return;
+          }
   
           // 🔒 ignore the same event id if we've already handled it
           if (row.id) {
-            if (handledEventIds.current.has(row.id)) return;
+            if (handledEventIds.current.has(row.id)) {
+              console.log('[task-events] Ignoring - duplicate event');
+              return;
+            }
             handledEventIds.current.add(row.id);
           }
   
           const evtType = row.event_type;
+          console.log('[task-events] Processing event type:', evtType);
   
           if (evtType === 'assigned') {
             try {
@@ -144,6 +186,7 @@ export function useRealtimeNotifications() {
                 .single();
   
               if (error || !data) {
+                console.warn('[task-events] Could not fetch task, showing toast instead:', error);
                 const actor = row.payload?.actor_name ?? 'Someone';
                 const taskName = row.payload?.name ?? 'a task';
                 toastRef.current({ title: 'New task assigned', description: `${actor} assigned "${taskName}" to you.` });
@@ -163,6 +206,7 @@ export function useRealtimeNotifications() {
                 completed: !!data.completed,
               } as any;
   
+              console.log('[task-events] Opening assignment modal for task:', taskForModal.name);
               openModalRef.current(taskForModal);
             } catch (err) {
               console.error('[task_events] open modal failed:', err);
@@ -174,17 +218,22 @@ export function useRealtimeNotifications() {
           const actor = row.payload?.actor_name ?? 'Someone';
           const taskName = row.payload?.name ?? 'your task';
           if (evtType === 'accepted') {
+            console.log('[task-events] Showing accepted toast');
             toastRef.current({ title: 'Task accepted', description: `${actor} accepted "${taskName}".` });
           } else if (evtType === 'rejected') {
+            console.log('[task-events] Showing rejected toast');
             toastRef.current({ title: 'Task rejected', description: `${actor} rejected "${taskName}".` });
           }
         }
       )
-      .subscribe((status) => {
-        if (status !== 'SUBSCRIBED') console.warn(`[task-events] Channel status: ${status}`);
+      .subscribe((status, err) => {
+        console.log(`[task-events] Subscription status: ${status}`, err || '');
       });
   
-    return () => { supabase.removeChannel(ch); };
+    return () => { 
+      console.log(`[task-events] Cleaning up channel: ${chan}`);
+      supabase.removeChannel(ch); 
+    };
   }, [user?.id, activeFamilyId]);
 
   // FAMILY SYNC (categories/templates) — silent refresh
