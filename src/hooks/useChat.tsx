@@ -95,19 +95,21 @@ export function useChat() {
     loadMessages();
   }, [loadMessages]);
 
-  // Realtime subscription for new messages
+  // Realtime subscription for new messages (NO filter - manual check)
   useEffect(() => {
     if (!activeFamilyId || !user?.id) return;
 
     const channelName = `chat-page:${user.id}:${activeFamilyId}`;
-    const filter = `family_id=eq.${activeFamilyId}`;
+    console.log(`[chat-page] Setting up subscription for channel: ${channelName}`);
 
     const ch = supabase
       .channel(channelName)
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'chat_messages', filter },
+        { event: 'INSERT', schema: 'public', table: 'chat_messages' }, // No filter - manual check below
         (e) => {
+          console.log('[chat-page] Received realtime event:', e);
+          
           const newRow = (e as any).new as {
             id: string;
             family_id: string;
@@ -117,7 +119,13 @@ export function useChat() {
           } | undefined;
 
           if (!newRow) {
-            console.error('[chat] Realtime event missing .new:', e);
+            console.error('[chat-page] Realtime event missing .new:', e);
+            return;
+          }
+
+          // Manual filter: check family_id
+          if (newRow.family_id !== activeFamilyId) {
+            console.log('[chat-page] Ignoring - different family');
             return;
           }
 
@@ -137,17 +145,17 @@ export function useChat() {
             createdAt: newRow.created_at,
           };
 
+          console.log('[chat-page] Adding message to state:', converted.id);
           setMessages((prev) => [...prev, converted]);
           // Note: Toast notifications are handled globally by useRealtimeNotifications
         }
       )
-      .subscribe((status) => {
-        if (status !== 'SUBSCRIBED') {
-          console.warn(`[chat] Channel ${channelName} status: ${status}`);
-        }
+      .subscribe((status, err) => {
+        console.log(`[chat-page] Subscription status: ${status}`, err || '');
       });
 
     return () => {
+      console.log(`[chat-page] Cleaning up channel: ${channelName}`);
       supabase.removeChannel(ch);
     };
   }, [activeFamilyId, user?.id, user?.displayName, getUserProfile]);
