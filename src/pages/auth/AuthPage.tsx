@@ -117,12 +117,9 @@ export function AuthPage() {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted flex items-center justify-center p-4">
       <div className="max-w-4xl w-full">
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <h1 className="text-5xl font-bold text-primary">
-              Family Huddle
-            </h1>
-            <img src={familyHuddleIcon} alt="" className="w-12 h-12" />
-          </div>
+          <h1 className="text-5xl font-bold text-primary mb-4">
+            Family Huddle<img src={familyHuddleIcon} alt="" className="inline-block w-[1em] h-[1em] ml-1 align-baseline" />
+          </h1>
           <p className="text-xl text-muted-foreground">
             Create families with relatives or friends, assign tasks to each other, and earn stars to level up your characters. Build real habits—and tighter bonds—through play.
           </p>
