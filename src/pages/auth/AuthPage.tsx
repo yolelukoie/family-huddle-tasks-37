@@ -8,7 +8,20 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { useToast } from '@/hooks/use-toast';
-import familyHuddleIcon from '@/assets/family-huddle-icon.png';
+
+const StarIcon = () => (
+  <svg viewBox="0 0 100 100" className="inline-block w-[1em] h-[1em] ml-1 align-baseline">
+    {/* Main star */}
+    <polygon 
+      points="50,10 61,40 95,40 68,60 79,90 50,72 21,90 32,60 5,40 39,40" 
+      fill="#FACC15" 
+    />
+    {/* Three dots */}
+    <circle cx="20" cy="75" r="8" fill="#FACC15" />
+    <circle cx="80" cy="75" r="8" fill="#FACC15" />
+    <circle cx="50" cy="5" r="6" fill="#FACC15" />
+  </svg>
+);
 
 export function AuthPage() {
   const [email, setEmail] = useState('');
@@ -118,7 +131,7 @@ export function AuthPage() {
       <div className="max-w-4xl w-full">
         <div className="text-center mb-8">
           <h1 className="text-5xl font-bold text-primary mb-4">
-            Family Huddle<img src={familyHuddleIcon} alt="" className="inline-block w-[1em] h-[1em] ml-1 align-baseline" />
+            Family Huddle<StarIcon />
           </h1>
           <p className="text-xl text-muted-foreground">
             Create families with relatives or friends, assign tasks to each other, and earn stars to level up your characters. Build real habits—and tighter bonds—through play.
