@@ -11,17 +11,17 @@ import { useToast } from '@/hooks/use-toast';
 
 const StarIcon = () => (
   <svg viewBox="0 0 100 100" className="inline-block w-[1.2em] h-[1.2em] ml-1 align-middle">
-    {/* Top dot - connected to star top */}
-    <circle cx="50" cy="12" r="8" fill="#FACC15" />
-    {/* Main star - centered, below top dot */}
+    {/* Main star - centered */}
     <polygon 
-      points="50,22 58,42 80,42 63,56 70,78 50,65 30,78 37,56 20,42 42,42" 
+      points="50,25 57,43 77,43 61,55 67,73 50,62 33,73 39,55 23,43 43,43" 
       fill="#FACC15" 
     />
-    {/* Bottom-left dot */}
-    <circle cx="22" cy="72" r="9" fill="#FACC15" />
-    {/* Bottom-right dot */}
-    <circle cx="78" cy="72" r="9" fill="#FACC15" />
+    {/* Top dot - touching star's top point */}
+    <circle cx="50" cy="15" r="7" fill="#FACC15" />
+    {/* Bottom-left dot - at 7 o'clock */}
+    <circle cx="25" cy="78" r="7" fill="#FACC15" />
+    {/* Bottom-right dot - at 5 o'clock */}
+    <circle cx="75" cy="78" r="7" fill="#FACC15" />
   </svg>
 );
 
