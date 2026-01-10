@@ -26,20 +26,12 @@ import { MilestoneCelebration } from '@/components/celebrations/MilestoneCelebra
 import { TaskAssignmentModal } from '@/components/modals/TaskAssignmentModal';
 import { useTaskAssignments } from '@/hooks/useTaskAssignments';
 import { Star, Calendar, Plus, RotateCcw, CheckCircle } from 'lucide-react';
+
 export default function MainPage() {
+  // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP
   const { user, isAuthenticated, isLoading } = useAuth();
   const { t } = useTranslation();
-
-  if (isLoading) {
-    return <div className="p-6">{t('main.loading')}</div>;
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/auth" replace />;
-  }
-
-  // If you require onboarding before main:
-  if (!user?.profileComplete) return <Navigate to="/onboarding" replace />;
+  const navigate = useNavigate();
   
   const {
     activeFamilyId,
@@ -48,15 +40,15 @@ export default function MainPage() {
     addStars,
     families
   } = useApp();
+  
   const {
     unlockedBadges,
     showBadges,
     checkForNewBadges,
     resetBadgeProgress
   } = useBadges();
-  const {
-    updateGoalProgress
-  } = useGoals();
+  
+  const { updateGoalProgress } = useGoals();
   const { currentCelebration, completeCelebration, addCelebration } = useCelebrations();
   const { tasks, categories, updateTask } = useTasks();
   const { getImagePath } = useCustomCharacterImages();
@@ -66,19 +58,25 @@ export default function MainPage() {
     handleTaskResponse, 
     closeAssignmentModal 
   } = useTaskAssignments();
-  
-  const navigate = useNavigate();
+
+  // All useState hooks
   const [showAssignTask, setShowAssignTask] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  const totalStars = getTotalStars(activeFamilyId);
+  const [previousStars, setPreviousStars] = useState(0);
+  const [containerDimensions, setContainerDimensions] = useState({ width: 320, height: 160 });
+  const [activeGoal, setActiveGoal] = useState<any>(null);
+  
+  // All useRef hooks
+  const badgeContainerRef = useRef<HTMLDivElement>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Derived values (computed after hooks, before conditionals)
+  const totalStars = getTotalStars(activeFamilyId || '');
   const currentStage = getCurrentStage(totalStars);
   const stageProgress = getStageProgress(totalStars);
   const stageName = getStageName(currentStage);
   const characterImagePath = getImagePath(user?.gender || 'male', currentStage);
-
-  const [previousStars, setPreviousStars] = useState(totalStars);
-  const badgeContainerRef = useRef<HTMLDivElement>(null);
-  const [containerDimensions, setContainerDimensions] = useState({ width: 320, height: 160 });
+  const currentFamily = activeFamilyId ? families.find(f => f.id === activeFamilyId) : null;
 
   // Measure actual container dimensions
   useEffect(() => {
@@ -99,13 +97,22 @@ export default function MainPage() {
     window.addEventListener('resize', updateDimensions);
     
     // Also measure after a short delay to ensure styles are applied
-    const timeout = setTimeout(updateDimensions, 100);
+    timeoutRef.current = setTimeout(updateDimensions, 100);
     
     return () => {
       window.removeEventListener('resize', updateDimensions);
-      clearTimeout(timeout);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
     };
   }, []);
+
+  // Sync previousStars with totalStars on initial load
+  useEffect(() => {
+    if (previousStars === 0 && totalStars > 0) {
+      setPreviousStars(totalStars);
+    }
+  }, [previousStars, totalStars]);
 
   // Check for newly unlocked badges and milestone when stars change
   useEffect(() => {
@@ -117,7 +124,7 @@ export default function MainPage() {
           addCelebration({ type: 'milestone', milestone: { stars: 1000 } });
           // Reset character after celebration is shown
           setTimeout(async () => {
-            await resetCharacterProgress(activeFamilyId);
+            await resetCharacterProgress(activeFamilyId || '');
             resetBadgeProgress();
             setPreviousStars(0);
           }, 3500); // Wait for celebration to complete (3s) + buffer
@@ -129,11 +136,7 @@ export default function MainPage() {
     setPreviousStars(totalStars);
   }, [totalStars, previousStars, checkForNewBadges, addCelebration, resetCharacterProgress, resetBadgeProgress, activeFamilyId]);
 
-  // Get today's tasks from useTasks hook - only tasks assigned to current user
-  const todaysTasks = tasks.filter(task => !task.completed && isToday(task.dueDate) && task.assignedTo === user?.id);
-
   // Get active goal (fetch from Supabase)
-  const [activeGoal, setActiveGoal] = useState(null);
   useEffect(() => {
     const fetchActiveGoal = async () => {
       if (!user?.id || !activeFamilyId) return;
@@ -152,6 +155,21 @@ export default function MainPage() {
     fetchActiveGoal();
   }, [user?.id, activeFamilyId, refreshKey]);
 
+  // CONDITIONAL RETURNS AFTER ALL HOOKS
+  if (isLoading) {
+    return <div className="p-6">{t('main.loading')}</div>;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  // If you require onboarding before main:
+  if (!user?.profileComplete) return <Navigate to="/onboarding" replace />;
+
+  // Get today's tasks from useTasks hook - only tasks assigned to current user
+  const todaysTasks = tasks.filter(task => !task.completed && isToday(task.dueDate) && task.assignedTo === user?.id);
+
   // Get task categories for star breakdown from useTasks hook
   const completedTasks = tasks.filter(task => task.completed && task.assignedTo === user?.id);
   const categoryStars = categories.map(category => {
@@ -162,6 +180,7 @@ export default function MainPage() {
       stars
     };
   });
+
   const handleCompleteTask = async (taskId: string) => {
     const task = todaysTasks.find(t => t.id === taskId);
     if (!task) return;
@@ -181,14 +200,14 @@ export default function MainPage() {
     // Refresh component to show updated goal progress
     setRefreshKey(prev => prev + 1);
   };
+
   const handleResetCharacter = async () => {
     if (window.confirm(t('main.resetConfirm'))) {
-      await resetCharacterProgress(activeFamilyId);
+      await resetCharacterProgress(activeFamilyId || '');
       resetBadgeProgress();
       setPreviousStars(0);
     }
   };
-  const currentFamily = activeFamilyId ? families.find(f => f.id === activeFamilyId) : null;
 
   return <div className="min-h-screen bg-gradient-to-b from-[hsl(var(--section-tint))] to-background">
       <NavigationHeader title={currentFamily?.name || t('main.title')} showBackButton={false} />
