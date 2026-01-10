@@ -56,29 +56,8 @@ export function useRealtimeNotifications() {
 
   // Debug logging removed for production
 
-  // CHAT EVENTS
-  useEffect(() => {
-    if (!user?.id || !activeFamilyId) return;
-  
-    const chan = `chat-global:${activeFamilyId}`;
-    const ch = supabase
-      .channel(chan)
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `family_id=eq.${activeFamilyId}` },
-        (e) => {
-          const row = (e as any).new as { user_id: string; content: string } | undefined;
-          if (!row || row.user_id === user.id) return; // only notify on others' messages
-          const name = getUserProfile(row.user_id)?.displayName ?? 'Family member';
-          toast({ title: 'New chat message', description: `${name}: ${row.content}` });
-        }
-      )
-      .subscribe((status) => {
-        if (status !== 'SUBSCRIBED') console.warn(`[chat-global] Channel status: ${status}`);
-      });
-  
-    return () => { supabase.removeChannel(ch); };
-  }, [user?.id, activeFamilyId, toast, getUserProfile]);
+  // CHAT EVENTS - Notifications are handled in useChat.tsx to avoid duplicates
+  // This subscription was removed because useChat already shows toasts for new messages
 
   // TASK EVENTS (recipient only) — open modal immediately on "assigned", with de-dupe
   useEffect(() => {
