@@ -94,7 +94,10 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
             event_type: "assigned",
             payload: {
               name: createdName,
+              description: form.getValues().description ?? '',
+              stars: form.getValues().starValue ?? 1,
               due_date: createdDue ? new Date(createdDue).toISOString() : null,
+              category_id: assignedCategory.id,
               actor_name: (user as any)?.displayName ?? "Someone",
             },
           })

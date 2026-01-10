@@ -14,7 +14,14 @@ type TaskEvent = {
   recipient_id: string | null;
   actor_id: string | null;
   event_type: 'assigned' | 'accepted' | 'rejected' | string;
-  payload: { name?: string; actor_name?: string } | null;
+  payload: { 
+    name?: string; 
+    description?: string;
+    stars?: number;
+    due_date?: string;
+    category_id?: string;
+    actor_name?: string;
+  } | null;
   created_at: string;
 };
 
@@ -186,39 +193,22 @@ export function useRealtimeNotifications() {
           console.log('[task-events] Processing event type:', evtType);
   
           if (evtType === 'assigned') {
-            try {
-              const { data, error } = await supabase
-                .from('tasks')
-                .select('*')
-                .eq('id', row.task_id)
-                .single();
-  
-              if (error || !data) {
-                console.warn('[task-events] Could not fetch task, showing toast instead:', error);
-                const actor = row.payload?.actor_name ?? 'Someone';
-                const taskName = row.payload?.name ?? 'a task';
-                toastRef.current({ title: 'New task assigned', description: `${actor} assigned "${taskName}" to you.` });
-                return;
-              }
-  
-              const taskForModal = {
-                id: data.id,
-                name: data.name,
-                description: data.description ?? '',
-                starValue: data.star_value ?? 0,
-                assignedBy: data.assigned_by,
-                assignedTo: data.assigned_to,
-                dueDate: data.due_date,
-                familyId: data.family_id ?? activeFamilyId,
-                categoryId: data.category_id,
-                completed: !!data.completed,
-              } as any;
-  
-              console.log('[task-events] Opening assignment modal for task:', taskForModal.name);
-              openModalRef.current(taskForModal);
-            } catch (err) {
-              console.error('[task_events] open modal failed:', err);
-            }
+            // Build task object directly from payload - no fetch needed, avoids race condition
+            const taskForModal = {
+              id: row.task_id,
+              name: row.payload?.name ?? 'New Task',
+              description: row.payload?.description ?? '',
+              starValue: row.payload?.stars ?? 0,
+              assignedBy: row.actor_id,
+              assignedTo: user.id,
+              dueDate: row.payload?.due_date,
+              familyId: row.family_id,
+              categoryId: row.payload?.category_id,
+              completed: false,
+            } as any;
+
+            console.log('[task-events] Opening assignment modal from payload:', taskForModal.name);
+            openModalRef.current(taskForModal);
             return;
           }
   
