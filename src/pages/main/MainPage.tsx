@@ -204,11 +204,88 @@ export default function MainPage() {
       completedAt: new Date().toISOString()
     });
 
-    // Goal progress is handled by TasksPage when the task is completed
-    // Do NOT call updateGoalProgress here to avoid duplicate celebrations
+    // Stars are updated by updateTask via applyStarsDelta
+    // Update goal progress (import useGoals at top)
+    if (task.assignedTo === user?.id && activeFamilyId) {
+      const { updateGoalProgress } = await import('@/hooks/useGoals').then(m => {
+        // Can't use hook here, call supabase directly
+        return { updateGoalProgress: null };
+      });
+      // Goal progress updated via direct supabase call below
+      await updateGoalProgressDirectly(task.categoryId, task.starValue);
+    }
 
     // Refresh component to show updated goal progress
     setRefreshKey(prev => prev + 1);
+  };
+
+  // Direct goal progress update function (since we can't use hooks inside callbacks)
+  const updateGoalProgressDirectly = async (taskCategoryId: string, starValue: number) => {
+    if (!user?.id || !activeFamilyId) return;
+
+    try {
+      // Get active goal from Supabase
+      const { data: goals } = await supabase
+        .from('goals')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('family_id', activeFamilyId)
+        .eq('completed', false)
+        .limit(1);
+
+      const activeGoalData = goals && goals.length > 0 ? goals[0] : null;
+      if (!activeGoalData) return;
+
+      // Check if this task's category should count towards the goal
+      let shouldCount = true;
+      if (activeGoalData.target_categories && activeGoalData.target_categories.length > 0) {
+        // Validate that target categories still exist
+        const { data: existingCategories } = await supabase
+          .from('task_categories')
+          .select('id')
+          .eq('family_id', activeFamilyId)
+          .in('id', activeGoalData.target_categories);
+        
+        const validCategoryIds = (existingCategories || []).map(c => c.id);
+        shouldCount = validCategoryIds.includes(taskCategoryId);
+      }
+
+      if (!shouldCount) return;
+
+      // Update goal progress
+      const newCurrentStars = activeGoalData.current_stars + starValue;
+      const isCompleted = newCurrentStars >= activeGoalData.target_stars;
+
+      await supabase
+        .from('goals')
+        .update({
+          current_stars: newCurrentStars,
+          completed: isCompleted,
+          completed_at: isCompleted ? new Date().toISOString() : null
+        })
+        .eq('id', activeGoalData.id);
+
+      // Goal celebration is handled by useCelebrations context
+      if (isCompleted) {
+        addCelebration({ 
+          type: 'goal', 
+          goal: {
+            id: activeGoalData.id,
+            familyId: activeGoalData.family_id,
+            userId: activeGoalData.user_id,
+            targetStars: activeGoalData.target_stars,
+            targetCategories: activeGoalData.target_categories,
+            reward: activeGoalData.reward,
+            currentStars: newCurrentStars,
+            completed: true,
+            completedAt: new Date().toISOString(),
+            createdAt: activeGoalData.created_at,
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error updating goal progress:', error);
+    }
   };
 
   const handleResetCharacter = async () => {
