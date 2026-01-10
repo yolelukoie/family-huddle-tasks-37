@@ -1,80 +1,50 @@
 // src/pages/auth/ResetPasswordPage.tsx
 import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 export function ResetPasswordPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [isSessionReady, setIsSessionReady] = useState(false);
-  const [searchParams] = useSearchParams();
+  const [hasCheckedSession, setHasCheckedSession] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
 
-  // 1) Prepare an authenticated session from the reset link.
+  // Wait for auth context to establish session from URL tokens (handled by useAuth)
   useEffect(() => {
-    let cancelled = false;
+    // Don't do anything while auth is still loading
+    if (authLoading) return;
 
-    const initFromLink = async () => {
-      try {
-        // Handle both query (?code=...) and hash (#access_token=...&refresh_token=...)
-        const hash = window.location.hash?.startsWith("#") ? window.location.hash.slice(1) : "";
-        const hashParams = new URLSearchParams(hash);
+    // Mark that we've checked the session
+    setHasCheckedSession(true);
 
-        const code = searchParams.get("code");
-        const accessToken = searchParams.get("access_token") || hashParams.get("access_token") || undefined;
-        const refreshToken = searchParams.get("refresh_token") || hashParams.get("refresh_token") || undefined;
-
-        if (code) {
-          const { error } = await supabase.auth.exchangeCodeForSession(code);
-          if (error) throw error;
-          if (!cancelled) setIsSessionReady(true);
-        } else if (accessToken && refreshToken) {
-          const { error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
-          });
-          if (error) throw error;
-          if (!cancelled) setIsSessionReady(true);
-        } else {
-          // Maybe the user already has a session (e.g., clicked link while signed in)
-          const { data } = await supabase.auth.getSession();
-          if (data.session) {
-            if (!cancelled) setIsSessionReady(true);
-          } else {
-            throw new Error("Missing password reset credentials");
-          }
-        }
-
-        // Clean the URL (remove query + hash) so reloads don’t re-run the flow.
-        window.history.replaceState({}, document.title, window.location.pathname);
-      } catch (err) {
-        console.error("[reset-password] link processing failed:", err);
-        toast({
-          title: "Invalid or expired link",
-          description: "Please request a new password reset email.",
-          variant: "destructive",
-        });
-        navigate("/auth", { replace: true });
-      }
-    };
-
-    initFromLink();
-    return () => {
-      cancelled = true;
-    };
-  }, [searchParams, navigate, toast]);
+    if (isAuthenticated) {
+      // Session is ready - useAuth already processed the tokens
+      setIsSessionReady(true);
+    } else {
+      // No session after auth loading completed = invalid/expired link
+      toast({
+        title: "Invalid or expired link",
+        description: "Please request a new password reset email.",
+        variant: "destructive",
+      });
+      navigate("/auth", { replace: true });
+    }
+  }, [isAuthenticated, authLoading, navigate, toast]);
 
   // 2) Submit handler
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isLoading) return;
+    if (isUpdating) return;
 
     if (password !== confirmPassword) {
       toast({
@@ -93,7 +63,7 @@ export function ResetPasswordPage() {
       return;
     }
 
-    setIsLoading(true);
+    setIsUpdating(true);
     try {
       const { error } = await supabase.auth.updateUser({ password });
       if (error) {
@@ -135,7 +105,7 @@ export function ResetPasswordPage() {
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      setIsUpdating(false);
     }
   };
 
@@ -187,8 +157,8 @@ export function ResetPasswordPage() {
                 minLength={8}
               />
             </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Updating…" : "Update Password"}
+            <Button type="submit" className="w-full" disabled={isUpdating}>
+              {isUpdating ? "Updating…" : "Update Password"}
             </Button>
           </form>
         </CardContent>
