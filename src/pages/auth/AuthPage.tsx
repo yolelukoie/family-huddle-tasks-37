@@ -10,16 +10,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 
 const StarIcon = () => (
-  <svg viewBox="0 0 100 100" className="inline-block w-[1em] h-[1em] ml-1 align-baseline">
-    {/* Main star */}
+  <svg viewBox="0 0 100 100" className="inline-block w-[1.2em] h-[1.2em] ml-1 align-middle">
+    {/* Top dot - connected to star top */}
+    <circle cx="50" cy="12" r="8" fill="#FACC15" />
+    {/* Main star - centered, below top dot */}
     <polygon 
-      points="50,10 61,40 95,40 68,60 79,90 50,72 21,90 32,60 5,40 39,40" 
+      points="50,22 58,42 80,42 63,56 70,78 50,65 30,78 37,56 20,42 42,42" 
       fill="#FACC15" 
     />
-    {/* Three dots */}
-    <circle cx="20" cy="75" r="8" fill="#FACC15" />
-    <circle cx="80" cy="75" r="8" fill="#FACC15" />
-    <circle cx="50" cy="5" r="6" fill="#FACC15" />
+    {/* Bottom-left dot */}
+    <circle cx="22" cy="72" r="9" fill="#FACC15" />
+    {/* Bottom-right dot */}
+    <circle cx="78" cy="72" r="9" fill="#FACC15" />
   </svg>
 );
 
