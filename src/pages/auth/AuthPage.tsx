@@ -118,7 +118,7 @@ export function AuthPage() {
       <div className="max-w-4xl w-full">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <h1 className="text-5xl font-bold bg-gradient-to-r from-primary via-primary to-primary-foreground bg-clip-text text-transparent">
+            <h1 className="text-5xl font-bold text-primary">
               Family Huddle
             </h1>
             <img src={familyHuddleIcon} alt="" className="w-12 h-12" />
