@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useAuth } from './useAuth';
 import { useApp } from './useApp';
 import { getCurrentStageBadges, getNewlyUnlockedBadges, shouldShowBadges } from '@/lib/badges';
@@ -81,6 +81,9 @@ export function useBadges() {
     }
   }, [user, activeFamilyId]);
 
+  // Track if we've done initial consistency repair this session
+  const hasRepairedRef = useRef(false);
+
   // Load persisted badges from database
   const loadPersistedBadges = useCallback(async () => {
     if (!user || !activeFamilyId) {
@@ -91,8 +94,11 @@ export function useBadges() {
     try {
       setIsLoading(true);
       
-      // First repair stars consistency
-      await repairStarsConsistency();
+      // Only repair stars consistency once per session (on first load)
+      if (!hasRepairedRef.current) {
+        await repairStarsConsistency();
+        hasRepairedRef.current = true;
+      }
       
       const { data, error } = await supabase
         .from('user_badges')

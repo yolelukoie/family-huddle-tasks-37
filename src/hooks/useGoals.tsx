@@ -58,6 +58,16 @@ export function useGoals() {
     loadGoals();
   }, [loadGoals]);
 
+  // Listen for goals:changed events (e.g., after character reset)
+  useEffect(() => {
+    const handler = () => {
+      console.log('Goals change event received, reloading goals');
+      loadGoals();
+    };
+    window.addEventListener('goals:changed', handler);
+    return () => window.removeEventListener('goals:changed', handler);
+  }, [loadGoals]);
+
   // Set up realtime subscription
   useEffect(() => {
     if (!user || !activeFamilyId) return;

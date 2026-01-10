@@ -957,12 +957,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         console.error('Failed to delete badges:', badgesError);
       }
 
+      // Reset active goals (set current_stars to 0) instead of deleting them
+      const { error: goalsError } = await supabase
+        .from('goals')
+        .update({ current_stars: 0, completed: false, completed_at: null })
+        .eq('user_id', user.id)
+        .eq('family_id', familyId);
+
+      if (goalsError) {
+        console.error('Failed to reset goals:', goalsError);
+      }
+
       // Rehydrate family data to refresh everything
       await hydrateActiveFamily();
       
-      // Emit events to refresh tasks and badges
+      // Emit events to refresh tasks, badges, and goals
       window.dispatchEvent(new CustomEvent('tasks:changed'));
       window.dispatchEvent(new CustomEvent('badges:changed'));
+      window.dispatchEvent(new CustomEvent('goals:changed'));
     }
   };
   return (

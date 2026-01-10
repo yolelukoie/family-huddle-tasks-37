@@ -31,7 +31,15 @@ export function CreateGoalModal({ open, onOpenChange, familyId, userId }: Create
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!targetStars || parseInt(targetStars) <= 0) return;
+    const stars = parseInt(targetStars);
+    if (!targetStars || stars < 5 || stars > 500) {
+      toast({
+        title: t('goalModal.error'),
+        description: t('goalModal.invalidStars', 'Target stars must be between 5 and 500'),
+        variant: "destructive",
+      });
+      return;
+    }
 
     setLoading(true);
     try {
@@ -91,12 +99,14 @@ export function CreateGoalModal({ open, onOpenChange, familyId, userId }: Create
             <Input
               id="targetStars"
               type="number"
-              min="1"
+              min="5"
+              max="500"
               value={targetStars}
               onChange={(e) => setTargetStars(e.target.value)}
               placeholder={t('goalModal.enterNumberOfStars')}
               required
             />
+            <p className="text-xs text-muted-foreground mt-1">{t('goalModal.starsRange', 'Between 5 and 500 stars')}</p>
           </div>
 
           <div>
