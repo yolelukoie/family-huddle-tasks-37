@@ -138,14 +138,7 @@ export function useChat() {
           };
 
           setMessages((prev) => [...prev, converted]);
-
-          // Toast only for messages from others
-          if (!isMine) {
-            toast({
-              title: 'New chat message',
-              description: `${displayName}: ${newRow.content}`,
-            });
-          }
+          // Note: Toast notifications are handled globally by useRealtimeNotifications
         }
       )
       .subscribe((status) => {
@@ -157,7 +150,7 @@ export function useChat() {
     return () => {
       supabase.removeChannel(ch);
     };
-  }, [activeFamilyId, user?.id, user?.displayName, getUserProfile, toast]);
+  }, [activeFamilyId, user?.id, user?.displayName, getUserProfile]);
 
   const sendMessage = useCallback(
     async (content: string) => {

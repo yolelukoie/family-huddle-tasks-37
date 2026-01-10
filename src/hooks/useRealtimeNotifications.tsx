@@ -34,11 +34,28 @@ export function useRealtimeNotifications() {
   const { refreshData } = useTasks();
   const {
     activeFamilyId,
-    getUserProfile,      // needed for chat name lookup
+    getUserProfile,
   } = useApp();
 
   const { openAssignmentModal } = useAssignmentModal();
   const handledEventIds = useRef<Set<string>>(new Set());
+
+  // Stable refs for callbacks to prevent subscription churn
+  const toastRef = useRef(toast);
+  const openModalRef = useRef(openAssignmentModal);
+  const getUserProfileRef = useRef(getUserProfile);
+
+  useEffect(() => {
+    toastRef.current = toast;
+  }, [toast]);
+
+  useEffect(() => {
+    openModalRef.current = openAssignmentModal;
+  }, [openAssignmentModal]);
+
+  useEffect(() => {
+    getUserProfileRef.current = getUserProfile;
+  }, [getUserProfile]);
 
   // Debounce refresh for category/template sync
   const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -54,10 +71,47 @@ export function useRealtimeNotifications() {
     }, 150);
   };
 
-  // Debug logging removed for production
+  // CHAT NOTIFICATIONS - Global listener for chat messages
+  useEffect(() => {
+    if (!user?.id || !activeFamilyId) return;
 
-  // CHAT EVENTS - Notifications are handled in useChat.tsx to avoid duplicates
-  // This subscription was removed because useChat already shows toasts for new messages
+    const channelName = `chat-notifications:${user.id}:${activeFamilyId}`;
+    const ch = supabase
+      .channel(channelName)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `family_id=eq.${activeFamilyId}` },
+        (e) => {
+          const row = (e as any).new as {
+            id: string;
+            family_id: string;
+            user_id: string;
+            content: string;
+            created_at: string;
+          } | undefined;
+
+          if (!row || row.user_id === user.id) return; // Ignore own messages
+
+          // De-duplicate
+          if (handledEventIds.current.has(`chat-${row.id}`)) return;
+          handledEventIds.current.add(`chat-${row.id}`);
+
+          // Get sender name
+          const senderProfile = getUserProfileRef.current(row.user_id);
+          const senderName = senderProfile?.displayName || 'Family Member';
+
+          toastRef.current({
+            title: 'New chat message',
+            description: `${senderName}: ${row.content.substring(0, 50)}${row.content.length > 50 ? '...' : ''}`,
+          });
+        }
+      )
+      .subscribe((status) => {
+        if (status !== 'SUBSCRIBED') console.warn(`[chat-notifications] Channel status: ${status}`);
+      });
+
+    return () => { supabase.removeChannel(ch); };
+  }, [user?.id, activeFamilyId]);
 
   // TASK EVENTS (recipient only) — open modal immediately on "assigned", with de-dupe
   useEffect(() => {
@@ -92,7 +146,7 @@ export function useRealtimeNotifications() {
               if (error || !data) {
                 const actor = row.payload?.actor_name ?? 'Someone';
                 const taskName = row.payload?.name ?? 'a task';
-                toast({ title: 'New task assigned', description: `${actor} assigned "${taskName}" to you.` });
+                toastRef.current({ title: 'New task assigned', description: `${actor} assigned "${taskName}" to you.` });
                 return;
               }
   
@@ -109,7 +163,7 @@ export function useRealtimeNotifications() {
                 completed: !!data.completed,
               } as any;
   
-              openAssignmentModal(taskForModal);
+              openModalRef.current(taskForModal);
             } catch (err) {
               console.error('[task_events] open modal failed:', err);
             }
@@ -120,9 +174,9 @@ export function useRealtimeNotifications() {
           const actor = row.payload?.actor_name ?? 'Someone';
           const taskName = row.payload?.name ?? 'your task';
           if (evtType === 'accepted') {
-            toast({ title: 'Task accepted', description: `${actor} accepted "${taskName}".` });
+            toastRef.current({ title: 'Task accepted', description: `${actor} accepted "${taskName}".` });
           } else if (evtType === 'rejected') {
-            toast({ title: 'Task rejected', description: `${actor} rejected "${taskName}".` });
+            toastRef.current({ title: 'Task rejected', description: `${actor} rejected "${taskName}".` });
           }
         }
       )
@@ -131,8 +185,7 @@ export function useRealtimeNotifications() {
       });
   
     return () => { supabase.removeChannel(ch); };
-    // Keep deps minimal so we don't re-subscribe unnecessarily in dev StrictMode
-  }, [user?.id, openAssignmentModal, toast]);
+  }, [user?.id, activeFamilyId]);
 
   // FAMILY SYNC (categories/templates) — silent refresh
   useEffect(() => {
