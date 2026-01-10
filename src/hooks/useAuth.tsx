@@ -209,25 +209,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Handle Supabase email links like #access_token=...&refresh_token=...&type=recovery
   useEffect(() => {
-    if (!window.location.hash.includes("access_token")) return;
+    const hash = window.location.hash;
+    if (!hash || !hash.includes("access_token")) return;
 
-    const params = new URLSearchParams(window.location.hash.slice(1));
+    const params = new URLSearchParams(hash.slice(1));
     const access_token = params.get("access_token");
     const refresh_token = params.get("refresh_token");
     const type = params.get("type"); // 'recovery' | 'magiclink' | etc.
+    const errorParam = params.get("error");
+    const errorCode = params.get("error_code");
+
+    // Handle error redirects (expired/invalid links)
+    if (errorParam || errorCode) {
+      console.warn("[Auth] Error in hash:", errorParam, errorCode);
+      // Clean URL and let the page handle showing the error
+      window.history.replaceState({}, "", window.location.pathname);
+      return;
+    }
 
     if (access_token && refresh_token) {
+      // Prevent double-processing
+      if (handlingRecovery.current && type === "recovery") return;
+      if (type === "recovery") handlingRecovery.current = true;
+
       supabase.auth
         .setSession({ access_token, refresh_token })
-        .then(() => {
-          // Clean URL and go to the right screen
+        .then(({ error }) => {
+          if (error) {
+            console.error("[Auth] setSession failed:", error);
+            handlingRecovery.current = false;
+            return;
+          }
+          // Clean URL - keep on reset-password for recovery, otherwise go home
           if (type === "recovery") {
             window.history.replaceState({}, "", "/reset-password");
           } else {
             window.history.replaceState({}, "", "/");
           }
         })
-        .catch((e) => console.error("[Auth] setSession from hash failed:", e));
+        .catch((e) => {
+          console.error("[Auth] setSession from hash failed:", e);
+          handlingRecovery.current = false;
+        });
     }
   }, []);
 
