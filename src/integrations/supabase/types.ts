@@ -461,6 +461,7 @@ export type Database = {
           id: string
           name: string
           star_value: number
+          status: string | null
           template_id: string | null
           updated_at: string
         }
@@ -477,6 +478,7 @@ export type Database = {
           id?: string
           name: string
           star_value?: number
+          status?: string | null
           template_id?: string | null
           updated_at?: string
         }
@@ -493,6 +495,7 @@ export type Database = {
           id?: string
           name?: string
           star_value?: number
+          status?: string | null
           template_id?: string | null
           updated_at?: string
         }

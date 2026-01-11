@@ -151,6 +151,7 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
           assignedTo: t.assigned_to,
           assignedBy: t.assigned_by,
           dueDate: t.due_date,
+          status: (t as any).status || 'active',
         }));
         setTasks(convertedTasks);
       }
@@ -228,6 +229,7 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
           assigned_to: task.assignedTo ?? user.id,
           assigned_by: task.assignedBy ?? user.id,
           due_date: ensureDate(task.dueDate),
+          status: task.status || 'active',
         }])
         .select()
         .single();
@@ -250,6 +252,7 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
         assignedTo: data.assigned_to,
         assignedBy: data.assigned_by,
         dueDate: data.due_date,
+        status: (data as any).status || 'active',
       };
   
       setTasks(prev => [...prev, newTask]);
@@ -276,6 +279,7 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
     if (updates.categoryId !== undefined) patch.category_id = updates.categoryId;
     if (updates.assignedTo !== undefined) patch.assigned_to = updates.assignedTo;
     if (updates.dueDate !== undefined) patch.due_date = updates.dueDate;
+    if (updates.status !== undefined) patch.status = updates.status;
 
     const { data: updated, error } = await supabase
       .from('tasks')
@@ -325,9 +329,42 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
+    // Send completion notification to assigner if task was completed by someone else
+    if (nowCompleted && !prevCompleted && prev?.assignedBy && prev.assignedBy !== user?.id) {
+      try {
+        const { error: evErr } = await supabase.from("task_events").insert({
+          task_id: taskId,
+          family_id: updated.family_id,
+          recipient_id: prev.assignedBy,
+          actor_id: user!.id,
+          event_type: "completed",
+          payload: {
+            name: prev.name,
+            stars: updated.star_value,
+            actor_name: user!.displayName,
+          },
+        });
+
+        if (!evErr) {
+          await supabase.functions.invoke("send-push", {
+            body: {
+              recipientId: prev.assignedBy,
+              title: "Task completed",
+              body: `${user!.displayName ?? "Someone"} completed "${prev.name}"`,
+              data: { type: "completed", taskId },
+            },
+          }).catch(e => console.error("[send-push] invoke failed:", e));
+        } else {
+          console.error("[task_events] insert failed (completed):", evErr);
+        }
+      } catch (e) {
+        console.error("[task_events] completion notification failed:", e);
+      }
+    }
+
     // Emit change event for other components
     window.dispatchEvent(new CustomEvent('tasks:changed'));
-  }, [activeFamilyId, tasks, applyStarsDelta, getUserFamily, user, toast]);
+  }, [activeFamilyId, tasks, applyStarsDelta, getUserFamily, user, toast, checkAndAwardBadges]);
 
   // Helper to ensure a category exists by name
   const ensureCategoryByName = useCallback(async (name: string, opts?: { isHouseChores?: boolean }) => {
