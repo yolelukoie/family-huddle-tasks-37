@@ -207,7 +207,11 @@ export function useRealtimeNotifications() {
               completed: false,
             } as any;
 
-            console.log('[task-events] Opening assignment modal from payload:', taskForModal.name);
+            console.log('[task-events] 🎯 Opening assignment modal from REALTIME payload:', {
+              taskId: taskForModal.id,
+              taskName: taskForModal.name,
+              hasOpenModalRef: !!openModalRef.current,
+            });
             openModalRef.current(taskForModal);
             return;
           }

@@ -16,6 +16,7 @@ import PrivacyPolicyPage from "@/pages/legal/PrivacyPolicyPage";
 import TermsOfServicePage from "@/pages/legal/TermsOfServicePage";
 import NotFound from "@/pages/NotFound";
 import { DevTestButton } from "@/components/dev/DevTestButton";
+import { useAssignmentModal } from "@/contexts/AssignmentModalContext";
 
 export function AppLayout() {
   // Mount notifications hook globally for all authenticated users
@@ -25,6 +26,7 @@ export function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const { openAssignmentModal } = useAssignmentModal();
 
   /** 1) Register the FCM service worker once */
   useEffect(() => {
@@ -49,7 +51,7 @@ export function AppLayout() {
     };
   }, []);
 
-  /** 2) Listen for foreground messages (token registration now triggered by user gesture) */
+  /** 2) Listen for foreground messages - SMART handler for task assignments */
   useEffect(() => {
     if (!isAuthenticated || !user?.id) return;
 
@@ -58,9 +60,38 @@ export function AppLayout() {
       requestAndSaveFcmToken(user.id);
     }
 
-    // Optional: show a toast when a push arrives while the tab is open
     let unsubscribe: (() => void) | null = null;
     listenForegroundMessages((p) => {
+      console.log('[FCM] Foreground message received:', p);
+      
+      const notifType = p?.data?.type;
+      
+      // For task assignments, open the modal instead of showing a toast
+      if (notifType === 'assigned') {
+        console.log('[FCM] Task assignment - opening modal instead of toast');
+        const taskId = p?.data?.taskId;
+        if (taskId) {
+          // Build task object from push notification data
+          const taskForModal = {
+            id: taskId,
+            name: p?.data?.taskName ?? 'New Task',
+            description: p?.data?.taskDescription ?? '',
+            starValue: parseInt(p?.data?.taskStars ?? '0', 10),
+            assignedBy: p?.data?.assignedBy,
+            assignedTo: user.id,
+            dueDate: p?.data?.taskDueDate,
+            familyId: p?.data?.taskFamilyId,
+            categoryId: p?.data?.taskCategoryId,
+            completed: false,
+          } as any;
+          
+          console.log('[FCM] Opening assignment modal with task:', taskForModal.name);
+          openAssignmentModal(taskForModal);
+        }
+        return; // Don't show toast for assignments
+      }
+      
+      // For other notification types (accepted, rejected, chat), show toast
       const title = p?.notification?.title || p?.data?.title || "Family Huddle";
       const body = p?.notification?.body || p?.data?.body || "";
       toast({ title, description: body });
@@ -71,7 +102,7 @@ export function AppLayout() {
     return () => {
       unsubscribe?.();
     };
-  }, [isAuthenticated, user?.id, toast]);
+  }, [isAuthenticated, user?.id, toast, openAssignmentModal]);
 
   useEffect(() => {
     if (isAuthenticated && location.pathname.includes("reset-password")) {
