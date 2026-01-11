@@ -109,14 +109,24 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
         } else {
           console.log("[task_events] insert ok (assigned), id=", evRow?.id);
 
-          // 🔔 push notify — keep it in the same scope so variables exist
+          // 🔔 push notify — include full task data so FCM handler can open modal
           try {
             await supabase.functions.invoke("send-push", {
               body: {
                 recipientId: assignedToVal,
                 title: "New task assigned",
                 body: `${(user as any)?.displayName ?? "Someone"} assigned "${createdName}" to you`,
-                data: { type: "assigned", taskId: createdId },
+                data: { 
+                  type: "assigned", 
+                  taskId: createdId,
+                  taskName: createdName,
+                  taskDescription: form.getValues().description ?? '',
+                  taskStars: String(form.getValues().starValue ?? 1),
+                  taskDueDate: createdDue ? new Date(createdDue).toISOString() : '',
+                  taskCategoryId: assignedCategory.id,
+                  taskFamilyId: familyId,
+                  assignedBy: user.id,
+                },
               },
             });
           } catch (pushErr) {
