@@ -236,6 +236,44 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
+    // Notify the assigner when a task is completed (not self-assigned)
+    if (nowCompleted && !prevCompleted && prev && prev.assignedBy !== prev.assignedTo) {
+      console.log(`TasksContext: Notifying assigner ${prev.assignedBy} of task completion`);
+      
+      // Insert completion event for the assigner
+      const { error: evErr } = await supabase.from("task_events").insert({
+        task_id: taskId,
+        family_id: updated.family_id,
+        recipient_id: prev.assignedBy,
+        actor_id: prev.assignedTo,
+        event_type: "completed",
+        payload: {
+          name: prev.name,
+          stars: updated.star_value,
+          actor_name: user?.displayName || 'Someone',
+        },
+      });
+
+      if (evErr) {
+        console.error("[task_events] insert failed (completed):", evErr);
+      } else {
+        // Send push notification to assigner
+        try {
+          await supabase.functions.invoke("send-push", {
+            body: {
+              recipientId: prev.assignedBy,
+              title: "Task completed! 🎉",
+              body: `${user?.displayName ?? "Someone"} completed "${prev.name}"`,
+              data: { type: "completed", taskId },
+            },
+          });
+          console.log("[send-push] completion notification sent to", prev.assignedBy);
+        } catch (pushErr) {
+          console.error("[send-push] invoke failed:", pushErr);
+        }
+      }
+    }
+
     // Emit change event for other components
     window.dispatchEvent(new CustomEvent('tasks:changed'));
   }, [activeFamilyId, tasks, applyStarsDelta, getUserFamily, user, toast]);
