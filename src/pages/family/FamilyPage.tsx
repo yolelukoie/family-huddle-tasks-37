@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,18 +12,15 @@ import { useAuth } from '@/hooks/useAuth';
 import { useApp } from '@/hooks/useApp';
 import { NavigationHeader } from '@/components/layout/NavigationHeader';
 import { MemberProfileModal } from '@/components/modals/MemberProfileModal';
-import { Users, Share, Plus, Edit, Star, Settings, UserMinus } from 'lucide-react';
+import { Users, Share, Plus, Star, Settings, UserMinus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getCurrentStage, getStageName } from '@/lib/character';
-import { supabase } from '@/integrations/supabase/client';
-import { useNavigate } from 'react-router-dom';
 
 export default function FamilyPage() {
   const { t } = useTranslation();
-  const { user, updateUser } = useAuth();
+  const { user } = useAuth();
   const { activeFamilyId, userFamilies, families, setActiveFamilyId, createFamily, joinFamily, updateFamilyName, quitFamily, removeFamilyMember, getFamilyMembers, getUserProfile } = useApp();
   const { toast } = useToast();
-  const navigate = useNavigate();
   const [showJoinFamily, setShowJoinFamily] = useState(false);
   const [inviteCode, setInviteCode] = useState('');
   const [showCreateFamily, setShowCreateFamily] = useState(false);
