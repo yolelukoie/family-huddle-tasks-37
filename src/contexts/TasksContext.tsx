@@ -4,7 +4,8 @@ import { useApp } from '@/hooks/useApp';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useCelebrations } from '@/hooks/useCelebrations';
-import type { Task, TaskCategory, TaskTemplate } from '@/lib/types';
+import { getNewlyUnlockedBadges } from '@/lib/badges';
+import type { Task, TaskCategory, TaskTemplate, Badge } from '@/lib/types';
 
 const MAX_CATEGORIES_PER_FAMILY = 10;
 const MAX_TEMPLATES_PER_CATEGORY = 20;
@@ -37,6 +38,85 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
   const [categories, setCategories] = useState<TaskCategory[]>([]);
   const [templates, setTemplates] = useState<TaskTemplate[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // Centralized badge checking and awarding - ensures badges are awarded from any page
+  const checkAndAwardBadges = useCallback(async (
+    userId: string, 
+    familyId: string, 
+    oldStars: number, 
+    newStars: number
+  ) => {
+    try {
+      const newBadges = getNewlyUnlockedBadges(oldStars, newStars);
+      if (newBadges.length === 0) return;
+
+      console.log(`TasksContext: Found ${newBadges.length} new badges to award`);
+
+      const badgeIds = newBadges.map(b => b.id);
+      
+      // Fetch existing badge rows for these ids
+      const { data: existing, error: selError } = await supabase
+        .from('user_badges')
+        .select('badge_id, seen')
+        .eq('user_id', userId)
+        .eq('family_id', familyId)
+        .in('badge_id', badgeIds);
+
+      if (selError) {
+        console.error('TasksContext: Failed to read user_badges:', selError);
+        return;
+      }
+
+      const existingMap = new Map<string, { seen: boolean }>();
+      (existing || []).forEach(row => existingMap.set(row.badge_id as string, { seen: row.seen as boolean }));
+
+      const toInsert: { user_id: string; family_id: string; badge_id: string; seen: boolean }[] = [];
+      const toMarkSeen: string[] = [];
+      const celebrate: Badge[] = [];
+
+      for (const b of newBadges) {
+        const ex = existingMap.get(b.id);
+        if (!ex) {
+          // Insert as unseen so celebration triggers
+          toInsert.push({ user_id: userId, family_id: familyId, badge_id: b.id, seen: false });
+          celebrate.push(b);
+        } else if (!ex.seen) {
+          toMarkSeen.push(b.id);
+          celebrate.push(b);
+        }
+      }
+
+      if (toInsert.length > 0) {
+        const { error } = await supabase.from('user_badges').insert(toInsert);
+        if (error) console.error('TasksContext: Failed to insert user_badges:', error);
+        else console.log('TasksContext: Inserted new badges:', toInsert.map(b => b.badge_id));
+      }
+
+      // Queue celebrations first
+      if (celebrate.length > 0) {
+        console.log('TasksContext: Queueing celebrations for badges:', celebrate.map(b => b.id));
+        celebrate.forEach(badge => addCelebration({ type: 'badge', badge }));
+      }
+
+      // Mark as seen after celebrations are queued (including newly inserted ones)
+      const allToMarkSeen = [...toMarkSeen, ...toInsert.map(b => b.badge_id)];
+      if (allToMarkSeen.length > 0) {
+        const { error } = await supabase
+          .from('user_badges')
+          .update({ seen: true })
+          .eq('user_id', userId)
+          .eq('family_id', familyId)
+          .in('badge_id', allToMarkSeen);
+        if (error) console.error('TasksContext: Failed to mark badges as seen:', error);
+        else console.log('TasksContext: Marked badges as seen:', allToMarkSeen);
+      }
+      
+      // Emit event for badge displays to refresh
+      window.dispatchEvent(new CustomEvent('badges:changed'));
+    } catch (e) {
+      console.error('TasksContext: checkAndAwardBadges failed:', e);
+    }
+  }, [addCelebration]);
 
   // Load data from Supabase when family changes
   const loadFamilyTasks = useCallback(async () => {
@@ -227,11 +307,20 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
     // Apply stars delta if there's a change
     if (delta !== 0) {
       console.log(`TasksContext: Applying stars delta ${delta} to family ${updated.family_id}`);
+      
+      // Get old stars before applying delta
+      const userFamily = getUserFamily(updated.family_id);
+      const oldStars = userFamily?.totalStars ?? 0;
+      
       const success = await applyStarsDelta(updated.family_id, delta);
       
-      if (success) {
-        // Badges are checked in MainPage.tsx, no need to check here
-      } else {
+      if (success && delta > 0 && user) {
+        const newStars = oldStars + delta;
+        console.log(`TasksContext: Stars changed from ${oldStars} to ${newStars}, checking badges...`);
+        
+        // Check for newly unlocked badges and trigger celebrations
+        await checkAndAwardBadges(user.id, updated.family_id, oldStars, newStars);
+      } else if (!success) {
         console.error('TasksContext: Failed to apply stars delta, skipping badge award');
       }
     }

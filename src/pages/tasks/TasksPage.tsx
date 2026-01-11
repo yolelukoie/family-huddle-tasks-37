@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useApp } from '@/hooks/useApp';
 import { useGoals } from '@/hooks/useGoals';
-import { useTasks } from '@/hooks/useTasks';
+import { useTasks } from '@/contexts/TasksContext';
 import { useCelebrations } from '@/hooks/useCelebrations';
 import { isToday, isFuture, formatDate } from '@/lib/utils';
 import { translateTaskName, translateCategoryName, translateTaskDescription } from '@/lib/translations';
@@ -22,7 +22,7 @@ import { History, Plus, CheckCircle } from 'lucide-react';
 
 export default function TasksPage() {
   const { user } = useAuth();
-  const { activeFamilyId, addStars } = useApp();
+  const { activeFamilyId } = useApp();
   const { updateGoalProgress } = useGoals();
   const { tasks, categories, updateTask, addCategory } = useTasks();
   const { currentCelebration, completeCelebration } = useCelebrations();
@@ -68,11 +68,8 @@ export default function TasksPage() {
       completedAt: new Date().toISOString(),
     });
 
-    // Add stars if it's the user's task
+    // Update goal progress (stars are handled centrally by TasksContext)
     if (task.assignedTo === user.id && activeFamilyId) {
-      addStars(activeFamilyId, task.starValue);
-      
-      // Update goal progress
       updateGoalProgress(task.categoryId, task.starValue);
     }
   };
