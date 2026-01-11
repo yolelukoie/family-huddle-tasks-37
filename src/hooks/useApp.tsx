@@ -948,61 +948,76 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (!user?.id) return;
 
     const userFamily = getUserFamily(familyId);
-    if (userFamily) {
-      const updatedUserFamily = {
-        ...userFamily,
-        totalStars: 0,
-        currentStage: 1
-      };
-      
-      // Optimistic UI update
-      setUserFamilies(prev => prev.map(uf => 
-        uf.familyId === familyId && uf.userId === user?.id 
-          ? updatedUserFamily 
-          : uf
-      ));
-      
-      // Reset user_families
-      const { error: familyError } = await supabase
-        .from('user_families')
-        .update({ total_stars: 0, current_stage: 1 })
-        .eq('user_id', user.id)
-        .eq('family_id', familyId);
+    if (!userFamily) return;
 
-      if (familyError) {
-        console.error('Failed to reset progress in Supabase:', familyError);
-      }
+    console.log('resetCharacterProgress: Starting reset for family', familyId);
 
-      // Delete ALL completed tasks for this user in this family
-      const { error: delErr } = await supabase
-        .from('tasks')
-        .delete()
-        .eq('family_id', familyId)
-        .eq('assigned_to', user.id)
-        .eq('completed', true);
+    // CRITICAL: Delete completed tasks FIRST before resetting stars
+    // This prevents the repairStarsConsistency bug where tasks remain
+    // and stars get recalculated from remaining tasks
+    const { error: delErr, count: deletedCount } = await supabase
+      .from('tasks')
+      .delete()
+      .eq('family_id', familyId)
+      .eq('assigned_to', user.id)
+      .eq('completed', true);
 
-      if (delErr) {
-        console.error('Failed to delete completed tasks:', delErr);
-      }
-
-      // Delete all badges for this user in this family
-      const { error: badgesError } = await supabase
-        .from('user_badges')
-        .delete()
-        .eq('user_id', user.id)
-        .eq('family_id', familyId);
-
-      if (badgesError) {
-        console.error('Failed to delete badges:', badgesError);
-      }
-
-      // Rehydrate family data to refresh everything
-      await hydrateActiveFamily();
-      
-      // Emit events to refresh tasks and badges
-      window.dispatchEvent(new CustomEvent('tasks:changed'));
-      window.dispatchEvent(new CustomEvent('badges:changed'));
+    if (delErr) {
+      console.error('resetCharacterProgress: Failed to delete completed tasks:', delErr);
+      // Don't proceed with star reset if task deletion failed
+      // This prevents inconsistency between stars and actual tasks
+      return;
     }
+
+    console.log(`resetCharacterProgress: Deleted ${deletedCount ?? 'unknown'} completed tasks`);
+
+    // Delete all badges for this user in this family
+    const { error: badgesError } = await supabase
+      .from('user_badges')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('family_id', familyId);
+
+    if (badgesError) {
+      console.error('resetCharacterProgress: Failed to delete badges:', badgesError);
+      // Continue anyway - badges are less critical than stars consistency
+    }
+
+    // NOW reset stars after tasks are confirmed deleted
+    const { error: familyError } = await supabase
+      .from('user_families')
+      .update({ total_stars: 0, current_stage: 1 })
+      .eq('user_id', user.id)
+      .eq('family_id', familyId);
+
+    if (familyError) {
+      console.error('resetCharacterProgress: Failed to reset progress in Supabase:', familyError);
+      return;
+    }
+
+    console.log('resetCharacterProgress: Successfully reset stars to 0');
+
+    // Update local state only after successful database operations
+    const updatedUserFamily = {
+      ...userFamily,
+      totalStars: 0,
+      currentStage: 1
+    };
+    
+    setUserFamilies(prev => prev.map(uf => 
+      uf.familyId === familyId && uf.userId === user?.id 
+        ? updatedUserFamily 
+        : uf
+    ));
+
+    // Rehydrate family data to refresh everything
+    await hydrateActiveFamily();
+    
+    // Emit events to refresh tasks and badges
+    window.dispatchEvent(new CustomEvent('tasks:changed'));
+    window.dispatchEvent(new CustomEvent('badges:changed'));
+
+    console.log('resetCharacterProgress: Reset complete');
   };
   return (
     <AppContext.Provider value={{
