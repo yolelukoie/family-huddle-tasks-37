@@ -51,6 +51,7 @@ export function useRealtimeNotifications() {
   const toastRef = useRef(toast);
   const openModalRef = useRef(openAssignmentModal);
   const getUserProfileRef = useRef(getUserProfile);
+  const activeFamilyIdRef = useRef(activeFamilyId);
 
   useEffect(() => {
     toastRef.current = toast;
@@ -63,6 +64,10 @@ export function useRealtimeNotifications() {
   useEffect(() => {
     getUserProfileRef.current = getUserProfile;
   }, [getUserProfile]);
+
+  useEffect(() => {
+    activeFamilyIdRef.current = activeFamilyId;
+  }, [activeFamilyId]);
 
   // Debounce refresh for category/template sync
   const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -80,14 +85,22 @@ export function useRealtimeNotifications() {
 
   // CHAT NOTIFICATIONS - Global listener for chat messages (NO filter, manual check)
   useEffect(() => {
-    if (!user?.id || !activeFamilyId) {
-      console.log('[chat-notifications] Skipping - no user or family', { userId: user?.id, familyId: activeFamilyId });
+    if (!user?.id) {
+      console.log('[chat-notifications] Skipping - no user');
+      return;
+    }
+
+    if (!activeFamilyId) {
+      console.log('[chat-notifications] Skipping - no activeFamilyId yet, will retry when available');
       return;
     }
 
     // Use a stable channel name with "global" prefix to avoid conflicts with page-level subscriptions
     const channelName = `global-chat-notifications:${user.id}:${activeFamilyId}`;
-    console.log(`[chat-notifications] Setting up GLOBAL subscription for channel: ${channelName}`);
+    console.log(`[chat-notifications] Setting up GLOBAL subscription for channel: ${channelName}`, {
+      userId: user.id,
+      familyId: activeFamilyId,
+    });
     
     const ch = supabase
       .channel(channelName)
@@ -95,7 +108,7 @@ export function useRealtimeNotifications() {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'chat_messages' }, // No filter - manual check below
         (e) => {
-          console.log('[chat-notifications] Received realtime event:', e);
+          console.log('[chat-notifications] Raw event received:', JSON.stringify(e));
           
           const row = (e as any).new as {
             id: string;
@@ -110,28 +123,37 @@ export function useRealtimeNotifications() {
             return;
           }
 
-          // Manual filter: check family and ignore own messages
-          if (row.family_id !== activeFamilyId) {
-            console.log('[chat-notifications] Ignoring - different family', { rowFamily: row.family_id, activeFamily: activeFamilyId });
+          // Use ref for current family ID to avoid stale closure
+          const currentFamilyId = activeFamilyIdRef.current;
+          if (row.family_id !== currentFamilyId) {
+            console.log('[chat-notifications] Ignoring - different family', { 
+              rowFamily: row.family_id, 
+              currentFamily: currentFamilyId 
+            });
             return;
           }
+          
           if (row.user_id === user.id) {
             console.log('[chat-notifications] Ignoring - own message');
             return;
           }
 
           // De-duplicate
-          if (handledEventIds.current.has(`chat-${row.id}`)) {
+          const eventKey = `chat-${row.id}`;
+          if (handledEventIds.current.has(eventKey)) {
             console.log('[chat-notifications] Ignoring - duplicate event');
             return;
           }
-          handledEventIds.current.add(`chat-${row.id}`);
+          handledEventIds.current.add(eventKey);
 
           // Get sender name
           const senderProfile = getUserProfileRef.current(row.user_id);
           const senderName = senderProfile?.displayName || 'Family Member';
 
-          console.log('[chat-notifications] Showing toast for message from:', senderName);
+          console.log('[chat-notifications] Showing toast for message from:', senderName, { 
+            messageId: row.id,
+            content: row.content.substring(0, 30) 
+          });
           toastRef.current({
             title: 'New chat message',
             description: `${senderName}: ${row.content.substring(0, 50)}${row.content.length > 50 ? '...' : ''}`,
@@ -139,7 +161,10 @@ export function useRealtimeNotifications() {
         }
       )
       .subscribe((status, err) => {
-        console.log(`[chat-notifications] GLOBAL Subscription status: ${status}`, err || '');
+        console.log(`[chat-notifications] GLOBAL Subscription status: ${status}`, err ? `Error: ${JSON.stringify(err)}` : '');
+        if (err) {
+          console.error('[chat-notifications] Subscription error details:', err);
+        }
       });
 
     return () => { 
