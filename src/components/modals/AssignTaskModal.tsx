@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -8,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useApp } from "@/hooks/useApp";
 import { useTasks } from "@/hooks/useTasks";
@@ -36,13 +38,31 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
   const { activeFamilyId, getFamilyMembers, getUserProfile } = useApp();
   const { toast } = useToast();
   const { addTask, ensureCategoryByName } = useTasks();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<AssignTaskForm>({
     resolver: zodResolver(assignTaskSchema),
     defaultValues: {
+      name: '',
+      description: '',
+      assignedTo: '',
+      dueDate: '',
       starValue: 1,
     },
   });
+
+  // Reset form when modal opens
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        name: '',
+        description: '',
+        assignedTo: '',
+        dueDate: '',
+        starValue: 1,
+      });
+    }
+  }, [open, form]);
 
   if (!user || !activeFamilyId) return null;
 
@@ -53,33 +73,48 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
   const canEditStars = user.age >= 18;
 
   const onSubmit = async (data: AssignTaskForm) => {
-    // Ensure "Assigned" category exists
-    const assignedCategory = await ensureCategoryByName("Assigned");
-    if (!assignedCategory) return;
-
-    const result = await addTask({
-      name: data.name,
-      description: data.description || "",
-      assignedTo: data.assignedTo,
-      assignedBy: user.id,
-      dueDate: data.dueDate,
-      starValue: data.starValue,
-      completed: false,
-      categoryId: assignedCategory.id,
-      familyId: activeFamilyId,
-    });
-
+    if (isSubmitting) return; // Prevent double submission
+    
+    setIsSubmitting(true);
     try {
+      // Ensure "Assigned" category exists
+      const assignedCategory = await ensureCategoryByName("Assigned");
+      if (!assignedCategory) {
+        toast({
+          title: t('common.error'),
+          description: t('assignTask.categoryError', 'Could not create category'),
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const result = await addTask({
+        name: data.name,
+        description: data.description || "",
+        assignedTo: data.assignedTo,
+        assignedBy: user.id,
+        dueDate: data.dueDate,
+        starValue: data.starValue,
+        completed: false,
+        categoryId: assignedCategory.id,
+        familyId: activeFamilyId,
+      });
+
+      if (!result) {
+        toast({
+          title: t('common.error'),
+          description: t('assignTask.createError', 'Could not create task'),
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Accept BOTH shapes: { id, ... } OR { task: { id, ... }, ... }
       const createdId = (result as any)?.id ?? (result as any)?.task?.id;
-
       const familyId = (result as any)?.familyId ?? (result as any)?.family_id ?? activeFamilyId;
-
-      const assignedToVal = (result as any)?.assignedTo ?? (result as any)?.assigned_to ?? form.getValues().assignedTo;
-
-      const createdName = (result as any)?.name ?? (result as any)?.task?.name ?? form.getValues().name;
-
-      const createdDue = (result as any)?.dueDate ?? (result as any)?.due_date ?? form.getValues().dueDate ?? null;
+      const assignedToVal = (result as any)?.assignedTo ?? (result as any)?.assigned_to ?? data.assignedTo;
+      const createdName = (result as any)?.name ?? (result as any)?.task?.name ?? data.name;
+      const createdDue = (result as any)?.dueDate ?? (result as any)?.due_date ?? data.dueDate ?? null;
 
       if (!createdId || !familyId || !assignedToVal) {
         console.error("[task_events] missing fields", { createdId, familyId, assignedToVal, result });
@@ -94,11 +129,11 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
             event_type: "assigned",
             payload: {
               name: createdName,
-              description: form.getValues().description ?? '',
-              stars: form.getValues().starValue ?? 1,
+              description: data.description ?? '',
+              stars: data.starValue ?? 1,
               due_date: createdDue ? new Date(createdDue).toISOString() : null,
               category_id: assignedCategory.id,
-              actor_name: (user as any)?.displayName ?? "Someone",
+              actor_name: user.displayName ?? "Someone",
             },
           })
           .select("id")
@@ -115,13 +150,13 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
               body: {
                 recipientId: assignedToVal,
                 title: "New task assigned",
-                body: `${(user as any)?.displayName ?? "Someone"} assigned "${createdName}" to you`,
+                body: `${user.displayName ?? "Someone"} assigned "${createdName}" to you`,
                 data: { 
                   type: "assigned", 
                   taskId: createdId,
                   taskName: createdName,
-                  taskDescription: form.getValues().description ?? '',
-                  taskStars: String(form.getValues().starValue ?? 1),
+                  taskDescription: data.description ?? '',
+                  taskStars: String(data.starValue ?? 1),
                   taskDueDate: createdDue ? new Date(createdDue).toISOString() : '',
                   taskCategoryId: assignedCategory.id,
                   taskFamilyId: familyId,
@@ -134,13 +169,7 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
           }
         }
       }
-    } catch (e) {
-      console.error("[task_events] insert threw (assigned):", e);
-    } finally {
-      onOpenChange(false);
-    }
 
-    if (result) {
       toast({
         title: t("assignTask.taskAssigned"),
         description: t("assignTask.taskAssignedDesc", { taskName: data.name }),
@@ -149,11 +178,24 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
       form.reset();
       onOpenChange(false);
       onTaskAssigned?.();
+    } catch (e) {
+      console.error("[AssignTaskModal] submit error:", e);
+      toast({
+        title: t('common.error'),
+        description: t('assignTask.submitError', 'An error occurred'),
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(newOpen) => {
+      // Prevent closing while submitting
+      if (isSubmitting) return;
+      onOpenChange(newOpen);
+    }}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>{t("assignTask.title")}</DialogTitle>
@@ -169,7 +211,11 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
                 <FormItem>
                   <FormLabel>{t("tasks.taskName")}</FormLabel>
                   <FormControl>
-                    <Input placeholder={t("tasks.taskNamePlaceholder")} {...field} />
+                    <Input 
+                      placeholder={t("tasks.taskNamePlaceholder")} 
+                      disabled={isSubmitting}
+                      {...field} 
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -183,7 +229,12 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
                 <FormItem>
                   <FormLabel>{t("tasks.description")}</FormLabel>
                   <FormControl>
-                    <Textarea placeholder={t("tasks.descriptionPlaceholder")} rows={2} {...field} />
+                    <Textarea 
+                      placeholder={t("tasks.descriptionPlaceholder")} 
+                      rows={2} 
+                      disabled={isSubmitting}
+                      {...field} 
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -197,7 +248,11 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t("assignTask.assignTo")}</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      value={field.value}
+                      disabled={isSubmitting}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder={t("assignTask.selectPerson")} />
@@ -228,7 +283,11 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
                   <FormItem>
                     <FormLabel>{t("assignTask.dueDate")}</FormLabel>
                     <FormControl>
-                      <Input type="date" {...field} />
+                      <Input 
+                        type="date" 
+                        disabled={isSubmitting}
+                        {...field} 
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -244,7 +303,13 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
                   <FormItem>
                     <FormLabel>{t("assignTask.stars")}</FormLabel>
                     <FormControl>
-                      <Input type="number" min="0" max="20" disabled={!canEditStars} {...field} />
+                      <Input 
+                        type="number" 
+                        min="0" 
+                        max="20" 
+                        disabled={!canEditStars || isSubmitting} 
+                        {...field} 
+                      />
                     </FormControl>
                     {!canEditStars && (
                       <p className="text-xs text-muted-foreground">{t("tasks.starValueRestriction")}</p>
@@ -256,10 +321,26 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
             </div>
 
             <div className="flex gap-2">
-              <Button type="submit" className="flex-1 bg-family-warm hover:bg-family-warm/90">
-                {t("assignTask.assignTask")}
+              <Button 
+                type="submit" 
+                disabled={isSubmitting}
+                className="flex-1 bg-family-warm hover:bg-family-warm/90"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    {t('common.loading', 'Assigning...')}
+                  </>
+                ) : (
+                  t("assignTask.assignTask")
+                )}
               </Button>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <Button 
+                type="button" 
+                variant="outline" 
+                disabled={isSubmitting}
+                onClick={() => onOpenChange(false)}
+              >
                 {t("common.cancel")}
               </Button>
             </div>
