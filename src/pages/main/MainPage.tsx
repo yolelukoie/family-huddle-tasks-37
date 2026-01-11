@@ -109,7 +109,7 @@ export default function MainPage() {
   // Track if we're currently resetting to prevent double-reset
   const isResettingRef = useRef(false);
 
-  // Check for newly unlocked badges and milestone when stars change
+  // Check for 1000 star milestone when stars change (badge checking is handled globally in AppLayout)
   useEffect(() => {
     if (previousStars !== totalStars && previousStars !== 0) {
       // Check for 1000 star milestone celebration
@@ -119,12 +119,10 @@ export default function MainPage() {
         
         // Add milestone celebration to queue
         addCelebration({ type: 'milestone', milestone: { stars: 1000 } });
-      } else if (!isResettingRef.current) {
-        checkForNewBadges(previousStars, totalStars);
       }
     }
     setPreviousStars(totalStars);
-  }, [totalStars, previousStars, checkForNewBadges, addCelebration]);
+  }, [totalStars, previousStars, addCelebration]);
 
   // Handle milestone celebration completion - reset character when milestone celebration finishes
   useEffect(() => {

@@ -1,7 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { useApp } from "@/hooks/useApp";
 import { useAuth } from "@/hooks/useAuth";
+import { useBadges } from "@/hooks/useBadges";
+import { useCelebrations } from "@/hooks/useCelebrations";
 import { requestAndSaveFcmToken, listenForegroundMessages } from "@/lib/fcm";
 import { useToast } from "@/hooks/use-toast";
 import { ROUTES } from "@/lib/constants";
@@ -17,6 +19,43 @@ import TermsOfServicePage from "@/pages/legal/TermsOfServicePage";
 import NotFound from "@/pages/NotFound";
 import { DevTestButton } from "@/components/dev/DevTestButton";
 import { useAssignmentModal } from "@/contexts/AssignmentModalContext";
+
+/**
+ * GlobalBadgeChecker - Always mounted component that checks for new badges
+ * whenever stars change, regardless of which page the user is on.
+ */
+function GlobalBadgeChecker() {
+  const { activeFamilyId, getTotalStars } = useApp();
+  const { checkForNewBadges } = useBadges();
+  const [previousStars, setPreviousStars] = useState(0);
+  const isInitializedRef = useRef(false);
+
+  const totalStars = activeFamilyId && getTotalStars 
+    ? getTotalStars(activeFamilyId) 
+    : 0;
+
+  // Initialize previousStars on first load (don't trigger badge check on initial load)
+  useEffect(() => {
+    if (!isInitializedRef.current && totalStars > 0) {
+      console.log('[GlobalBadgeChecker] Initializing with', totalStars, 'stars');
+      setPreviousStars(totalStars);
+      isInitializedRef.current = true;
+    }
+  }, [totalStars]);
+
+  // Check for badges when stars change (after initialization)
+  useEffect(() => {
+    if (isInitializedRef.current && previousStars !== totalStars && previousStars > 0) {
+      console.log(`[GlobalBadgeChecker] Stars changed: ${previousStars} -> ${totalStars}`);
+      checkForNewBadges(previousStars, totalStars);
+    }
+    if (totalStars > 0) {
+      setPreviousStars(totalStars);
+    }
+  }, [totalStars, previousStars, checkForNewBadges]);
+
+  return null; // Renders nothing, just runs badge checking logic
+}
 
 export function AppLayout() {
   // Mount notifications hook globally for all authenticated users
@@ -167,19 +206,22 @@ export function AppLayout() {
   }
 
   return (
-    <div>
-      <Routes>
-        <Route index element={<MainPage />} />
-        <Route path={ROUTES.onboarding.slice(1)} element={<OnboardingPage />} />
-        <Route path={ROUTES.tasks.slice(1)} element={<TasksPage />} />
-        <Route path={ROUTES.goals.slice(1)} element={<GoalsPage />} />
-        <Route path={ROUTES.chat.slice(1)} element={<ChatPage />} />
-        <Route path={ROUTES.family.slice(1)} element={<FamilyPage />} />
-        <Route path={ROUTES.personal.slice(1)} element={<PersonalPage />} />
-        <Route path={ROUTES.privacy.slice(1)} element={<PrivacyPolicyPage />} />
-        <Route path={ROUTES.terms.slice(1)} element={<TermsOfServicePage />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </div>
+    <>
+      <GlobalBadgeChecker />
+      <div>
+        <Routes>
+          <Route index element={<MainPage />} />
+          <Route path={ROUTES.onboarding.slice(1)} element={<OnboardingPage />} />
+          <Route path={ROUTES.tasks.slice(1)} element={<TasksPage />} />
+          <Route path={ROUTES.goals.slice(1)} element={<GoalsPage />} />
+          <Route path={ROUTES.chat.slice(1)} element={<ChatPage />} />
+          <Route path={ROUTES.family.slice(1)} element={<FamilyPage />} />
+          <Route path={ROUTES.personal.slice(1)} element={<PersonalPage />} />
+          <Route path={ROUTES.privacy.slice(1)} element={<PrivacyPolicyPage />} />
+          <Route path={ROUTES.terms.slice(1)} element={<TermsOfServicePage />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </div>
+    </>
   );
 }
