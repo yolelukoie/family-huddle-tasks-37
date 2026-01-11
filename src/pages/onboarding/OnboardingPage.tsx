@@ -91,7 +91,7 @@ export default function OnboardingPage() {
         console.log('Family created successfully with ID:', familyId);
         
         toast({
-          title: "Welcome to Family Huddle! ⭐",
+          title: "Welcome to Family Stars! ⭐",
           description: `Your family "${data.familyName}" has been created!`,
         });
       } else if (data.familyAction === 'join' && data.inviteCode) {
@@ -101,7 +101,7 @@ export default function OnboardingPage() {
           console.log('Joined family successfully:', family.name);
           
           toast({
-            title: "Welcome to Family Huddle! ⭐",
+            title: "Welcome to Family Stars! ⭐",
             description: `You've joined "${family.name}"!`,
           });
         } else {
@@ -145,7 +145,7 @@ export default function OnboardingPage() {
       <div className="max-w-md w-full space-y-6">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-family-warm mb-2">
-            Welcome to Family Huddle! ⭐
+            Welcome to Family Stars! ⭐
           </h1>
           <p className="text-muted-foreground">
             Complete your profile to start your family adventure

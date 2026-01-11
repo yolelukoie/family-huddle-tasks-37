@@ -69,7 +69,7 @@ function cors(req: Request, resHeaders = new Headers()) {
   resHeaders.set("Access-Control-Allow-Headers", "authorization, x-client-info, apikey, content-type, x-push-secret");
   resHeaders.set("Access-Control-Allow-Methods", "POST, OPTIONS");
   if (req.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: resHeaders });
+    return new Response("", { status: 204, headers: resHeaders });
   }
   return null;
 }

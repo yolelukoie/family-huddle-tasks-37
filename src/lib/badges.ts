@@ -2,20 +2,6 @@ import { BABY_STAGE_BADGES, CHILD_STAGE_BADGES, TEENAGER_STAGE_BADGES, YOUNG_ADU
 import { storage } from './storage';
 import type { Badge } from './types';
 
-// Get all badges defined in the system
-function getAllBadges(): Badge[] {
-  return [
-    ...BABY_STAGE_BADGES,
-    ...CHILD_STAGE_BADGES,
-    ...TEENAGER_STAGE_BADGES,
-    ...YOUNG_ADULT_STAGE_BADGES,
-    ...ON_THE_RISE_STAGE_BADGES,
-    ...ADULT_STAGE_BADGES,
-    ...MATURE_ADULT_STAGE_BADGES,
-    ...GOLDEN_CHAPTER_STAGE_BADGES,
-  ];
-}
-
 export function getBabyBadges(totalStars: number): Badge[] {
   return BABY_STAGE_BADGES.filter(badge => totalStars >= badge.unlockStars);
 }
@@ -48,56 +34,33 @@ export function getGoldenChapterBadges(totalStars: number): Badge[] {
   return GOLDEN_CHAPTER_STAGE_BADGES.filter(badge => totalStars >= badge.unlockStars);
 }
 
-/**
- * Get ALL badges earned across all stages up to the current star count.
- * Used for database operations and detecting newly unlocked badges.
- */
-export function getAllEarnedBadges(totalStars: number): Badge[] {
-  return getAllBadges().filter(badge => totalStars >= badge.unlockStars);
-}
-
-/**
- * Get badges for the CURRENT stage only (for display purposes).
- * When character changes stage, only shows badges from that new stage.
- */
 export function getCurrentStageBadges(totalStars: number): Badge[] {
-  if (isBabyStage(totalStars)) {
-    return BABY_STAGE_BADGES.filter(badge => totalStars >= badge.unlockStars);
+  if (totalStars < 50) {
+    return getBabyBadges(totalStars);
+  } else if (totalStars < 200) {
+    return getChildBadges(totalStars);
+  } else if (totalStars < 350) {
+    return getTeenagerBadges(totalStars);
+  } else if (totalStars < 500) {
+    return getYoungAdultBadges(totalStars);
+  } else if (totalStars < 600) {
+    return getOnTheRiseBadges(totalStars);
+  } else if (totalStars < 700) {
+    return getAdultBadges(totalStars);
+  } else if (totalStars < 800) {
+    return getMatureAdultBadges(totalStars);
+  } else {
+    return getGoldenChapterBadges(totalStars);
   }
-  if (isChildStage(totalStars)) {
-    return CHILD_STAGE_BADGES.filter(badge => totalStars >= badge.unlockStars);
-  }
-  if (isTeenagerStage(totalStars)) {
-    return TEENAGER_STAGE_BADGES.filter(badge => totalStars >= badge.unlockStars);
-  }
-  if (isYoungAdultStage(totalStars)) {
-    return YOUNG_ADULT_STAGE_BADGES.filter(badge => totalStars >= badge.unlockStars);
-  }
-  if (isOnTheRiseStage(totalStars)) {
-    return ON_THE_RISE_STAGE_BADGES.filter(badge => totalStars >= badge.unlockStars);
-  }
-  if (isAdultStage(totalStars)) {
-    return ADULT_STAGE_BADGES.filter(badge => totalStars >= badge.unlockStars);
-  }
-  if (isMatureAdultStage(totalStars)) {
-    return MATURE_ADULT_STAGE_BADGES.filter(badge => totalStars >= badge.unlockStars);
-  }
-  if (isGoldenChapterStage(totalStars)) {
-    return GOLDEN_CHAPTER_STAGE_BADGES.filter(badge => totalStars >= badge.unlockStars);
-  }
-  return [];
 }
 
-/**
- * Get badges that were newly unlocked between oldStars and newStars.
- * Uses getAllEarnedBadges to properly detect new badges across stage transitions.
- */
 export function getNewlyUnlockedBadges(oldStars: number, newStars: number): Badge[] {
-  const oldBadges = getAllEarnedBadges(oldStars);
-  const newBadges = getAllEarnedBadges(newStars);
+  const oldBadges = getCurrentStageBadges(oldStars);
+  const newBadges = getCurrentStageBadges(newStars);
   
-  const oldBadgeIds = new Set(oldBadges.map(b => b.id));
-  return newBadges.filter(badge => !oldBadgeIds.has(badge.id));
+  return newBadges.filter(newBadge => 
+    !oldBadges.some(oldBadge => oldBadge.id === newBadge.id)
+  );
 }
 
 export function isBabyStage(totalStars: number): boolean {

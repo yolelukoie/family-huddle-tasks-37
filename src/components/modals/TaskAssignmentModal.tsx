@@ -1,16 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Star, User, Calendar, Clock, Loader2 } from "lucide-react";
+import { Star, User, Calendar, Clock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useApp } from "@/hooks/useApp";
 import { useTasks } from "@/hooks/useTasks";
 import { useToast } from "@/hooks/use-toast";
 import { translateTaskName } from "@/lib/translations";
 import { Task } from "@/lib/types";
-import { format, isToday } from "date-fns";
+import { format, isToday, isFuture } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 
 interface TaskAssignmentModalProps {
@@ -26,28 +26,24 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
   const { getUserProfile } = useApp();
   const { updateTask, deleteTask, ensureCategoryByName } = useTasks();
   const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Don't render if no task or user, but don't check familyId here (check in handlers)
   if (!task || !user) return null;
 
   const assignerProfile = getUserProfile(task.assignedBy);
   const assignerName = assignerProfile?.displayName || t('common.someone', 'Someone');
 
-  const handleAccept = async () => {
-    // Check familyId in handler, not at component level
-    const familyId = task.familyId;
-    if (!familyId) {
-      console.error("Missing familyId for task_events insert");
-      toast({
-        title: t('taskAssignment.cannotNotify'),
-        description: t('taskAssignment.familyNotLoaded'),
-        variant: "destructive",
-      });
-      return;
-    }
+  const familyId = task.familyId;
+  if (!familyId) {
+    console.error("Missing familyId for task_events insert");
+    toast({
+      title: t('taskAssignment.cannotNotify'),
+      description: t('taskAssignment.familyNotLoaded'),
+      variant: "destructive",
+    });
+    return null;
+  }
 
-    setIsSubmitting(true);
+  const handleAccept = async () => {
     try {
       // Move task to "Assigned" category regardless of due date
       const cat = await ensureCategoryByName("Assigned");
@@ -61,13 +57,13 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
         task_id: task.id,
         family_id: familyId,
         recipient_id: task.assignedBy, // notify the assigner
-        actor_id: user.id, // me, the acceptor
-        event_type: "accepted",
+        actor_id: user!.id, // me, the acceptor/rejector
+        event_type: "accepted", // or 'rejected' in the reject handler
         payload: {
           name: task.name,
           stars: task.starValue,
           due_date: task.dueDate,
-          actor_name: user.displayName || 'Someone',
+          actor_name: user!.displayName, // avoid undefined
         },
       });
       if (evErr) {
@@ -80,7 +76,7 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
             body: {
               recipientId: task.assignedBy, // notify assigner
               title: "Task accepted",
-              body: `${user.displayName ?? "Someone"} accepted "${task.name}"`,
+              body: `${(user as any)?.displayName ?? "Someone"} accepted "${task.name}"`,
               data: { type: "accepted", taskId: task.id },
             },
           })
@@ -101,64 +97,40 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
         description: t('taskAssignment.acceptError'),
         variant: "destructive",
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
   const handleReject = async () => {
-    // Check familyId in handler
-    const familyId = task.familyId;
-    if (!familyId) {
-      console.error("Missing familyId for task_events insert");
-      toast({
-        title: t('taskAssignment.cannotNotify'),
-        description: t('taskAssignment.familyNotLoaded'),
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
     try {
-      // Store task details BEFORE deletion for the event payload
-      const taskDetails = {
-        id: task.id,
-        name: task.name,
-        starValue: task.starValue,
-        dueDate: task.dueDate,
-        assignedBy: task.assignedBy,
-      };
+      // Delete the task since it was rejected
+      await deleteTask(task.id);
 
-      // INSERT a notification event for the assigner BEFORE deleting the task
+      // INSERT a notification event for the assigner
       const { error: evErr } = await supabase.from("task_events").insert({
-        task_id: taskDetails.id,
+        task_id: task.id,
         family_id: familyId,
-        recipient_id: taskDetails.assignedBy, // notify the assigner
-        actor_id: user.id, // me, the rejector
-        event_type: "rejected",
+        recipient_id: task.assignedBy, // notify the assigner
+        actor_id: user!.id, // me, the acceptor/rejector
+        event_type: "rejected", // or 'rejected' in the reject handler
         payload: {
-          name: taskDetails.name,
-          stars: taskDetails.starValue,
-          due_date: taskDetails.dueDate,
-          actor_name: user.displayName || 'Someone',
+          name: task.name,
+          stars: task.starValue,
+          due_date: task.dueDate,
+          actor_name: user!.displayName, // avoid undefined
         },
       });
       if (evErr) {
         console.error("task_events insert failed", evErr);
       }
 
-      // Now delete the task since it was rejected
-      await deleteTask(taskDetails.id);
-
       if (!evErr) {
         await supabase.functions
           .invoke("send-push", {
             body: {
-              recipientId: taskDetails.assignedBy, // notify assigner
+              recipientId: task.assignedBy, // notify assigner
               title: "Task rejected",
-              body: `${user.displayName ?? "Someone"} rejected "${taskDetails.name}"`,
-              data: { type: "rejected", taskId: taskDetails.id },
+              body: `${(user as any)?.displayName ?? "Someone"} rejected "${task.name}"`,
+              data: { type: "rejected", taskId: task.id },
             },
           })
           .catch((e) => console.error("[send-push] invoke failed:", e));
@@ -166,10 +138,10 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
 
       toast({
         title: t('taskAssignment.rejected'),
-        description: t('taskAssignment.rejectedDesc', { taskName: translateTaskName(taskDetails.name, t) }),
+        description: t('taskAssignment.rejectedDesc', { taskName: translateTaskName(task.name, t) }),
       });
 
-      onTaskResponse?.(taskDetails.id, false);
+      onTaskResponse?.(task.id, false);
       onOpenChange(false);
     } catch (error) {
       console.error("Error rejecting task:", error);
@@ -178,17 +150,11 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
         description: t('taskAssignment.rejectError'),
         variant: "destructive",
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={(newOpen) => {
-      // Prevent closing while submitting
-      if (isSubmitting) return;
-      onOpenChange(newOpen);
-    }}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -230,34 +196,11 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
 
           {/* Action Buttons */}
           <div className="flex gap-2">
-            <Button 
-              onClick={handleAccept} 
-              disabled={isSubmitting}
-              className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  {t('common.loading', 'Loading...')}
-                </>
-              ) : (
-                t('taskAssignment.accept')
-              )}
+            <Button onClick={handleAccept} className="flex-1 bg-green-600 hover:bg-green-700 text-white">
+              {t('taskAssignment.accept')}
             </Button>
-            <Button 
-              onClick={handleReject} 
-              disabled={isSubmitting}
-              variant="destructive" 
-              className="flex-1"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  {t('common.loading', 'Loading...')}
-                </>
-              ) : (
-                t('taskAssignment.reject')
-              )}
+            <Button onClick={handleReject} variant="destructive" className="flex-1">
+              {t('taskAssignment.reject')}
             </Button>
           </div>
 

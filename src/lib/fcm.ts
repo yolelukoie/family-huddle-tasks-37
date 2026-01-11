@@ -20,19 +20,17 @@ export function isIOSSafari(): boolean {
   return isIOS() && !isStandalone();
 }
 
-// Firebase config - these are PUBLIC/PUBLISHABLE values, safe to include in code
 const firebaseConfig = {
-  apiKey: "AIzaSyBES2a1nZEqfBKk7GkNc5nkFACOe60JV8E",
-  authDomain: "family-huddle-app.firebaseapp.com",
-  projectId: "family-huddle-app",
-  storageBucket: "family-huddle-app.firebasestorage.app",
-  messagingSenderId: "508239163662",
-  appId: "1:508239163662:web:4192a2e3ca9746bcdea75f",
-  measurementId: "G-598JQT461W",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY as string,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN as string,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID as string,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET as string,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID as string,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID as string,
 };
 
 // Public VAPID key from Firebase → Cloud Messaging → Web configuration
-const VAPID_PUBLIC_KEY = "BKH7SmPFC-v8tg9qKIYyRL5dyFCdiHYXzsVnjgmcOppIqeUBTZwe8OyA2YhOYzusp6ryOk4UNqwI9hNz34J19O0";
+const VAPID_PUBLIC_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY as string;
 
 let messaging: Messaging | null = null;
 

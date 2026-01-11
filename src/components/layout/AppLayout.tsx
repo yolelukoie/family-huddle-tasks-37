@@ -1,9 +1,7 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect } from "react";
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { useApp } from "@/hooks/useApp";
 import { useAuth } from "@/hooks/useAuth";
-import { useBadges } from "@/hooks/useBadges";
-import { useCelebrations } from "@/hooks/useCelebrations";
 import { requestAndSaveFcmToken, listenForegroundMessages } from "@/lib/fcm";
 import { useToast } from "@/hooks/use-toast";
 import { ROUTES } from "@/lib/constants";
@@ -18,44 +16,6 @@ import PrivacyPolicyPage from "@/pages/legal/PrivacyPolicyPage";
 import TermsOfServicePage from "@/pages/legal/TermsOfServicePage";
 import NotFound from "@/pages/NotFound";
 import { DevTestButton } from "@/components/dev/DevTestButton";
-import { useAssignmentModal } from "@/contexts/AssignmentModalContext";
-
-/**
- * GlobalBadgeChecker - Always mounted component that checks for new badges
- * whenever stars change, regardless of which page the user is on.
- */
-function GlobalBadgeChecker() {
-  const { activeFamilyId, getTotalStars } = useApp();
-  const { checkForNewBadges } = useBadges();
-  const [previousStars, setPreviousStars] = useState(0);
-  const isInitializedRef = useRef(false);
-
-  const totalStars = activeFamilyId && getTotalStars 
-    ? getTotalStars(activeFamilyId) 
-    : 0;
-
-  // Initialize previousStars on first load (don't trigger badge check on initial load)
-  useEffect(() => {
-    if (!isInitializedRef.current && totalStars > 0) {
-      console.log('[GlobalBadgeChecker] Initializing with', totalStars, 'stars');
-      setPreviousStars(totalStars);
-      isInitializedRef.current = true;
-    }
-  }, [totalStars]);
-
-  // Check for badges when stars change (after initialization)
-  useEffect(() => {
-    if (isInitializedRef.current && previousStars !== totalStars && previousStars > 0) {
-      console.log(`[GlobalBadgeChecker] Stars changed: ${previousStars} -> ${totalStars}`);
-      checkForNewBadges(previousStars, totalStars);
-    }
-    if (totalStars > 0) {
-      setPreviousStars(totalStars);
-    }
-  }, [totalStars, previousStars, checkForNewBadges]);
-
-  return null; // Renders nothing, just runs badge checking logic
-}
 
 export function AppLayout() {
   // Mount notifications hook globally for all authenticated users
@@ -65,7 +25,6 @@ export function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const { openAssignmentModal } = useAssignmentModal();
 
   /** 1) Register the FCM service worker once */
   useEffect(() => {
@@ -90,7 +49,7 @@ export function AppLayout() {
     };
   }, []);
 
-  /** 2) Listen for foreground messages - SMART handler for task assignments */
+  /** 2) Listen for foreground messages (token registration now triggered by user gesture) */
   useEffect(() => {
     if (!isAuthenticated || !user?.id) return;
 
@@ -99,38 +58,9 @@ export function AppLayout() {
       requestAndSaveFcmToken(user.id);
     }
 
+    // Optional: show a toast when a push arrives while the tab is open
     let unsubscribe: (() => void) | null = null;
     listenForegroundMessages((p) => {
-      console.log('[FCM] Foreground message received:', p);
-      
-      const notifType = p?.data?.type;
-      
-      // For task assignments, open the modal instead of showing a toast
-      if (notifType === 'assigned') {
-        console.log('[FCM] Task assignment - opening modal instead of toast');
-        const taskId = p?.data?.taskId;
-        if (taskId) {
-          // Build task object from push notification data
-          const taskForModal = {
-            id: taskId,
-            name: p?.data?.taskName ?? 'New Task',
-            description: p?.data?.taskDescription ?? '',
-            starValue: parseInt(p?.data?.taskStars ?? '0', 10),
-            assignedBy: p?.data?.assignedBy,
-            assignedTo: user.id,
-            dueDate: p?.data?.taskDueDate,
-            familyId: p?.data?.taskFamilyId,
-            categoryId: p?.data?.taskCategoryId,
-            completed: false,
-          } as any;
-          
-          console.log('[FCM] Opening assignment modal with task:', taskForModal.name);
-          openAssignmentModal(taskForModal);
-        }
-        return; // Don't show toast for assignments
-      }
-      
-      // For other notification types (accepted, rejected, chat), show toast
       const title = p?.notification?.title || p?.data?.title || "Family Huddle";
       const body = p?.notification?.body || p?.data?.body || "";
       toast({ title, description: body });
@@ -141,7 +71,7 @@ export function AppLayout() {
     return () => {
       unsubscribe?.();
     };
-  }, [isAuthenticated, user?.id, toast, openAssignmentModal]);
+  }, [isAuthenticated, user?.id, toast]);
 
   useEffect(() => {
     if (isAuthenticated && location.pathname.includes("reset-password")) {
@@ -206,22 +136,19 @@ export function AppLayout() {
   }
 
   return (
-    <>
-      <GlobalBadgeChecker />
-      <div>
-        <Routes>
-          <Route index element={<MainPage />} />
-          <Route path={ROUTES.onboarding.slice(1)} element={<OnboardingPage />} />
-          <Route path={ROUTES.tasks.slice(1)} element={<TasksPage />} />
-          <Route path={ROUTES.goals.slice(1)} element={<GoalsPage />} />
-          <Route path={ROUTES.chat.slice(1)} element={<ChatPage />} />
-          <Route path={ROUTES.family.slice(1)} element={<FamilyPage />} />
-          <Route path={ROUTES.personal.slice(1)} element={<PersonalPage />} />
-          <Route path={ROUTES.privacy.slice(1)} element={<PrivacyPolicyPage />} />
-          <Route path={ROUTES.terms.slice(1)} element={<TermsOfServicePage />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </div>
-    </>
+    <div>
+      <Routes>
+        <Route index element={<MainPage />} />
+        <Route path={ROUTES.onboarding.slice(1)} element={<OnboardingPage />} />
+        <Route path={ROUTES.tasks.slice(1)} element={<TasksPage />} />
+        <Route path={ROUTES.goals.slice(1)} element={<GoalsPage />} />
+        <Route path={ROUTES.chat.slice(1)} element={<ChatPage />} />
+        <Route path={ROUTES.family.slice(1)} element={<FamilyPage />} />
+        <Route path={ROUTES.personal.slice(1)} element={<PersonalPage />} />
+        <Route path={ROUTES.privacy.slice(1)} element={<PrivacyPolicyPage />} />
+        <Route path={ROUTES.terms.slice(1)} element={<TermsOfServicePage />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </div>
   );
 }

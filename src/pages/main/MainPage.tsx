@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useApp } from '@/hooks/useApp';
 import { useBadges } from '@/hooks/useBadges';
-// useGoals is used for goal state but goal updates happen via TasksPage
+import { useGoals } from '@/hooks/useGoals';
 import { useCelebrations } from '@/hooks/useCelebrations';
 import { useTasks } from '@/hooks/useTasks';
 import { useCustomCharacterImages } from '@/hooks/useCustomCharacterImages';
@@ -23,13 +23,23 @@ import { supabase } from '@/integrations/supabase/client';
 import { isToday } from '@/lib/utils';
 import { AssignTaskModal } from '@/components/modals/AssignTaskModal';
 import { MilestoneCelebration } from '@/components/celebrations/MilestoneCelebration';
+import { TaskAssignmentModal } from '@/components/modals/TaskAssignmentModal';
+import { useTaskAssignments } from '@/hooks/useTaskAssignments';
 import { Star, Calendar, Plus, RotateCcw, CheckCircle } from 'lucide-react';
-
 export default function MainPage() {
-  // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP
   const { user, isAuthenticated, isLoading } = useAuth();
   const { t } = useTranslation();
-  const navigate = useNavigate();
+
+  if (isLoading) {
+    return <div className="p-6">{t('main.loading')}</div>;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  // If you require onboarding before main:
+  if (!user?.profileComplete) return <Navigate to="/onboarding" replace />;
   
   const {
     activeFamilyId,
@@ -38,37 +48,37 @@ export default function MainPage() {
     addStars,
     families
   } = useApp();
-  
   const {
     unlockedBadges,
     showBadges,
     checkForNewBadges,
     resetBadgeProgress
   } = useBadges();
-  
-  // Note: Goal progress is handled by TasksPage, not here (to avoid duplicate celebrations)
+  const {
+    updateGoalProgress
+  } = useGoals();
   const { currentCelebration, completeCelebration, addCelebration } = useCelebrations();
   const { tasks, categories, updateTask } = useTasks();
   const { getImagePath } = useCustomCharacterImages();
-
-  // All useState hooks
+  const { 
+    currentAssignment, 
+    showAssignmentModal, 
+    handleTaskResponse, 
+    closeAssignmentModal 
+  } = useTaskAssignments();
+  
+  const navigate = useNavigate();
   const [showAssignTask, setShowAssignTask] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [previousStars, setPreviousStars] = useState(0);
-  const [containerDimensions, setContainerDimensions] = useState({ width: 320, height: 160 });
-  const [activeGoal, setActiveGoal] = useState<any>(null);
-  
-  // All useRef hooks
-  const badgeContainerRef = useRef<HTMLDivElement>(null);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Derived values (computed after hooks, before conditionals)
-  const totalStars = getTotalStars(activeFamilyId || '');
+  const totalStars = getTotalStars(activeFamilyId);
   const currentStage = getCurrentStage(totalStars);
   const stageProgress = getStageProgress(totalStars);
   const stageName = getStageName(currentStage);
   const characterImagePath = getImagePath(user?.gender || 'male', currentStage);
-  const currentFamily = activeFamilyId ? families.find(f => f.id === activeFamilyId) : null;
+
+  const [previousStars, setPreviousStars] = useState(totalStars);
+  const badgeContainerRef = useRef<HTMLDivElement>(null);
+  const [containerDimensions, setContainerDimensions] = useState({ width: 320, height: 160 });
 
   // Measure actual container dimensions
   useEffect(() => {
@@ -89,56 +99,41 @@ export default function MainPage() {
     window.addEventListener('resize', updateDimensions);
     
     // Also measure after a short delay to ensure styles are applied
-    timeoutRef.current = setTimeout(updateDimensions, 100);
+    const timeout = setTimeout(updateDimensions, 100);
     
     return () => {
       window.removeEventListener('resize', updateDimensions);
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
+      clearTimeout(timeout);
     };
   }, []);
 
-  // Sync previousStars with totalStars on initial load
-  useEffect(() => {
-    if (previousStars === 0 && totalStars > 0) {
-      setPreviousStars(totalStars);
-    }
-  }, [previousStars, totalStars]);
-
-  // Track if we're currently resetting to prevent double-reset
-  const isResettingRef = useRef(false);
-
-  // Check for 1000 star milestone when stars change (badge checking is handled globally in AppLayout)
+  // Check for newly unlocked badges and milestone when stars change
   useEffect(() => {
     if (previousStars !== totalStars && previousStars !== 0) {
       // Check for 1000 star milestone celebration
-      if (previousStars < 1000 && totalStars >= 1000 && !isResettingRef.current) {
-        // Set flag to prevent double-reset
-        isResettingRef.current = true;
-        
+      if (previousStars < 1000 && totalStars >= 1000) {
         // Add milestone celebration to queue
-        addCelebration({ type: 'milestone', milestone: { stars: 1000 } });
+        setTimeout(() => {
+          addCelebration({ type: 'milestone', milestone: { stars: 1000 } });
+          // Reset character after celebration is shown
+          setTimeout(async () => {
+            await resetCharacterProgress(activeFamilyId);
+            resetBadgeProgress();
+            setPreviousStars(0);
+          }, 3500); // Wait for celebration to complete (3s) + buffer
+        }, 100);
+      } else {
+        checkForNewBadges(previousStars, totalStars);
       }
     }
     setPreviousStars(totalStars);
-  }, [totalStars, previousStars, addCelebration]);
+  }, [totalStars, previousStars, checkForNewBadges, addCelebration, resetCharacterProgress, resetBadgeProgress, activeFamilyId]);
 
-  // Handle milestone celebration completion - reset character when milestone celebration finishes
-  useEffect(() => {
-    if (currentCelebration?.item.type === 'milestone' && !currentCelebration.show && isResettingRef.current) {
-      // Celebration just finished, now reset
-      const performReset = async () => {
-        await resetCharacterProgress(activeFamilyId || '');
-        resetBadgeProgress();
-        setPreviousStars(0);
-        isResettingRef.current = false;
-      };
-      performReset();
-    }
-  }, [currentCelebration, resetCharacterProgress, resetBadgeProgress, activeFamilyId]);
+  // Get today's tasks from useTasks hook - only tasks assigned to current user
+  const todaysTasks = tasks.filter(task => !task.completed && isToday(task.dueDate) && task.assignedTo === user?.id);
 
   // Get active goal (fetch from Supabase)
+  const [activeGoal, setActiveGoal] = useState(null);
   useEffect(() => {
     const fetchActiveGoal = async () => {
       if (!user?.id || !activeFamilyId) return;
@@ -157,21 +152,6 @@ export default function MainPage() {
     fetchActiveGoal();
   }, [user?.id, activeFamilyId, refreshKey]);
 
-  // CONDITIONAL RETURNS AFTER ALL HOOKS
-  if (isLoading) {
-    return <div className="p-6">{t('main.loading')}</div>;
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/auth" replace />;
-  }
-
-  // If you require onboarding before main:
-  if (!user?.profileComplete) return <Navigate to="/onboarding" replace />;
-
-  // Get today's tasks from useTasks hook - only tasks assigned to current user
-  const todaysTasks = tasks.filter(task => !task.completed && isToday(task.dueDate) && task.assignedTo === user?.id);
-
   // Get task categories for star breakdown from useTasks hook
   const completedTasks = tasks.filter(task => task.completed && task.assignedTo === user?.id);
   const categoryStars = categories.map(category => {
@@ -182,7 +162,6 @@ export default function MainPage() {
       stars
     };
   });
-
   const handleCompleteTask = async (taskId: string) => {
     const task = todaysTasks.find(t => t.id === taskId);
     if (!task) return;
@@ -194,97 +173,22 @@ export default function MainPage() {
       completedAt: new Date().toISOString()
     });
 
-    // Stars are updated by updateTask via applyStarsDelta
-    // Update goal progress (import useGoals at top)
-    if (task.assignedTo === user?.id && activeFamilyId) {
-      const { updateGoalProgress } = await import('@/hooks/useGoals').then(m => {
-        // Can't use hook here, call supabase directly
-        return { updateGoalProgress: null };
-      });
-      // Goal progress updated via direct supabase call below
-      await updateGoalProgressDirectly(task.categoryId, task.starValue);
+    // Update goal progress if it's the user's task (stars are handled by TasksContext)
+    if (task.assignedTo === user?.id) {
+      await updateGoalProgress(task.categoryId, task.starValue);
     }
 
     // Refresh component to show updated goal progress
     setRefreshKey(prev => prev + 1);
   };
-
-  // Direct goal progress update function (since we can't use hooks inside callbacks)
-  const updateGoalProgressDirectly = async (taskCategoryId: string, starValue: number) => {
-    if (!user?.id || !activeFamilyId) return;
-
-    try {
-      // Get active goal from Supabase
-      const { data: goals } = await supabase
-        .from('goals')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('family_id', activeFamilyId)
-        .eq('completed', false)
-        .limit(1);
-
-      const activeGoalData = goals && goals.length > 0 ? goals[0] : null;
-      if (!activeGoalData) return;
-
-      // Check if this task's category should count towards the goal
-      let shouldCount = true;
-      if (activeGoalData.target_categories && activeGoalData.target_categories.length > 0) {
-        // Validate that target categories still exist
-        const { data: existingCategories } = await supabase
-          .from('task_categories')
-          .select('id')
-          .eq('family_id', activeFamilyId)
-          .in('id', activeGoalData.target_categories);
-        
-        const validCategoryIds = (existingCategories || []).map(c => c.id);
-        shouldCount = validCategoryIds.includes(taskCategoryId);
-      }
-
-      if (!shouldCount) return;
-
-      // Update goal progress
-      const newCurrentStars = activeGoalData.current_stars + starValue;
-      const isCompleted = newCurrentStars >= activeGoalData.target_stars;
-
-      await supabase
-        .from('goals')
-        .update({
-          current_stars: newCurrentStars,
-          completed: isCompleted,
-          completed_at: isCompleted ? new Date().toISOString() : null
-        })
-        .eq('id', activeGoalData.id);
-
-      // Goal celebration is handled by useCelebrations context
-      if (isCompleted) {
-        addCelebration({ 
-          type: 'goal', 
-          goal: {
-            id: activeGoalData.id,
-            familyId: activeGoalData.family_id,
-            userId: activeGoalData.user_id,
-            targetStars: activeGoalData.target_stars,
-            targetCategories: activeGoalData.target_categories,
-            reward: activeGoalData.reward,
-            currentStars: newCurrentStars,
-            completed: true,
-            completedAt: new Date().toISOString(),
-            createdAt: activeGoalData.created_at,
-          }
-        });
-      }
-    } catch (error) {
-      console.error('Error updating goal progress:', error);
-    }
-  };
-
   const handleResetCharacter = async () => {
     if (window.confirm(t('main.resetConfirm'))) {
-      await resetCharacterProgress(activeFamilyId || '');
+      await resetCharacterProgress(activeFamilyId);
       resetBadgeProgress();
       setPreviousStars(0);
     }
   };
+  const currentFamily = activeFamilyId ? families.find(f => f.id === activeFamilyId) : null;
 
   return <div className="min-h-screen bg-gradient-to-b from-[hsl(var(--section-tint))] to-background">
       <NavigationHeader title={currentFamily?.name || t('main.title')} showBackButton={false} />
@@ -439,5 +343,13 @@ export default function MainPage() {
           onComplete={completeCelebration}
         />
       )}
+
+      {/* Task Assignment Modal */}
+      <TaskAssignmentModal
+        open={showAssignmentModal}
+        onOpenChange={closeAssignmentModal}
+        task={currentAssignment}
+        onTaskResponse={handleTaskResponse}
+      />
     </div>;
 }

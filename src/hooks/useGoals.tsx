@@ -58,16 +58,6 @@ export function useGoals() {
     loadGoals();
   }, [loadGoals]);
 
-  // Listen for goals:changed events (e.g., after character reset)
-  useEffect(() => {
-    const handler = () => {
-      console.log('Goals change event received, reloading goals');
-      loadGoals();
-    };
-    window.addEventListener('goals:changed', handler);
-    return () => window.removeEventListener('goals:changed', handler);
-  }, [loadGoals]);
-
   // Set up realtime subscription
   useEffect(() => {
     if (!user || !activeFamilyId) return;
@@ -204,21 +194,7 @@ export function useGoals() {
       // Check if this task's category should count towards the goal
       let shouldCount = true;
       if (activeGoal.target_categories && activeGoal.target_categories.length > 0) {
-        // Validate that target categories still exist in the database
-        const { data: existingCategories } = await supabase
-          .from('task_categories')
-          .select('id')
-          .eq('family_id', activeFamilyId)
-          .in('id', activeGoal.target_categories);
-        
-        const validCategoryIds = (existingCategories || []).map(c => c.id);
-        
-        // If no valid categories remain, treat as "all categories" (no filter)
-        if (validCategoryIds.length === 0) {
-          shouldCount = true;
-        } else {
-          shouldCount = validCategoryIds.includes(taskCategoryId);
-        }
+        shouldCount = activeGoal.target_categories.includes(taskCategoryId);
       }
 
       if (!shouldCount) return;

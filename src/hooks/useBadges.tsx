@@ -1,7 +1,7 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useAuth } from './useAuth';
 import { useApp } from './useApp';
-import { getCurrentStageBadges, getNewlyUnlockedBadges, shouldShowBadges, getAllEarnedBadges } from '@/lib/badges';
+import { getCurrentStageBadges, getNewlyUnlockedBadges, shouldShowBadges } from '@/lib/badges';
 import { supabase } from '@/integrations/supabase/client';
 import { useCelebrations } from './useCelebrations';
 import type { Badge } from '@/lib/types';
@@ -81,10 +81,7 @@ export function useBadges() {
     }
   }, [user, activeFamilyId]);
 
-  // Track if we've done initial consistency repair this session
-  const hasRepairedRef = useRef(false);
-
-  // Load persisted badges from database and repair any missing ones
+  // Load persisted badges from database
   const loadPersistedBadges = useCallback(async () => {
     if (!user || !activeFamilyId) {
       setPersistedBadges(new Set());
@@ -94,19 +91,9 @@ export function useBadges() {
     try {
       setIsLoading(true);
       
-      // Only repair stars consistency once per session (on first load)
-      if (!hasRepairedRef.current) {
-        await repairStarsConsistency();
-        hasRepairedRef.current = true;
-      }
+      // First repair stars consistency
+      await repairStarsConsistency();
       
-      // Get current total stars for repair calculation
-      const currentStars = getTotalStars ? getTotalStars(activeFamilyId) : 0;
-      
-      // Get what SHOULD be unlocked based on current stars
-      const allEarnedBadges = getAllEarnedBadges(currentStars);
-      
-      // Load existing badges from database
       const { data, error } = await supabase
         .from('user_badges')
         .select('badge_id')
@@ -118,39 +105,15 @@ export function useBadges() {
         return;
       }
 
-      const existingIds = new Set((data || []).map(row => row.badge_id as string));
-      
-      // Find missing badges (should be unlocked based on stars but not in DB)
-      const missingBadges = allEarnedBadges.filter(b => !existingIds.has(b.id));
-      
-      if (missingBadges.length > 0) {
-        console.log('useBadges: Repairing', missingBadges.length, 'missing badges:', missingBadges.map(b => b.id));
-        
-        const toInsert = missingBadges.map(b => ({
-          user_id: user.id,
-          family_id: activeFamilyId,
-          badge_id: b.id,
-          seen: true // Mark as seen since they're retroactive repairs
-        }));
-
-        const { error: insertError } = await supabase.from('user_badges').insert(toInsert);
-        if (insertError) {
-          console.error('useBadges: Failed to insert missing badges:', insertError);
-        } else {
-          console.log('useBadges: Successfully repaired', missingBadges.length, 'missing badges');
-          // Add repaired badges to the set
-          missingBadges.forEach(b => existingIds.add(b.id));
-        }
-      }
-
-      setPersistedBadges(existingIds);
-      console.log('useBadges: Loaded persisted badges:', Array.from(existingIds));
+      const badgeIds = new Set((data || []).map(row => row.badge_id as string));
+      setPersistedBadges(badgeIds);
+      console.log('useBadges: Loaded persisted badges:', Array.from(badgeIds));
     } catch (error) {
       console.error('useBadges: Error loading persisted badges:', error);
     } finally {
       setIsLoading(false);
     }
-  }, [user, activeFamilyId, repairStarsConsistency, getTotalStars]);
+  }, [user, activeFamilyId, repairStarsConsistency]);
 
   // Load badges when family changes
   useEffect(() => {

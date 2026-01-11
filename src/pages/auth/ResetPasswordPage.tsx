@@ -31,27 +31,7 @@ export function ResetPasswordPage() {
       // Session is ready - useAuth already processed the tokens
       setIsSessionReady(true);
     } else {
-      // Check if there's still a hash in the URL that might be processing
-      const hash = window.location.hash;
-      const hasRecoveryTokens = hash.includes('access_token') || hash.includes('type=recovery');
-      
-      if (hasRecoveryTokens) {
-        // Still have tokens in URL, give it more time
-        const timeout = setTimeout(() => {
-          if (!isAuthenticated) {
-            toast({
-              title: "Invalid or expired link",
-              description: "Please request a new password reset email.",
-              variant: "destructive",
-            });
-            navigate("/auth", { replace: true });
-          }
-        }, 3000); // Wait 3 seconds before showing error
-        
-        return () => clearTimeout(timeout);
-      }
-      
-      // No session and no tokens = invalid/expired link
+      // No session after auth loading completed = invalid/expired link
       toast({
         title: "Invalid or expired link",
         description: "Please request a new password reset email.",

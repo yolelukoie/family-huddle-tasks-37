@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth';
 import { useApp } from './useApp';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,9 +13,6 @@ export function useChat() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [chatClearedAt, setChatClearedAt] = useState<string | null>(null);
-
-  // Unique instance ID to avoid channel name conflicts
-  const instanceId = useRef(crypto.randomUUID());
 
   // Load chat_cleared_at timestamp for the current user
   const loadChatClearedAt = useCallback(async () => {
@@ -98,26 +95,18 @@ export function useChat() {
     loadMessages();
   }, [loadMessages]);
 
-  // Realtime subscription for chat UI updates only (uses unique instance channel)
-  // This subscription is ONLY for updating the chat UI when it's open
-  // Global notifications are handled by useRealtimeNotifications
+  // Realtime subscription for new messages
   useEffect(() => {
     if (!activeFamilyId || !user?.id) return;
 
-    // Use unique instance-based channel name to avoid conflicts with global notification handler
-    const channelName = `chat-ui:${instanceId.current}`;
-    console.log(`[chat-ui] Setting up subscription`, { channelName, familyId: activeFamilyId });
+    const channelName = `chat-page:${user.id}:${activeFamilyId}`;
+    const filter = `family_id=eq.${activeFamilyId}`;
 
     const ch = supabase
       .channel(channelName)
       .on(
         'postgres_changes',
-        { 
-          event: 'INSERT', 
-          schema: 'public', 
-          table: 'chat_messages',
-          filter: `family_id=eq.${activeFamilyId}`
-        },
+        { event: 'INSERT', schema: 'public', table: 'chat_messages', filter },
         (e) => {
           const newRow = (e as any).new as {
             id: string;
@@ -128,7 +117,7 @@ export function useChat() {
           } | undefined;
 
           if (!newRow) {
-            console.error('[chat-ui] Missing row data');
+            console.error('[chat] Realtime event missing .new:', e);
             return;
           }
 
@@ -148,23 +137,27 @@ export function useChat() {
             createdAt: newRow.created_at,
           };
 
-          console.log('[chat-ui] Adding message:', converted.id);
-          setMessages((prev) => {
-            // Avoid duplicates
-            if (prev.some(m => m.id === converted.id)) return prev;
-            return [...prev, converted];
-          });
+          setMessages((prev) => [...prev, converted]);
+
+          // Toast only for messages from others
+          if (!isMine) {
+            toast({
+              title: 'New chat message',
+              description: `${displayName}: ${newRow.content}`,
+            });
+          }
         }
       )
-      .subscribe((status, err) => {
-        console.log(`[chat-ui] Status: ${status}`, err || '');
+      .subscribe((status) => {
+        if (status !== 'SUBSCRIBED') {
+          console.warn(`[chat] Channel ${channelName} status: ${status}`);
+        }
       });
 
     return () => {
-      console.log(`[chat-ui] Cleanup: ${channelName}`);
       supabase.removeChannel(ch);
     };
-  }, [activeFamilyId, user?.id, user?.displayName, getUserProfile]);
+  }, [activeFamilyId, user?.id, user?.displayName, getUserProfile, toast]);
 
   const sendMessage = useCallback(
     async (content: string) => {
