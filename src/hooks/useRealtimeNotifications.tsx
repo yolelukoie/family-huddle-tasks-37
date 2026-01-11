@@ -1,5 +1,5 @@
 // src/hooks/useRealtimeNotifications.tsx
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -47,6 +47,9 @@ export function useRealtimeNotifications() {
   const { openAssignmentModal } = useAssignmentModal();
   const handledEventIds = useRef<Set<string>>(new Set());
 
+  // Reconnect trigger - incrementing this forces subscriptions to re-create
+  const [reconnectTrigger, setReconnectTrigger] = useState(0);
+
   // Stable refs for callbacks to prevent subscription churn
   const toastRef = useRef(toast);
   const openModalRef = useRef(openAssignmentModal);
@@ -69,6 +72,18 @@ export function useRealtimeNotifications() {
     activeFamilyIdRef.current = activeFamilyId;
   }, [activeFamilyId]);
 
+  // AUTH STATE LISTENER - Reconnect on token refresh or sign in
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
+        console.log('[realtime] Auth event:', event, '- triggering reconnect');
+        setReconnectTrigger(prev => prev + 1);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   // Debounce refresh for category/template sync
   const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const debounceRefresh = () => {
@@ -83,7 +98,7 @@ export function useRealtimeNotifications() {
     }, 150);
   };
 
-  // CHAT NOTIFICATIONS - Global listener for chat messages WITH explicit filter
+  // CHAT NOTIFICATIONS - Global listener for chat messages
   useEffect(() => {
     if (!user?.id) {
       console.log('[chat-notifications] Skipping - no user');
@@ -91,13 +106,12 @@ export function useRealtimeNotifications() {
     }
 
     if (!activeFamilyId) {
-      console.log('[chat-notifications] Skipping - no activeFamilyId yet, will retry when available');
+      console.log('[chat-notifications] Skipping - no activeFamilyId');
       return;
     }
 
-    // Use a stable channel name with "global" prefix to avoid conflicts with page-level subscriptions
-    const channelName = `chat-notif:${activeFamilyId}:${user.id}`;
-    console.log(`[chat-notifications] Setting up subscription`, { channelName, familyId: activeFamilyId });
+    const channelName = `chat-notif:${activeFamilyId}:${user.id}:${reconnectTrigger}`;
+    console.log(`[chat-notifications] Setting up subscription`, { channelName, familyId: activeFamilyId, trigger: reconnectTrigger });
     
     const ch = supabase
       .channel(channelName)
@@ -107,7 +121,7 @@ export function useRealtimeNotifications() {
           event: 'INSERT', 
           schema: 'public', 
           table: 'chat_messages',
-          filter: `family_id=eq.${activeFamilyId}` // Explicit filter for reliable event routing
+          filter: `family_id=eq.${activeFamilyId}`
         },
         (e) => {
           console.log('[chat-notifications] Event received:', e);
@@ -155,9 +169,14 @@ export function useRealtimeNotifications() {
         if (err) {
           console.error('[chat-notifications] Error:', err);
         }
+        // Error recovery - schedule reconnect on channel errors
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          console.error('[chat-notifications] Channel error/timeout, scheduling reconnect in 5s');
+          setTimeout(() => setReconnectTrigger(prev => prev + 1), 5000);
+        }
       });
 
-    // Heartbeat for debugging - verify subscription stays alive
+    // Heartbeat for debugging
     const heartbeat = setInterval(() => {
       console.log('[chat-notifications] Heartbeat - channel active');
     }, 60000);
@@ -167,54 +186,49 @@ export function useRealtimeNotifications() {
       console.log(`[chat-notifications] Cleanup: ${channelName}`);
       supabase.removeChannel(ch); 
     };
-  }, [user?.id, activeFamilyId]);
+  }, [user?.id, activeFamilyId, reconnectTrigger]);
 
-  // TASK EVENTS (recipient only) — open modal immediately on "assigned", with de-dupe
-  // NO filter - manual check for recipient_id
+  // TASK EVENTS (recipient only)
   useEffect(() => {
     if (!user?.id) {
       console.log('[task-events] Skipping - no user');
       return;
     }
   
-    // Use stable channel name to avoid conflicts
-    const chan = `global-task-events:${user.id}`;
-    console.log(`[task-events] Setting up GLOBAL subscription for channel: ${chan}`);
+    const chan = `task-events:${user.id}:${reconnectTrigger}`;
+    console.log(`[task-events] Setting up subscription`, { channel: chan, trigger: reconnectTrigger });
     
     const ch = supabase
       .channel(chan)
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'task_events' }, // No filter - manual check below
+        { event: 'INSERT', schema: 'public', table: 'task_events' },
         async (e) => {
-          console.log('[task-events] Received realtime event:', e);
+          console.log('[task-events] Event received:', e);
           
           const row = (e as any).new as TaskEvent | undefined;
           if (!row) {
-            console.warn('[task-events] Missing row data in event');
+            console.warn('[task-events] Missing row data');
             return;
           }
 
           // Manual filter: check recipient_id
           if (row.recipient_id !== user.id) {
-            console.log('[task-events] Ignoring - not for current user', { recipient: row.recipient_id, me: user.id });
+            console.log('[task-events] Ignoring - not for current user');
             return;
           }
   
-          // 🔒 ignore the same event id if we've already handled it
-          if (row.id) {
-            if (handledEventIds.current.has(row.id)) {
-              console.log('[task-events] Ignoring - duplicate event');
-              return;
-            }
-            handledEventIds.current.add(row.id);
+          // De-duplicate
+          if (row.id && handledEventIds.current.has(row.id)) {
+            console.log('[task-events] Ignoring - duplicate');
+            return;
           }
+          if (row.id) handledEventIds.current.add(row.id);
   
           const evtType = row.event_type;
-          console.log('[task-events] Processing event type:', evtType);
+          console.log('[task-events] Processing:', evtType);
   
           if (evtType === 'assigned') {
-            // Build task object directly from payload - no fetch needed, avoids race condition
             const taskForModal = {
               id: row.task_id,
               name: row.payload?.name ?? 'New Task',
@@ -228,45 +242,42 @@ export function useRealtimeNotifications() {
               completed: false,
             } as any;
 
-            console.log('[task-events] 🎯 Opening assignment modal from REALTIME payload:', {
-              taskId: taskForModal.id,
-              taskName: taskForModal.name,
-              hasOpenModalRef: !!openModalRef.current,
-            });
+            console.log('[task-events] Opening assignment modal:', taskForModal.name);
             openModalRef.current(taskForModal);
             return;
           }
   
-          // accepted / rejected / completed → toast for the assigner
+          // accepted / rejected / completed → toast
           const actor = row.payload?.actor_name ?? 'Someone';
           const taskName = row.payload?.name ?? 'your task';
           if (evtType === 'accepted') {
-            console.log('[task-events] Showing accepted toast');
             toastRef.current({ title: 'Task accepted', description: `${actor} accepted "${taskName}".` });
           } else if (evtType === 'rejected') {
-            console.log('[task-events] Showing rejected toast');
             toastRef.current({ title: 'Task rejected', description: `${actor} rejected "${taskName}".` });
           } else if (evtType === 'completed') {
-            console.log('[task-events] Showing completed toast');
             toastRef.current({ title: 'Task completed! 🎉', description: `${actor} completed "${taskName}".` });
           }
         }
       )
       .subscribe((status, err) => {
-        console.log(`[task-events] GLOBAL Subscription status: ${status}`, err || '');
+        console.log(`[task-events] Status: ${status}`, err || '');
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          console.error('[task-events] Error, scheduling reconnect in 5s');
+          setTimeout(() => setReconnectTrigger(prev => prev + 1), 5000);
+        }
       });
   
     return () => { 
-      console.log(`[task-events] Cleaning up GLOBAL channel: ${chan}`);
+      console.log(`[task-events] Cleanup: ${chan}`);
       supabase.removeChannel(ch); 
     };
-  }, [user?.id]); // Only depend on user.id - task events are filtered by recipient_id, not family
+  }, [user?.id, reconnectTrigger]);
 
   // FAMILY SYNC (categories/templates) — silent refresh
   useEffect(() => {
     if (!user?.id || !activeFamilyId) return;
 
-    const chan = `family-sync:${activeFamilyId}`;
+    const chan = `family-sync:${activeFamilyId}:${reconnectTrigger}`;
     const ch = supabase
       .channel(chan)
       .on(
@@ -274,21 +285,16 @@ export function useRealtimeNotifications() {
         { event: 'INSERT', schema: 'public', table: 'family_sync_events', filter: `family_id=eq.${activeFamilyId}` },
         (e) => {
           const row = (e as any).new as FamilySyncEvent | undefined;
-          if (!row) {
-            console.error('[family_sync] Missing .new in realtime event:', e);
-            return;
-          }
-          if (!row.entity || !row.op) {
-            console.error('[family_sync] Missing entity/op in row:', row);
-            return;
-          }
+          if (!row?.entity || !row?.op) return;
           debounceRefresh();
         }
       )
       .subscribe((status) => {
-        if (status !== 'SUBSCRIBED') console.warn(`[family_sync] Channel status: ${status}`);
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          setTimeout(() => setReconnectTrigger(prev => prev + 1), 5000);
+        }
       });
 
     return () => { supabase.removeChannel(ch); };
-  }, [user?.id, activeFamilyId, refreshData]);
+  }, [user?.id, activeFamilyId, refreshData, reconnectTrigger]);
 }
