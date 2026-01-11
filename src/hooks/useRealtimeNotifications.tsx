@@ -216,7 +216,7 @@ export function useRealtimeNotifications() {
             return;
           }
   
-          // accepted / rejected → toast for the assigner
+          // accepted / rejected / completed → toast for the assigner
           const actor = row.payload?.actor_name ?? 'Someone';
           const taskName = row.payload?.name ?? 'your task';
           if (evtType === 'accepted') {
@@ -225,6 +225,9 @@ export function useRealtimeNotifications() {
           } else if (evtType === 'rejected') {
             console.log('[task-events] Showing rejected toast');
             toastRef.current({ title: 'Task rejected', description: `${actor} rejected "${taskName}".` });
+          } else if (evtType === 'completed') {
+            console.log('[task-events] Showing completed toast');
+            toastRef.current({ title: 'Task completed! 🎉', description: `${actor} completed "${taskName}".` });
           }
         }
       )
