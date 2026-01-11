@@ -83,7 +83,7 @@ export function useRealtimeNotifications() {
     }, 150);
   };
 
-  // CHAT NOTIFICATIONS - Global listener for chat messages (NO filter, manual check)
+  // CHAT NOTIFICATIONS - Global listener for chat messages WITH explicit filter
   useEffect(() => {
     if (!user?.id) {
       console.log('[chat-notifications] Skipping - no user');
@@ -96,19 +96,21 @@ export function useRealtimeNotifications() {
     }
 
     // Use a stable channel name with "global" prefix to avoid conflicts with page-level subscriptions
-    const channelName = `global-chat-notifications:${user.id}:${activeFamilyId}`;
-    console.log(`[chat-notifications] Setting up GLOBAL subscription for channel: ${channelName}`, {
-      userId: user.id,
-      familyId: activeFamilyId,
-    });
+    const channelName = `chat-notif:${activeFamilyId}:${user.id}`;
+    console.log(`[chat-notifications] Setting up subscription`, { channelName, familyId: activeFamilyId });
     
     const ch = supabase
       .channel(channelName)
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'chat_messages' }, // No filter - manual check below
+        { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'chat_messages',
+          filter: `family_id=eq.${activeFamilyId}` // Explicit filter for reliable event routing
+        },
         (e) => {
-          console.log('[chat-notifications] Raw event received:', JSON.stringify(e));
+          console.log('[chat-notifications] Event received:', e);
           
           const row = (e as any).new as {
             id: string;
@@ -119,29 +121,20 @@ export function useRealtimeNotifications() {
           } | undefined;
 
           if (!row) {
-            console.warn('[chat-notifications] Missing row data in event');
+            console.warn('[chat-notifications] Missing row data');
             return;
           }
 
-          // Use ref for current family ID to avoid stale closure
-          const currentFamilyId = activeFamilyIdRef.current;
-          if (row.family_id !== currentFamilyId) {
-            console.log('[chat-notifications] Ignoring - different family', { 
-              rowFamily: row.family_id, 
-              currentFamily: currentFamilyId 
-            });
-            return;
-          }
-          
+          // Skip own messages
           if (row.user_id === user.id) {
-            console.log('[chat-notifications] Ignoring - own message');
+            console.log('[chat-notifications] Skipping own message');
             return;
           }
 
           // De-duplicate
           const eventKey = `chat-${row.id}`;
           if (handledEventIds.current.has(eventKey)) {
-            console.log('[chat-notifications] Ignoring - duplicate event');
+            console.log('[chat-notifications] Skipping duplicate');
             return;
           }
           handledEventIds.current.add(eventKey);
@@ -150,10 +143,7 @@ export function useRealtimeNotifications() {
           const senderProfile = getUserProfileRef.current(row.user_id);
           const senderName = senderProfile?.displayName || 'Family Member';
 
-          console.log('[chat-notifications] Showing toast for message from:', senderName, { 
-            messageId: row.id,
-            content: row.content.substring(0, 30) 
-          });
+          console.log('[chat-notifications] Showing toast:', { sender: senderName, messageId: row.id });
           toastRef.current({
             title: 'New chat message',
             description: `${senderName}: ${row.content.substring(0, 50)}${row.content.length > 50 ? '...' : ''}`,
@@ -161,14 +151,20 @@ export function useRealtimeNotifications() {
         }
       )
       .subscribe((status, err) => {
-        console.log(`[chat-notifications] GLOBAL Subscription status: ${status}`, err ? `Error: ${JSON.stringify(err)}` : '');
+        console.log(`[chat-notifications] Status: ${status}`, err || '');
         if (err) {
-          console.error('[chat-notifications] Subscription error details:', err);
+          console.error('[chat-notifications] Error:', err);
         }
       });
 
+    // Heartbeat for debugging - verify subscription stays alive
+    const heartbeat = setInterval(() => {
+      console.log('[chat-notifications] Heartbeat - channel active');
+    }, 60000);
+
     return () => { 
-      console.log(`[chat-notifications] Cleaning up GLOBAL channel: ${channelName}`);
+      clearInterval(heartbeat);
+      console.log(`[chat-notifications] Cleanup: ${channelName}`);
       supabase.removeChannel(ch); 
     };
   }, [user?.id, activeFamilyId]);
