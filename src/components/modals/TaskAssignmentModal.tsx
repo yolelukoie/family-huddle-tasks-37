@@ -45,11 +45,14 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
 
   const handleAccept = async () => {
     try {
-      // Move task to "Assigned" category regardless of due date
+      // Move task to "Assigned" category and set status to 'active'
       const cat = await ensureCategoryByName("Assigned");
 
       if (cat) {
-        await updateTask(task.id, { categoryId: cat.id });
+        await updateTask(task.id, { categoryId: cat.id, status: 'active' });
+      } else {
+        // Still set status to active even if category lookup fails
+        await updateTask(task.id, { status: 'active' });
       }
 
       // INSERT a notification event for the assigner

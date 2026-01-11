@@ -56,8 +56,19 @@ export default function TasksPage() {
     );
   }
 
-  const todaysTasks = tasks.filter(task => !task.completed && isToday(task.dueDate) && task.assignedTo === user.id);
-  const upcomingTasks = tasks.filter(task => !task.completed && isFuture(task.dueDate) && task.assignedTo === user.id);
+  // Filter out pending tasks - only show active (accepted) tasks
+  const todaysTasks = tasks.filter(task => 
+    !task.completed && 
+    isToday(task.dueDate) && 
+    task.assignedTo === user.id && 
+    task.status !== 'pending'
+  );
+  const upcomingTasks = tasks.filter(task => 
+    !task.completed && 
+    isFuture(task.dueDate) && 
+    task.assignedTo === user.id && 
+    task.status !== 'pending'
+  );
 
   const handleCompleteTask = async (taskId: string) => {
     const task = tasks.find(t => t.id === taskId);

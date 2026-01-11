@@ -137,13 +137,15 @@ export function useRealtimeNotifications() {
             return;
           }
   
-          // accepted / rejected → toast for the assigner
+          // accepted / rejected / completed → toast for the assigner
           const actor = row.payload?.actor_name ?? 'Someone';
           const taskName = row.payload?.name ?? 'your task';
           if (evtType === 'accepted') {
             toast({ title: 'Task accepted', description: `${actor} accepted "${taskName}".` });
           } else if (evtType === 'rejected') {
             toast({ title: 'Task rejected', description: `${actor} rejected "${taskName}".` });
+          } else if (evtType === 'completed') {
+            toast({ title: 'Task completed', description: `${actor} completed "${taskName}".` });
           }
         }
       )

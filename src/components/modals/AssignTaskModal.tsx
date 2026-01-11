@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -36,6 +37,7 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
   const { activeFamilyId, getFamilyMembers, getUserProfile } = useApp();
   const { toast } = useToast();
   const { addTask, ensureCategoryByName } = useTasks();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<AssignTaskForm>({
     resolver: zodResolver(assignTaskSchema),
@@ -53,21 +55,32 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
   const canEditStars = user.age >= 18;
 
   const onSubmit = async (data: AssignTaskForm) => {
-    // Ensure "Assigned" category exists
-    const assignedCategory = await ensureCategoryByName("Assigned");
-    if (!assignedCategory) return;
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
-    const result = await addTask({
-      name: data.name,
-      description: data.description || "",
-      assignedTo: data.assignedTo,
-      assignedBy: user.id,
-      dueDate: data.dueDate,
-      starValue: data.starValue,
-      completed: false,
-      categoryId: assignedCategory.id,
-      familyId: activeFamilyId,
-    });
+    try {
+      // Ensure "Assigned" category exists
+      const assignedCategory = await ensureCategoryByName("Assigned");
+      if (!assignedCategory) {
+        setIsSubmitting(false);
+        return;
+      }
+
+      // If assigning to someone else, set status to 'pending' so it requires accept/reject
+      const isAssigningToOther = data.assignedTo !== user.id;
+
+      const result = await addTask({
+        name: data.name,
+        description: data.description || "",
+        assignedTo: data.assignedTo,
+        assignedBy: user.id,
+        dueDate: data.dueDate,
+        starValue: data.starValue,
+        completed: false,
+        categoryId: assignedCategory.id,
+        familyId: activeFamilyId,
+        status: isAssigningToOther ? 'pending' : 'active',
+      });
 
     try {
       // Accept BOTH shapes: { id, ... } OR { task: { id, ... }, ... }
@@ -121,21 +134,22 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
           }
         }
       }
-    } catch (e) {
-      console.error("[task_events] insert threw (assigned):", e);
+      } catch (e) {
+        console.error("[task_events] insert threw (assigned):", e);
+      }
+
+      if (result) {
+        toast({
+          title: t("assignTask.taskAssigned"),
+          description: t("assignTask.taskAssignedDesc", { taskName: data.name }),
+        });
+
+        form.reset();
+        onOpenChange(false);
+        onTaskAssigned?.();
+      }
     } finally {
-      onOpenChange(false);
-    }
-
-    if (result) {
-      toast({
-        title: t("assignTask.taskAssigned"),
-        description: t("assignTask.taskAssignedDesc", { taskName: data.name }),
-      });
-
-      form.reset();
-      onOpenChange(false);
-      onTaskAssigned?.();
+      setIsSubmitting(false);
     }
   };
 
@@ -243,10 +257,10 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
             </div>
 
             <div className="flex gap-2">
-              <Button type="submit" className="flex-1 bg-family-warm hover:bg-family-warm/90">
-                {t("assignTask.assignTask")}
+              <Button type="submit" disabled={isSubmitting} className="flex-1 bg-family-warm hover:bg-family-warm/90">
+                {isSubmitting ? t("common.loading") : t("assignTask.assignTask")}
               </Button>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
                 {t("common.cancel")}
               </Button>
             </div>

@@ -63,6 +63,7 @@ export interface Task {
   completed: boolean;
   completedAt?: string;
   categoryId: string;
+  status?: 'pending' | 'active' | 'completed';
 }
 
 export interface Goal {
