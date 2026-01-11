@@ -91,8 +91,9 @@ export function useBadges() {
     try {
       setIsLoading(true);
       
-      // First repair stars consistency
-      await repairStarsConsistency();
+      // NOTE: repairStarsConsistency was removed - it was causing data corruption
+      // by overwriting stars after character resets when task deletion failed.
+      // Stars are now only modified through explicit user actions.
       
       const { data, error } = await supabase
         .from('user_badges')
@@ -111,9 +112,9 @@ export function useBadges() {
     } catch (error) {
       console.error('useBadges: Error loading persisted badges:', error);
     } finally {
-      setIsLoading(false);
+    setIsLoading(false);
     }
-  }, [user, activeFamilyId, repairStarsConsistency]);
+  }, [user, activeFamilyId]);
 
   // Load badges when family changes
   useEffect(() => {
