@@ -16,6 +16,7 @@ import PrivacyPolicyPage from "@/pages/legal/PrivacyPolicyPage";
 import TermsOfServicePage from "@/pages/legal/TermsOfServicePage";
 import NotFound from "@/pages/NotFound";
 import { DevTestButton } from "@/components/dev/DevTestButton";
+import { useKickedFromFamily } from "@/hooks/useKickedFromFamily";
 
 export function AppLayout() {
   // Mount notifications hook globally for all authenticated users
@@ -25,6 +26,9 @@ export function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+
+  // Global listener for when user is kicked from a family
+  useKickedFromFamily();
 
   /** 1) Register the FCM service worker once */
   useEffect(() => {

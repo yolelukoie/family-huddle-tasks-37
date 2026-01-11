@@ -649,17 +649,56 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }));
 
       // Remove member from the family in database
-      const { error: removeError } = await supabase
+      const { data: deletedData, error: removeError } = await supabase
         .from('user_families')
         .delete()
         .eq('user_id', memberUserId)
-        .eq('family_id', familyId);
+        .eq('family_id', familyId)
+        .select();
+
+      console.log('[removeFamilyMember] DELETE result:', { deletedData, removeError, memberUserId, familyId });
 
       if (removeError) {
         console.error('Error removing member from family:', removeError);
         // Rollback on error: refresh from database
         await fetchFamilyMembers(familyId);
         throw removeError;
+      }
+
+      if (!deletedData || deletedData.length === 0) {
+        console.warn('[removeFamilyMember] No rows deleted - RLS may have blocked the delete');
+        await fetchFamilyMembers(familyId);
+        return false;
+      }
+
+      // Update the kicked user's active_family_id in the database
+      // This ensures consistency when they next open the app
+      const { data: kickedUserRemainingFamilies } = await supabase
+        .from('user_families')
+        .select('family_id')
+        .eq('user_id', memberUserId);
+
+      if (!kickedUserRemainingFamilies || kickedUserRemainingFamilies.length === 0) {
+        // User has no families left - clear their active_family_id
+        await supabase
+          .from('profiles')
+          .update({ active_family_id: null })
+          .eq('id', memberUserId);
+      } else {
+        // Check if we need to switch their active family
+        const { data: kickedUserProfile } = await supabase
+          .from('profiles')
+          .select('active_family_id')
+          .eq('id', memberUserId)
+          .maybeSingle();
+
+        if (kickedUserProfile?.active_family_id === familyId) {
+          // Their active family was the one they got kicked from - switch to another
+          await supabase
+            .from('profiles')
+            .update({ active_family_id: kickedUserRemainingFamilies[0].family_id })
+            .eq('id', memberUserId);
+        }
       }
 
       // Refresh family members to get server truth

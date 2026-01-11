@@ -185,63 +185,7 @@ export default function FamilyPage() {
     }
   };
 
-  // Listen for when user is kicked from a family
-  useEffect(() => {
-    if (!user?.id) return;
-
-    const channel = supabase
-      .channel('user-family-changes')
-      .on('postgres_changes', {
-        event: 'DELETE',
-        schema: 'public',
-        table: 'user_families',
-        filter: `user_id=eq.${user.id}`,
-      }, async (payload) => {
-        const removedFamilyId = (payload.old as any).family_id;
-        
-        // Refresh userFamilies from database to get current state
-        const { data: currentUserFamilies } = await supabase
-          .from('user_families')
-          .select('*')
-          .eq('user_id', user.id);
-
-        // Get the removed family details
-        const { data: removedFamilyData } = await supabase
-          .from('families')
-          .select('name')
-          .eq('id', removedFamilyId)
-          .single();
-
-        const familyName = removedFamilyData?.name || 'the family';
-
-        // Show notification
-        toast({
-          title: t('family.removedFromFamily'),
-          description: `${t('family.removedFromFamilyDesc')} "${familyName}".`,
-          variant: "destructive",
-        });
-
-        // Check if user has any remaining families
-        if (!currentUserFamilies || currentUserFamilies.length === 0) {
-          // No families left, go to onboarding
-          await updateUser({ activeFamilyId: undefined, profileComplete: false });
-          navigate('/onboarding');
-        } else if (activeFamilyId === removedFamilyId) {
-          // If this was the active family, switch to the first remaining family
-          const nextFamilyId = currentUserFamilies[0].family_id;
-          await updateUser({ activeFamilyId: nextFamilyId });
-          window.location.reload(); // Force reload to refresh all data
-        } else {
-          // User still has families but wasn't on the kicked family page
-          window.location.reload(); // Force reload to refresh family list
-        }
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user?.id, activeFamilyId, toast, navigate, updateUser]);
+  // Kicked-from-family handling is now global in useKickedFromFamily hook
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[hsl(var(--section-tint))] to-background">
