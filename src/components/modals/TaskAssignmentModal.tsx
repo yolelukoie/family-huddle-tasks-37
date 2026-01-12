@@ -33,17 +33,17 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
   const assignerName = assignerProfile?.displayName || t('common.someone', 'Someone');
 
   const familyId = task.familyId;
-  if (!familyId) {
-    console.error("Missing familyId for task_events insert");
-    toast({
-      title: t('taskAssignment.cannotNotify'),
-      description: t('taskAssignment.familyNotLoaded'),
-      variant: "destructive",
-    });
-    return null;
-  }
+  const canRespond = !!familyId; // Actions are disabled if familyId is missing
 
   const handleAccept = async () => {
+    if (!familyId) {
+      toast({
+        title: t('taskAssignment.cannotNotify'),
+        description: t('taskAssignment.familyNotLoaded'),
+        variant: "destructive",
+      });
+      return;
+    }
     try {
       // Move task to "Assigned" category and set status to 'active'
       const cat = await ensureCategoryByName("Assigned");
@@ -104,6 +104,14 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
   };
 
   const handleReject = async () => {
+    if (!familyId) {
+      toast({
+        title: t('taskAssignment.cannotNotify'),
+        description: t('taskAssignment.familyNotLoaded'),
+        variant: "destructive",
+      });
+      return;
+    }
     try {
       // Delete the task since it was rejected
       await deleteTask(task.id);
@@ -199,13 +207,28 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
 
           {/* Action Buttons */}
           <div className="flex gap-2">
-            <Button onClick={handleAccept} className="flex-1 bg-green-600 hover:bg-green-700 text-white">
+            <Button 
+              onClick={handleAccept} 
+              disabled={!canRespond}
+              className="flex-1 bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
+            >
               {t('taskAssignment.accept')}
             </Button>
-            <Button onClick={handleReject} variant="destructive" className="flex-1">
+            <Button 
+              onClick={handleReject} 
+              disabled={!canRespond}
+              variant="destructive" 
+              className="flex-1"
+            >
               {t('taskAssignment.reject')}
             </Button>
           </div>
+
+          {!canRespond && (
+            <p className="text-xs text-destructive text-center">
+              {t('taskAssignment.familyNotLoaded', 'Unable to load family data. Please try again.')}
+            </p>
+          )}
 
           <p className="text-xs text-muted-foreground text-center">
             {t('taskAssignment.acceptHint')}
