@@ -33,25 +33,20 @@ const App = () => (
     <BrowserRouter>
       <ThemeProvider>
         <AuthProvider>
-          <Routes>
-            <Route path="/auth" element={<AuthPage />} />
-            <Route path="/reset-password" element={<ResetPasswordPage />} />
-            <Route
-              path="/*"
-              element={
-                <CelebrationsProvider>
-                  <AppProvider>
-                    <TasksProvider>
-                      <AssignmentModalProvider>
-                        <RealtimeRoot />
-                        <AppLayout />
-                      </AssignmentModalProvider>
-                    </TasksProvider>
-                  </AppProvider>
-                </CelebrationsProvider>
-              }
-            />
-          </Routes>
+          <CelebrationsProvider>
+            <AppProvider>
+              <TasksProvider>
+                <AssignmentModalProvider>
+                  <RealtimeRoot />
+                  <Routes>
+                    <Route path="/auth" element={<AuthPage />} />
+                    <Route path="/reset-password" element={<ResetPasswordPage />} />
+                    <Route path="/*" element={<AppLayout />} />
+                  </Routes>
+                </AssignmentModalProvider>
+              </TasksProvider>
+            </AppProvider>
+          </CelebrationsProvider>
         </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>
