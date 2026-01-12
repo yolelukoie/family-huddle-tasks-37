@@ -2,6 +2,7 @@
 // Generates a pleasant notification tone programmatically
 
 let audioContext: AudioContext | null = null;
+let audioUnlocked = false;
 
 function getAudioContext(): AudioContext | null {
   if (typeof window === 'undefined') return null;
@@ -17,27 +18,57 @@ function getAudioContext(): AudioContext | null {
   return audioContext;
 }
 
+// Unlock audio on first user interaction - must happen DURING the gesture
+async function unlockAudio() {
+  if (audioUnlocked) return;
+  
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  
+  try {
+    // Resume if suspended - this must happen during user gesture
+    if (ctx.state === 'suspended') {
+      await ctx.resume();
+    }
+    
+    // Play a silent buffer to fully unlock on iOS Safari
+    const buffer = ctx.createBuffer(1, 1, 22050);
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.connect(ctx.destination);
+    source.start(0);
+    
+    audioUnlocked = true;
+    console.log('Audio unlocked successfully, state:', ctx.state);
+  } catch (error) {
+    console.warn('Could not unlock audio:', error);
+  }
+}
+
 // Initialize audio context on first user interaction
 if (typeof window !== 'undefined') {
   const initAudio = () => {
-    getAudioContext();
+    unlockAudio(); // Resume immediately during gesture
     window.removeEventListener('click', initAudio);
     window.removeEventListener('touchstart', initAudio);
+    window.removeEventListener('keydown', initAudio);
   };
   window.addEventListener('click', initAudio);
   window.addEventListener('touchstart', initAudio);
+  window.addEventListener('keydown', initAudio);
 }
 
 export async function playNotificationSound(variant?: 'default' | 'destructive') {
   const ctx = getAudioContext();
   if (!ctx) return;
 
-  try {
-    // Resume if suspended (required by browsers)
-    if (ctx.state === 'suspended') {
-      await ctx.resume();
-    }
+  // Check if context is running
+  if (ctx.state !== 'running') {
+    console.warn('AudioContext not running, state:', ctx.state);
+    return;
+  }
 
+  try {
     const now = ctx.currentTime;
     const volume = variant === 'destructive' ? 0.15 : 0.2;
 
