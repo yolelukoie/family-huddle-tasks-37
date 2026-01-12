@@ -99,7 +99,9 @@ export function useRealtimeNotifications() {
                 return;
               }
 
-              console.log('[task-events] Opening assignment modal for task:', data.name);
+              // Use row.family_id from event as primary (guaranteed), fallback to data.family_id
+              const taskFamilyId = row.family_id || data.family_id;
+              console.log('[task-events] Opening assignment modal for task:', data.name, 'familyId:', taskFamilyId);
 
               openAssignmentModal({
                 id: data.id,
@@ -109,7 +111,7 @@ export function useRealtimeNotifications() {
                 assignedBy: data.assigned_by,
                 assignedTo: data.assigned_to,
                 dueDate: data.due_date,
-                familyId: data.family_id ?? activeFamilyId,
+                familyId: taskFamilyId,
                 categoryId: data.category_id,
                 completed: !!data.completed,
               } as any);
@@ -145,7 +147,7 @@ export function useRealtimeNotifications() {
       console.log('[task-events] Cleaning up channel');
       supabase.removeChannel(ch);
     };
-  }, [user?.id, openAssignmentModal, toast, activeFamilyId]);
+  }, [user?.id, openAssignmentModal, toast]);
 
   // CHAT EVENTS - Simple pattern
   useEffect(() => {
