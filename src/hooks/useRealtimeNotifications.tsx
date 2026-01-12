@@ -71,20 +71,35 @@ export function useRealtimeNotifications() {
           if (row.id && handledEventIds.current.has(row.id)) return;
           if (row.id) handledEventIds.current.add(row.id);
 
-          console.log('[task-events] Received event:', row.event_type, row.id);
+          console.log('[MODAL-DEBUG] 1. task_events INSERT received:', {
+            eventId: row.id,
+            eventType: row.event_type,
+            taskId: row.task_id,
+            familyId: row.family_id,
+            recipientId: row.recipient_id,
+            actorId: row.actor_id,
+            timestamp: new Date().toISOString()
+          });
 
           if (row.event_type === 'assigned') {
+            console.log('[MODAL-DEBUG] 2. Processing "assigned" event - NO toast, only modal');
             try {
+              console.log('[MODAL-DEBUG] 3. Fetching task from DB...');
               const { data, error } = await supabase
                 .from('tasks')
                 .select('*')
                 .eq('id', row.task_id)
                 .single();
 
+              console.log('[MODAL-DEBUG] 3b. Task fetch result:', {
+                success: !error,
+                taskData: data ? { id: data.id, name: data.name, status: data.status, familyId: data.family_id } : null,
+                error: error?.message
+              });
+
               if (error || !data) {
-                console.error('[task-events] Failed to fetch task:', error);
-                // Fallback: still try to show modal with event payload data
-                openAssignmentModal({
+                console.error('[MODAL-DEBUG] Task fetch failed, using fallback data');
+                const fallbackTask = {
                   id: row.task_id!,
                   name: row.payload?.name || 'New Task',
                   description: '',
@@ -95,15 +110,17 @@ export function useRealtimeNotifications() {
                   familyId: row.family_id,
                   categoryId: '',
                   completed: false,
-                } as any);
+                };
+                console.log('[MODAL-DEBUG] 4. Calling openAssignmentModal with fallback:', fallbackTask);
+                openAssignmentModal(fallbackTask as any);
+                console.log('[MODAL-DEBUG] 4b. openAssignmentModal called (fallback)');
                 return;
               }
 
               // Use row.family_id from event as primary (guaranteed), fallback to data.family_id
               const taskFamilyId = row.family_id || data.family_id;
-              console.log('[task-events] Opening assignment modal for task:', data.name, 'familyId:', taskFamilyId);
-
-              openAssignmentModal({
+              
+              const taskForModal = {
                 id: data.id,
                 name: data.name,
                 description: data.description ?? '',
@@ -114,10 +131,15 @@ export function useRealtimeNotifications() {
                 familyId: taskFamilyId,
                 categoryId: data.category_id,
                 completed: !!data.completed,
-              } as any);
+              };
+              
+              console.log('[MODAL-DEBUG] 4. Calling openAssignmentModal with:', taskForModal);
+              openAssignmentModal(taskForModal as any);
+              console.log('[MODAL-DEBUG] 4b. openAssignmentModal called successfully');
             } catch (err) {
-              console.error('[task-events] open modal failed:', err);
+              console.error('[MODAL-DEBUG] ERROR in assigned handler:', err);
             }
+            // NO TOAST for 'assigned' - only the modal
             return;
           }
 

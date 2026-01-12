@@ -121,8 +121,14 @@ export default function MainPage() {
     setPreviousStars(totalStars);
   }, [totalStars, previousStars, checkForNewBadges, addCelebration, resetCharacterProgress, resetBadgeProgress, activeFamilyId]);
 
-  // Get today's tasks from useTasks hook - only tasks assigned to current user
-  const todaysTasks = tasks.filter(task => !task.completed && isToday(task.dueDate) && task.assignedTo === user?.id);
+  // Get today's tasks from useTasks hook - only ACCEPTED tasks assigned to current user
+  // Filter out pending tasks - they must be accepted via the modal first
+  const todaysTasks = tasks.filter(task => 
+    !task.completed && 
+    isToday(task.dueDate) && 
+    task.assignedTo === user?.id &&
+    task.status !== 'pending'
+  );
 
   // Get active goal (fetch from Supabase)
   const [activeGoal, setActiveGoal] = useState(null);
