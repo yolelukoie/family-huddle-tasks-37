@@ -156,8 +156,9 @@ export function useRealtimeNotifications() {
         }
       )
       .subscribe((status, err) => {
+        console.log('[REALTIME-DEBUG] Subscription status changed:', { status, err, userId: user.id });
         if (status === 'SUBSCRIBED') {
-          console.log('[task-events] ✓ Successfully subscribed');
+          console.log('[task-events] ✓ Successfully subscribed - READY to receive INSERT events');
         } else if (status === 'CHANNEL_ERROR') {
           console.error('[task-events] Channel error:', err);
         } else {

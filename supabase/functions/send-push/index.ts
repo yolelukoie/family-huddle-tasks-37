@@ -160,15 +160,20 @@ serve(async (req) => {
     // FCM v1 endpoint
     const url = `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`;
 
+    // Ensure all data values are strings for FCM
+    const stringifiedData = data
+      ? Object.fromEntries(
+          Object.entries(data).map(([k, v]) => [k, String(v)]),
+        )
+      : undefined;
+    
+    console.log("[send-push] Payload data:", stringifiedData);
+    
     const payload = {
       message: {
         token: fcmToken,
         notification: { title, body: text, image },
-        data: data
-          ? Object.fromEntries(
-              Object.entries(data).map(([k, v]) => [k, String(v)]),
-            )
-          : undefined,
+        data: stringifiedData,
         android: { priority: "high" },
         apns: { payload: { aps: { sound: "default" } } },
       },
