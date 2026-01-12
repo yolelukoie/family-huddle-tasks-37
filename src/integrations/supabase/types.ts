@@ -698,6 +698,20 @@ export type Database = {
           id: string
           invite_code: string
           name: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "families"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      regenerate_invite_code: {
+        Args: { p_family_id: string }
+        Returns: {
+          new_expires_at: string
+          new_invite_code: string
         }[]
       }
       seed_family_defaults: {
