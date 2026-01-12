@@ -82,11 +82,24 @@ export function useRealtimeNotifications() {
                 .single();
 
               if (error || !data) {
-                const actor = row.payload?.actor_name ?? 'Someone';
-                const taskName = row.payload?.name ?? 'a task';
-                toast({ title: 'New task assigned', description: `${actor} assigned "${taskName}" to you.` });
+                console.error('[task-events] Failed to fetch task:', error);
+                // Fallback: still try to show modal with event payload data
+                openAssignmentModal({
+                  id: row.task_id!,
+                  name: row.payload?.name || 'New Task',
+                  description: '',
+                  starValue: 0,
+                  assignedBy: row.actor_id!,
+                  assignedTo: user.id,
+                  dueDate: new Date().toISOString().split('T')[0],
+                  familyId: row.family_id,
+                  categoryId: '',
+                  completed: false,
+                } as any);
                 return;
               }
+
+              console.log('[task-events] Opening assignment modal for task:', data.name);
 
               openAssignmentModal({
                 id: data.id,
@@ -101,7 +114,7 @@ export function useRealtimeNotifications() {
                 completed: !!data.completed,
               } as any);
             } catch (err) {
-              console.error('[task_events] open modal failed:', err);
+              console.error('[task-events] open modal failed:', err);
             }
             return;
           }

@@ -23,8 +23,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { isToday } from '@/lib/utils';
 import { AssignTaskModal } from '@/components/modals/AssignTaskModal';
 import { MilestoneCelebration } from '@/components/celebrations/MilestoneCelebration';
-import { TaskAssignmentModal } from '@/components/modals/TaskAssignmentModal';
-import { useTaskAssignments } from '@/hooks/useTaskAssignments';
 import { Star, Calendar, Plus, RotateCcw, CheckCircle } from 'lucide-react';
 export default function MainPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -60,12 +58,6 @@ export default function MainPage() {
   const { currentCelebration, completeCelebration, addCelebration } = useCelebrations();
   const { tasks, categories, updateTask } = useTasks();
   const { getImagePath } = useCustomCharacterImages();
-  const { 
-    currentAssignment, 
-    showAssignmentModal, 
-    handleTaskResponse, 
-    closeAssignmentModal 
-  } = useTaskAssignments();
   
   const navigate = useNavigate();
   const [showAssignTask, setShowAssignTask] = useState(false);
@@ -343,13 +335,5 @@ export default function MainPage() {
           onComplete={completeCelebration}
         />
       )}
-
-      {/* Task Assignment Modal */}
-      <TaskAssignmentModal
-        open={showAssignmentModal}
-        onOpenChange={closeAssignmentModal}
-        task={currentAssignment}
-        onTaskResponse={handleTaskResponse}
-      />
     </div>;
 }
