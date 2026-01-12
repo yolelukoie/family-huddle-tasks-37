@@ -17,6 +17,8 @@ import TermsOfServicePage from "@/pages/legal/TermsOfServicePage";
 import NotFound from "@/pages/NotFound";
 import { DevTestButton } from "@/components/dev/DevTestButton";
 import { useKickedFromFamily } from "@/hooks/useKickedFromFamily";
+import { useAssignmentModal } from "@/contexts/AssignmentModalContext";
+import { supabase } from "@/integrations/supabase/client";
 
 export function AppLayout() {
   // Mount notifications hook globally for all authenticated users
@@ -26,6 +28,7 @@ export function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const { openAssignmentModal } = useAssignmentModal();
 
   // Global listener for when user is kicked from a family
   useKickedFromFamily();
@@ -53,7 +56,7 @@ export function AppLayout() {
     };
   }, []);
 
-  /** 2) Listen for foreground messages (token registration now triggered by user gesture) */
+  /** 2) Listen for foreground messages - handle 'assigned' events specially */
   useEffect(() => {
     if (!isAuthenticated || !user?.id) return;
 
@@ -62,9 +65,53 @@ export function AppLayout() {
       requestAndSaveFcmToken(user.id);
     }
 
-    // Optional: show a toast when a push arrives while the tab is open
+    // Handle FCM messages - open modal for 'assigned', toast for others
     let unsubscribe: (() => void) | null = null;
-    listenForegroundMessages((p) => {
+    listenForegroundMessages(async (p) => {
+      console.log('[FCM-DEBUG] Foreground message received:', p);
+      
+      const eventType = p?.data?.event_type || p?.data?.type;
+      
+      // Handle 'assigned' events by opening the modal - NO toast
+      if (eventType === 'assigned') {
+        console.log('[FCM-DEBUG] Assigned event detected - fetching task and opening modal');
+        const taskId = p?.data?.task_id;
+        const familyId = p?.data?.family_id;
+        
+        if (taskId && familyId) {
+          try {
+            const { data: task, error } = await supabase
+              .from('tasks')
+              .select('*')
+              .eq('id', taskId)
+              .single();
+            
+            console.log('[FCM-DEBUG] Task fetch result:', { task, error });
+            
+            if (task && !error) {
+              const taskForModal = {
+                id: task.id,
+                name: task.name,
+                description: task.description ?? '',
+                starValue: task.star_value ?? 0,
+                assignedBy: task.assigned_by,
+                assignedTo: task.assigned_to,
+                dueDate: task.due_date,
+                familyId: familyId,
+                categoryId: task.category_id,
+                completed: !!task.completed,
+              };
+              console.log('[FCM-DEBUG] Opening assignment modal with:', taskForModal);
+              openAssignmentModal(taskForModal as any);
+            }
+          } catch (err) {
+            console.error('[FCM-DEBUG] Failed to fetch task:', err);
+          }
+        }
+        return; // Don't show toast for assigned events
+      }
+      
+      // For other events, show toast as before
       const title = p?.notification?.title || p?.data?.title || "Family Huddle";
       const body = p?.notification?.body || p?.data?.body || "";
       toast({ title, description: body });
@@ -75,7 +122,7 @@ export function AppLayout() {
     return () => {
       unsubscribe?.();
     };
-  }, [isAuthenticated, user?.id, toast]);
+  }, [isAuthenticated, user?.id, toast, openAssignmentModal]);
 
   useEffect(() => {
     if (isAuthenticated && location.pathname.includes("reset-password")) {
