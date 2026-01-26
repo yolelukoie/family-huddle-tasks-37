@@ -27,23 +27,13 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
   const { updateTask, deleteTask, ensureCategoryByName } = useTasks();
   const { toast } = useToast();
 
-  // DEBUG: Log every render
-  console.log('[MODAL-DEBUG] 8. TaskAssignmentModal render:', {
-    open,
-    hasTask: !!task,
-    taskId: task?.id,
-    taskName: task?.name,
-    taskFamilyId: task?.familyId,
-    hasUser: !!user,
-    userId: user?.id,
-    timestamp: new Date().toISOString()
-  });
-
   if (!task || !user) {
-    console.log('[MODAL-DEBUG] 9. TaskAssignmentModal returning null:', {
-      reason: !task ? 'no task' : 'no user',
-      open
-    });
+    return null;
+  }
+
+  // Defense in depth: Only render for the actual assignee
+  if (task.assignedTo !== user.id) {
+    console.warn('[TaskAssignmentModal] User is not the assignee, not rendering');
     return null;
   }
 
@@ -52,14 +42,6 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
 
   const familyId = task.familyId;
   const canRespond = !!familyId; // Actions are disabled if familyId is missing
-  
-  console.log('[MODAL-DEBUG] 10. TaskAssignmentModal will render dialog:', {
-    taskId: task.id,
-    taskName: task.name,
-    familyId,
-    canRespond,
-    assignerName
-  });
 
   const handleAccept = async () => {
     if (!familyId) {

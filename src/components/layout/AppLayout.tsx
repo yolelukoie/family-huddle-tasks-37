@@ -74,7 +74,6 @@ export function AppLayout() {
       
       // Handle 'assigned' events by opening the modal - NO toast
       if (eventType === 'assigned') {
-        console.log('[FCM-DEBUG] Assigned event detected - fetching task and opening modal');
         const taskId = p?.data?.task_id;
         const familyId = p?.data?.family_id;
         
@@ -86,9 +85,13 @@ export function AppLayout() {
               .eq('id', taskId)
               .single();
             
-            console.log('[FCM-DEBUG] Task fetch result:', { task, error });
-            
             if (task && !error) {
+              // CRITICAL: Only show modal if current user is the ASSIGNEE
+              if (task.assigned_to !== user?.id) {
+                console.log('[FCM] Ignoring assigned event - current user is not the assignee');
+                return;
+              }
+              
               const taskForModal = {
                 id: task.id,
                 name: task.name,
@@ -101,11 +104,10 @@ export function AppLayout() {
                 categoryId: task.category_id,
                 completed: !!task.completed,
               };
-              console.log('[FCM-DEBUG] Opening assignment modal with:', taskForModal);
               openAssignmentModal(taskForModal as any);
             }
           } catch (err) {
-            console.error('[FCM-DEBUG] Failed to fetch task:', err);
+            console.error('[FCM] Failed to fetch task:', err);
           }
         }
         return; // Don't show toast for assigned events
