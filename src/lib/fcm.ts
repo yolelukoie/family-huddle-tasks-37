@@ -170,3 +170,50 @@ export async function listenForegroundMessages(onPayload: (p: any) => void): Pro
   });
   return unsubscribe;
 }
+
+/** Get the current FCM token without requesting permission */
+export async function getCurrentFcmToken(): Promise<string | null> {
+  const m = await ensureMessaging();
+  if (!m) return null;
+
+  // Check if we have permission
+  if (typeof window === "undefined" || !("Notification" in window)) return null;
+  if (Notification.permission !== "granted") return null;
+
+  try {
+    const swReg = await navigator.serviceWorker.ready;
+    const token = await getToken(m, {
+      vapidKey: VAPID_PUBLIC_KEY,
+      serviceWorkerRegistration: swReg,
+    });
+    return token || null;
+  } catch (e) {
+    console.error("[FCM] getCurrentFcmToken failed:", e);
+    return null;
+  }
+}
+
+/** Delete the current device's FCM token from the database on logout */
+export async function deleteFcmToken(userId: string): Promise<void> {
+  console.log("[FCM] Deleting token for user:", userId);
+  try {
+    const token = await getCurrentFcmToken();
+    if (token) {
+      const { error } = await supabase
+        .from("user_fcm_tokens")
+        .delete()
+        .eq("user_id", userId)
+        .eq("token", token);
+      
+      if (error) {
+        console.error("[FCM] Failed to delete token:", error);
+      } else {
+        console.log("[FCM] Token deleted successfully");
+      }
+    } else {
+      console.log("[FCM] No token to delete");
+    }
+  } catch (e) {
+    console.error("[FCM] deleteFcmToken error:", e);
+  }
+}

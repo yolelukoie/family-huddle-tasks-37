@@ -82,42 +82,24 @@ export function useRealtimeNotifications() {
           });
 
           if (row.event_type === 'assigned') {
-            console.log('[MODAL-DEBUG] 2. Processing "assigned" event - NO toast, only modal');
             try {
-              console.log('[MODAL-DEBUG] 3. Fetching task from DB...');
               const { data, error } = await supabase
                 .from('tasks')
                 .select('*')
                 .eq('id', row.task_id)
                 .single();
 
-              console.log('[MODAL-DEBUG] 3b. Task fetch result:', {
-                success: !error,
-                taskData: data ? { id: data.id, name: data.name, status: data.status, familyId: data.family_id } : null,
-                error: error?.message
-              });
-
               if (error || !data) {
-                console.error('[MODAL-DEBUG] Task fetch failed, using fallback data');
-                const fallbackTask = {
-                  id: row.task_id!,
-                  name: row.payload?.name || 'New Task',
-                  description: '',
-                  starValue: 0,
-                  assignedBy: row.actor_id!,
-                  assignedTo: user.id,
-                  dueDate: new Date().toISOString().split('T')[0],
-                  familyId: row.family_id,
-                  categoryId: '',
-                  completed: false,
-                };
-                console.log('[MODAL-DEBUG] 4. Calling openAssignmentModal with fallback:', fallbackTask);
-                openAssignmentModal(fallbackTask as any);
-                console.log('[MODAL-DEBUG] 4b. openAssignmentModal called (fallback)');
+                console.error('[REALTIME] Task fetch failed:', error?.message);
                 return;
               }
 
-              // Use row.family_id from event as primary (guaranteed), fallback to data.family_id
+              // CRITICAL: Only show modal if current user is the ASSIGNEE
+              if (data.assigned_to !== user.id) {
+                console.log('[REALTIME] Ignoring assigned event - current user is not the assignee');
+                return;
+              }
+
               const taskFamilyId = row.family_id || data.family_id;
               
               const taskForModal = {
@@ -133,14 +115,11 @@ export function useRealtimeNotifications() {
                 completed: !!data.completed,
               };
               
-              console.log('[MODAL-DEBUG] 4. Calling openAssignmentModal with:', taskForModal);
               openAssignmentModal(taskForModal as any);
-              console.log('[MODAL-DEBUG] 4b. openAssignmentModal called successfully');
             } catch (err) {
-              console.error('[MODAL-DEBUG] ERROR in assigned handler:', err);
+              console.error('[REALTIME] Error in assigned handler:', err);
             }
-            // NO TOAST for 'assigned' - only the modal
-            return;
+            return; // NO TOAST for 'assigned' - only the modal
           }
 
           // accepted / rejected / completed → toast for the assigner

@@ -1,9 +1,9 @@
-import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User as SupabaseUser, Session } from "@supabase/supabase-js";
 import type { User } from "@/lib/types";
 import { generateId, calculateAge } from "@/lib/utils";
-import { useRef } from "react";
+import { deleteFcmToken } from "@/lib/fcm";
 
 const SESSION_KEY = "app_session_id";
 const USER_KEY = "app_current_user";
@@ -279,6 +279,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = useCallback(async () => {
     try {
+      // Delete FCM token before signing out to prevent stale tokens
+      if (session?.user?.id) {
+        await deleteFcmToken(session.user.id);
+      }
       await supabase.auth.signOut({ scope: "global" });
     } finally {
       setUser(null);
@@ -287,7 +291,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (window.location.hash) window.history.replaceState({}, "", "/auth");
       window.location.assign("/auth");
     }
-  }, []);
+  }, [session]);
 
   const resetPassword = useCallback(async (email: string) => {
     const redirectUrl = `${window.location.origin}/reset-password`;
