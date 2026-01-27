@@ -1,0 +1,6 @@
+{
+  "appId": "com.familyhuddle.app",
+  "appName": "Family Huddle",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}
