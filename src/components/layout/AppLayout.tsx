@@ -2,7 +2,8 @@ import { useEffect } from "react";
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { useApp } from "@/hooks/useApp";
 import { useAuth } from "@/hooks/useAuth";
-import { requestAndSaveFcmToken, listenForegroundMessages } from "@/lib/fcm";
+import { isPlatform } from "@/lib/platform";
+import { requestPushPermission, listenForPushNotifications } from "@/lib/pushNotifications";
 import { useToast } from "@/hooks/use-toast";
 import { ROUTES } from "@/lib/constants";
 import MainPage from "@/pages/main/MainPage";
@@ -33,8 +34,14 @@ export function AppLayout() {
   // Global listener for when user is kicked from a family
   useKickedFromFamily();
 
-  /** 1) Register the FCM service worker once */
+  /** 1) Register the service worker for web FCM (skip on native) */
   useEffect(() => {
+    // Skip service worker registration on native platforms
+    if (isPlatform('capacitor')) {
+      console.log('[Push] Native platform detected, skipping SW registration');
+      return;
+    }
+    
     let cancelled = false;
     (async () => {
       if (!("serviceWorker" in navigator)) return;
@@ -44,7 +51,6 @@ export function AppLayout() {
         if (!cancelled) {
           // Wait until it's active so getToken can attach to it
           await navigator.serviceWorker.ready;
-          // optional log
           console.log("[FCM] SW registered:", reg.scope);
         }
       } catch (e) {
@@ -56,19 +62,21 @@ export function AppLayout() {
     };
   }, []);
 
-  /** 2) Listen for foreground messages - handle 'assigned' events specially */
+  /** 2) Listen for push notifications (both web and native) */
   useEffect(() => {
     if (!isAuthenticated || !user?.id) return;
 
-    // Check if already granted and silently register token
-    if ('Notification' in window && Notification.permission === 'granted') {
-      requestAndSaveFcmToken(user.id);
+    // For web: Check if already granted and silently register token
+    // For native: This will be handled by registerNativePush
+    if (!isPlatform('capacitor') && 'Notification' in window && Notification.permission === 'granted') {
+      requestPushPermission(user.id);
     }
 
-    // Handle FCM messages - open modal for 'assigned', toast for others
+    // Handle push notifications - open modal for 'assigned', toast for others
     let unsubscribe: (() => void) | null = null;
-    listenForegroundMessages(async (p) => {
-      console.log('[FCM-DEBUG] Foreground message received:', p);
+    
+    const handleNotification = async (p: any) => {
+      console.log('[Push] Notification received:', p);
       
       const eventType = p?.data?.event_type || p?.data?.type;
       
@@ -88,7 +96,7 @@ export function AppLayout() {
             if (task && !error) {
               // CRITICAL: Only show modal if current user is the ASSIGNEE
               if (task.assigned_to !== user?.id) {
-                console.log('[FCM] Ignoring assigned event - current user is not the assignee');
+                console.log('[Push] Ignoring assigned event - current user is not the assignee');
                 return;
               }
               
@@ -107,17 +115,19 @@ export function AppLayout() {
               openAssignmentModal(taskForModal as any);
             }
           } catch (err) {
-            console.error('[FCM] Failed to fetch task:', err);
+            console.error('[Push] Failed to fetch task:', err);
           }
         }
         return; // Don't show toast for assigned events
       }
       
-      // For other events, show toast as before
+      // For other events, show toast
       const title = p?.notification?.title || p?.data?.title || "Family Huddle";
       const body = p?.notification?.body || p?.data?.body || "";
       toast({ title, description: body });
-    }).then((unsub) => {
+    };
+    
+    listenForPushNotifications(handleNotification).then((unsub) => {
       unsubscribe = unsub;
     });
 

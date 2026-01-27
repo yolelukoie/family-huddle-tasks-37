@@ -1,7 +1,11 @@
 // src/lib/fcm.ts
+// Web-based FCM implementation - for desktop browsers and Android Chrome
+// For native iOS/Android, see capacitorPush.ts
+
 import { initializeApp, getApps } from "firebase/app";
 import { getMessaging, getToken, onMessage, isSupported, Messaging } from "firebase/messaging";
 import { supabase } from "@/integrations/supabase/client";
+import { isPlatform } from "./platform";
 
 // Utility functions for iOS/PWA detection
 export function isIOS(): boolean {
@@ -55,6 +59,12 @@ export async function ensureMessaging(): Promise<Messaging | null> {
 
 /** Ask permission, get FCM token, upsert into Supabase */
 export async function requestAndSaveFcmToken(userId: string): Promise<{ success: boolean; error?: string }> {
+  // Skip web FCM on native platforms - use Capacitor push instead
+  if (isPlatform('capacitor')) {
+    console.log("[FCM] Running on native platform, skipping web FCM");
+    return { success: false, error: "Use native push on Capacitor" };
+  }
+
   console.log("[FCM] Starting token registration for user:", userId);
   console.log("[FCM] Device info:", {
     isIOS: isIOS(),
