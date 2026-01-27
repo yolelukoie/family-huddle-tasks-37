@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "508239163662",
+    "project_id": "family-huddle-app",
+    "storage_bucket": "family-huddle-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:508239163662:android:0ec994ccaa87759cdea75f",
+        "android_client_info": {
+          "package_name": "com.familyhuddle.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "508239163662-s3d7rr79hj8atv95u46ldl7b3ledfaem.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDxIz_YARLTVCh1Od698tcnhU7AY2h8pLo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "508239163662-s3d7rr79hj8atv95u46ldl7b3ledfaem.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
