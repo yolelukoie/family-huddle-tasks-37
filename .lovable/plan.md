@@ -1,223 +1,273 @@
 
 
-## Complete Fix: Task Assignment Modal Flow
+## Capacitor Native Push Notifications Integration Plan
 
-### Problem Analysis
+### Current Situation
 
-Based on your screenshots and the database query, I found **TWO separate issues**:
+1. **Why iPhone didn't receive notification**: iOS Safari and iOS Chrome do NOT support web push notifications. The current FCM implementation uses the web SDK which requires Service Workers - these don't work on iOS browsers. Even iOS PWA has limited/unreliable web push support.
 
-#### Issue 1: Stale FCM Tokens (The Root Cause of Wrong User Getting Notifications)
+2. **What's already working**:
+   - Realtime notifications via Supabase channels (works on ALL platforms)
+   - Task assignment modal opens correctly when triggered by realtime events
+   - Web FCM push works on desktop browsers and Android Chrome
+   - Platform detection utility is ready (`src/lib/platform.ts`)
+   - Token storage supports platform differentiation (`platform` column)
 
-From the database:
-```
-User: 62e9c60d... → Token: dm1NBKNThf2F... (laptop) - Updated: Jan 26
-User: 4b68072a... → Token: dm1NBKNThf2F... (SAME laptop token!) - Updated: Jan 26
-```
-
-**The same FCM token is registered for BOTH users!** This happens because:
-1. You logged into User A on the laptop → laptop's FCM token saved for User A
-2. You logged out of User A, logged into User B on the same laptop → same laptop token saved for User B
-3. But User A's old token was never deleted!
-4. Now when sending a notification to User A, the edge function finds the laptop's token (most recent for User A)
-5. But User B is currently logged into the laptop, so User B receives the notification!
-
-**Current behavior**: Tokens are ADDED on login but NEVER REMOVED on logout.
-
-#### Issue 2: Modal Shows for Sender (Even if FCM Was Working)
-
-Looking at the FCM handler in `AppLayout.tsx` (lines 76-111):
-```typescript
-if (eventType === 'assigned') {
-  // Opens modal for ANYONE who receives the FCM message
-  // NO CHECK if current user is the assignee!
-  openAssignmentModal(taskForModal);
-}
-```
-
-And in `useRealtimeNotifications.tsx` (lines 84-143):
-```typescript
-if (row.event_type === 'assigned') {
-  // Also opens modal without checking if user is the assignee
-  openAssignmentModal(taskForModal);
-}
-```
-
-**Neither handler checks if `task.assigned_to === user.id` before opening the modal!**
+3. **What needs to be added**:
+   - `@capacitor/push-notifications` plugin for native push
+   - Hybrid notification initialization that detects platform
+   - Native FCM token registration for iOS/Android
+   - Minor AndroidManifest.xml updates for push permissions
 
 ---
 
-### What's Actually Working
+### Implementation Steps
 
-| Component | Status | Notes |
-|-----------|--------|-------|
-| Task creation & assignment | Working | Database records created correctly |
-| task_events INSERT | Working | Events are being created |
-| Realtime subscription | Working | Events are received (but by wrong user due to token issue) |
-| FCM push delivery | Working | Messages delivered (but to wrong device) |
-| TaskAssignmentModal component | Working | Renders correctly when opened |
-| Accept/Reject handlers | Working | Correctly notify assigner, update task |
-| Star attribution | Working | Stars go to the completer |
+#### Step 1: Install Capacitor Push Notifications Plugin
+
+Add the required dependency to `package.json`:
+
+```
+@capacitor/push-notifications
+```
+
+This will be installed when you run `npm install` locally after pulling from GitHub.
 
 ---
 
-### Required Fixes
+#### Step 2: Create Hybrid Push Notification Module
 
-#### Fix 1: Delete FCM Token on Logout
+**New File: `src/lib/pushNotifications.ts`**
+
+Create a unified push notification API that:
+- Detects if running in Capacitor native or web
+- Uses `@capacitor/push-notifications` for native (iOS/Android)
+- Falls back to existing FCM web SDK for browsers
+- Registers tokens with the correct `platform` value ('ios', 'android', or 'web')
+
+```text
+Architecture:
+                   requestPushPermission()
+                           |
+           ┌───────────────┴───────────────┐
+           ▼                               ▼
+    isPlatform('capacitor')          isPlatform('web')
+           |                               |
+           ▼                               ▼
+  PushNotifications.register()     requestAndSaveFcmToken()
+           |                               |
+           ▼                               ▼
+   Save token with                  Save token with
+   platform: 'ios'/'android'        platform: 'web'
+```
+
+---
+
+#### Step 3: Update FCM Module for Platform Awareness
 
 **File: `src/lib/fcm.ts`**
 
-Add a new function to delete the user's FCM token from the database when they log out:
+Modify to:
+1. Skip web FCM initialization when running in Capacitor native
+2. Export the core functions that can be reused (like `isIOS()`, `isStandalone()`)
+
+Add check at the start of `requestAndSaveFcmToken()`:
+```typescript
+import { isPlatform } from './platform';
+
+export async function requestAndSaveFcmToken(userId: string) {
+  // Skip web FCM on native platforms - use Capacitor push instead
+  if (isPlatform('capacitor')) {
+    console.log('[FCM] Running on native platform, skipping web FCM');
+    return { success: false, error: 'Use native push on Capacitor' };
+  }
+  // ... existing web FCM code
+}
+```
+
+---
+
+#### Step 4: Create Native Push Handler
+
+**New File: `src/lib/capacitorPush.ts`**
+
+Handles native push notifications for iOS and Android:
 
 ```typescript
-export async function deleteFcmToken(userId: string): Promise<void> {
-  const token = await getCurrentFcmToken();
-  if (token) {
+import { PushNotifications } from '@capacitor/push-notifications';
+import { isPlatform, getCurrentPlatform } from './platform';
+import { supabase } from '@/integrations/supabase/client';
+
+export async function registerNativePush(userId: string) {
+  if (!isPlatform('capacitor')) {
+    return { success: false, error: 'Not running on native platform' };
+  }
+  
+  // Request permission
+  const permResult = await PushNotifications.requestPermissions();
+  if (permResult.receive !== 'granted') {
+    return { success: false, error: 'Permission denied' };
+  }
+  
+  // Register with APNs/FCM
+  await PushNotifications.register();
+  
+  // Listen for token
+  PushNotifications.addListener('registration', async (token) => {
+    const platform = getCurrentPlatform(); // 'ios' or 'android'
     await supabase
       .from('user_fcm_tokens')
-      .delete()
-      .eq('user_id', userId)
-      .eq('token', token);
-  }
+      .upsert({ user_id: userId, token: token.value, platform }, 
+              { onConflict: 'user_id,token' });
+  });
+  
+  // Handle foreground notifications
+  PushNotifications.addListener('pushNotificationReceived', (notification) => {
+    // Handle in-app notification display
+    console.log('[NativePush] Foreground:', notification);
+  });
+  
+  return { success: true };
 }
 ```
 
-**File: `src/hooks/useAuth.tsx`**
+---
 
-Call the new function in `signOut`:
+#### Step 5: Update AppLayout for Hybrid Push
+
+**File: `src/components/layout/AppLayout.tsx`**
+
+Modify the push initialization to use the hybrid approach:
 
 ```typescript
-const signOut = useCallback(async () => {
-  try {
-    // Delete FCM token before signing out
-    if (session?.user?.id) {
-      await deleteFcmToken(session.user.id);
+import { isPlatform } from '@/lib/platform';
+import { requestAndSaveFcmToken, listenForegroundMessages } from '@/lib/fcm';
+import { registerNativePush, listenNativePush } from '@/lib/capacitorPush';
+
+// In useEffect:
+useEffect(() => {
+  if (!isAuthenticated || !user?.id) return;
+
+  if (isPlatform('capacitor')) {
+    // Native: Use Capacitor push notifications
+    registerNativePush(user.id);
+    listenNativePush((data) => {
+      // Handle 'assigned' events same as FCM handler
+    });
+  } else {
+    // Web: Use existing FCM web SDK
+    if ('Notification' in window && Notification.permission === 'granted') {
+      requestAndSaveFcmToken(user.id);
     }
-    await supabase.auth.signOut({ scope: "global" });
-  } finally {
-    setUser(null);
-    setSession(null);
-    window.location.assign("/auth");
+    listenForegroundMessages(/* existing handler */);
   }
-}, [session]);
-```
-
-#### Fix 2: Add Assignee Check Before Opening Modal
-
-**File: `src/components/layout/AppLayout.tsx`** (FCM Handler)
-
-Add check after fetching the task:
-
-```typescript
-if (task && !error) {
-  // CRITICAL: Only show modal if current user is the ASSIGNEE
-  if (task.assigned_to !== user?.id) {
-    console.log('[FCM-DEBUG] Ignoring - current user is not the assignee');
-    return;
-  }
-  // ... rest of modal opening code
-}
-```
-
-**File: `src/hooks/useRealtimeNotifications.tsx`** (Realtime Handler)
-
-Same check:
-
-```typescript
-if (data && !error) {
-  // CRITICAL: Only show modal if current user is the ASSIGNEE
-  if (data.assigned_to !== user.id) {
-    console.log('[REALTIME] Ignoring - current user is not the assignee');
-    return;
-  }
-  // ... rest of modal opening code
-}
-```
-
-#### Fix 3: Defense in Depth - Modal Component
-
-**File: `src/components/modals/TaskAssignmentModal.tsx`**
-
-Add safety check at the top:
-
-```typescript
-if (!task || !user) return null;
-
-// Safety: Only render for the actual assignee
-if (task.assignedTo !== user.id) {
-  console.warn('[TaskAssignmentModal] User is not the assignee, not rendering');
-  return null;
-}
+}, [isAuthenticated, user?.id]);
 ```
 
 ---
 
-### Updated Flow After Fixes
+#### Step 6: Android Configuration
 
-```text
-User A (Sender - Phone)                    User B (Assignee - Laptop)
-    |                                              |
-    |-- Creates task assigned to User B -------->  |
-    |   (task_events INSERT for User B)            |
-    |                                              |
-    |                                      [Realtime: task_events INSERT]
-    |                                      [Check: assigned_to === user.id? YES]
-    |                                      [Opens Accept/Reject Modal]
-    |                                              |
-    |                                      [If ACCEPT]
-    |<-- task_events INSERT (accepted) ------------|
-    |<-- send-push (to User A's PHONE token) -----|
-    |   Toast: "User B accepted the task"          |
-    |                                      Task in B's "Today's Tasks"
-    |                                              |
-    |                                      [When B completes task]
-    |<-- task_events INSERT (completed) ----------|
-    |<-- send-push (to User A's PHONE token) -----|
-    |   Toast: "User B completed the task"         |
+**File: `android/app/src/main/AndroidManifest.xml`**
+
+Add required permissions for push notifications:
+
+```xml
+<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 ```
 
----
-
-### Cleanup: Remove Debug Logs
-
-After confirming the fix works, remove all `[MODAL-DEBUG]`, `[FCM-DEBUG]`, and `[REALTIME-DEBUG]` console.log statements from:
-- `src/components/layout/AppLayout.tsx`
-- `src/hooks/useRealtimeNotifications.tsx`
-- `src/contexts/AssignmentModalContext.tsx`
-- `src/components/modals/TaskAssignmentModal.tsx`
+Add Firebase messaging service (Capacitor plugin does this automatically when you run `npx cap sync`).
 
 ---
 
-### Files to Modify
+#### Step 7: iOS Configuration (After Running `npx cap add ios`)
 
-| File | Change |
-|------|--------|
-| `src/lib/fcm.ts` | Add `deleteFcmToken()` and helper `getCurrentFcmToken()` |
-| `src/hooks/useAuth.tsx` | Call `deleteFcmToken()` in `signOut` |
-| `src/components/layout/AppLayout.tsx` | Add assignee check before opening modal |
-| `src/hooks/useRealtimeNotifications.tsx` | Add assignee check before opening modal |
-| `src/components/modals/TaskAssignmentModal.tsx` | Add defense-in-depth assignee check |
+**File: `ios/App/App/AppDelegate.swift`**
+
+The Capacitor push notifications plugin will require:
+1. Enable Push Notifications capability in Xcode
+2. Add APNs key to Firebase Console
+3. Download and add `GoogleService-Info.plist` to the iOS project
 
 ---
 
-### Testing Checklist
+### Files to Create/Modify
 
-After implementation:
+| File | Action | Description |
+|------|--------|-------------|
+| `package.json` | Modify | Add `@capacitor/push-notifications` dependency |
+| `src/lib/capacitorPush.ts` | Create | Native push notification handler |
+| `src/lib/pushNotifications.ts` | Create | Unified hybrid API |
+| `src/lib/fcm.ts` | Modify | Add platform check to skip on native |
+| `src/components/layout/AppLayout.tsx` | Modify | Use hybrid push initialization |
+| `android/app/src/main/AndroidManifest.xml` | Modify | Add POST_NOTIFICATIONS permission |
+| `capacitor.config.ts` | Modify | Add server URL for live reload during development |
 
-1. **Log out User A from laptop** → Verify token is deleted from `user_fcm_tokens`
-2. **Log in User B on laptop** → New token saved for User B only
-3. **User A assigns task to User B** → 
-   - User A should NOT see the Accept/Reject modal
-   - User B should see the Accept/Reject modal immediately
-4. **User B accepts** → User A gets toast notification on phone
-5. **User B completes** → User A gets toast notification on phone
+---
+
+### What Will Work After Implementation
+
+| Feature | Web | iOS Native | Android Native |
+|---------|-----|------------|----------------|
+| Task assignment modal | ✅ Realtime | ✅ Realtime | ✅ Realtime |
+| Push notification delivery | ✅ FCM Web | ✅ APNs | ✅ FCM Native |
+| Accept/Reject flow | ✅ | ✅ | ✅ |
+| Completion notifications | ✅ | ✅ | ✅ |
+| Background notifications | ✅ (PWA) | ✅ | ✅ |
+
+---
+
+### Important: Realtime Notifications Are Your Safety Net
+
+Even if push notifications fail to deliver (token issues, permission denied, etc.), the **Realtime subscription in `useRealtimeNotifications.tsx` will still work**. This means:
+
+1. If the app is open (foreground), task assignments will ALWAYS show the modal via realtime
+2. Push notifications are only needed for when the app is closed/background
+3. The current architecture is already resilient
+
+---
+
+### Local Setup Required by User
+
+After these code changes are deployed, you'll need to:
+
+1. **Pull the code from GitHub**
+2. **Install dependencies**: `npm install`
+3. **Add iOS platform**: `npx cap add ios` (if not done)
+4. **Sync Capacitor**: `npx cap sync`
+5. **For iOS**: 
+   - Open in Xcode: `npx cap open ios`
+   - Enable Push Notifications capability
+   - Add APNs key to Firebase Console
+   - Download `GoogleService-Info.plist` from Firebase
+6. **For Android**: 
+   - Download `google-services.json` from Firebase Console
+   - Place in `android/app/`
+7. **Build and run**: `npx cap run ios` or `npx cap run android`
+
+---
 
 ### Edge Cases Handled
 
 | Scenario | Behavior |
 |----------|----------|
-| User assigns task to themselves | No modal (self-assign sets status='active' directly) |
-| Both users on same device sequentially | Only the currently logged-in user's token is active |
-| Realtime and FCM both trigger | Assignee check prevents wrong user, deduplication prevents double modal |
-| User has no FCM token | Realtime notifications still work, push fails gracefully |
-| User logged in on multiple devices | Latest token wins for push, realtime works on all |
+| Web user on desktop | Uses FCM web SDK (works) |
+| iOS Safari (no native app) | No push, but realtime notifications work when app is open |
+| iOS PWA | Limited web push, realtime works |
+| iOS native app (Capacitor) | Uses APNs via Capacitor plugin |
+| Android Chrome | Uses FCM web SDK (works) |
+| Android native app (Capacitor) | Uses FCM native via Capacitor plugin |
+| User denies push permission | Realtime notifications still show modal in-app |
+
+---
+
+### Technical Notes
+
+1. **Capacitor Push Notifications plugin** uses FCM on Android and APNs on iOS - tokens are different format than web tokens but the backend `send-push` function already handles both (FCM v1 API supports both)
+
+2. **The `platform` column** in `user_fcm_tokens` will correctly distinguish between 'web', 'ios', and 'android' tokens
+
+3. **Service workers** are not used in native Capacitor apps - the native notification system handles background delivery
+
+4. **Realtime subscriptions** work identically on web and native because they use WebSocket connections via the Supabase client
 
