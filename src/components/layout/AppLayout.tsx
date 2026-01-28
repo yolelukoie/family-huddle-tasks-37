@@ -1,9 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { useApp } from "@/hooks/useApp";
 import { useAuth } from "@/hooks/useAuth";
 import { isPlatform } from "@/lib/platform";
-import { requestPushPermission, listenForPushNotifications } from "@/lib/pushNotifications";
+import { requestPushPermission, listenForPushNotifications, getPushPermissionStatus } from "@/lib/pushNotifications";
 import { useToast } from "@/hooks/use-toast";
 import { ROUTES } from "@/lib/constants";
 import MainPage from "@/pages/main/MainPage";
@@ -20,6 +20,11 @@ import { DevTestButton } from "@/components/dev/DevTestButton";
 import { useKickedFromFamily } from "@/hooks/useKickedFromFamily";
 import { useAssignmentModal } from "@/contexts/AssignmentModalContext";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  NotificationPermissionDialog,
+  hasSeenNotificationPrompt,
+  markNotificationPromptAsShown,
+} from "@/components/notifications/NotificationPermissionDialog";
 
 export function AppLayout() {
   // Mount notifications hook globally for all authenticated users
@@ -30,6 +35,9 @@ export function AppLayout() {
   const location = useLocation();
   const { toast } = useToast();
   const { openAssignmentModal } = useAssignmentModal();
+  
+  // State for notification permission dialog
+  const [showNotificationDialog, setShowNotificationDialog] = useState(false);
 
   // Global listener for when user is kicked from a family
   useKickedFromFamily();
@@ -185,6 +193,21 @@ export function AppLayout() {
     if (user?.profileComplete && user.activeFamilyId && location.pathname === ROUTES.onboarding) {
       navigate(ROUTES.main, { replace: true });
     }
+
+    // Show notification permission dialog for fully set up users who haven't seen it
+    if (user?.profileComplete && user.activeFamilyId && location.pathname === ROUTES.main) {
+      if (!hasSeenNotificationPrompt()) {
+        // Check if permission is still promptable
+        getPushPermissionStatus().then((status) => {
+          if (status === 'prompt') {
+            setShowNotificationDialog(true);
+          } else {
+            // Already granted or denied, mark as shown
+            markNotificationPromptAsShown();
+          }
+        });
+      }
+    }
   }, [user, isAuthenticated, authLoading, isLoading, navigate, location.pathname]);
 
   if (authLoading || isLoading) {
@@ -212,6 +235,15 @@ export function AppLayout() {
         <Route path={ROUTES.terms.slice(1)} element={<TermsOfServicePage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
+
+      {/* One-time notification permission dialog */}
+      {user?.id && (
+        <NotificationPermissionDialog
+          open={showNotificationDialog}
+          onClose={() => setShowNotificationDialog(false)}
+          userId={user.id}
+        />
+      )}
     </div>
   );
 }
