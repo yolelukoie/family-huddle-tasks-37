@@ -37,7 +37,7 @@ export function NavigationHeader({ title, showBackButton = true }: NavigationHea
   ];
 
   return (
-    <div className="bg-gradient-to-r from-[hsl(var(--gradient-start))]/30 to-[hsl(var(--gradient-end))]/30 border-b border-[hsl(var(--card-accent))]/20 sticky top-0 z-10 backdrop-blur-sm">
+    <div className="bg-gradient-to-r from-[hsl(var(--gradient-start))]/30 to-[hsl(var(--gradient-end))]/30 border-b border-[hsl(var(--card-accent))]/20 sticky z-10 backdrop-blur-sm" style={{ top: 'env(safe-area-inset-top)' }}>
       <div className="max-w-4xl mx-auto px-4 py-3">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
