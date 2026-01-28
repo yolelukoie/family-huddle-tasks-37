@@ -49,7 +49,6 @@ export default function MainPage() {
   const {
     unlockedBadges,
     showBadges,
-    checkForNewBadges,
     resetBadgeProgress
   } = useBadges();
   const {
@@ -99,10 +98,11 @@ export default function MainPage() {
     };
   }, []);
 
-  // Check for newly unlocked badges and milestone when stars change
+  // Check for milestone celebration when stars change
+  // NOTE: Badge checking is centralized in TasksContext.tsx - do NOT call checkForNewBadges here
   useEffect(() => {
     if (previousStars !== totalStars && previousStars !== 0) {
-      // Check for 1000 star milestone celebration
+      // Check for 1000 star milestone celebration only
       if (previousStars < 1000 && totalStars >= 1000) {
         // Add milestone celebration to queue
         setTimeout(() => {
@@ -114,12 +114,11 @@ export default function MainPage() {
             setPreviousStars(0);
           }, 3500); // Wait for celebration to complete (3s) + buffer
         }, 100);
-      } else {
-        checkForNewBadges(previousStars, totalStars);
       }
+      // Badge checking removed - handled centrally in TasksContext.checkAndAwardBadges()
     }
     setPreviousStars(totalStars);
-  }, [totalStars, previousStars, checkForNewBadges, addCelebration, resetCharacterProgress, resetBadgeProgress, activeFamilyId]);
+  }, [totalStars, previousStars, addCelebration, resetCharacterProgress, resetBadgeProgress, activeFamilyId]);
 
   // Get today's tasks from useTasks hook - only ACCEPTED tasks assigned to current user
   // Filter out pending tasks - they must be accepted via the modal first

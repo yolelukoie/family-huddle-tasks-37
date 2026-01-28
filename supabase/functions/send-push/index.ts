@@ -203,8 +203,9 @@ serve(async (req) => {
     }
 
     return new Response(JSON.stringify({ ok: true, response: out }), { status: 200, headers: h });
-  } catch (e) {
+  } catch (e: unknown) {
     console.error("[send-push] error:", e);
-    return new Response(JSON.stringify({ error: String(e?.message || e) }), { status: 500, headers: h });
+    const errorMessage = e instanceof Error ? e.message : String(e);
+    return new Response(JSON.stringify({ error: errorMessage }), { status: 500, headers: h });
   }
 });
