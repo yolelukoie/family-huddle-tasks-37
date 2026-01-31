@@ -522,7 +522,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateFamilyName = async (familyId: string, name: string): Promise<void> => {
+    if (!user) throw new Error('No user found');
+    
     try {
+      // Get the old family name before updating
+      const oldFamily = families.find(f => f.id === familyId);
+      const oldName = oldFamily?.name || 'Family';
+
       // Update in Supabase
       const { error } = await supabase
         .from('families')
@@ -544,6 +550,33 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       
       // Dispatch event to trigger refetch in other components
       window.dispatchEvent(new CustomEvent('family:updated'));
+
+      // Send push notifications to all family members (except the one who made the change)
+      // Get all family members
+      const familyMembers = allFamilyMembers[familyId] || [];
+      const otherMembers = familyMembers.filter(m => m.userId !== user.id);
+
+      // Send notification to each member
+      for (const member of otherMembers) {
+        try {
+          await supabase.functions.invoke('send-push', {
+            body: {
+              recipientId: member.userId,
+              title: 'Family Name Changed',
+              body: `Family "${oldName}" changed its name to "${name}"`,
+              data: {
+                event_type: 'family_name_changed',
+                family_id: familyId,
+                old_name: oldName,
+                new_name: name
+              }
+            }
+          });
+        } catch (pushError) {
+          // Don't fail the operation if push notification fails
+          console.error('Failed to send push notification:', pushError);
+        }
+      }
     } catch (error) {
       console.error('Failed to update family name:', error);
       throw error;
@@ -629,10 +662,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (!user) return false;
 
     try {
-      // Check if current user is the family owner
-      const family = families.find(f => f.id === familyId);
-      if (!family || family.createdBy !== user.id) {
-        console.error('Only family owner can remove members');
+      // Check if user is a family member (any member can remove others)
+      const isMember = userFamilies.some(uf => uf.familyId === familyId && uf.userId === user.id);
+      if (!isMember) {
+        console.error('Only family members can remove other members');
         return false;
       }
 

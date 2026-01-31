@@ -1,39 +1,55 @@
-# Family Ownership Transfer on Account Deletion - IMPLEMENTED ✅
+# Family Equal Permissions (No Ownership) - IMPLEMENTED ✅
 
 ## Summary
 
-When a family owner deletes their account:
+Removed the "family owner" concept entirely. All family members now have equal permissions:
 
-1. **Solo owner (only member)**: The entire family and all related data are deleted
-2. **Multiple members**: Ownership transfers to the next member (by join date), only the owner's personal data is deleted
+1. **All members can edit family name** (with notifications to other members)
+2. **All members can share invite codes** 
+3. **All members can remove other members**
+4. **When any user deletes their account**: Family persists as long as ≥1 member remains
+5. **When the LAST member deletes their account**: Family and all data are deleted
 
 ## Implementation Details
 
+### Database Migration
+
+1. **Updated `regenerate_invite_code` function**: Now allows any family member to regenerate codes (was creator-only)
+2. **Updated RLS policies on `families` table**: Any member can UPDATE (was creator-only)
+3. **Updated RLS policies on `user_families` table**: Any member can DELETE other members (was owner-only)
+
+### Frontend Changes
+
+1. **`src/pages/family/FamilyPage.tsx`**:
+   - Removed owner check from Share button (line 246)
+   - Removed "Owner" badge display (lines 280-282)
+   - Removed owner check from Remove Member button (line 343)
+   - Removed owner check from Edit/Settings dialog (line 368)
+
+2. **`src/hooks/useApp.tsx`**:
+   - Changed `removeFamilyMember` to check membership instead of ownership
+   - Updated `updateFamilyName` to send push notifications to all family members
+
 ### Edge Function: `supabase/functions/delete-account/index.ts`
 
-Added logic to:
-1. Check if user owns any families (`created_by = userId`)
-2. For each owned family:
-   - Get other members (excluding deleting user)
-   - If no other members → delete family completely via `deleteFamilyCompletely()` helper
-   - If has members → transfer ownership to earliest joiner
-3. Continue with existing user data deletion
+Simplified logic:
+1. Get all families where user is a member
+2. For each family, count remaining members
+3. If user is the LAST member → delete entire family via `deleteFamilyCompletely()`
+4. If other members remain → family continues (user's membership deleted automatically)
+5. Delete user's personal data
+6. Delete auth user
 
-### Helper Function: `deleteFamilyCompletely()`
+### Family Name Change Notifications
 
-Deletes all family-related data in proper order:
-- task_events, tasks, task_templates, task_categories
-- chat_messages, goals, user_badges, celebration_events
-- device_tokens, family_sync_events, user_families
-- Clears active_family_id references in profiles
-- Finally deletes the family record
+When a family name is changed:
+- All other family members receive a push notification: "Family '{old name}' changed its name to '{new name}'"
+- The notification includes event_type, family_id, old_name, and new_name in the data payload
 
 ## Testing Checklist
 
-- [ ] Create family as sole owner → delete account → verify family completely deleted
-- [ ] Create family with other members → delete owner account → verify:
-  - [ ] New owner has "Owner" badge
-  - [ ] New owner can edit family name
-  - [ ] New owner can generate invite codes
-  - [ ] Original owner's data is gone but family persists
-- [ ] As non-owner, delete account → verify family continues normally
+- [ ] As any member, edit family name → verify notification sent to others
+- [ ] As any member, share invite code → verify code is generated
+- [ ] As any member, remove another member → verify member is removed
+- [ ] Delete account (not last member) → verify family persists
+- [ ] Delete account (last member) → verify family is completely deleted

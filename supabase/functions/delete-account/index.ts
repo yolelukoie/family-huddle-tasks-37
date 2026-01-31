@@ -78,55 +78,45 @@ Deno.serve(async (req) => {
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
     // =============================================
-    // STEP 1: Handle family ownership transfer/deletion
+    // STEP 1: Handle families where user is a member
+    // Delete family if user is the LAST member, otherwise just leave
     // =============================================
     
-    // Get all families where user is the owner
-    const { data: ownedFamilies, error: ownedFamiliesError } = await supabaseAdmin
-      .from("families")
-      .select("id, name")
-      .eq("created_by", userId);
+    // Get all families where user is a member
+    const { data: memberFamilies, error: memberFamiliesError } = await supabaseAdmin
+      .from("user_families")
+      .select("family_id")
+      .eq("user_id", userId);
 
-    if (ownedFamiliesError) {
-      console.error("Error fetching owned families:", ownedFamiliesError);
+    if (memberFamiliesError) {
+      console.error("Error fetching user families:", memberFamiliesError);
     }
 
-    if (ownedFamilies && ownedFamilies.length > 0) {
-      console.log(`User owns ${ownedFamilies.length} families`);
+    if (memberFamilies && memberFamilies.length > 0) {
+      console.log(`User is a member of ${memberFamilies.length} families`);
       
-      for (const family of ownedFamilies) {
-        // Get other family members (excluding the deleting user)
-        const { data: otherMembers, error: membersError } = await supabaseAdmin
+      for (const membership of memberFamilies) {
+        const familyId = membership.family_id;
+        
+        // Count remaining members (excluding current user)
+        const { count, error: countError } = await supabaseAdmin
           .from("user_families")
-          .select("user_id, joined_at")
-          .eq("family_id", family.id)
-          .neq("user_id", userId)
-          .order("joined_at", { ascending: true });
+          .select("*", { count: "exact", head: true })
+          .eq("family_id", familyId)
+          .neq("user_id", userId);
 
-        if (membersError) {
-          console.error(`Error fetching members for family ${family.id}:`, membersError);
+        if (countError) {
+          console.error(`Error counting members for family ${familyId}:`, countError);
           continue;
         }
 
-        if (!otherMembers || otherMembers.length === 0) {
-          // No other members - delete entire family
-          console.log(`Family "${family.name}" (${family.id}) has no other members - deleting completely`);
-          await deleteFamilyCompletely(supabaseAdmin, family.id);
+        if (count === 0) {
+          // User is the last member - delete entire family
+          console.log(`Family ${familyId} has no other members - deleting completely`);
+          await deleteFamilyCompletely(supabaseAdmin, familyId);
         } else {
-          // Transfer ownership to earliest joiner
-          const newOwner = otherMembers[0].user_id;
-          console.log(`Transferring ownership of family "${family.name}" (${family.id}) to user ${newOwner}`);
-          
-          const { error: transferError } = await supabaseAdmin
-            .from("families")
-            .update({ created_by: newOwner })
-            .eq("id", family.id);
-
-          if (transferError) {
-            console.error(`Error transferring ownership for family ${family.id}:`, transferError);
-          } else {
-            console.log(`Ownership of family "${family.name}" transferred successfully`);
-          }
+          console.log(`Family ${familyId} has ${count} other members - family will continue`);
+          // Family continues to exist, user's membership will be deleted in Step 2
         }
       }
     }
