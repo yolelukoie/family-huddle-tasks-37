@@ -10,7 +10,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useApp } from '@/hooks/useApp';
 import { useBadges } from '@/hooks/useBadges';
 import { NavigationHeader } from '@/components/layout/NavigationHeader';
-import { Edit, Settings, Upload, Loader2, Languages, Palette, RotateCcw, Bell, BellOff } from 'lucide-react';
+import { Edit, Settings, Upload, Loader2, Languages, Palette, RotateCcw, Bell, BellOff, Trash2 } from 'lucide-react';
+import { DeleteAccountModal } from '@/components/modals/DeleteAccountModal';
 import { requestAndSaveFcmToken } from '@/lib/fcm';
 import { ThemeSelector } from '@/components/theme/ThemeSelector';
 import { CharacterImageCustomizer } from '@/components/character/CharacterImageCustomizer';
@@ -474,6 +475,22 @@ export default function PersonalPage() {
               <RotateCcw className="h-4 w-4 mr-2" />
               {t('personal.resetCharacter')}
             </Button>
+          </CardContent>
+        </Card>
+
+        {/* Delete Account */}
+        <Card className="border-destructive/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-destructive">
+              <Trash2 className="h-5 w-5" />
+              {t('personal.deleteAccount') || 'Delete Account'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              {t('personal.deleteAccountDesc') || 'Permanently delete your account and all associated data. This action cannot be undone.'}
+            </p>
+            <DeleteAccountModal userId={user.id} />
           </CardContent>
         </Card>
 
