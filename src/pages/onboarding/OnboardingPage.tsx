@@ -14,7 +14,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useApp } from '@/hooks/useApp';
 import { ROUTES } from '@/lib/constants';
 import { useToast } from '@/hooks/use-toast';
-import { LEMON_CHECKOUT_URL } from '@/config/subscription';
+import { initiateSubscription } from '@/config/subscription';
 
 const onboardingSchema = z.object({
   // Profile fields
@@ -152,7 +152,7 @@ export default function OnboardingPage() {
           </p>
         </div>
 
-        {/* Trial CTA */}
+        {/* Trial CTA - TODO: Integrate with RevenueCat */}
         <Card className="bg-primary/5 border-primary/20">
           <CardContent className="pt-6 text-center space-y-4">
             <h2 className="text-xl font-semibold">Start your 5-day free trial</h2>
@@ -160,8 +160,9 @@ export default function OnboardingPage() {
               Try Family Huddle with all features free for 5 days. No commitment. After that you can continue on a paid plan or cancel anytime from the Family page.
             </p>
             <Button 
-              onClick={() => window.location.href = LEMON_CHECKOUT_URL}
+              onClick={() => user?.id && initiateSubscription(user.id)}
               className="w-full"
+              disabled={!user?.id}
             >
               Start free trial
             </Button>
