@@ -16,6 +16,22 @@ import { ROUTES } from '@/lib/constants';
 import { useToast } from '@/hooks/use-toast';
 import { initiateSubscription } from '@/config/subscription';
 
+const StarIcon = () => (
+  <svg viewBox="0 0 100 100" className="inline-block w-[1.2em] h-[1.2em] ml-1 align-middle">
+    {/* Main star - centered */}
+    <polygon 
+      points="50,25 57,43 77,43 61,55 67,73 50,62 33,73 39,55 23,43 43,43" 
+      fill="#FACC15" 
+    />
+    {/* Top dot - touching star's top point */}
+    <circle cx="50" cy="15" r="7" fill="#FACC15" />
+    {/* Bottom-left dot - at 7 o'clock */}
+    <circle cx="25" cy="78" r="7" fill="#FACC15" />
+    {/* Bottom-right dot - at 5 o'clock */}
+    <circle cx="75" cy="78" r="7" fill="#FACC15" />
+  </svg>
+);
+
 const onboardingSchema = z.object({
   // Profile fields
   displayName: z.string().min(2, 'Name must be at least 2 characters'),
@@ -91,7 +107,7 @@ export default function OnboardingPage() {
         console.log('Family created successfully with ID:', familyId);
         
         toast({
-          title: "Welcome to Family Stars! ⭐",
+          title: "Welcome to Family Huddle! ⭐",
           description: `Your family "${data.familyName}" has been created!`,
         });
       } else if (data.familyAction === 'join' && data.inviteCode) {
@@ -101,7 +117,7 @@ export default function OnboardingPage() {
           console.log('Joined family successfully:', family.name);
           
           toast({
-            title: "Welcome to Family Stars! ⭐",
+            title: "Welcome to Family Huddle! ⭐",
             description: `You've joined "${family.name}"!`,
           });
         } else {
@@ -145,7 +161,7 @@ export default function OnboardingPage() {
       <div className="max-w-md w-full space-y-6">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-family-warm mb-2">
-            Welcome to Family Stars! ⭐
+            Welcome to Family Huddle! <StarIcon />
           </h1>
           <p className="text-muted-foreground">
             Complete your profile to start your family adventure
