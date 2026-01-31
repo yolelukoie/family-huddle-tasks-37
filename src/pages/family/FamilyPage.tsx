@@ -243,7 +243,7 @@ export default function FamilyPage() {
                 <Button 
                   variant="theme" 
                   onClick={() => generateAndShareCode(activeFamily.id)}
-                  disabled={isGeneratingCode || activeFamily.createdBy !== user.id}
+                  disabled={isGeneratingCode}
                 >
                   <Share className="h-4 w-4 mr-2" />
                   {isGeneratingCode ? t('common.loading') : t('family.shareCode')}
@@ -276,9 +276,6 @@ export default function FamilyPage() {
                       <div className="flex flex-wrap gap-2">
                         {family.id === activeFamilyId && (
                           <Badge variant="default">{t('family.active')}</Badge>
-                        )}
-                        {family.createdBy === user.id && (
-                          <Badge variant="secondary">{t('family.owner')}</Badge>
                         )}
                       </div>
                     </div>
@@ -340,7 +337,7 @@ export default function FamilyPage() {
                                   {isCurrentUser && (
                                     <Badge variant="secondary">{t('family.you')}</Badge>
                                   )}
-                                  {!isCurrentUser && family.createdBy === user.id && (
+                                  {!isCurrentUser && (
                                     <Button
                                       type="button"
                                       variant="ghost"
@@ -365,59 +362,57 @@ export default function FamilyPage() {
                       </DialogContent>
                     </Dialog>
 
-                    {family.createdBy === user.id && (
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="theme" size="sm" className="flex-1 sm:flex-initial">
-                            <Settings className="h-4 w-4 mr-1" />
-                            <span className="sm:hidden">{t('family.edit')}</span>
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>{t('family.editFamilyName')}</DialogTitle>
-                          </DialogHeader>
-                          <form onSubmit={handleUpdateFamilyName} className="space-y-4">
-                            <div>
-                              <Label htmlFor="familyName">{t('family.familyName')}</Label>
-                              <Input
-                                id="familyName"
-                                value={editingFamilyId === family.id ? editingFamilyName : family.name}
-                                onChange={(e) => {
-                                  setEditingFamilyId(family.id);
-                                  setEditingFamilyName(e.target.value);
-                                }}
-                                placeholder={t('family.enterFamilyName')}
-                                required
-                              />
-                            </div>
-                            <div className="flex flex-col gap-2">
-                              <div className="flex gap-2">
-                                <Button type="submit" className="flex-1">{t('family.update')}</Button>
-                                <Button 
-                                  type="button" 
-                                  variant="outline" 
-                                  onClick={() => {
-                                    setEditingFamilyId(null);
-                                    setEditingFamilyName('');
-                                  }}
-                                >
-                                  {t('family.cancel')}
-                                </Button>
-                              </div>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="theme" size="sm" className="flex-1 sm:flex-initial">
+                          <Settings className="h-4 w-4 mr-1" />
+                          <span className="sm:hidden">{t('family.edit')}</span>
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>{t('family.editFamilyName')}</DialogTitle>
+                        </DialogHeader>
+                        <form onSubmit={handleUpdateFamilyName} className="space-y-4">
+                          <div>
+                            <Label htmlFor="familyName">{t('family.familyName')}</Label>
+                            <Input
+                              id="familyName"
+                              value={editingFamilyId === family.id ? editingFamilyName : family.name}
+                              onChange={(e) => {
+                                setEditingFamilyId(family.id);
+                                setEditingFamilyName(e.target.value);
+                              }}
+                              placeholder={t('family.enterFamilyName')}
+                              required
+                            />
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            <div className="flex gap-2">
+                              <Button type="submit" className="flex-1">{t('family.update')}</Button>
                               <Button 
                                 type="button" 
-                                variant="destructive" 
-                                 onClick={() => handleQuitFamily(family.id)}
-                                 className="w-full"
-                               >
-                                 {t("family.quitFamily")}
-                               </Button>
+                                variant="outline" 
+                                onClick={() => {
+                                  setEditingFamilyId(null);
+                                  setEditingFamilyName('');
+                                }}
+                              >
+                                {t('family.cancel')}
+                              </Button>
                             </div>
-                          </form>
-                        </DialogContent>
-                      </Dialog>
-                    )}
+                            <Button 
+                              type="button" 
+                              variant="destructive" 
+                               onClick={() => handleQuitFamily(family.id)}
+                               className="w-full"
+                             >
+                               {t("family.quitFamily")}
+                             </Button>
+                          </div>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
 
                     {family.id !== activeFamilyId && (
                       <Button
