@@ -135,8 +135,37 @@ export default function OnboardingPage() {
       setTimeout(() => {
         navigate(ROUTES.main, { replace: true });
       }, 100);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Onboarding error:', error);
+      
+      // Check for stale session error (foreign key constraint violation)
+      const errorCode = error?.code || error?.message?.includes('23503');
+      const isForeignKeyError = errorCode === '23503' || 
+        error?.message?.includes('foreign key constraint') ||
+        error?.message?.includes('profiles_id_fkey');
+      
+      if (isForeignKeyError) {
+        // Clear all auth state to remove stale session
+        const keysToRemove: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && (key.startsWith('sb-') || key.startsWith('app_'))) {
+            keysToRemove.push(key);
+          }
+        }
+        keysToRemove.forEach(key => localStorage.removeItem(key));
+        
+        toast({
+          title: "Session expired",
+          description: "Your session was invalid. Please sign in again.",
+          variant: "destructive",
+        });
+        
+        // Force redirect to auth page
+        window.location.replace('/auth');
+        return;
+      }
+      
       toast({
         title: "Error",
         description: "Something went wrong. Please try again.",

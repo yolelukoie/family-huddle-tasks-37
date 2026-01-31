@@ -49,6 +49,16 @@ export function DeleteAccountModal({ userId }: DeleteAccountModalProps) {
         throw new Error(data.error);
       }
 
+      // Clear all Supabase and app-related localStorage items
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith('sb-') || key.startsWith('app_'))) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+
       // Sign out the user
       await supabase.auth.signOut();
 
@@ -57,8 +67,8 @@ export function DeleteAccountModal({ userId }: DeleteAccountModalProps) {
         description: t('personal.accountDeletedDesc') || 'Your account and all data have been permanently deleted.',
       });
 
-      // Redirect to auth page
-      navigate('/auth', { replace: true });
+      // Force full page reload to auth page to ensure clean state
+      window.location.replace('/auth');
     } catch (error) {
       console.error('Error deleting account:', error);
       toast({
