@@ -101,6 +101,8 @@
     "enterInviteCode": "Enter invite code",
     "inviteCodeCopied": "Invite code copied!",
     "inviteCodeCopiedDesc": "The invite code has been copied to your clipboard.",
+    "codeActiveFor24Hours": "The invite code will be active for 24 hours.",
+    "errorGeneratingCode": "Failed to generate invite code. Only family owners can share codes.",
     "joinedSuccess": "Joined family successfully!",
     "welcomeTo": "Welcome to",
     "invalidCode": "Invalid invite code",

@@ -15,6 +15,7 @@ import { MemberProfileModal } from '@/components/modals/MemberProfileModal';
 import { Users, Share, Plus, Star, Settings, UserMinus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getCurrentStage, getStageName } from '@/lib/character';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function FamilyPage() {
   const { t } = useTranslation();
@@ -30,6 +31,7 @@ export default function FamilyPage() {
   const [selectedMember, setSelectedMember] = useState<any>(null);
   const [showMemberProfile, setShowMemberProfile] = useState(false);
   const [memberToRemove, setMemberToRemove] = useState<{ userId: string; displayName: string; familyId: string } | null>(null);
+  const [isGeneratingCode, setIsGeneratingCode] = useState(false);
 
   if (!user) return null;
 
@@ -145,12 +147,42 @@ export default function FamilyPage() {
     }
   };
 
-  const copyInviteCode = (inviteCode: string) => {
-    navigator.clipboard.writeText(inviteCode);
-    toast({
-      title: t('family.inviteCodeCopied'),
-      description: t('family.inviteCodeCopiedDesc'),
-    });
+  const generateAndShareCode = async (familyId: string) => {
+    setIsGeneratingCode(true);
+    try {
+      // Call RPC to regenerate invite code with 24-hour expiry
+      const { data, error } = await supabase
+        .rpc('regenerate_invite_code', { p_family_id: familyId });
+      
+      if (error) {
+        console.error('Error regenerating invite code:', error);
+        toast({
+          title: t('family.error'),
+          description: t('family.errorGeneratingCode') || 'Failed to generate invite code.',
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (data && data[0]) {
+        const newCode = data[0].new_invite_code;
+        // Copy the new code to clipboard
+        await navigator.clipboard.writeText(newCode);
+        toast({
+          title: t('family.inviteCodeCopied'),
+          description: `${t('family.inviteCodeCopiedDesc')} ${t('family.codeActiveFor24Hours') || 'The invite code will be active for 24 hours.'}`,
+        });
+      }
+    } catch (err) {
+      console.error('Error generating invite code:', err);
+      toast({
+        title: t('family.error'),
+        description: t('family.errorGeneratingCode') || 'Failed to generate invite code.',
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingCode(false);
+    }
   };
 
   const handleRemoveMember = async () => {
@@ -202,13 +234,18 @@ export default function FamilyPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="font-medium">{activeFamily.name}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {t('family.inviteCode')}: {activeFamily.inviteCode}
-                  </p>
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                    <Star className="h-3 w-3" />
+                    <span>{userFamilies.find(uf => uf.familyId === activeFamilyId)?.totalStars || 0} {t('main.stars')}</span>
+                  </div>
                 </div>
-                <Button variant="theme" onClick={() => copyInviteCode(activeFamily.inviteCode)}>
+                <Button 
+                  variant="theme" 
+                  onClick={() => generateAndShareCode(activeFamily.id)}
+                  disabled={isGeneratingCode || activeFamily.createdBy !== user.id}
+                >
                   <Share className="h-4 w-4 mr-2" />
-                  {t('family.shareCode')}
+                  {isGeneratingCode ? t('common.loading') : t('family.shareCode')}
                 </Button>
               </div>
             </CardContent>
@@ -231,8 +268,9 @@ export default function FamilyPage() {
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                     <div className="space-y-2">
                       <div className="font-medium text-lg">{family.name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {t('family.code')}: {family.inviteCode}
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <Star className="h-3 w-3" />
+                        <span>{userFamilies.find(uf => uf.familyId === family.id)?.totalStars || 0} {t('main.stars')}</span>
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {family.id === activeFamilyId && (
