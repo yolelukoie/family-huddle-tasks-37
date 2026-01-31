@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, useCallback, useRef } f
 import { supabase } from "@/integrations/supabase/client";
 import type { User as SupabaseUser, Session } from "@supabase/supabase-js";
 import type { User } from "@/lib/types";
-import { generateId, calculateAge } from "@/lib/utils";
+import { generateId } from "@/lib/utils";
 import { deletePushToken } from "@/lib/pushNotifications";
 
 const SESSION_KEY = "app_session_id";
@@ -91,9 +91,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const mapped: User = {
         id: profile.id,
         displayName: profile.display_name,
-        dateOfBirth: profile.date_of_birth,
         gender: profile.gender as "male" | "female" | "other",
-        age: profile.age,
         profileComplete: profile.profile_complete,
         activeFamilyId: profile.active_family_id,
         avatar_url: profile.avatar_url,
@@ -302,14 +300,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const createUser = useCallback(
-    async (userData: Omit<User, "id" | "age" | "profileComplete">): Promise<User> => {
+    async (userData: Omit<User, "id" | "profileComplete">): Promise<User> => {
       const uid = getUserId(session);
       if (!uid) throw new Error("Must be signed in to create user");
 
       const newUser: User = {
         ...userData,
         id: uid,
-        age: calculateAge(userData.dateOfBirth),
         profileComplete: true,
       };
 
@@ -319,9 +316,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           {
             id: newUser.id,
             display_name: newUser.displayName,
-            date_of_birth: newUser.dateOfBirth,
             gender: newUser.gender,
-            age: newUser.age,
             profile_complete: newUser.profileComplete,
             active_family_id: newUser.activeFamilyId ?? null,
           },
@@ -358,9 +353,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .from("profiles")
           .update({
             display_name: updatedUser.displayName,
-            date_of_birth: updatedUser.dateOfBirth,
             gender: updatedUser.gender,
-            age: updatedUser.age,
             profile_complete: updatedUser.profileComplete,
             active_family_id: updatedUser.activeFamilyId ?? null,
             avatar_url: updatedUser.avatar_url ?? null,

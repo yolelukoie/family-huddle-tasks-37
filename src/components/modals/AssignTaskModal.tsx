@@ -51,8 +51,8 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
   const members = activeFamilyId ? getFamilyMembers(activeFamilyId) : [];
   const otherMembers = members.filter((m) => m.userId !== user.id);
 
-  // Check if user is 18+ for star value editing
-  const canEditStars = user.age >= 18;
+  // All users can edit star values now
+  const canEditStars = true;
 
   const onSubmit = async (data: AssignTaskForm) => {
     if (isSubmitting) return;

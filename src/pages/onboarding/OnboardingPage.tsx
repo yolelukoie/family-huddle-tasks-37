@@ -35,7 +35,6 @@ const StarIcon = () => (
 const onboardingSchema = z.object({
   // Profile fields
   displayName: z.string().min(2, 'Name must be at least 2 characters'),
-  dateOfBirth: z.string().min(1, 'Date of birth is required'),
   gender: z.enum(['male', 'female', 'other'], {
     required_error: 'Please select your gender',
   }),
@@ -94,7 +93,6 @@ export default function OnboardingPage() {
       // Create user profile
       const newUser = await createUser({
         displayName: data.displayName,
-        dateOfBirth: data.dateOfBirth,
         gender: data.gender,
       });
       
@@ -239,20 +237,6 @@ export default function OnboardingPage() {
                         <FormLabel>Display Name</FormLabel>
                         <FormControl>
                           <Input placeholder="What should we call you?" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="dateOfBirth"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Date of Birth</FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

@@ -43,8 +43,8 @@ export function TaskTemplateModal({ open, onOpenChange, category, familyId, onTe
 
   if (!user) return null;
 
-  // Check if user is 18+ for star value editing
-  const canEditStars = user.age >= 18;
+  // All users can edit star values now
+  const canEditStars = true;
 
   const onSubmit = async (data: TaskTemplateForm) => {
     if (!user) return;
