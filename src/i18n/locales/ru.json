@@ -447,5 +447,11 @@
     "rejectError": "Не удалось отклонить задачу. Попробуйте снова.",
     "cannotNotify": "Не удаётся уведомить",
     "familyNotLoaded": "Семья ещё не загружена. Попробуйте через мгновение."
+  },
+  "familyNotifications": {
+    "memberLeft": "{{name}} покинул(а) семью",
+    "memberLeftTitle": "Участник ушёл",
+    "familyNameChangedTitle": "Название семьи изменено",
+    "familyNameChanged": "Семья \"{{oldName}}\" изменила название на \"{{newName}}\""
   }
 }

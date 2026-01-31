@@ -344,5 +344,11 @@
     "rejectError": "No se pudo rechazar la tarea. Inténtalo de nuevo.",
     "cannotNotify": "No se puede notificar",
     "familyNotLoaded": "La familia aún no está cargada. Inténtalo en un momento."
+  },
+  "familyNotifications": {
+    "memberLeft": "{{name}} ha dejado la familia",
+    "memberLeftTitle": "Miembro se fue",
+    "familyNameChangedTitle": "Nombre de familia cambiado",
+    "familyNameChanged": "La familia \"{{oldName}}\" cambió su nombre a \"{{newName}}\""
   }
 }

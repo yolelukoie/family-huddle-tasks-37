@@ -463,5 +463,11 @@
     "rejectError": "Failed to reject the task. Please try again.",
     "cannotNotify": "Cannot notify",
     "familyNotLoaded": "Family is not loaded yet. Try again in a moment."
+  },
+  "familyNotifications": {
+    "memberLeft": "{{name}} has left the family",
+    "memberLeftTitle": "Member Left",
+    "familyNameChangedTitle": "Family Name Changed",
+    "familyNameChanged": "Family \"{{oldName}}\" changed its name to \"{{newName}}\""
   }
 }

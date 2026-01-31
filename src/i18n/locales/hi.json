@@ -344,5 +344,11 @@
     "rejectError": "कार्य अस्वीकार करने में विफल। कृपया पुनः प्रयास करें।",
     "cannotNotify": "सूचित नहीं कर सकते",
     "familyNotLoaded": "परिवार अभी लोड नहीं हुआ है। कृपया थोड़ी देर बाद पुनः प्रयास करें।"
+  },
+  "familyNotifications": {
+    "memberLeft": "{{name}} ने परिवार छोड़ दिया है",
+    "memberLeftTitle": "सदस्य ने छोड़ा",
+    "familyNameChangedTitle": "परिवार का नाम बदला गया",
+    "familyNameChanged": "परिवार \"{{oldName}}\" ने अपना नाम बदलकर \"{{newName}}\" कर दिया है"
   }
 }
