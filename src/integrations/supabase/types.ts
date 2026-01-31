@@ -162,6 +162,7 @@ export type Database = {
           created_by: string
           id: string
           invite_code: string
+          invite_code_expires_at: string | null
           invite_code_used_at: string | null
           name: string
           updated_at: string
@@ -171,6 +172,7 @@ export type Database = {
           created_by: string
           id?: string
           invite_code?: string
+          invite_code_expires_at?: string | null
           invite_code_used_at?: string | null
           name: string
           updated_at?: string
@@ -180,6 +182,7 @@ export type Database = {
           created_by?: string
           id?: string
           invite_code?: string
+          invite_code_expires_at?: string | null
           invite_code_used_at?: string | null
           name?: string
           updated_at?: string
@@ -700,6 +703,7 @@ export type Database = {
           created_by: string
           id: string
           invite_code: string
+          invite_code_expires_at: string | null
           invite_code_used_at: string | null
           name: string
           updated_at: string
