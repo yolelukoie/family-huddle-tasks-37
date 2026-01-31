@@ -1,4 +1,8 @@
 {
+  "legal": {
+    "privacyPolicy": "隐私政策",
+    "termsOfUse": "使用条款"
+  },
   "nav": {
     "home": "主页",
     "tasks": "任务",
