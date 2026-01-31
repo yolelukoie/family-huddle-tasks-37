@@ -15,7 +15,7 @@ import { requestAndSaveFcmToken } from '@/lib/fcm';
 import { ThemeSelector } from '@/components/theme/ThemeSelector';
 import { CharacterImageCustomizer } from '@/components/character/CharacterImageCustomizer';
 import { useToast } from '@/hooks/use-toast';
-import { LEMON_CHECKOUT_URL } from '@/config/subscription';
+import { initiateSubscription } from '@/config/subscription';
 import { supabase } from '@/integrations/supabase/client';
 
 const LANGUAGES = [
@@ -446,7 +446,8 @@ export default function PersonalPage() {
             </p>
             <Button 
               variant="theme" 
-              onClick={() => window.location.href = LEMON_CHECKOUT_URL}
+              onClick={() => user?.id && initiateSubscription(user.id)}
+              disabled={!user?.id}
             >
               {t('personal.manageSubscription')}
             </Button>
