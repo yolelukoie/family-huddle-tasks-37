@@ -497,11 +497,11 @@ export default function PersonalPage() {
         {/* Legal Links */}
         <div className="flex justify-center gap-4 text-sm text-muted-foreground py-4">
           <a href="/privacy" className="hover:text-foreground transition-colors">
-            {t('legal.privacyPolicy') || 'Privacy Policy'}
+            {t('legal.privacyPolicy')}
           </a>
           <span>•</span>
           <a href="/terms" className="hover:text-foreground transition-colors">
-            {t('legal.termsOfService') || 'Terms of Service'}
+            {t('legal.termsOfUse')}
           </a>
         </div>
       </div>

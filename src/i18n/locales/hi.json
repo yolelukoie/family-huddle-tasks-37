@@ -1,4 +1,8 @@
 {
+  "legal": {
+    "privacyPolicy": "गोपनीयता नीति",
+    "termsOfUse": "उपयोग की शर्तें"
+  },
   "nav": {
     "home": "होम",
     "tasks": "कार्य",

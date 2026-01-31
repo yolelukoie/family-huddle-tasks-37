@@ -1,4 +1,8 @@
 {
+  "legal": {
+    "privacyPolicy": "Política de Privacidad",
+    "termsOfUse": "Términos de Uso"
+  },
   "nav": {
     "home": "Inicio",
     "tasks": "Tareas",

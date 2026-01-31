@@ -1,28 +1,25 @@
-import { useTranslation } from 'react-i18next';
 import { NavigationHeader } from '@/components/layout/NavigationHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function PrivacyPolicyPage() {
-  const { t } = useTranslation();
-  
   return (
     <div className="min-h-screen bg-gradient-to-b from-[hsl(var(--section-tint))] to-background">
       <NavigationHeader title="Privacy Policy" showBackButton={true} />
       
-      <div className="max-w-3xl mx-auto p-4 space-y-6">
+      <div className="max-w-3xl mx-auto p-4 space-y-6 pb-12">
         <Card>
           <CardHeader>
-            <CardTitle>Privacy Policy</CardTitle>
-            <p className="text-sm text-muted-foreground">Last updated: December 2024</p>
+            <CardTitle>Privacy Policy – Family Huddle</CardTitle>
+            <p className="text-sm text-muted-foreground">Last updated: 31 January 2026</p>
           </CardHeader>
-          <CardContent className="prose prose-sm dark:prose-invert max-w-none space-y-4">
+          <CardContent className="prose prose-sm dark:prose-invert max-w-none space-y-6">
             <section>
               <h2 className="text-lg font-semibold">1. Information We Collect</h2>
               <p className="text-muted-foreground">
                 We collect information you provide directly to us, including:
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-1">
-                <li>Account information (email address, display name, date of birth)</li>
+                <li>Account information (email address, display name)</li>
                 <li>Profile information (avatar, gender preference for character display)</li>
                 <li>Family and task data you create within the app</li>
                 <li>Chat messages shared within your family groups</li>
@@ -86,7 +83,7 @@ export default function PrivacyPolicyPage() {
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-1">
                 <li>Access and update your personal information</li>
-                <li>Delete your account and associated data</li>
+                <li>Delete your account and associated data at: <a href="https://familyhuddletasks.com/delete-account" className="text-primary hover:underline">familyhuddletasks.com/delete-account</a></li>
                 <li>Opt out of push notifications</li>
                 <li>Leave family groups at any time</li>
               </ul>
