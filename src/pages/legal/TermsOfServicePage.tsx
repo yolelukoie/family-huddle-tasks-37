@@ -10,7 +10,7 @@ export default function TermsOfServicePage() {
         <Card>
           <CardHeader>
             <CardTitle>Terms of Service – Family Huddle</CardTitle>
-            <p className="text-sm text-muted-foreground">Last updated: 29 January 2026</p>
+            <p className="text-sm text-muted-foreground">Last updated: 31 January 2026</p>
           </CardHeader>
           <CardContent className="prose prose-sm dark:prose-invert max-w-none space-y-6">
             <p className="text-muted-foreground">
@@ -42,8 +42,8 @@ export default function TermsOfServicePage() {
               <h2 className="text-lg font-semibold">2. Eligibility</h2>
               <p className="text-muted-foreground">You may use the Service only if:</p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-1">
-                <li>you are at least 18 years old, or</li>
-                <li>you are a minor using the Service with the permission and supervision of a parent or legal guardian.</li>
+                <li>you are at least 13 years old,</li>
+                <li>if you are between 13 and 18 years old, you are using the Service with the permission and supervision of a parent or legal guardian.</li>
               </ul>
               <p className="text-muted-foreground">
                 Parents and legal guardians are responsible for the actions of minors who use the Service under their supervision.
@@ -75,14 +75,35 @@ export default function TermsOfServicePage() {
                 Some features of Family Huddle are available only through paid subscriptions ("Premium").
               </p>
               
-              <h3 className="text-base font-medium mt-4">4.1 Subscriptions and Renewal</h3>
-              <ul className="list-disc pl-6 text-muted-foreground space-y-1">
-                <li>Subscription prices, billing periods, and what is included in each plan are displayed in the app or on our website.</li>
-                <li>Subscriptions are typically billed in advance and renew automatically at the end of each billing period unless cancelled.</li>
-                <li>You can cancel your subscription at any time through the platform where you subscribed (for example, in-app stores, web payment page, or payment provider account).</li>
-              </ul>
+              <h3 className="text-base font-medium mt-4">4.1 Pricing and Free Trial</h3>
+              <p className="text-muted-foreground">
+                The standard price for a Family Huddle Premium subscription is 14 NIS (New Israeli Shekel) per month (approximately 3.70 USD, depending on exchange rates). Prices may vary by region, currency, taxes, or promotions.
+              </p>
+              <p className="text-muted-foreground">
+                We may offer a free trial period for new Premium subscriptions. As of the date of these Terms, the free trial is four (4) days. During the trial you have full access to all Premium features without limitations.
+              </p>
+              <p className="text-muted-foreground">
+                Unless you cancel before the end of the free trial, your subscription will automatically start at the then-current monthly price, and your payment method will be charged.
+              </p>
+              <p className="text-muted-foreground">
+                We may change our prices or trial terms in the future. If we do, we will notify you in advance where required by law, and changes will apply from your next billing period.
+              </p>
+              <p className="text-muted-foreground">
+                From time to time we may offer promo codes, discounts, or other special offers. These are subject to the specific terms of each promotion, are non-transferable, and may be available only for a limited time.
+              </p>
 
-              <h3 className="text-base font-medium mt-4">4.2 Payment Processing</h3>
+              <h3 className="text-base font-medium mt-4">4.2 Subscriptions and Renewal</h3>
+              <p className="text-muted-foreground">
+                Subscription prices, billing periods, and what is included in each plan are displayed in the app or on our website.
+              </p>
+              <p className="text-muted-foreground">
+                Subscriptions are typically billed in advance and renew automatically at the end of each billing period unless cancelled.
+              </p>
+              <p className="text-muted-foreground">
+                You can cancel your subscription at any time through the platform where you subscribed (for example, in-app stores, web payment page, or payment provider account). After cancellation, you will continue to have access to Premium features until the end of your current paid billing period. After that, access to Premium features will be removed unless you renew.
+              </p>
+
+              <h3 className="text-base font-medium mt-4">4.3 Payment Processing</h3>
               <p className="text-muted-foreground">
                 Payments are processed by third-party payment providers (for example, payment platforms, app stores, or other billing services). We do not store your full payment card details on our own servers.
               </p>
@@ -90,12 +111,16 @@ export default function TermsOfServicePage() {
                 Your use of these third-party services may be subject to their own terms and privacy policies in addition to these Terms.
               </p>
 
-              <h3 className="text-base font-medium mt-4">4.3 Refunds and Cancellations</h3>
-              <ul className="list-disc pl-6 text-muted-foreground space-y-1">
-                <li>No refunds for partial billing periods are provided.</li>
-                <li>You may cancel your subscription at any time; after cancellation, you will continue to have access to Premium features until the end of your current paid billing period. After that, access to Premium features will be removed unless you renew.</li>
-                <li>Any refunds required by applicable law will be handled in accordance with that law and, where relevant, the policies of the payment provider or app store through which you subscribed.</li>
-              </ul>
+              <h3 className="text-base font-medium mt-4">4.4 Refunds</h3>
+              <p className="text-muted-foreground">
+                We do not provide refunds for partial billing periods (for example, if you cancel in the middle of a month) or for unused time, except where required by applicable law.
+              </p>
+              <p className="text-muted-foreground">
+                If you believe you have been incorrectly charged (for example, due to fraud, a billing error, or duplicate payment), please contact us as soon as possible at the email address in the Contact section. We will review your request and, where appropriate and permitted by the payment provider or app store, issue a refund.
+              </p>
+              <p className="text-muted-foreground">
+                Any refunds that are required by applicable consumer protection laws will be provided in accordance with those laws and, where relevant, the policies of the payment provider or app store through which you subscribed.
+              </p>
             </section>
 
             <section>
@@ -282,11 +307,11 @@ export default function TermsOfServicePage() {
               <p className="text-muted-foreground">
                 If you have any questions about these Terms or our privacy practices, you can contact:
               </p>
-              <div className="text-muted-foreground mt-2">
-                <p><strong>Owner:</strong> Yana Sklyar</p>
-                <p><strong>Location:</strong> Tel Aviv, Israel</p>
-                <p><strong>Email:</strong> <a href="mailto:y.olelukoie@gmail.com" className="text-primary hover:underline">y.olelukoie@gmail.com</a></p>
-              </div>
+              <ul className="list-none pl-0 text-muted-foreground space-y-1">
+                <li><strong>Owner:</strong> Yana Sklyar</li>
+                <li><strong>Location:</strong> Tel Aviv, Israel</li>
+                <li><strong>Email:</strong> support@familyhuddletasks.com</li>
+              </ul>
             </section>
           </CardContent>
         </Card>
