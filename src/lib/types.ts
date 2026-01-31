@@ -1,9 +1,7 @@
 export interface User {
   id: string;
   displayName: string;
-  dateOfBirth: string;
   gender: 'male' | 'female' | 'other';
-  age: number;
   profileComplete: boolean;
   activeFamilyId?: string;
   avatar_url?: string;

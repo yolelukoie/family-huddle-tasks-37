@@ -847,9 +847,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         profiles[row.user_id] = {
           id: row.profile_id ?? row.user_id,
           displayName: row.display_name ?? null,
-          dateOfBirth: row.date_of_birth ?? null,
           gender: (row.gender ?? 'other') as 'male' | 'female' | 'other',
-          age: row.age ?? null,
           profileComplete: !!row.profile_complete,
           activeFamilyId: row.active_family_id ?? null,
           avatar_url: row.avatar_url ?? null,
@@ -881,9 +879,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           acc[profile.id] = {
             id: profile.id,
             displayName: profile.display_name,
-            dateOfBirth: profile.date_of_birth,
             gender: profile.gender as 'male' | 'female' | 'other',
-            age: profile.age,
             profileComplete: profile.profile_complete,
             activeFamilyId: profile.active_family_id,
           };

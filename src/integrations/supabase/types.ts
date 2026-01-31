@@ -272,10 +272,8 @@ export type Database = {
       profiles: {
         Row: {
           active_family_id: string | null
-          age: number
           avatar_url: string | null
           created_at: string
-          date_of_birth: string
           display_name: string
           gender: string
           id: string
@@ -285,10 +283,8 @@ export type Database = {
         }
         Insert: {
           active_family_id?: string | null
-          age: number
           avatar_url?: string | null
           created_at?: string
-          date_of_birth: string
           display_name: string
           gender: string
           id: string
@@ -298,10 +294,8 @@ export type Database = {
         }
         Update: {
           active_family_id?: string | null
-          age?: number
           avatar_url?: string | null
           created_at?: string
-          date_of_birth?: string
           display_name?: string
           gender?: string
           id?: string

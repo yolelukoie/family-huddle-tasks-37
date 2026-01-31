@@ -71,9 +71,6 @@ export function NavigationHeader({ title, showBackButton = true }: NavigationHea
                 <div className="flex items-center justify-between w-full">
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">{user?.displayName}</p>
-                    <p className="text-xs leading-none text-muted-foreground">
-                      Age: {user?.age}
-                    </p>
                   </div>
                   <Edit className="h-4 w-4 text-muted-foreground" />
                 </div>
