@@ -75,11 +75,20 @@ Deno.serve(async (req) => {
       );
     }
 
-    const visibleUserId = userId;
+    const userId = user.id;
     console.log(`[delete-account] Starting account deletion for user: ${userId}`);
 
     // Use service role client for admin operations
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Get user's display name for notifications
+    const { data: profileData } = await supabaseAdmin
+      .from("profiles")
+      .select("display_name")
+      .eq("id", userId)
+      .single();
+    
+    const userName = profileData?.display_name || "A member";
 
     // =============================================
     // STEP 1: Handle families where user is a member
@@ -103,11 +112,20 @@ Deno.serve(async (req) => {
         const familyId = membership.family_id;
         console.log(`[delete-account] Processing family: ${familyId}`);
         
+        // Get remaining family members BEFORE deleting user's membership (for notifications)
+        const { data: remainingMembersData } = await supabaseAdmin
+          .from("user_families")
+          .select("user_id")
+          .eq("family_id", familyId)
+          .neq("user_id", userId);
+        
+        const remainingMembers = remainingMembersData || [];
+        
         // STEP 1a: Delete user's membership for THIS family first
         const { error: deleteMembershipError } = await supabaseAdmin
           .from("user_families")
           .delete()
-          .eq("user_id", visibleUserId)
+          .eq("user_id", userId)
           .eq("family_id", familyId);
 
         if (deleteMembershipError) {
@@ -136,7 +154,52 @@ Deno.serve(async (req) => {
           await deleteFamilyCompletely(supabaseAdmin, familyId);
         } else {
           console.log(`[delete-account] Family ${familyId} has ${count} remaining members - family will continue`);
-          // Family continues to exist with remaining members
+          
+          // Send "member left" notification to remaining members
+          for (const member of remainingMembers) {
+            try {
+              // Get member's FCM token
+              const { data: tokenData } = await supabaseAdmin
+                .from("user_fcm_tokens")
+                .select("token")
+                .eq("user_id", member.user_id)
+                .order("updated_at", { ascending: false })
+                .limit(1)
+                .single();
+
+              if (tokenData?.token) {
+                // Send FCM notification directly (since we're in an edge function)
+                const saJsonRaw = Deno.env.get("FCM_SA_JSON");
+                const projectId = Deno.env.get("FCM_PROJECT_ID");
+                
+                if (saJsonRaw && projectId) {
+                  console.log(`[delete-account] Sending "member left" notification to user ${member.user_id}`);
+                  // We'll use fetch to call send-push function instead of sending directly
+                  // to avoid duplicating FCM logic
+                  await fetch(`${supabaseUrl}/functions/v1/send-push`, {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      "Authorization": `Bearer ${supabaseServiceKey}`,
+                    },
+                    body: JSON.stringify({
+                      recipientId: member.user_id,
+                      title: "Member Left",
+                      body: `${userName} has left the family`,
+                      data: {
+                        event_type: "member_left",
+                        family_id: familyId,
+                        member_name: userName
+                      }
+                    })
+                  });
+                }
+              }
+            } catch (notifyError) {
+              console.error(`[delete-account] Failed to notify member ${member.user_id}:`, notifyError);
+              // Continue - notification failure shouldn't block deletion
+            }
+          }
         }
       }
     }

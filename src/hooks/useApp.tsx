@@ -630,6 +630,30 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           await loadFamilyData();
           throw userFamilyError;
         }
+
+        // Notify remaining family members that this user left
+        const familyMembers = allFamilyMembers[familyId] || [];
+        const otherMembers = familyMembers.filter(m => m.userId !== user.id);
+        const leavingUserName = user.displayName || 'A member';
+        
+        for (const member of otherMembers) {
+          try {
+            await supabase.functions.invoke('send-push', {
+              body: {
+                recipientId: member.userId,
+                title: 'Member Left',
+                body: `${leavingUserName} has left the family`,
+                data: {
+                  event_type: 'member_left',
+                  family_id: familyId,
+                  member_name: leavingUserName
+                }
+              }
+            });
+          } catch (pushError) {
+            console.error('Failed to send member left notification:', pushError);
+          }
+        }
       }
 
       // If the family being quit is the active family, switch to another one
@@ -734,6 +758,33 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             .from('profiles')
             .update({ active_family_id: kickedUserRemainingFamilies[0].family_id })
             .eq('id', memberUserId);
+        }
+      }
+
+      // Get the removed member's name for notification
+      const removedMemberProfile = userProfiles[memberUserId];
+      const removedMemberName = removedMemberProfile?.displayName || 'A member';
+
+      // Notify remaining family members (except the remover) that this member left
+      const familyMembers = allFamilyMembers[familyId] || [];
+      const otherMembers = familyMembers.filter(m => m.userId !== user.id && m.userId !== memberUserId);
+      
+      for (const member of otherMembers) {
+        try {
+          await supabase.functions.invoke('send-push', {
+            body: {
+              recipientId: member.userId,
+              title: 'Member Left',
+              body: `${removedMemberName} has left the family`,
+              data: {
+                event_type: 'member_left',
+                family_id: familyId,
+                member_name: removedMemberName
+              }
+            }
+          });
+        } catch (pushError) {
+          console.error('Failed to send member left notification:', pushError);
         }
       }
 

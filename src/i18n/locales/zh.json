@@ -363,5 +363,11 @@
     "rejectError": "无法拒绝任务。请重试。",
     "cannotNotify": "无法通知",
     "familyNotLoaded": "家庭尚未加载。请稍后再试。"
+  },
+  "familyNotifications": {
+    "memberLeft": "{{name}} 已离开家庭",
+    "memberLeftTitle": "成员离开",
+    "familyNameChangedTitle": "家庭名称已更改",
+    "familyNameChanged": "家庭「{{oldName}}」已更名为「{{newName}}」"
   }
 }

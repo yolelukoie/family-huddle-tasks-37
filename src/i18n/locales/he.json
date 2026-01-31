@@ -344,5 +344,11 @@
     "rejectError": "לא ניתן לדחות את המשימה. נסה שוב.",
     "cannotNotify": "לא ניתן להודיע",
     "familyNotLoaded": "המשפחה עדיין לא נטענה. נסה שוב בעוד רגע."
+  },
+  "familyNotifications": {
+    "memberLeft": "{{name}} עזב/ה את המשפחה",
+    "memberLeftTitle": "חבר עזב",
+    "familyNameChangedTitle": "שם המשפחה שונה",
+    "familyNameChanged": "המשפחה \"{{oldName}}\" שינתה את שמה ל-\"{{newName}}\""
   }
 }
