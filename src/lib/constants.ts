@@ -10,6 +10,7 @@ export const ROUTES = {
   personal: '/personal',
   privacy: '/privacy',
   terms: '/terms',
+  refund: '/refund',
 } as const;
 
 export const CHARACTER_STAGES: CharacterStage[] = [
