@@ -98,12 +98,12 @@ export default function FamilyPage() {
     }
   };
 
-  const handleUpdateFamilyName = (e: React.FormEvent) => {
+  const handleUpdateFamilyName = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingFamilyId || !editingFamilyName.trim()) return;
 
     try {
-      updateFamilyName(editingFamilyId, editingFamilyName.trim());
+      await updateFamilyName(editingFamilyId, editingFamilyName.trim());
       setEditingFamilyId(null);
       setEditingFamilyName('');
       toast({
@@ -111,6 +111,7 @@ export default function FamilyPage() {
         description: t('family.nameUpdatedDesc'),
       });
     } catch (error) {
+      console.error('Error updating family name:', error);
       toast({
         title: t('family.errorUpdatingName'),
         description: t('family.errorUpdatingNameDesc'),

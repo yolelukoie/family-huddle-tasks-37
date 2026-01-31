@@ -541,6 +541,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       // Also update localStorage as backup
       storage.updateFamily(familyId, { name });
+      
+      // Dispatch event to trigger refetch in other components
+      window.dispatchEvent(new CustomEvent('family:updated'));
     } catch (error) {
       console.error('Failed to update family name:', error);
       throw error;
