@@ -72,7 +72,7 @@ export function useGoals() {
           event: '*',
           schema: 'public',
           table: 'goals',
-          filter: `user_id=eq.${user.id}&family_id=eq.${activeFamilyId}`
+          filter: `user_id=eq.${user.id}`
         },
         () => {
           loadGoals();
