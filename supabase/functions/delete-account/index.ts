@@ -2,7 +2,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 // Helper function to delete a family and all its related data
@@ -35,9 +36,12 @@ async function deleteFamilyCompletely(supabaseAdmin: ReturnType<typeof createCli
 }
 
 Deno.serve(async (req) => {
+  // Log request details for debugging
+  console.log("[delete-account] Request:", req.method, "Origin:", req.headers.get("Origin"), "Preflight-Headers:", req.headers.get("Access-Control-Request-Headers"));
+
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { status: 204, headers: corsHeaders });
   }
 
   try {

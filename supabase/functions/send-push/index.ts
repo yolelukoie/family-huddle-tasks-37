@@ -66,7 +66,7 @@ async function getAccessToken(saJson: any): Promise<string> {
 
 function cors(req: Request, resHeaders = new Headers()) {
   resHeaders.set("Access-Control-Allow-Origin", "*");
-  resHeaders.set("Access-Control-Allow-Headers", "authorization, x-client-info, apikey, content-type, x-push-secret");
+  resHeaders.set("Access-Control-Allow-Headers", "authorization, x-client-info, apikey, content-type, x-push-secret, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version");
   resHeaders.set("Access-Control-Allow-Methods", "POST, OPTIONS");
   if (req.method === "OPTIONS") {
     // 204 No Content must have null body, not empty string
