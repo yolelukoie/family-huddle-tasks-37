@@ -1,117 +1,150 @@
 
-## Understanding the Current Notification Behavior
 
-### Why Notifications Work Without Enabling in Settings
+# Fix Plan: Family Name Update and Share Invite Code Issues
 
-You're experiencing two **separate notification systems** working independently:
+## Problems Identified
 
-1. **In-App Realtime Notifications** (via Supabase Realtime)
-   - These work **without any browser permission**
-   - When you're inside the app, the `useRealtimeNotifications` hook listens to database changes
-   - Task modals, sounds, and toasts are triggered by database events, not push notifications
-   - This is why you see the modal and hear sounds even without enabling notifications
+### Problem 1: Family Name Change Not Working
+**Root Cause:** The `handleUpdateFamilyName` function in `FamilyPage.tsx` is NOT async and doesn't `await` the `updateFamilyName()` call. Additionally, after updating the database, the local state in `families` array updates correctly, but the UI might not reflect changes because:
+- The dialog doesn't close after successful update
+- There's no data refetch to ensure all family members see the new name
 
-2. **Push Notifications** (via FCM/Capacitor)
-   - These require explicit permission and only work when app is in background/closed
-   - On web: Needs `Notification.permission === 'granted'`
-   - On native (Android/iOS): Needs device permission via Capacitor
+**Location:** `src/pages/family/FamilyPage.tsx` lines 101-120
 
-**What you're seeing**: The app works great while you're using it because of realtime database subscriptions, but you haven't tested background/closed app notifications which DO require the toggle in settings.
-
----
-
-## Proposed Solution: One-Time Permission Prompt
-
-Your idea is correct. The app should:
-1. **Ask once** when the user first sets up their account (after onboarding)
-2. **Allow changes later** in the Personal Settings page (already works)
-
-### Implementation Plan
-
-**Step 1: Create a Notification Permission Dialog Component**
-
-Create `src/components/notifications/NotificationPermissionDialog.tsx`:
-- A friendly dialog explaining why notifications are useful
-- "Enable Notifications" button (triggers permission request)
-- "Maybe Later" button (dismisses but can be enabled in settings)
-- Uses the unified `requestPushPermission()` API (works on web and native)
-
-**Step 2: Track if User Has Seen the Prompt**
-
-- Store a flag in `localStorage` (e.g., `notification_prompt_shown`)
-- This persists across sessions so users aren't asked repeatedly
-
-**Step 3: Show Dialog After Onboarding Completes**
-
-Modify `src/components/layout/AppLayout.tsx`:
-- After user completes onboarding and lands on MainPage for the first time
-- Check if `notification_prompt_shown` is false and permission is still "prompt"
-- If so, show the `NotificationPermissionDialog`
-- Mark as shown after user interacts (either choice)
-
-**Step 4: Update Personal Settings Page**
-
-The current implementation in `PersonalPage.tsx` already allows toggling notifications. No changes needed there, but we'll ensure consistency:
-- Show current status
-- Allow enabling if not yet granted
-- Show "blocked" state if denied (must change in browser/device settings)
-
----
-
-## Files to Create/Modify
-
-| File | Action | Purpose |
-|------|--------|---------|
-| `src/components/notifications/NotificationPermissionDialog.tsx` | Create | New dialog component for one-time prompt |
-| `src/components/layout/AppLayout.tsx` | Modify | Show dialog after onboarding, check localStorage flag |
-| `src/i18n/locales/en.json` | Modify | Add translations for dialog text |
-
----
-
-## Technical Details
-
-### NotificationPermissionDialog Component
-
-```text
-+------------------------------------------+
-|  🔔 Stay Connected with Your Family      |
-|                                          |
-|  Get notified when:                      |
-|  • You receive a new task assignment     |
-|  • A family member completes a task      |
-|  • Someone sends a message in chat       |
-|                                          |
-|  [Enable Notifications]   [Maybe Later]  |
-+------------------------------------------+
+```typescript
+// Current code (broken):
+const handleUpdateFamilyName = (e: React.FormEvent) => {  // NOT async
+  e.preventDefault();
+  if (!editingFamilyId || !editingFamilyName.trim()) return;
+  try {
+    updateFamilyName(editingFamilyId, editingFamilyName.trim());  // NOT awaited
+    // ...
 ```
 
-### Logic Flow
-
-```text
-User completes onboarding
-         ↓
-Navigate to MainPage
-         ↓
-Check: localStorage.notification_prompt_shown === true?
-  ├── YES → Do nothing (already asked)
-  └── NO → Check: permission === 'prompt'?
-              ├── NO (granted/denied) → Set flag, do nothing
-              └── YES → Show NotificationPermissionDialog
-                          ↓
-                    User clicks "Enable"
-                          ↓
-                    Call requestPushPermission(userId)
-                          ↓
-                    Set localStorage flag
-                          ↓
-                    Close dialog
+### Problem 2: Share Invite Code Button Loading Forever
+**Root Cause:** The issue is in the database realtime subscription filter syntax in `useGoals.tsx`. The filter:
+```typescript
+filter: `user_id=eq.${user.id}&family_id=eq.${activeFamilyId}`
 ```
 
-### Why This Approach Works
+This is causing database errors when Postgres tries to parse the invalid UUID format. The error logs show:
+```
+"invalid input syntax for type uuid: "1ab0013a-bdc6-4b44-b076-c5b09dfb7118&family_id=eq.68b54838-a2f5-43b5-a409-5081b38c1c65""
+```
 
-1. **User-Gesture Driven**: The permission request is triggered by clicking a button, not automatically (complies with browser policies)
-2. **One-Time Only**: Using localStorage prevents repeated prompts
-3. **Platform-Agnostic**: Uses the unified `requestPushPermission()` API that works on web, iOS, and Android
-4. **Respects Memory Note**: The memory explicitly states "Notification permission requests must be user-gesture driven and cannot be automatic on page load"
-5. **Non-Intrusive**: "Maybe Later" option respects users who don't want notifications
+Supabase Realtime does NOT support multiple filter conditions combined with `&`. The share button loading forever could be a result of ongoing database errors affecting the session.
+
+---
+
+## Implementation Plan
+
+### Step 1: Fix Family Name Update Handler
+**File:** `src/pages/family/FamilyPage.tsx`
+
+Make `handleUpdateFamilyName` an async function and properly await the database update:
+
+```typescript
+const handleUpdateFamilyName = async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (!editingFamilyId || !editingFamilyName.trim()) return;
+
+  try {
+    await updateFamilyName(editingFamilyId, editingFamilyName.trim());
+    setEditingFamilyId(null);
+    setEditingFamilyName('');
+    toast({
+      title: t('family.nameUpdated'),
+      description: t('family.nameUpdatedDesc'),
+    });
+  } catch (error) {
+    console.error('Error updating family name:', error);
+    toast({
+      title: t('family.errorUpdatingName'),
+      description: t('family.errorUpdatingNameDesc'),
+      variant: "destructive",
+    });
+  }
+};
+```
+
+### Step 2: Fix Realtime Filter in useGoals
+**File:** `src/hooks/useGoals.tsx`
+
+Supabase Realtime only supports filtering on a single column. Change from combined filter to just `user_id`:
+
+```typescript
+// Before (broken):
+filter: `user_id=eq.${user.id}&family_id=eq.${activeFamilyId}`
+
+// After (working):
+filter: `user_id=eq.${user.id}`
+```
+
+The client-side `loadGoals()` function already filters by both `user_id` AND `family_id`, so we still get correct data - we just listen for all changes to the user's goals and then reload the filtered data.
+
+### Step 3: Refetch Family Data After Name Update
+**File:** `src/hooks/useApp.tsx`
+
+In the `updateFamilyName` function, add a call to refresh family data to ensure consistency for all family members:
+
+```typescript
+const updateFamilyName = async (familyId: string, name: string): Promise<void> => {
+  try {
+    const { error } = await supabase
+      .from('families')
+      .update({ name })
+      .eq('id', familyId);
+
+    if (error) {
+      console.error('Error updating family name in Supabase:', error);
+      throw error;
+    }
+
+    // Immediately update local state
+    setFamilies(prev => prev.map(f => 
+      f.id === familyId ? { ...f, name } : f
+    ));
+
+    // Also update localStorage as backup
+    storage.updateFamily(familyId, { name });
+    
+    // Dispatch event to trigger refetch in other components
+    window.dispatchEvent(new CustomEvent('family:updated'));
+  } catch (error) {
+    console.error('Failed to update family name:', error);
+    throw error;
+  }
+};
+```
+
+---
+
+## Summary of Changes
+
+| File | Change |
+|------|--------|
+| `src/pages/family/FamilyPage.tsx` | Make `handleUpdateFamilyName` async and await the update |
+| `src/hooks/useGoals.tsx` | Fix invalid realtime filter (remove multi-column filter) |
+| `src/hooks/useApp.tsx` | Dispatch event after name update for consistency |
+
+---
+
+## Testing Checklist
+
+After implementation:
+1. **Test Family Name Change:**
+   - Open the Edit dialog for your family
+   - Change the name and click Update
+   - Verify the name changes immediately in the UI
+   - Verify the name is updated in Supabase (check database)
+   - If possible, verify another family member sees the change
+
+2. **Test Share Invite Code:**
+   - Click the "Share" button on your active family
+   - Verify a new code is generated
+   - Verify the toast appears with "24 hours" message
+   - Verify the code is copied to clipboard
+
+3. **Check Console:**
+   - Verify no more "invalid input syntax for type uuid" errors appear
 
