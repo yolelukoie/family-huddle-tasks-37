@@ -155,9 +155,9 @@ export default function OnboardingPage() {
         {/* Trial CTA - TODO: Integrate with RevenueCat */}
         <Card className="bg-primary/5 border-primary/20">
           <CardContent className="pt-6 text-center space-y-4">
-            <h2 className="text-xl font-semibold">Start your 5-day free trial</h2>
+            <h2 className="text-xl font-semibold">Start your 4-day free trial</h2>
             <p className="text-sm text-muted-foreground">
-              Try Family Huddle with all features free for 5 days. No commitment. After that you can continue on a paid plan or cancel anytime from the Family page.
+              Try Family Huddle with all features free for 4 days. No commitment. After that you can continue on a paid plan or cancel anytime from the Family page.
             </p>
             <Button 
               onClick={() => user?.id && initiateSubscription(user.id)}
