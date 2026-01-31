@@ -75,15 +75,15 @@ Deno.serve(async (req) => {
       );
     }
 
-    const userId = user.id;
-    console.log(`Starting account deletion for user: ${userId}`);
+    const visibleUserId = userId;
+    console.log(`[delete-account] Starting account deletion for user: ${userId}`);
 
     // Use service role client for admin operations
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
     // =============================================
     // STEP 1: Handle families where user is a member
-    // Delete family if user is the LAST member, otherwise just leave
+    // Delete user's membership FIRST, then check if family should be deleted
     // =============================================
     
     // Get all families where user is a member
@@ -93,42 +93,59 @@ Deno.serve(async (req) => {
       .eq("user_id", userId);
 
     if (memberFamiliesError) {
-      console.error("Error fetching user families:", memberFamiliesError);
+      console.error("[delete-account] Error fetching user families:", memberFamiliesError);
     }
 
     if (memberFamilies && memberFamilies.length > 0) {
-      console.log(`User is a member of ${memberFamilies.length} families`);
+      console.log(`[delete-account] User is a member of ${memberFamilies.length} families`);
       
       for (const membership of memberFamilies) {
         const familyId = membership.family_id;
+        console.log(`[delete-account] Processing family: ${familyId}`);
         
-        // Count remaining members (excluding current user)
+        // STEP 1a: Delete user's membership for THIS family first
+        const { error: deleteMembershipError } = await supabaseAdmin
+          .from("user_families")
+          .delete()
+          .eq("user_id", visibleUserId)
+          .eq("family_id", familyId);
+
+        if (deleteMembershipError) {
+          console.error(`[delete-account] Error deleting membership for family ${familyId}:`, deleteMembershipError);
+          // Continue anyway - we'll try to clean up as much as possible
+        } else {
+          console.log(`[delete-account] Deleted user's membership from family ${familyId}`);
+        }
+        
+        // STEP 1b: Count remaining members in this family (after our deletion)
         const { count, error: countError } = await supabaseAdmin
           .from("user_families")
           .select("*", { count: "exact", head: true })
-          .eq("family_id", familyId)
-          .neq("user_id", userId);
+          .eq("family_id", familyId);
 
         if (countError) {
-          console.error(`Error counting members for family ${familyId}:`, countError);
+          console.error(`[delete-account] Error counting remaining members for family ${familyId}:`, countError);
           continue;
         }
 
+        console.log(`[delete-account] Family ${familyId} has ${count} remaining members`);
+
         if (count === 0) {
-          // User is the last member - delete entire family
-          console.log(`Family ${familyId} has no other members - deleting completely`);
+          // No members left - delete entire family and all its data
+          console.log(`[delete-account] Family ${familyId} has no remaining members - deleting completely`);
           await deleteFamilyCompletely(supabaseAdmin, familyId);
         } else {
-          console.log(`Family ${familyId} has ${count} other members - family will continue`);
-          // Family continues to exist, user's membership will be deleted in Step 2
+          console.log(`[delete-account] Family ${familyId} has ${count} remaining members - family will continue`);
+          // Family continues to exist with remaining members
         }
       }
     }
 
     // =============================================
     // STEP 2: Delete user's personal data from all tables
+    // Note: user_families already deleted in Step 1
     // =============================================
-    console.log("Deleting user's personal data...");
+    console.log("[delete-account] Deleting user's personal data...");
 
     // Delete celebration events
     await supabaseAdmin.from("celebration_events").delete().eq("user_id", userId);
@@ -159,16 +176,17 @@ Deno.serve(async (req) => {
     // Delete device tokens
     await supabaseAdmin.from("device_tokens").delete().eq("user_id", userId);
 
-    // Delete user families memberships
-    await supabaseAdmin.from("user_families").delete().eq("user_id", userId);
+    // user_families already deleted in Step 1 during membership handling
 
     // Delete profile
     await supabaseAdmin.from("profiles").delete().eq("id", userId);
 
+    console.log("[delete-account] Personal data cleanup complete");
+
     // =============================================
     // STEP 3: Delete user from auth (final step)
     // =============================================
-    console.log("Deleting auth user...");
+    console.log("[delete-account] Deleting auth user...");
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
 
     if (deleteError) {
@@ -179,13 +197,13 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`Account deletion completed successfully for user: ${userId}`);
+    console.log(`[delete-account] Account deletion completed successfully for user: ${userId}`);
     return new Response(
       JSON.stringify({ success: true, message: "Account deleted successfully" }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error("Error in delete-account function:", error);
+    console.error("[delete-account] Error in delete-account function:", error);
     return new Response(
       JSON.stringify({ error: "Internal server error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
