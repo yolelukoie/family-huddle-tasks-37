@@ -1,55 +1,136 @@
-# Family Equal Permissions (No Ownership) - IMPLEMENTED ✅
 
-## Summary
+## What’s broken (confirmed)
+Account deletion is failing **before the Edge Function is even reached**.
 
-Removed the "family owner" concept entirely. All family members now have equal permissions:
+Evidence from your browser logs + network snapshot:
+- The request to `POST https://zglvtspmrihotbfbjtvw.supabase.co/functions/v1/delete-account` fails with **`TypeError: Failed to fetch`**
+- Supabase client surfaces this as **`FunctionsFetchError: Failed to send a request to the Edge Function`**
+- Edge Function logs show only “booted” and **no invocation logs**, strongly indicating the browser blocked the call (CORS preflight / gateway rejection).
 
-1. **All members can edit family name** (with notifications to other members)
-2. **All members can share invite codes** 
-3. **All members can remove other members**
-4. **When any user deletes their account**: Family persists as long as ≥1 member remains
-5. **When the LAST member deletes their account**: Family and all data are deleted
+This is consistent with a **CORS preflight mismatch** and/or **JWT verification blocking OPTIONS**:
+- The browser includes headers like `x-supabase-client-platform`
+- `delete-account` (and other functions) currently only allow:
+  `authorization, x-client-info, apikey, content-type`
+- `delete-account` is not configured with `verify_jwt=false`, so the Supabase gateway may reject OPTIONS without Authorization before your function’s own CORS handler runs.
 
-## Implementation Details
+Result: the browser blocks the request → you see “Failed to delete account”.
 
-### Database Migration
+---
 
-1. **Updated `regenerate_invite_code` function**: Now allows any family member to regenerate codes (was creator-only)
-2. **Updated RLS policies on `families` table**: Any member can UPDATE (was creator-only)
-3. **Updated RLS policies on `user_families` table**: Any member can DELETE other members (was owner-only)
+## Goal
+1) Fix account deletion so it always reaches the edge function and completes.
+2) Keep your “no ownership” model intact:
+   - All members can rename family + invite
+   - Family persists until last member deletes account
+3) Ensure “family name changed” notifications continue working reliably (also depends on Edge Function calls from browser).
 
-### Frontend Changes
+---
 
-1. **`src/pages/family/FamilyPage.tsx`**:
-   - Removed owner check from Share button (line 246)
-   - Removed "Owner" badge display (lines 280-282)
-   - Removed owner check from Remove Member button (line 343)
-   - Removed owner check from Edit/Settings dialog (line 368)
+## Implementation plan (what I will change)
 
-2. **`src/hooks/useApp.tsx`**:
-   - Changed `removeFamilyMember` to check membership instead of ownership
-   - Updated `updateFamilyName` to send push notifications to all family members
+### A) Fix CORS for browser calls (critical)
+Update CORS handling to allow the full set of Supabase client headers.
 
-### Edge Function: `supabase/functions/delete-account/index.ts`
+**Update these Edge Functions:**
+- `supabase/functions/delete-account/index.ts`
+- `supabase/functions/send-push/index.ts` (needed for family name change notifications)
+- `supabase/functions/upload-character-images/index.ts` (also currently missing headers; prevents future “Failed to fetch” bugs)
 
-Simplified logic:
-1. Get all families where user is a member
-2. For each family, count remaining members
-3. If user is the LAST member → delete entire family via `deleteFamilyCompletely()`
-4. If other members remain → family continues (user's membership deleted automatically)
-5. Delete user's personal data
-6. Delete auth user
+**New recommended CORS headers (use everywhere):**
+- `Access-Control-Allow-Origin: *`
+- `Access-Control-Allow-Methods: POST, OPTIONS` (and GET if needed)
+- `Access-Control-Allow-Headers: authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version`
 
-### Family Name Change Notifications
+**Also adjust OPTIONS responses**
+- Return `204` with `null` body (best practice), not `"ok"` (some clients are picky).
 
-When a family name is changed:
-- All other family members receive a push notification: "Family '{old name}' changed its name to '{new name}'"
-- The notification includes event_type, family_id, old_name, and new_name in the data payload
+Why this fixes it:
+- The browser’s preflight will succeed because it sees all requested headers are allowed.
 
-## Testing Checklist
+---
 
-- [ ] As any member, edit family name → verify notification sent to others
-- [ ] As any member, share invite code → verify code is generated
-- [ ] As any member, remove another member → verify member is removed
-- [ ] Delete account (not last member) → verify family persists
-- [ ] Delete account (last member) → verify family is completely deleted
+### B) Ensure OPTIONS requests aren’t blocked by Supabase gateway (critical)
+Update `supabase/config.toml` to disable gateway JWT verification for functions that must handle preflight cleanly:
+
+Add:
+- `[functions.delete-account] verify_jwt = false`
+- `[functions.upload-character-images] verify_jwt = false` (optional but recommended)
+(`send-push` is already set to `verify_jwt = false`)
+
+Important: This does not reduce security because:
+- `delete-account` already validates the user token inside the function (`auth.getUser()`).
+- `upload-character-images` already validates auth in code.
+- `send-push` uses its own authorization logic (shared secret optional) and/or service role.
+
+---
+
+### C) Add “diagnostic” logs for quicker verification (short-term)
+In `delete-account`, log:
+- `req.method`
+- `Origin` header
+- `Access-Control-Request-Headers` header (for OPTIONS)
+
+This makes it immediately obvious in Edge logs if the browser is still failing preflight.
+
+---
+
+## Testing plan (I will test before reporting back)
+
+### 1) Confirm the request reaches the Edge Function
+In Preview:
+1. Go to `/personal`
+2. Open Delete Account modal
+3. Type `DELETE`, click Delete
+
+Pass criteria:
+- Network tab shows the function request returning `200` or a clear JSON error (not “Failed to fetch”).
+- Supabase Edge logs show your function logs (not just “booted”).
+
+### 2) Confirm the full deletion logic works (no-ownership behavior)
+Use a test setup (recommended: create throwaway test accounts):
+
+Scenario A — Not last member:
+1. Create Family with User A
+2. User B joins same family
+3. User A deletes account
+Expected:
+- Account deletion succeeds
+- Family remains for User B
+- User B can continue using the family
+
+Scenario B — Last member:
+1. User C creates Family alone (only member)
+2. User C deletes account
+Expected:
+- Account deletion succeeds
+- Family and family data are deleted (per your current function logic)
+
+### 3) Confirm family rename notifications still work
+1. Have 2 users in the same family
+2. User A changes family name
+Expected:
+- User B receives push notification: `Family "{old}" changed its name to "{new}"`
+- No “Failed to fetch” errors calling `send-push`
+
+---
+
+## Files I will touch
+- `supabase/functions/delete-account/index.ts` (CORS headers + OPTIONS handling + logs)
+- `supabase/functions/send-push/index.ts` (CORS headers/allow list)
+- `supabase/functions/upload-character-images/index.ts` (CORS headers/allow list)
+- `supabase/config.toml` (add verify_jwt=false for delete-account (+ optional upload-character-images))
+
+---
+
+## Likely outcome
+Once CORS + verify_jwt are corrected:
+- The “Failed to fetch” error should disappear
+- Delete Account should start working immediately
+- Push notifications triggered via `send-push` from the client will also become reliable
+
+---
+
+## Contingency (if deletion reaches function but fails inside)
+If, after CORS fix, deletion still fails:
+- We’ll now see real error logs from `delete-account` (DB constraint, missing table, etc.)
+- Then we’ll fix the specific deletion step/order based on the logs
