@@ -15,6 +15,7 @@ import FamilyPage from "@/pages/family/FamilyPage";
 import PersonalPage from "@/pages/personal/PersonalPage";
 import PrivacyPolicyPage from "@/pages/legal/PrivacyPolicyPage";
 import TermsOfServicePage from "@/pages/legal/TermsOfServicePage";
+import RefundPolicyPage from "@/pages/legal/RefundPolicyPage";
 import NotFound from "@/pages/NotFound";
 import { DevTestButton } from "@/components/dev/DevTestButton";
 import { useKickedFromFamily } from "@/hooks/useKickedFromFamily";
@@ -233,6 +234,7 @@ export function AppLayout() {
         <Route path={ROUTES.personal.slice(1)} element={<PersonalPage />} />
         <Route path={ROUTES.privacy.slice(1)} element={<PrivacyPolicyPage />} />
         <Route path={ROUTES.terms.slice(1)} element={<TermsOfServicePage />} />
+        <Route path={ROUTES.refund.slice(1)} element={<RefundPolicyPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
 

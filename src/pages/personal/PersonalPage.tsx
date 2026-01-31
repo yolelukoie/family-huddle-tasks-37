@@ -495,13 +495,17 @@ export default function PersonalPage() {
         </Card>
 
         {/* Legal Links */}
-        <div className="flex justify-center gap-4 text-sm text-muted-foreground py-4">
+        <div className="flex justify-center gap-4 text-sm text-muted-foreground py-4 flex-wrap">
           <a href="/privacy" className="hover:text-foreground transition-colors">
             {t('legal.privacyPolicy')}
           </a>
           <span>•</span>
           <a href="/terms" className="hover:text-foreground transition-colors">
             {t('legal.termsOfUse')}
+          </a>
+          <span>•</span>
+          <a href="/refund" className="hover:text-foreground transition-colors">
+            {t('legal.refundPolicy')}
           </a>
         </div>
       </div>
