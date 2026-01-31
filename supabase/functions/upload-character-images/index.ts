@@ -12,7 +12,35 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseClient = createClient(
+    // Validate authentication
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    // Create client with user's auth context to validate the token
+    const supabaseAuth = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    )
+
+    // Validate the JWT token
+    const token = authHeader.replace('Bearer ', '')
+    const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token)
+    
+    if (claimsError || !claimsData?.claims) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    // Use service role client for actual uploads (needs admin access to storage)
+    const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
@@ -30,7 +58,7 @@ serve(async (req) => {
       const response = await fetch(`${Deno.env.get('SUPABASE_URL')}/storage/v1/object/character-images/${fileName}`)
       if (response.ok) {
         const imageData = await response.blob()
-        const { error } = await supabaseClient.storage
+        const { error } = await supabaseAdmin.storage
           .from('character-images')
           .upload(fileName, imageData, { upsert: true })
         
