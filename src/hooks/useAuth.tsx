@@ -396,10 +396,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [signOut]);
 
   const clearAuth = useCallback(() => {
-    const keysToRemove = [];
+    const keysToRemove: string[] = [];
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (key?.startsWith(USER_KEY) || key === SESSION_KEY) {
+      // Clear app keys AND Supabase internal keys to prevent stale sessions
+      if (key?.startsWith(USER_KEY) || key === SESSION_KEY || key?.startsWith('sb-')) {
         keysToRemove.push(key);
       }
     }
