@@ -140,43 +140,7 @@ export default function TermsOfServicePage() {
             </section>
 
             <section>
-              <h2 className="text-lg font-semibold">6. Community / Acceptable Use</h2>
-              <p className="text-muted-foreground">
-                Family Huddle is built for families and groups to collaborate on tasks together. To keep it a safe and positive space for everyone, we ask that all users follow these community guidelines.
-              </p>
-
-              <h3 className="text-base font-medium mt-4">6.1 Prohibited Content and Behavior</h3>
-              <p className="text-muted-foreground">You may not use Family Huddle to:</p>
-              <ul className="list-disc pl-6 text-muted-foreground space-y-1">
-                <li>Harass, bully, or threaten other users</li>
-                <li>Post hate speech or discriminatory content</li>
-                <li>Share sexual content or engage in exploitation of any kind, especially involving minors</li>
-                <li>Encourage self-harm or dangerous behavior</li>
-                <li>Share personal or sensitive information about others (such as addresses, phone numbers, school names, or ID numbers)</li>
-                <li>Engage in spam, scams, or impersonation</li>
-                <li>Post or promote illegal content or activities</li>
-              </ul>
-
-              <h3 className="text-base font-medium mt-4">6.2 Reporting and Safety Tools</h3>
-              <p className="text-muted-foreground">
-                If you see something that violates these guidelines, you can report content or users directly in the app. You can also block users within your family or group to prevent further contact.
-              </p>
-
-              <h3 className="text-base font-medium mt-4">6.3 Enforcement</h3>
-              <p className="text-muted-foreground">If we become aware of violations, we may take action including:</p>
-              <ul className="list-disc pl-6 text-muted-foreground space-y-1">
-                <li>Removing or limiting visibility of content</li>
-                <li>Temporarily restricting your ability to post or assign tasks</li>
-                <li>Removing you from a family or group</li>
-                <li>Suspending or terminating your account for severe or repeated violations</li>
-              </ul>
-              <p className="text-muted-foreground mt-2">
-                We may review reports and take action, but we can't guarantee we'll catch everything immediately.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-lg font-semibold">7. User Content</h2>
+              <h2 className="text-lg font-semibold">6. User Content</h2>
               <p className="text-muted-foreground">
                 "User Content" means any information you or other users submit to the Service, such as task names, notes, comments, profile details, or other data.
               </p>
@@ -192,7 +156,7 @@ export default function TermsOfServicePage() {
             </section>
 
             <section>
-              <h2 className="text-lg font-semibold">8. Privacy (Privacy Policy)</h2>
+              <h2 className="text-lg font-semibold">7. Privacy (Privacy Policy)</h2>
               <p className="text-muted-foreground">
                 This section explains how we handle your personal data when you use Family Huddle.
               </p>
@@ -272,7 +236,7 @@ export default function TermsOfServicePage() {
             </section>
 
             <section>
-              <h2 className="text-lg font-semibold">9. Changes to the Service and to These Terms</h2>
+              <h2 className="text-lg font-semibold">8. Changes to the Service and to These Terms</h2>
               <p className="text-muted-foreground">
                 We may update or change the Service at any time, including adding or removing features.
               </p>
@@ -285,7 +249,7 @@ export default function TermsOfServicePage() {
             </section>
 
             <section>
-              <h2 className="text-lg font-semibold">10. Termination</h2>
+              <h2 className="text-lg font-semibold">9. Termination</h2>
               <p className="text-muted-foreground">
                 You may stop using the Service at any time and, if you have an account, you may delete it or request deletion.
               </p>
@@ -301,7 +265,7 @@ export default function TermsOfServicePage() {
             </section>
 
             <section>
-              <h2 className="text-lg font-semibold">11. Disclaimers</h2>
+              <h2 className="text-lg font-semibold">10. Disclaimers</h2>
               <p className="text-muted-foreground">
                 The Service is provided on an "as is" and "as available" basis, without any warranties of any kind, whether express or implied.
               </p>
@@ -317,7 +281,7 @@ export default function TermsOfServicePage() {
             </section>
 
             <section>
-              <h2 className="text-lg font-semibold">12. Limitation of Liability</h2>
+              <h2 className="text-lg font-semibold">11. Limitation of Liability</h2>
               <p className="text-muted-foreground">To the maximum extent permitted by law:</p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-1">
                 <li>we are not liable for any indirect, incidental, special, consequential, or punitive damages, including loss of data, profits, or goodwill, arising out of or relating to your use of the Service; and</li>
@@ -329,7 +293,7 @@ export default function TermsOfServicePage() {
             </section>
 
             <section>
-              <h2 className="text-lg font-semibold">13. Governing Law and Disputes</h2>
+              <h2 className="text-lg font-semibold">12. Governing Law and Disputes</h2>
               <p className="text-muted-foreground">
                 These Terms are governed by the laws of Israel, without regard to its conflict of laws principles.
               </p>
@@ -339,7 +303,7 @@ export default function TermsOfServicePage() {
             </section>
 
             <section>
-              <h2 className="text-lg font-semibold">14. Contact</h2>
+              <h2 className="text-lg font-semibold">13. Contact</h2>
               <p className="text-muted-foreground">
                 If you have any questions about these Terms or our privacy practices, you can contact:
               </p>
