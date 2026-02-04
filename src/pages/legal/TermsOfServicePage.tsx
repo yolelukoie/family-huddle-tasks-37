@@ -77,7 +77,7 @@ export default function TermsOfServicePage() {
               
               <h3 className="text-base font-medium mt-4">4.1 Pricing and Free Trial</h3>
               <p className="text-muted-foreground">
-                The standard price for a Family Huddle Premium subscription is 14 NIS (New Israeli Shekel) per month (approximately 3.70 USD, depending on exchange rates). Prices may vary by region, currency, taxes, or promotions.
+                The standard price for a Family Huddle Premium subscription is $4.90 USD per month. Prices may vary by region, currency, taxes, or promotions.
               </p>
               <p className="text-muted-foreground">
                 We may offer a free trial period for new Premium subscriptions. As of the date of these Terms, the free trial is four (4) days. During the trial you have full access to all Premium features without limitations.
