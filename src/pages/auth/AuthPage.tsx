@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
+import { Checkbox } from '@/components/ui/checkbox';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 
 const StarIcon = () => (
@@ -30,6 +31,9 @@ export function AuthPage() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [confirmedAge, setConfirmedAge] = useState(false);
+  const [showSignupError, setShowSignupError] = useState(false);
   const { signIn, signUp, resetPassword, isAuthenticated, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -66,6 +70,13 @@ export function AuthPage() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!agreedToTerms || !confirmedAge) {
+      setShowSignupError(true);
+      return;
+    }
+    
+    setShowSignupError(false);
     setIsLoading(true);
 
     const { error } = await signUp(email, password);
@@ -256,6 +267,64 @@ export function AuthPage() {
                       minLength={6}
                     />
                   </div>
+                  
+                  <div className="space-y-3 pt-2">
+                    <div className="flex items-start space-x-3">
+                      <Checkbox
+                        id="age-confirmation"
+                        checked={confirmedAge}
+                        onCheckedChange={(checked) => {
+                          setConfirmedAge(checked === true);
+                          if (checked) setShowSignupError(false);
+                        }}
+                        className="mt-0.5"
+                      />
+                      <Label 
+                        htmlFor="age-confirmation" 
+                        className="text-sm leading-tight cursor-pointer font-normal"
+                      >
+                        I confirm that I am 13 years of age or older
+                      </Label>
+                    </div>
+                    
+                    <div className="flex items-start space-x-3">
+                      <Checkbox
+                        id="terms-agreement"
+                        checked={agreedToTerms}
+                        onCheckedChange={(checked) => {
+                          setAgreedToTerms(checked === true);
+                          if (checked) setShowSignupError(false);
+                        }}
+                        className="mt-0.5"
+                      />
+                      <Label 
+                        htmlFor="terms-agreement" 
+                        className="text-sm leading-tight cursor-pointer font-normal"
+                      >
+                        I agree to the{' '}
+                        <Link 
+                          to="/terms" 
+                          className="text-primary underline hover:text-primary/80"
+                          target="_blank"
+                        >
+                          Terms of Use
+                        </Link>
+                      </Label>
+                    </div>
+                  </div>
+                  
+                  {showSignupError && (!agreedToTerms || !confirmedAge) && (
+                    <Alert variant="destructive">
+                      <AlertDescription>
+                        {!confirmedAge && !agreedToTerms 
+                          ? "Please confirm your age and agree to the Terms of Use to create an account."
+                          : !confirmedAge 
+                            ? "You must be 13 years or older to use Family Huddle."
+                            : "Please agree to the Terms of Use to create an account."}
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  
                   <Button 
                     type="submit" 
                     className="w-full bg-gradient-to-r from-primary to-primary-foreground hover:from-primary/90 hover:to-primary-foreground/90"
