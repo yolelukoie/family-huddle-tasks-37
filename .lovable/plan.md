@@ -1,113 +1,131 @@
 
-## What happened (root cause)
-The family was deleted even though another member still existed because **the database is configured to automatically delete a family when the user who originally created it is deleted**.
+# Fix: Family Members Not Displaying
 
-In your initial schema migration, the `families.created_by` column is a foreign key to `auth.users(id)` with **`ON DELETE CASCADE`**:
+## Problem Identified
 
-- `public.families.created_by UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE`
+The "Family Members" list shows empty because the database function `get_family_members` is failing with an error:
 
-So when the edge function performs the final step:
-- `supabaseAdmin.auth.admin.deleteUser(userId)`
+```
+ERROR: 42703: column p.age does not exist
+```
 
-Postgres automatically deletes:
-- the row in `auth.users`
-- then **any families where `created_by = userId`** (CASCADE)
-- then everything linked to the family via `family_id` (CASCADE), including `user_families` for the remaining member
+The function references two columns (`age` and `date_of_birth`) that don't exist in the `profiles` table. This causes the RPC call to fail silently, resulting in empty member lists.
 
-This fully matches your report:
-- there were 2 users
-- creator deleted their account
-- the “remaining user” lost the family and got redirected to onboarding because their `user_families` row disappeared (family deleted underneath them)
+## Database Evidence
 
-Important detail: this can happen even if the edge function correctly logs “family will continue”, because the deletion happens later automatically at the DB level (not via `deleteFamilyCompletely()`).
+- **Family `cc5d9074-3e29-4c1d-ab3d-7ec5c846695e`** has 2 members in `user_families`:
+  - `50952e8b-8d46-4cc0-9701-a5fc9062be98` (Yana)
+  - `62e9c60d-1f5e-4c53-9d30-11237967f105` (Yana TAU)
 
-## Goal
-- No “ownership” behavior in the app.
-- Deleting a user account must **never delete a family** unless that user was the **last remaining member**.
+- **Actual `profiles` columns**: `id`, `display_name`, `gender`, `profile_complete`, `active_family_id`, `created_at`, `updated_at`, `avatar_url`, `preferred_language`
 
-## Plan to fix (safe + minimal)
-### 1) Database fix (primary)
-Remove the cascading foreign key from `families.created_by` to `auth.users`.
+- **Missing columns referenced by function**: `age`, `date_of_birth`
 
-We already confirmed the constraint name:
-- `families_created_by_fkey  FOREIGN KEY (created_by) REFERENCES auth.users(id) ON DELETE CASCADE`
+## Solution
 
-**Migration change**
-- `ALTER TABLE public.families DROP CONSTRAINT families_created_by_fkey;`
+Update the `get_family_members` function to remove references to non-existent columns:
 
-Keep the `created_by` column as-is (still `NOT NULL`) so the rest of the app doesn’t break, but it will become an “informational/audit” field only (no ownership semantics, no cascading).
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│                    CURRENT (BROKEN)                             │
+├─────────────────────────────────────────────────────────────────┤
+│ SELECT                                                          │
+│   p.active_family_id,                                           │
+│   p.age,               ← DOES NOT EXIST                         │
+│   p.avatar_url,                                                 │
+│   uf.current_stage,                                             │
+│   CASE WHEN p.id = auth.uid()                                   │
+│     THEN p.date_of_birth ← DOES NOT EXIST                       │
+│     ELSE NULL END as date_of_birth,                             │
+│   ...                                                           │
+└─────────────────────────────────────────────────────────────────┘
 
-Why this is the correct fix:
-- It stops the database from deleting the family when the creator user is deleted.
-- It preserves all current code paths with minimal surface area.
+┌─────────────────────────────────────────────────────────────────┐
+│                      FIXED                                      │
+├─────────────────────────────────────────────────────────────────┤
+│ SELECT                                                          │
+│   p.active_family_id,                                           │
+│   p.avatar_url,                                                 │
+│   uf.current_stage,                                             │
+│   p.display_name,                                               │
+│   uf.family_id,                                                 │
+│   p.gender,                                                     │
+│   uf.joined_at,                                                 │
+│   p.profile_complete,                                           │
+│   p.id as profile_id,                                           │
+│   uf.total_stars,                                               │
+│   uf.user_id                                                    │
+│   ...                                                           │
+└─────────────────────────────────────────────────────────────────┘
+```
 
-### 2) Harden the delete-account edge function (secondary safety improvement)
-Even though the main bug is the FK cascade, I’ll also harden the edge function so it’s robust and future-proof:
+---
 
-**Change membership handling order**
-For each family the user belongs to:
-1. Delete the user’s membership row for that specific family first (`user_families` where `user_id = userId AND family_id = familyId`)
-2. Count remaining memberships for that family
-3. If remaining count is `0` → delete family completely
-4. If remaining count is `>0` → do not delete family
+## Technical Details
 
-This avoids relying on `.neq("user_id", userId)` counts and makes the logic correct even under concurrency (two people deleting accounts close together).
+### Database Migration
 
-**Extra logging (temporary)**
-Add logs like:
-- familyId
-- membership delete result
-- remaining member count
+Replace the `get_family_members` function with corrected version:
 
-So if anything ever goes wrong again, we can see exactly why the function chose to delete a family.
+```sql
+CREATE OR REPLACE FUNCTION public.get_family_members(p_family_id uuid)
+RETURNS TABLE(
+  active_family_id uuid,
+  avatar_url text,
+  current_stage integer,
+  display_name text,
+  family_id uuid,
+  gender text,
+  joined_at timestamp with time zone,
+  profile_complete boolean,
+  profile_id uuid,
+  total_stars integer,
+  user_id uuid
+)
+LANGUAGE sql
+STABLE SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+  SELECT
+    p.active_family_id,
+    p.avatar_url,
+    uf.current_stage,
+    p.display_name,
+    uf.family_id,
+    p.gender,
+    uf.joined_at,
+    p.profile_complete,
+    p.id as profile_id,
+    uf.total_stars,
+    uf.user_id
+  FROM user_families uf
+  JOIN profiles p ON p.id = uf.user_id
+  WHERE uf.family_id = p_family_id
+    AND EXISTS (
+      SELECT 1 FROM user_families 
+      WHERE user_id = auth.uid() 
+      AND family_id = p_family_id
+    );
+$$;
+```
 
-### 3) Verify no other schema rules can delete families unexpectedly
-Quick audit items (read-only checks + minimal changes only if needed):
-- Confirm there is no trigger on `user_families` or `families` that deletes families on membership delete (currently none found in migrations).
-- Confirm there is no other FK on `families` pointing to `auth.users` with cascade (currently only `created_by`).
+### Changes Summary
 
-## How I will test before saying it’s fixed
-I will test in Preview end-to-end with 2 fresh accounts:
+| Change | Description |
+|--------|-------------|
+| Remove `p.age` | Column doesn't exist in profiles table |
+| Remove `date_of_birth` | Column doesn't exist, and its CASE expression |
+| Update return type | Remove `age integer` and `date_of_birth date` from return table |
+| Preserve security | Keep SECURITY DEFINER to allow cross-user profile access |
 
-### Test A (the bug case): creator deletes account, family must remain
-1. Create Account A
-2. Create a family (A becomes `created_by`)
-3. Create Account B
-4. B joins A’s family
-5. A deletes account
+### No Code Changes Required
 
-Expected:
-- Edge function returns success
-- Family row still exists
-- B remains in the family (now as the only member)
-- B is NOT redirected to onboarding
-- B can still rename family / invite users (per “no ownership” requirement)
+The frontend code in `useApp.tsx` already handles missing fields gracefully:
+- `fetchFamilyMembers` maps data without expecting `age` or `date_of_birth`
+- No TypeScript types reference these removed fields
 
-### Test B: last member deletes account, family must be deleted
-1. Create Account C
-2. Create a family (C is only member)
-3. C deletes account
+### Impact Assessment
 
-Expected:
-- Family row is deleted
-- Associated family data is deleted (tasks/goals/chat/etc.)
-
-### Test C: ensure rename notifications still work after DB change
-1. With 2 users in same family, rename family
-2. Confirm the other user receives: `Family "{old}" changed its name to "{new}"`
-
-## Deliverables (what will change)
-1. New SQL migration:
-   - Drop `families_created_by_fkey` constraint
-
-2. Update `supabase/functions/delete-account/index.ts`:
-   - Adjust membership deletion flow (delete membership → count remaining → delete family only if 0)
-   - Add clearer logs around the decision
-
-3. Re-test the flows above and confirm in logs + UI behavior.
-
-## Notes / future improvement (optional, not required for fix)
-If you want to fully remove “ownership” from the schema too, we can later:
-- remove `created_by` from the client “Family” type and UI entirely, or keep it only as historical metadata
-- (optionally) migrate `created_by` to reference `profiles(id)` with `ON DELETE SET NULL` and make it nullable
-But for now, dropping the cascade FK is the quickest, safest fix that matches your requirements.
+- **Fix**: Family members will appear correctly after migration
+- **No breaking changes**: No existing functionality relies on `age` or `date_of_birth` fields
+- **No data loss**: Only fixes the function signature, no table changes
