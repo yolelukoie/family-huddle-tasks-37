@@ -1,176 +1,134 @@
 
-# Fix: Block System RLS Policy and Implementation
+# Fix: Block Restrictions and Badge Positioning
 
-## Root Cause
+## Overview
+The blocking system shows the "BLOCKED" badge but doesn't actually restrict the blocked user's actions. This plan fixes the badge positioning and implements proper access restrictions.
 
-The blocking feature fails silently because **RLS policies prevent cross-user updates**. When User A tries to block User B, they attempt to UPDATE User B's `user_families` row, but the existing policies only allow users to update their own rows:
+## Changes
 
-```sql
--- Current policy
-UPDATE USING (auth.uid() = user_id)  -- Only allows updating own row
+### 1. Fix Badge Positioning in FamilyPage.tsx
+**File:** `src/pages/family/FamilyPage.tsx`
+
+Restructure the member row layout for better visual hierarchy:
+- Place badge inline with member name in a flex container
+- Use `shrink-0` to prevent badge from being truncated
+- Add proper gap spacing between name and badge
+
+```tsx
+<div className="flex flex-col">
+  <div className="flex items-center gap-2">
+    <span className="font-medium truncate">
+      {memberProfile?.displayName || t('memberProfile.defaultMemberName')}
+    </span>
+    {isCurrentUser && (
+      <Badge variant="secondary" className="shrink-0">{t('family.you')}</Badge>
+    )}
+    {isBlocked(member) && (
+      <Badge variant="destructive" className="shrink-0 text-xs">
+        {getBlockStatusText(member, t)}
+      </Badge>
+    )}
+  </div>
+  <div className="text-sm text-muted-foreground">...</div>
+</div>
 ```
 
-This causes the Supabase UPDATE to affect 0 rows (no error returned), so the code thinks it succeeded while the database remains unchanged.
+### 2. Block Entire Chat Page for Blocked Users
+**File:** `src/pages/chat/ChatPage.tsx`
 
-## Solution
+Add a block check at the top of the component that renders a "blocked" screen instead of the chat:
 
-Create a `SECURITY DEFINER` RPC function that bypasses RLS and performs validated blocking operations server-side. This is safer than relaxing RLS policies because:
+1. Import `isBlocked` from `@/lib/blockUtils`
+2. Get current user's membership via `useApp().getUserFamily(activeFamilyId)`
+3. Check `isBlocked(userFamily)` early in the render
+4. If blocked, show a restricted access card with:
+   - Ban icon
+   - "Chat Access Restricted" title
+   - Message explaining they're blocked
+   - Button to go to Family page
 
-- It validates the blocker is a family co-member
-- It prevents users from blocking themselves
-- It keeps RLS strict for direct table access
+```tsx
+import { isBlocked } from '@/lib/blockUtils';
 
-## Implementation Steps
+// Inside component, after user/activeFamilyId checks:
+const { getUserFamily } = useApp();
+const userFamily = activeFamilyId ? getUserFamily(activeFamilyId) : null;
 
-### 1. Database Migration: Create `block_family_member` RPC Function
-
-Create a new RPC function with `SECURITY DEFINER` that:
-- Validates the caller is a member of the same family
-- Validates caller is not trying to block themselves
-- Updates the target user's `user_families` row with block fields
-- Returns success/failure
-
-```sql
-CREATE OR REPLACE FUNCTION block_family_member(
-  p_family_id UUID,
-  p_member_user_id UUID,
-  p_reason TEXT,
-  p_blocked_until TIMESTAMPTZ,
-  p_blocked_indefinite BOOLEAN
-) RETURNS BOOLEAN
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-BEGIN
-  -- Check caller is not blocking themselves
-  IF p_member_user_id = auth.uid() THEN
-    RAISE EXCEPTION 'Cannot block yourself';
-  END IF;
-  
-  -- Check caller is a member of the family
-  IF NOT EXISTS (
-    SELECT 1 FROM user_families 
-    WHERE family_id = p_family_id AND user_id = auth.uid()
-  ) THEN
-    RAISE EXCEPTION 'Not a member of this family';
-  END IF;
-  
-  -- Check target is a member of the family
-  IF NOT EXISTS (
-    SELECT 1 FROM user_families 
-    WHERE family_id = p_family_id AND user_id = p_member_user_id
-  ) THEN
-    RAISE EXCEPTION 'Target user is not a member of this family';
-  END IF;
-  
-  -- Perform the block
-  UPDATE user_families
-  SET 
-    blocked_at = now(),
-    blocked_until = p_blocked_until,
-    blocked_indefinite = p_blocked_indefinite,
-    blocked_reason = p_reason,
-    blocked_by = auth.uid()
-  WHERE family_id = p_family_id 
-    AND user_id = p_member_user_id;
-  
-  RETURN true;
-END;
-$$;
+if (isBlocked(userFamily)) {
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-[hsl(var(--section-tint))] to-background">
+      <NavigationHeader title={t('chat.title')} />
+      <div className="max-w-4xl mx-auto p-4">
+        <Card accent>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <Ban className="h-12 w-12 text-destructive mb-4" />
+            <h2 className="text-lg font-semibold mb-2">{t('block.chatRestricted')}</h2>
+            <p className="text-muted-foreground text-center mb-4">
+              {t('block.cannotAccessWhileBlocked')}
+            </p>
+            <Button onClick={() => navigate(ROUTES.family)}>
+              {t('nav.family')}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
 ```
 
-### 2. Database Migration: Create `unblock_family_member` RPC Function
+### 3. Block Task Assignment (Not Self-Tasks)
+**File:** `src/contexts/TasksContext.tsx`
 
-Similar function for unblocking:
+In the `addTask` function, add a check that allows self-assigned tasks but blocks assigning to others:
 
-```sql
-CREATE OR REPLACE FUNCTION unblock_family_member(
-  p_family_id UUID,
-  p_member_user_id UUID
-) RETURNS BOOLEAN
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-BEGIN
-  -- Check caller is a member of the family
-  IF NOT EXISTS (
-    SELECT 1 FROM user_families 
-    WHERE family_id = p_family_id AND user_id = auth.uid()
-  ) THEN
-    RAISE EXCEPTION 'Not a member of this family';
-  END IF;
-  
-  -- Perform the unblock
-  UPDATE user_families
-  SET 
-    blocked_at = NULL,
-    blocked_until = NULL,
-    blocked_indefinite = false,
-    blocked_reason = NULL,
-    blocked_by = NULL
-  WHERE family_id = p_family_id 
-    AND user_id = p_member_user_id;
-  
-  RETURN true;
-END;
-$$;
+1. Import `isBlocked` from `@/lib/blockUtils`
+2. Get the user's family membership
+3. If blocked AND `assignedTo !== user.id`, show error toast and return null
+4. Self-assigned tasks (`assignedTo === user.id`) are always allowed
+
+```tsx
+// In addTask, after the activeFamilyId/user checks:
+const userFamily = getUserFamily(activeFamilyId);
+if (isBlocked(userFamily)) {
+  // Allow self-assigned tasks
+  const targetUser = task.assignedTo ?? user.id;
+  if (targetUser !== user.id) {
+    toast({
+      title: t('block.restricted'),
+      description: t('block.cannotAssignTasks'),
+      variant: 'destructive',
+    });
+    return null;
+  }
+}
 ```
 
-### 3. Update `src/hooks/useApp.tsx`
+### 4. Add Translation Keys
+**File:** `src/i18n/locales/en.json`
 
-Modify `blockFamilyMember` function to use the RPC instead of direct UPDATE:
+Add new keys to the `block` section:
 
-**Current (broken):**
-```typescript
-const { error } = await supabase
-  .from('user_families')
-  .update({ blocked_at: ... })
-  .eq('user_id', memberUserId)
-  .eq('family_id', familyId);
+```json
+{
+  "block": {
+    ...existing keys...
+    "restricted": "Action Restricted",
+    "chatRestricted": "Chat Access Restricted",
+    "cannotAssignTasks": "You are blocked and cannot assign tasks to other family members."
+  }
+}
 ```
-
-**Fixed:**
-```typescript
-const { error } = await supabase.rpc('block_family_member', {
-  p_family_id: familyId,
-  p_member_user_id: memberUserId,
-  p_reason: reason,
-  p_blocked_until: blockedUntil,
-  p_blocked_indefinite: blockedIndefinite,
-});
-```
-
-### 4. Update `unblockFamilyMember` Similarly
-
-Change from direct UPDATE to RPC call:
-
-```typescript
-const { error } = await supabase.rpc('unblock_family_member', {
-  p_family_id: familyId,
-  p_member_user_id: memberUserId,
-});
-```
-
-### 5. Add Error Handling for RPC Calls
-
-Currently the code doesn't properly detect when 0 rows are affected. With RPC, we get proper exceptions for validation failures.
-
-## Technical Details
-
-- **Why SECURITY DEFINER?**: This allows the function to run with elevated privileges (bypassing RLS) while still validating the caller's permissions within the function logic
-- **Why not just relax RLS?**: Relaxing UPDATE policies could allow unintended modifications to other columns like `total_stars`. The RPC approach is more secure and explicit.
 
 ## Files to Modify
-
-1. **New SQL migration** - Create both RPC functions
-2. **`src/hooks/useApp.tsx`** - Replace direct UPDATE with RPC calls in `blockFamilyMember` and `unblockFamilyMember`
+1. `src/pages/family/FamilyPage.tsx` - Badge positioning fix
+2. `src/pages/chat/ChatPage.tsx` - Block entire page for blocked users
+3. `src/contexts/TasksContext.tsx` - Block task assignment (allow self-tasks)
+4. `src/i18n/locales/en.json` - Add restriction translation keys
 
 ## Expected Outcome
-
-After implementation:
-1. Blocking a member will actually persist to the database
-2. The UI will show the "BLOCKED" badge next to blocked members
-3. Realtime updates will trigger and notify the blocked user
-4. The blocked user will see access restrictions
+1. BLOCKED badge displays inline with member name, cleanly positioned
+2. Blocked users see a "Chat Access Restricted" screen instead of chat
+3. Blocked users can still create tasks for themselves
+4. Blocked users cannot assign tasks to other family members
+5. Clear error messages in the user's language
