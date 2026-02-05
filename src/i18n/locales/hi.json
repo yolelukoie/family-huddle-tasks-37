@@ -441,6 +441,10 @@
     "title": "{{name}} का प्रोफ़ाइल",
     "defaultMemberName": "परिवार का सदस्य"
   },
+  "notification": {
+    "taskReported": "कार्य हटाया गया",
+    "taskReportedBody": "आपका कार्य '{{name}}' हटा दिया गया क्योंकि इसकी रिपोर्ट की गई: {{reason}}"
+  },
   "report": {
     "title": "सामग्री की रिपोर्ट करें",
     "description": "अनुचित सामग्री की रिपोर्ट करके Family Huddle को सुरक्षित रखने में हमारी मदद करें।",

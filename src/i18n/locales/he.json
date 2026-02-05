@@ -441,6 +441,10 @@
     "title": "הפרופיל של {{name}}",
     "defaultMemberName": "בן משפחה"
   },
+  "notification": {
+    "taskReported": "המשימה הוסרה",
+    "taskReportedBody": "המשימה שלך '{{name}}' הוסרה כי דווחה כ: {{reason}}"
+  },
   "report": {
     "title": "דיווח על תוכן",
     "description": "עזור לנו לשמור על Family Huddle בטוח על ידי דיווח על תוכן לא הולם.",

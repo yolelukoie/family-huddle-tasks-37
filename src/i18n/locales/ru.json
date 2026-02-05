@@ -544,6 +544,10 @@
     "title": "Профиль {{name}}",
     "defaultMemberName": "Член семьи"
   },
+  "notification": {
+    "taskReported": "Задача удалена",
+    "taskReportedBody": "Ваша задача '{{name}}' была удалена, потому что на неё пожаловались: {{reason}}"
+  },
   "report": {
     "title": "Пожаловаться на контент",
     "description": "Помогите нам сохранить Family Huddle безопасным, сообщая о неприемлемом контенте.",
