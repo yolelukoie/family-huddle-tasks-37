@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -13,7 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useApp } from "@/hooks/useApp";
 import { useTasks } from "@/hooks/useTasks";
 import { useToast } from "@/hooks/use-toast";
-import { isBlocked } from "@/lib/blockUtils";
+import { isBlocked, getReasonLabel, BlockReason } from "@/lib/blockUtils";
 import { supabase } from "@/integrations/supabase/client";
 
 const assignTaskSchema = z.object({
@@ -40,6 +40,20 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
   const { toast } = useToast();
   const { addTask, ensureCategoryByName } = useTasks();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Re-evaluate block status whenever modal opens
+  const [userIsBlocked, setUserIsBlocked] = useState(false);
+  const [blockReason, setBlockReason] = useState<string | null>(null);
+  
+  useEffect(() => {
+    if (open && activeFamilyId) {
+      const membership = getUserFamily(activeFamilyId);
+      const blocked = isBlocked(membership);
+      setUserIsBlocked(blocked);
+      setBlockReason(membership?.blockedReason || null);
+      console.log('[AssignTaskModal] Block check on open:', { blocked, reason: membership?.blockedReason });
+    }
+  }, [open, activeFamilyId, getUserFamily]);
 
   const form = useForm<AssignTaskForm>({
     resolver: zodResolver(assignTaskSchema),
@@ -50,15 +64,19 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
 
   if (!user || !activeFamilyId) return null;
 
-  // Check if current user is blocked
-  const userMembership = getUserFamily(activeFamilyId);
-  if (isBlocked(userMembership)) {
+  // Check if current user is blocked - show restricted dialog
+  if (userIsBlocked) {
+    const reasonText = blockReason ? getReasonLabel(blockReason as BlockReason, t) : '';
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>{t('block.restricted')}</DialogTitle>
-            <DialogDescription>{t('block.cannotAssignTasks')}</DialogDescription>
+            <DialogDescription>
+              {reasonText 
+                ? t('block.blockedWithReason', { reason: reasonText })
+                : t('block.cannotAssignTasks')}
+            </DialogDescription>
           </DialogHeader>
           <Button onClick={() => onOpenChange(false)}>{t('common.close')}</Button>
         </DialogContent>
