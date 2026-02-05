@@ -588,6 +588,10 @@
     "error": "Error",
     "cancel": "Cancel",
     "delete": "Delete",
-    "report": "Report"
+    "report": "Report",
+    "creating": "Creating...",
+    "confirm": "Confirm",
+    "deleteCategoryTitle": "Delete Category",
+    "deleteCategoryDesc": "This will permanently delete the category and all its templates and tasks. This action cannot be undone."
   }
 }

@@ -475,6 +475,10 @@
     "error": "Error",
     "cancel": "Cancelar",
     "delete": "Eliminar",
-    "report": "Reportar"
+    "report": "Reportar",
+    "creating": "Creando...",
+    "confirm": "Confirmar",
+    "deleteCategoryTitle": "Eliminar categoría",
+    "deleteCategoryDesc": "Esto eliminará permanentemente la categoría y todas sus plantillas y tareas. Esta acción no se puede deshacer."
   }
 }
