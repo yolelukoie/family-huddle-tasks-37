@@ -503,11 +503,28 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
   const addTemplate = useCallback(async (template: Omit<TaskTemplate, 'id' | 'createdAt'>) => {
     if (!activeFamilyId || !user) return null;
 
-    // Check if user is blocked and trying to add to default category
-    const userFamily = getUserFamily(activeFamilyId);
-    if (isBlocked(userFamily)) {
+    // FRESH fetch of membership to check block status (not relying on cached state)
+    const { data: freshMembership, error: membershipError } = await supabase
+      .from('user_families')
+      .select('blocked_until, blocked_indefinite')
+      .eq('user_id', user.id)
+      .eq('family_id', activeFamilyId)
+      .maybeSingle();
+
+    if (membershipError) {
+      console.error('[TasksContext] Error fetching membership for block check:', membershipError);
+    }
+
+    // Check if user is blocked using fresh data
+    const isUserBlocked = !!(
+      freshMembership?.blocked_indefinite || 
+      (freshMembership?.blocked_until && new Date(freshMembership.blocked_until) > new Date())
+    );
+
+    if (isUserBlocked) {
       const category = categories.find(c => c.id === template.categoryId);
       if (category?.isDefault || category?.isHouseChores) {
+        console.log('[TasksContext] BLOCKED: User attempted to create template in default category');
         toast({
           title: t('block.restricted'),
           description: t('block.cannotCreateInDefaultCategory'),
@@ -583,7 +600,7 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
     setTemplates(prev => [...prev, newTemplate]);
     window.dispatchEvent(new CustomEvent('tasks:changed'));
     return newTemplate;
-  }, [activeFamilyId, user, templates, toast]);
+  }, [activeFamilyId, user, templates, categories, toast, t]);
 
   const addTodayTaskFromTemplate = useCallback(async (templateId: string) => {
     if (!activeFamilyId || !user) return null;
@@ -594,11 +611,28 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
       return null;
     }
 
-    // Check if user is blocked and trying to add to default category
-    const userFamily = getUserFamily(activeFamilyId);
-    if (isBlocked(userFamily)) {
+    // FRESH fetch of membership to check block status (not relying on cached state)
+    const { data: freshMembership, error: membershipError } = await supabase
+      .from('user_families')
+      .select('blocked_until, blocked_indefinite')
+      .eq('user_id', user.id)
+      .eq('family_id', activeFamilyId)
+      .maybeSingle();
+
+    if (membershipError) {
+      console.error('[TasksContext] Error fetching membership for block check:', membershipError);
+    }
+
+    // Check if user is blocked using fresh data
+    const isUserBlocked = !!(
+      freshMembership?.blocked_indefinite || 
+      (freshMembership?.blocked_until && new Date(freshMembership.blocked_until) > new Date())
+    );
+
+    if (isUserBlocked) {
       const category = categories.find(c => c.id === template.categoryId);
       if (category?.isDefault || category?.isHouseChores) {
+        console.log('[TasksContext] BLOCKED: User attempted to create task in default category');
         toast({
           title: t('block.restricted'),
           description: t('block.cannotCreateInDefaultCategory'),
@@ -661,7 +695,7 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
       toast({ title: 'Error', description: `Failed to add task: ${e?.message || 'Unknown error'}`, variant: 'destructive' });
       return null;
     }
-  }, [activeFamilyId, user, templates, toast]);
+  }, [activeFamilyId, user, templates, categories, toast, t]);
 
   const deleteCategory = useCallback(async (categoryId: string) => {
     if (!activeFamilyId) return false;
