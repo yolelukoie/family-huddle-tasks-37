@@ -1,40 +1,58 @@
 
-# Restrict Blocked Users from Creating Tasks in Default Categories
+# Fix: Block Restrictions Not Working for Task Creation in Default Categories
 
-## Overview
+## Root Cause Analysis
 
-Blocked users should only be able to create tasks in custom (personal) categories, not in default/shared categories. This prevents them from affecting other family members while still allowing personal productivity.
+After thorough code review, I've identified **two issues**:
 
-## Categories Classification
+### Issue 1: Stale Closure in TasksContext
+The `addTodayTaskFromTemplate` and `addTemplate` functions in `TasksContext.tsx` use `getUserFamily` from `useApp` hook. However, these functions are wrapped in `useCallback` which captures the function reference. When block status changes:
+- The `useApp` state updates correctly
+- But `TasksContext` callbacks may still use a stale `getUserFamily` reference that reads old state
 
-| Category Type | Shared? | Blocked User Access |
-|---------------|---------|---------------------|
-| `isDefault: true` | Yes | Read-only (can see, cannot create) |
-| `isHouseChores: true` | Yes | Read-only (can see, cannot create) |
-| `isDefault: false` + `isHouseChores: false` | No (personal) | Full access |
-| "Assigned" category | Yes | Cannot assign to others (already implemented) |
+### Issue 2: UI Component May Have Stale State
+The `TaskCategorySection` component checks block status at render time, but if the component doesn't re-render when block status changes, the check will be stale.
 
-## Implementation Strategy
+## Solution: Multi-Layer Defense
 
-### 1. Add Block Check to `addTodayTaskFromTemplate()` (TasksContext.tsx)
+### Layer 1: Fetch Fresh Data in TasksContext (Lines 597-609)
 
-When a blocked user clicks on a template to add it to today, check if the template's category is a default category. If so, show an error and prevent the task from being created.
+Instead of relying on `getUserFamily` which may be stale, fetch the membership data directly from Supabase at the time of the action:
+
+**File: `src/contexts/TasksContext.tsx`**
 
 ```typescript
 const addTodayTaskFromTemplate = useCallback(async (templateId: string) => {
   if (!activeFamilyId || !user) return null;
-  
+
   const template = templates.find(x => x.id === templateId);
-  if (!template) return null;
-  
-  // Check if user is blocked
-  const userFamily = getUserFamily(activeFamilyId);
-  if (isBlocked(userFamily)) {
-    // Find the category for this template
+  if (!template) {
+    console.error('Template not found for Today:', templateId);
+    return null;
+  }
+
+  // FRESH fetch of membership to check block status (not relying on cached state)
+  const { data: freshMembership, error: membershipError } = await supabase
+    .from('user_families')
+    .select('blocked_at, blocked_until, blocked_indefinite')
+    .eq('user_id', user.id)
+    .eq('family_id', activeFamilyId)
+    .single();
+
+  if (membershipError) {
+    console.error('Error fetching membership:', membershipError);
+  }
+
+  // Check if user is blocked using fresh data
+  const isUserBlocked = !!(
+    freshMembership?.blocked_indefinite || 
+    (freshMembership?.blocked_until && new Date(freshMembership.blocked_until) > new Date())
+  );
+
+  if (isUserBlocked) {
     const category = categories.find(c => c.id === template.categoryId);
-    
-    // If category is default/shared, block the action
     if (category?.isDefault || category?.isHouseChores) {
+      console.log('[TasksContext] BLOCKED: User attempted to create task in default category');
       toast({
         title: t('block.restricted'),
         description: t('block.cannotCreateInDefaultCategory'),
@@ -43,22 +61,33 @@ const addTodayTaskFromTemplate = useCallback(async (templateId: string) => {
       return null;
     }
   }
-  
+
   // ... rest of the function
-}, [activeFamilyId, user, templates, categories, getUserFamily, toast, t]);
+}, [activeFamilyId, user, templates, categories, toast, t]);
 ```
 
-### 2. Add Block Check to `addTemplate()` (TasksContext.tsx)
+### Layer 2: Same Fix for `addTemplate` (Lines 503-518)
 
-When a blocked user tries to create a new template in a default category, prevent it.
+Apply the same fresh-fetch pattern to `addTemplate`:
 
 ```typescript
 const addTemplate = useCallback(async (template: Omit<TaskTemplate, 'id' | 'createdAt'>) => {
   if (!activeFamilyId || !user) return null;
-  
-  // Check if user is blocked and trying to add to default category
-  const userFamily = getUserFamily(activeFamilyId);
-  if (isBlocked(userFamily)) {
+
+  // FRESH fetch of membership to check block status
+  const { data: freshMembership } = await supabase
+    .from('user_families')
+    .select('blocked_at, blocked_until, blocked_indefinite')
+    .eq('user_id', user.id)
+    .eq('family_id', activeFamilyId)
+    .single();
+
+  const isUserBlocked = !!(
+    freshMembership?.blocked_indefinite || 
+    (freshMembership?.blocked_until && new Date(freshMembership.blocked_until) > new Date())
+  );
+
+  if (isUserBlocked) {
     const category = categories.find(c => c.id === template.categoryId);
     if (category?.isDefault || category?.isHouseChores) {
       toast({
@@ -69,97 +98,56 @@ const addTemplate = useCallback(async (template: Omit<TaskTemplate, 'id' | 'crea
       return null;
     }
   }
-  
+
   // ... rest of the function
-}, [...]);
+}, [activeFamilyId, user, templates, categories, toast, t]);
 ```
 
-### 3. Hide/Disable UI Elements in Default Categories (TaskCategorySection.tsx)
+### Layer 3: Create Helper Function for Reuse
 
-For blocked users, hide the "Add Task Template" button and disable clicking on templates for default categories. This provides immediate visual feedback.
+To avoid code duplication, create a helper function:
 
-```tsx
-// In TaskCategorySection component
-const { getUserFamily } = useApp();
-const userFamily = familyId ? getUserFamily(familyId) : null;
-const userIsBlocked = isBlocked(userFamily);
-const isSharedCategory = category.isDefault || category.isHouseChores;
-const canCreateInCategory = !userIsBlocked || !isSharedCategory;
-
-// When rendering template click handler:
-<div 
-  onClick={() => canCreateInCategory ? handleAddToToday(template) : null}
-  className={cn(
-    "flex items-center justify-between p-2 border rounded transition-colors",
-    canCreateInCategory 
-      ? "cursor-pointer hover:bg-accent" 
-      : "opacity-60 cursor-not-allowed"
-  )}
->
-  ...
-</div>
-
-// When rendering "Add Task Template" button:
-{canCreateInCategory && (
-  <Button
-    variant="theme"
-    size="sm"
-    onClick={() => setShowTemplateModal(true)}
-  >
-    <Plus className="h-3 w-3 mr-2" />
-    {t('tasks.addTaskTemplate')}
-  </Button>
-)}
-
-{/* Show message for blocked users in default categories */}
-{!canCreateInCategory && (
-  <p className="text-xs text-muted-foreground text-center py-2">
-    {t('block.viewOnlyWhileBlocked')}
-  </p>
-)}
-```
-
-### 4. Add Translation Keys (en.json)
-
-```json
-{
-  "block": {
-    "cannotCreateInDefaultCategory": "You cannot create tasks in shared categories while blocked. Use custom categories instead.",
-    "viewOnlyWhileBlocked": "View only - cannot add tasks while blocked"
-  }
-}
+```typescript
+// Inside TasksProvider, before the callbacks:
+const checkUserBlocked = async (): Promise<boolean> => {
+  if (!activeFamilyId || !user) return false;
+  
+  const { data } = await supabase
+    .from('user_families')
+    .select('blocked_until, blocked_indefinite')
+    .eq('user_id', user.id)
+    .eq('family_id', activeFamilyId)
+    .single();
+    
+  return !!(
+    data?.blocked_indefinite || 
+    (data?.blocked_until && new Date(data.blocked_until) > new Date())
+  );
+};
 ```
 
 ## Files to Modify
 
-1. **`src/contexts/TasksContext.tsx`** - Add block checks to `addTodayTaskFromTemplate()` and `addTemplate()`
-2. **`src/components/tasks/TaskCategorySection.tsx`** - Disable UI for blocked users in default categories
-3. **`src/i18n/locales/en.json`** - Add translation keys
+1. **`src/contexts/TasksContext.tsx`**
+   - Add `checkUserBlocked` helper function
+   - Update `addTodayTaskFromTemplate` to use fresh DB check
+   - Update `addTemplate` to use fresh DB check
+   - Remove dependency on `getUserFamily` for these functions
 
-## User Experience
+## Why This Works
 
-### When a blocked user views the Tasks page:
+1. **Fresh Data**: Every time a blocked user tries to create a task, we query the database directly for their current block status
+2. **No Stale Closures**: We don't rely on React state that may be stale in callback closures
+3. **Authoritative Source**: The database is the single source of truth for block status
+4. **UI Still Works**: The UI restrictions in `TaskCategorySection` provide immediate visual feedback, but the backend check is the enforcement layer
 
-**Default categories (House Chores, Personal Growth, etc.):**
-- Templates are visible but grayed out / not clickable
-- "Add Task Template" button is hidden
-- A subtle message shows "View only - cannot add tasks while blocked"
+## Testing Checklist
 
-**Custom categories they created:**
-- Full functionality remains
-- Can click templates to add to today
-- Can create new templates
-- Can complete tasks
-
-## Summary
-
-This approach enforces restrictions at multiple layers:
-1. **UI layer** - Visual feedback by disabling/hiding buttons
-2. **Business logic layer** - Block checks in context functions prevent bypass
-3. **Clear messaging** - User understands WHY they can't perform actions
-
-The blocked user can still:
-- View all categories and templates
-- Create and use custom categories
-- Complete their own assigned tasks
-- Collect stars and progress their character
+After implementation:
+1. User A blocks User B
+2. User B (without refreshing) navigates to Tasks page
+3. User B clicks on a template in "House Chores" category
+4. Expected: Toast appears with "You cannot create tasks in shared categories while blocked"
+5. Expected: No task is created
+6. User B creates a custom category and adds a template
+7. Expected: Task IS created successfully (custom categories are allowed)
