@@ -616,6 +616,7 @@
     "chatRestricted": "Chat Access Restricted",
     "restricted": "Action Restricted",
     "cannotAssignTasks": "You are blocked and cannot assign tasks to other family members.",
+    "noMembersAccess": "Members list restricted",
     "reasons": {
       "harassment": "Harassment / bullying",
       "hate": "Hate or abusive language",

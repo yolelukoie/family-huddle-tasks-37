@@ -73,9 +73,58 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     fetchFamilyMembers(activeFamilyId);
   }, [activeFamilyId]);
 
-  // Optional realtime refresh for family members
+  // Refresh just the current user's membership for a family (for realtime block updates)
+  const refreshUserMembership = async (familyId: string) => {
+    if (!user) return;
+    
+    console.log('[useApp] refreshUserMembership called for family:', familyId);
+    
+    const { data, error } = await supabase
+      .from('user_families')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('family_id', familyId)
+      .single();
+      
+    if (error) {
+      console.error('[useApp] Error refreshing user membership:', error);
+      return;
+    }
+    
+    if (data) {
+      console.log('[useApp] Refreshed membership data:', {
+        blockedAt: data.blocked_at,
+        blockedIndefinite: data.blocked_indefinite
+      });
+      
+      const updated: UserFamily = {
+        userId: data.user_id,
+        familyId: data.family_id,
+        joinedAt: data.joined_at,
+        totalStars: data.total_stars,
+        currentStage: data.current_stage,
+        lastReadTimestamp: data.last_read_timestamp,
+        seenCelebrations: data.seen_celebrations,
+        blockedAt: data.blocked_at ?? undefined,
+        blockedUntil: data.blocked_until ?? undefined,
+        blockedIndefinite: data.blocked_indefinite ?? false,
+        blockedReason: data.blocked_reason ?? undefined,
+        blockedBy: data.blocked_by ?? undefined,
+      };
+      
+      setUserFamilies(prev => 
+        prev.map(uf => 
+          uf.familyId === familyId && uf.userId === user.id 
+            ? updated 
+            : uf
+        )
+      );
+    }
+  };
+
+  // Optional realtime refresh for family members with block state sync
   useEffect(() => {
-    if (!activeFamilyId) return;
+    if (!activeFamilyId || !user) return;
     const ch = supabase
       .channel(`family-members-${activeFamilyId}`)
       .on('postgres_changes', {
@@ -83,10 +132,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         schema: 'public',
         table: 'user_families',
         filter: `family_id=eq.${activeFamilyId}`
-      }, () => fetchFamilyMembers(activeFamilyId))
+      }, (payload) => {
+        console.log('[useApp] Realtime user_families update:', payload);
+        
+        // Refresh family members for all users
+        fetchFamilyMembers(activeFamilyId);
+        
+        // If the update was for the current user, also refresh their membership state
+        const updatedRow = (payload as any).new || (payload as any).old;
+        if (updatedRow && updatedRow.user_id === user.id) {
+          console.log('[useApp] Update affects current user, refreshing membership');
+          refreshUserMembership(activeFamilyId);
+        }
+      })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [activeFamilyId]);
+  }, [activeFamilyId, user]);
 
   // Add focus/visibility refetch
   useEffect(() => {
