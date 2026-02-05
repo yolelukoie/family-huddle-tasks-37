@@ -22,9 +22,11 @@ export default function PrivacyPolicyPage() {
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-1">
                 <li>Account information (email address, display name)</li>
-                <li>Profile information (avatar, gender preference for character display)</li>
+                <li>Profile information (avatar, gender preference for character display, language preference)</li>
                 <li>Family and task data you create within the app</li>
                 <li>Chat messages shared within your family groups</li>
+                <li>Custom images you upload (profile pictures, character images)</li>
+                <li>Push notification tokens (if you enable notifications)</li>
               </ul>
             </section>
 
@@ -85,7 +87,7 @@ export default function PrivacyPolicyPage() {
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-1">
                 <li>Access and update your personal information</li>
-                <li>Delete your account and associated data at: <a href="https://familyhuddletasks.com/delete-account" className="text-primary hover:underline">familyhuddletasks.com/delete-account</a></li>
+                <li>Delete your account and associated data through the app's Personal Settings page</li>
                 <li>Opt out of push notifications</li>
                 <li>Leave family groups at any time</li>
               </ul>
@@ -103,8 +105,10 @@ export default function PrivacyPolicyPage() {
             <section>
               <h2 className="text-lg font-semibold">9. Contact Us</h2>
               <p className="text-muted-foreground">
-                If you have questions about this Privacy Policy, please contact us through the app's 
-                support channels.
+                If you have questions about this Privacy Policy, please contact us at{' '}
+                <a href="mailto:support@familyhuddletasks.com" className="text-primary hover:underline">
+                  support@familyhuddletasks.com
+                </a>
               </p>
             </section>
           </CardContent>

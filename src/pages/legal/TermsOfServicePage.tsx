@@ -167,10 +167,11 @@ export default function TermsOfServicePage() {
               <p className="text-muted-foreground">Depending on how you use the Service, we may collect:</p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-1">
                 <li><strong>Account data:</strong> email address, name or nickname, password (stored in hashed form), language preferences.</li>
-                <li><strong>Profile and family data:</strong> family or group names, member names or nicknames, roles, and relationships you define in the app.</li>
-                <li><strong>Usage data:</strong> tasks you create or complete, schedules, streaks, achievements, app settings, and other in-app activity.</li>
-                <li><strong>Technical data:</strong> IP address, device type, operating system, app version, and basic usage analytics (for example, which screens are most used).</li>
-                <li><strong>Payment data:</strong> limited information about your subscription status, payment method type, and billing history, as provided by payment processors or app stores. We do not store your full payment card number on our servers.</li>
+                <li><strong>Profile and family data:</strong> family or group names, member names or nicknames, and relationships you define in the app.</li>
+                <li><strong>Usage data:</strong> tasks you create or complete, schedules, progress, achievements, and app settings.</li>
+                <li><strong>Notification data:</strong> push notification tokens if you enable notifications, and your device platform (web, Android, iOS).</li>
+                <li><strong>Uploaded content:</strong> profile pictures and custom character images you choose to upload.</li>
+                <li><strong>Payment data:</strong> if you subscribe to Premium, limited information about your subscription status and billing history as provided by payment processors. We do not store your full payment card number.</li>
               </ul>
 
               <h3 className="text-base font-medium mt-4">7.2 How We Use Your Data</h3>
