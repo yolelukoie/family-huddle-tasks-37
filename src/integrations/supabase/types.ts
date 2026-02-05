@@ -315,6 +315,7 @@ export type Database = {
       }
       reports: {
         Row: {
+          content_description: string | null
           content_id: string
           content_name: string | null
           content_type: string
@@ -326,6 +327,7 @@ export type Database = {
           reporter_id: string
         }
         Insert: {
+          content_description?: string | null
           content_id: string
           content_name?: string | null
           content_type?: string
@@ -337,6 +339,7 @@ export type Database = {
           reporter_id: string
         }
         Update: {
+          content_description?: string | null
           content_id?: string
           content_name?: string | null
           content_type?: string
