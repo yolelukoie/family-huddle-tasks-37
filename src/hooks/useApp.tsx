@@ -602,6 +602,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setUserFamilies(remainingFamilies);
       setFamilies(prev => prev.filter(f => f.id !== familyId));
       
+      // Clean up allFamilyMembers state for this family
+      setAllFamilyMembers(prev => {
+        const updated = { ...prev };
+        delete updated[familyId];
+        return updated;
+      });
+      
       // If user is the only member, delete the family
       if (members.length === 1 && members[0].userId === user.id) {
         // Delete the family
@@ -656,6 +663,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
+      // Clean up localStorage backup to prevent ghost families on refresh
+      storage.removeUserFamily(user.id, familyId);
+      storage.removeFamily(familyId);
+      storage.clearSeenBadges(familyId, user.id);
+
       // If the family being quit is the active family, switch to another one
       if (activeFamilyId === familyId) {
         if (remainingFamilies.length > 0) {
@@ -674,6 +686,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           await setActiveFamilyId(nextFamilyId);
         }
       }
+
+      // Force reload from Supabase to ensure consistency
+      await loadFamilyData();
 
       return true;
     } catch (error) {

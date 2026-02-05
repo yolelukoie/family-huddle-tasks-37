@@ -243,6 +243,20 @@ class LocalStorage {
     this.setSeenBadges(familyId, userId, []);
   }
 
+  // Remove a family from localStorage
+  removeFamily(familyId: string): void {
+    const families = this.getFamilies();
+    const filtered = families.filter(f => f.id !== familyId);
+    this.setItem('families', filtered);
+  }
+
+  // Remove a user-family relationship from localStorage
+  removeUserFamily(userId: string, familyId: string): void {
+    const userFamilies = this.getUserFamilies();
+    const filtered = userFamilies.filter(uf => !(uf.userId === userId && uf.familyId === familyId));
+    this.setItem('userFamilies', filtered);
+  }
+
   // Clear all data and reset to single account
   clearAllData(): void {
     localStorage.clear();
