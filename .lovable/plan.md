@@ -1,126 +1,165 @@
 
-# Fix: Block Restrictions Not Enforced in Task Assignment Modal
+# Restrict Blocked Users from Creating Tasks in Default Categories
 
-## Root Cause Analysis
+## Overview
 
-After thorough code review, I identified the issue:
+Blocked users should only be able to create tasks in custom (personal) categories, not in default/shared categories. This prevents them from affecting other family members while still allowing personal productivity.
 
-1. **The block check code EXISTS** in `AssignTaskModal.tsx` (lines 53-67)
-2. **The realtime subscription IS working** (console logs confirm `blocked_until` is received)
-3. **The problem is a React stale closure issue**: When the modal component mounts, it captures the `getUserFamily` function reference. If the state updates AFTER the modal opens, the closure may still reference old state.
+## Categories Classification
 
-Additionally, the current restricted dialog shows a generic message but doesn't include the **block reason** which the user requested.
+| Category Type | Shared? | Blocked User Access |
+|---------------|---------|---------------------|
+| `isDefault: true` | Yes | Read-only (can see, cannot create) |
+| `isHouseChores: true` | Yes | Read-only (can see, cannot create) |
+| `isDefault: false` + `isHouseChores: false` | No (personal) | Full access |
+| "Assigned" category | Yes | Cannot assign to others (already implemented) |
 
-## Solution
+## Implementation Strategy
 
-### 1. Fix the Stale Closure Issue in AssignTaskModal
+### 1. Add Block Check to `addTodayTaskFromTemplate()` (TasksContext.tsx)
 
-The issue is that `getUserFamily` uses `userFamilies.find()` inside the function, but the component may not re-render when `userFamilies` state changes. We need to ensure the modal ALWAYS checks the latest state.
+When a blocked user clicks on a template to add it to today, check if the template's category is a default category. If so, show an error and prevent the task from being created.
 
-**Fix**: Add console logging first to confirm the issue, then ensure the modal properly reacts to state changes by using the `open` prop as a dependency to re-evaluate the block status.
-
-**File:** `src/components/modals/AssignTaskModal.tsx`
-
-```tsx
-// Add console logging to debug
-console.log('[AssignTaskModal] Checking block status:', {
-  activeFamilyId,
-  userMembership,
-  isBlocked: isBlocked(userMembership),
-  blockedUntil: userMembership?.blockedUntil,
-  blockedReason: userMembership?.blockedReason
-});
-```
-
-### 2. Show Block Reason in Restricted Dialog
-
-Update the restricted dialog to show WHY the user is blocked, using the `blockedReason` field and `getReasonLabel` utility.
-
-**File:** `src/components/modals/AssignTaskModal.tsx`
-
-```tsx
-import { isBlocked, getReasonLabel } from '@/lib/blockUtils';
-
-// In the blocked check:
-if (isBlocked(userMembership)) {
-  const reasonKey = userMembership?.blockedReason;
-  const reasonText = reasonKey ? getReasonLabel(reasonKey as any, t) : '';
+```typescript
+const addTodayTaskFromTemplate = useCallback(async (templateId: string) => {
+  if (!activeFamilyId || !user) return null;
   
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>{t('block.restricted')}</DialogTitle>
-          <DialogDescription>
-            {reasonText 
-              ? t('block.blockedWithReason', { reason: reasonText })
-              : t('block.cannotAssignTasks')}
-          </DialogDescription>
-        </DialogHeader>
-        <Button onClick={() => onOpenChange(false)}>{t('common.close')}</Button>
-      </DialogContent>
-    </Dialog>
-  );
-}
+  const template = templates.find(x => x.id === templateId);
+  if (!template) return null;
+  
+  // Check if user is blocked
+  const userFamily = getUserFamily(activeFamilyId);
+  if (isBlocked(userFamily)) {
+    // Find the category for this template
+    const category = categories.find(c => c.id === template.categoryId);
+    
+    // If category is default/shared, block the action
+    if (category?.isDefault || category?.isHouseChores) {
+      toast({
+        title: t('block.restricted'),
+        description: t('block.cannotCreateInDefaultCategory'),
+        variant: 'destructive',
+      });
+      return null;
+    }
+  }
+  
+  // ... rest of the function
+}, [activeFamilyId, user, templates, categories, getUserFamily, toast, t]);
 ```
 
-### 3. Add Missing Translation Key
+### 2. Add Block Check to `addTemplate()` (TasksContext.tsx)
 
-**File:** `src/i18n/locales/en.json`
+When a blocked user tries to create a new template in a default category, prevent it.
+
+```typescript
+const addTemplate = useCallback(async (template: Omit<TaskTemplate, 'id' | 'createdAt'>) => {
+  if (!activeFamilyId || !user) return null;
+  
+  // Check if user is blocked and trying to add to default category
+  const userFamily = getUserFamily(activeFamilyId);
+  if (isBlocked(userFamily)) {
+    const category = categories.find(c => c.id === template.categoryId);
+    if (category?.isDefault || category?.isHouseChores) {
+      toast({
+        title: t('block.restricted'),
+        description: t('block.cannotCreateInDefaultCategory'),
+        variant: 'destructive',
+      });
+      return null;
+    }
+  }
+  
+  // ... rest of the function
+}, [...]);
+```
+
+### 3. Hide/Disable UI Elements in Default Categories (TaskCategorySection.tsx)
+
+For blocked users, hide the "Add Task Template" button and disable clicking on templates for default categories. This provides immediate visual feedback.
+
+```tsx
+// In TaskCategorySection component
+const { getUserFamily } = useApp();
+const userFamily = familyId ? getUserFamily(familyId) : null;
+const userIsBlocked = isBlocked(userFamily);
+const isSharedCategory = category.isDefault || category.isHouseChores;
+const canCreateInCategory = !userIsBlocked || !isSharedCategory;
+
+// When rendering template click handler:
+<div 
+  onClick={() => canCreateInCategory ? handleAddToToday(template) : null}
+  className={cn(
+    "flex items-center justify-between p-2 border rounded transition-colors",
+    canCreateInCategory 
+      ? "cursor-pointer hover:bg-accent" 
+      : "opacity-60 cursor-not-allowed"
+  )}
+>
+  ...
+</div>
+
+// When rendering "Add Task Template" button:
+{canCreateInCategory && (
+  <Button
+    variant="theme"
+    size="sm"
+    onClick={() => setShowTemplateModal(true)}
+  >
+    <Plus className="h-3 w-3 mr-2" />
+    {t('tasks.addTaskTemplate')}
+  </Button>
+)}
+
+{/* Show message for blocked users in default categories */}
+{!canCreateInCategory && (
+  <p className="text-xs text-muted-foreground text-center py-2">
+    {t('block.viewOnlyWhileBlocked')}
+  </p>
+)}
+```
+
+### 4. Add Translation Keys (en.json)
 
 ```json
 {
   "block": {
-    "blockedWithReason": "You are blocked in this family for {{reason}} and cannot assign tasks."
+    "cannotCreateInDefaultCategory": "You cannot create tasks in shared categories while blocked. Use custom categories instead.",
+    "viewOnlyWhileBlocked": "View only - cannot add tasks while blocked"
   }
-}
-```
-
-### 4. Force State Re-evaluation When Modal Opens
-
-To fix the stale closure issue, add a `useEffect` that re-evaluates the block status when the modal opens:
-
-**File:** `src/components/modals/AssignTaskModal.tsx`
-
-```tsx
-import { useState, useEffect } from "react";
-
-// Inside the component, add:
-const [blockedCheck, setBlockedCheck] = useState(false);
-
-// Force re-check when modal opens
-useEffect(() => {
-  if (open && activeFamilyId) {
-    const membership = getUserFamily(activeFamilyId);
-    console.log('[AssignTaskModal] Modal opened, checking block:', membership);
-    setBlockedCheck(isBlocked(membership));
-  }
-}, [open, activeFamilyId, getUserFamily]);
-
-// Replace the existing isBlocked check with:
-const userMembership = getUserFamily(activeFamilyId);
-const userIsBlocked = isBlocked(userMembership);
-
-if (userIsBlocked) {
-  // ... restricted dialog
 }
 ```
 
 ## Files to Modify
 
-1. `src/components/modals/AssignTaskModal.tsx` - Add console logging, show block reason, fix stale closure
-2. `src/i18n/locales/en.json` - Add `blockedWithReason` translation key
+1. **`src/contexts/TasksContext.tsx`** - Add block checks to `addTodayTaskFromTemplate()` and `addTemplate()`
+2. **`src/components/tasks/TaskCategorySection.tsx`** - Disable UI for blocked users in default categories
+3. **`src/i18n/locales/en.json`** - Add translation keys
 
-## Testing Steps
+## User Experience
 
-After implementation:
-1. User A blocks User B in a family
-2. User B (without refreshing) tries to click "Assign Task"
-3. User B should see: "You are blocked in this family for [reason] and cannot assign tasks."
-4. User B should NOT see the task assignment form
+### When a blocked user views the Tasks page:
 
-## Expected Outcome
+**Default categories (House Chores, Personal Growth, etc.):**
+- Templates are visible but grayed out / not clickable
+- "Add Task Template" button is hidden
+- A subtle message shows "View only - cannot add tasks while blocked"
 
-1. Blocked users see a clear message with the block REASON
-2. The modal correctly detects block status even if it was just applied
-3. Console logs help debug any remaining issues
+**Custom categories they created:**
+- Full functionality remains
+- Can click templates to add to today
+- Can create new templates
+- Can complete tasks
+
+## Summary
+
+This approach enforces restrictions at multiple layers:
+1. **UI layer** - Visual feedback by disabling/hiding buttons
+2. **Business logic layer** - Block checks in context functions prevent bypass
+3. **Clear messaging** - User understands WHY they can't perform actions
+
+The blocked user can still:
+- View all categories and templates
+- Create and use custom categories
+- Complete their own assigned tasks
+- Collect stars and progress their character
