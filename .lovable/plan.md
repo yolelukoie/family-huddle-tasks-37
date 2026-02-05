@@ -1,201 +1,198 @@
 
-# Fix Plan: Ghost Families + Complete Translation Coverage
+# Fix Plan: Report System Improvements
 
-## Problem 1: Ghost Families After User Quits
+## Overview
 
-### Root Cause Analysis
+This plan addresses five issues with the task reporting system:
 
-When a user quits a family, the application performs these steps:
+1. Default tasks should not show the "Report" option
+2. Reported tasks should be deleted from the database
+3. Task creators should receive a notification when their task is reported
+4. Remove unused `status` column from reports table
+5. Add task name to reports table for audit purposes
 
-1. Optimistically removes the family from local React state (`setFamilies`, `setUserFamilies`)
-2. Deletes the `user_families` row in Supabase
-3. Updates the user's `active_family_id` if needed
+---
 
-**Issue**: The `families` state is filtered **immediately** (`setFamilies(prev => prev.filter(f => f.id !== familyId))`), but this only affects memory. On page refresh or when `loadFamilyData()` runs:
-- The code fetches `user_families` for the user (correct - only shows families user belongs to)
-- Then fetches `families` where ID is in that list
-- **BUT** the local state may still contain stale family data from before the quit, or localStorage backup contains old data
+## Problem 1: Default Tasks Showing Report Option
 
-The ghost family appears because:
-1. **localStorage backup is not cleaned**: The code calls `storage.addFamily()` and `storage.addUserFamily()` when joining, but doesn't remove them when quitting
-2. **The `allFamilyMembers` state** isn't cleaned for the quit family
-3. **Race conditions**: If the UI renders before the async delete completes, stale data persists
+**Current behavior**: All tasks show the 3-dots menu with "Report" option, including default tasks like "Clean the room", "Do the dishes", etc.
 
-### Solution
+**Fix**: Add a condition to only show the 3-dots menu for non-default tasks, OR only show the Report option for non-default tasks.
+
+### File: `src/components/tasks/TaskCategorySection.tsx`
+
+**Change**: Wrap the DropdownMenu in a condition that checks if the template is not default. For default tasks, no menu is needed since they cannot be deleted or reported.
 
 ```text
-CURRENT FLOW (BROKEN)
-┌─────────────────────────────────────────────────────────────────┐
-│ quitFamily() called                                             │
-│   → Optimistic state update (removes from React state)          │
-│   → Delete from Supabase user_families                          │
-│   → (localStorage NOT cleaned)                                  │
-│   → On refresh: localStorage fallback restores ghost family     │
-└─────────────────────────────────────────────────────────────────┘
+BEFORE (lines 122-152):
+<DropdownMenu>
+  <DropdownMenuTrigger>...</DropdownMenuTrigger>
+  <DropdownMenuContent>
+    {template.isDeletable && !template.isDefault && (...Delete...)}
+    <DropdownMenuItem onClick={Report}>...</DropdownMenuItem>
+  </DropdownMenuContent>
+</DropdownMenu>
 
-FIXED FLOW
-┌─────────────────────────────────────────────────────────────────┐
-│ quitFamily() called                                             │
-│   → Optimistic state update (removes from React state)          │
-│   → Clean allFamilyMembers state for this family                │
-│   → Delete from Supabase user_families                          │
-│   → Clean localStorage backup (storage.removeFamily)            │
-│   → Force reload family data from Supabase (source of truth)    │
-└─────────────────────────────────────────────────────────────────┘
+AFTER:
+{!template.isDefault && (
+  <DropdownMenu>
+    <DropdownMenuTrigger>...</DropdownMenuTrigger>
+    <DropdownMenuContent>
+      {template.isDeletable && (...Delete...)}
+      <DropdownMenuItem onClick={Report}>...</DropdownMenuItem>
+    </DropdownMenuContent>
+  </DropdownMenu>
+)}
 ```
 
-### Files to Modify
+---
 
-| File | Change |
-|------|--------|
-| `src/hooks/useApp.tsx` | In `quitFamily()`: clean `allFamilyMembers` state, add localStorage cleanup, call `loadFamilyData()` to refresh from Supabase |
-| `src/lib/storage.ts` | Add `removeFamily()` and `removeUserFamily()` methods if they don't exist |
+## Problem 2: Reported Tasks Should Be Deleted
+
+**Current behavior**: When a task is reported, only a report record is created. The task remains visible to everyone.
+
+**Fix**: After successfully inserting the report, also delete the task template from the database.
+
+### File: `src/components/modals/ReportContentModal.tsx`
+
+**Changes**:
+1. Pass additional prop `templateName` to the modal (for storing in reports table)
+2. Pass `createdBy` (the task creator's user ID) for notification purposes
+3. After inserting the report, delete the task template
+4. Insert a notification event for the task creator
+
+### File: `src/components/tasks/TaskCategorySection.tsx`
+
+**Changes**:
+- Pass `templateName={template.name}` and `createdBy={template.createdBy}` to `ReportContentModal`
 
 ---
 
-## Problem 2: Non-Translatable UI Text
+## Problem 3: Notify Task Creator When Reported
 
-### Analysis Summary
+**Current behavior**: Task creators don't know their task was deleted due to a report.
 
-After reviewing all pages and components, I found the following hardcoded English text that needs translation:
+**Fix**: After deleting the reported task, send a push notification and create a `task_events` record to notify the creator.
 
-### AuthPage.tsx (Login/Signup)
+### File: `src/components/modals/ReportContentModal.tsx`
 
-| Line | Hardcoded Text | Translation Key Needed |
-|------|---------------|----------------------|
-| 56-57 | "Sign in failed" / error.message | `auth.signInFailed` |
-| 61-62 | "Welcome back!" / "Successfully signed in." | `auth.welcomeBack` |
-| 85-86 | "Sign up failed" | `auth.signUpFailed` |
-| 91-92 | "Check your email!" | `auth.checkEmail` |
-| 104-105 | "Email required" / "Please enter your email address first." | `auth.emailRequired` |
-| 115-116 | "Password reset failed" | `auth.passwordResetFailed` |
-| 121-122 | "Check your email!" (reset) | `auth.passwordResetSent` |
-| 136 | "Loading..." | `common.loading` |
-| 147 | "Family Huddle" | `app.name` |
-| 149-150 | App description | `auth.appDescription` |
-| 156 | "Join Family Huddle" | `auth.joinTitle` |
-| 158 | "Sign in to your account..." | `auth.joinDescription` |
-| 164-165 | "Sign In" / "Sign Up" tab labels | `auth.signIn` / `auth.signUp` |
-| 172 | "Email" label | `auth.email` |
-| 178-179 | "Enter your email" placeholder | `auth.emailPlaceholder` |
-| 182 | "Password" label | `auth.password` |
-| 189 | "Enter your password" placeholder | `auth.passwordPlaceholder` |
-| 198 | "Sign In" / "Signing in..." button | `auth.signInButton` |
-| 207 | "Forgot password?" | `auth.forgotPassword` |
-| 229 | "Send Reset Link" | `auth.sendResetLink` |
-| 238 | "Back to sign in" | `auth.backToSignIn` |
-| 254, 264 | "Create a password" placeholder | `auth.createPasswordPlaceholder` |
-| 286 | "I confirm that I am 13 years of age or older" | `auth.ageConfirmation` |
-| 305 | "I agree to the Terms of Use" | `auth.termsAgreement` |
-| 311-349 | Full Terms of Service text | Keep hardcoded (legal document) |
-| 358-362 | Age/Terms error messages | `auth.ageTermsError` variants |
-| 372 | "Sign Up" / "Creating account..." button | `auth.signUpButton` |
-| 382 | "Made with ❤️ for families everywhere" | `auth.madeWithLove` |
+**Logic to add in `handleSubmit`**:
 
-### OnboardingPage.tsx
+```text
+1. Insert report (existing)
+2. Delete the task_template from Supabase
+3. Create task_event record for the creator with event_type = "reported"
+4. Call send-push edge function to notify the creator
+5. Show success toast and trigger UI refresh
+```
 
-| Line | Hardcoded Text | Translation Key Needed |
-|------|---------------|----------------------|
-| 37-39 | Zod error messages | `onboarding.nameMinLength`, `onboarding.selectGender` |
-| 54 | "Please fill in the required family information" | `onboarding.familyInfoRequired` |
-| 108-109 | "Welcome to Family Huddle! ⭐" | `onboarding.welcomeTitle` |
-| 119 | "You've joined..." | `onboarding.joinedFamily` |
-| 122-123 | "Invalid invite code" | Use existing `family.invalidCode` |
-| 157 | "Session expired" | `auth.sessionExpired` |
-| 168 | "Error" / "Something went wrong" | `common.error` |
-| 180 | "Loading..." | `common.loading` |
-| 191 | "Welcome to Family Huddle!" | `onboarding.welcomeTitle` |
-| 194 | "Complete your profile..." | `onboarding.completeProfile` |
-| 201-203 | "Start your 4-day free trial" | `onboarding.trialTitle` / `onboarding.trialDesc` |
-| 210 | "Start free trial" | `onboarding.startTrial` |
-| 217 | "Set up your profile" | `onboarding.setupProfile` |
-| 219 | "Tell us about yourself..." | `onboarding.setupProfileDesc` |
-| 229 | "About you" | `onboarding.aboutYou` |
-| 237 | "Display Name" | `onboarding.displayName` |
-| 239 | "What should we call you?" | `onboarding.displayNamePlaceholder` |
-| 251 | "Gender" | `onboarding.gender` |
-| 255 | "Select your gender" | `onboarding.selectGenderPlaceholder` |
-| 259-261 | "Male" / "Female" / "Other" | `onboarding.male` / `onboarding.female` / `onboarding.other` |
-| 277 | "Join your family" | `onboarding.joinFamily` |
-| 289 | "Create Family" / "Join Family" | Use existing `family.createFamily` / `family.joinFamily` |
-| 299 | "Family Name" | Use existing `family.familyName` |
-| 302 | "The Smith Family" placeholder | `onboarding.familyNamePlaceholder` |
-| 315 | "Invite Code" | Use existing `family.inviteCode` |
-| 319 | "Enter family invite code" | Use existing `family.enterInviteCode` |
-| 336 | "Create Family & Get Started" / "Join Family & Get Started" | `onboarding.createAndStart` / `onboarding.joinAndStart` |
+**Notification message format**:
+- Title: "Task removed"
+- Body: "Your task '{task name}' was removed because it was reported as: {reason}"
 
-### MemberProfileModal.tsx
-
-| Line | Hardcoded Text | Translation Key Needed |
-|------|---------------|----------------------|
-| 43 | "Family Member" fallback | `family.defaultMemberName` |
-| 51 | "{displayName}'s Profile" | `memberProfile.title` |
-| 101 | "Progress to next stage" | Use existing `main.progressToNext` |
-| 102 | "stars" | Use existing `main.stars` |
-| 112 | "Active Goal" | Use existing `main.activeGoal` |
-| 113 | "stars" (in goal) | Use existing `main.stars` |
-| 116 | "Reward:" | Use existing `goals.reward` |
-| 129 | "Today's Tasks" | Use existing `main.todayTasks` |
-| 136 | "No tasks for today!" | Use existing `main.noTasksToday` |
-
-### FamilyPage.tsx
-
-| Line | Hardcoded Text | Translation Key Needed |
-|------|---------------|----------------------|
-| 326-327 | "Family Member" fallback | `family.defaultMemberName` |
-| 330 | "stars" (in member stats) | Use existing `main.stars` |
-
-### Summary of Files to Modify
-
-| File | Type of Change |
-|------|---------------|
-| `src/pages/auth/AuthPage.tsx` | Add `useTranslation`, replace all hardcoded text with `t()` calls |
-| `src/pages/onboarding/OnboardingPage.tsx` | Add `useTranslation`, replace all hardcoded text |
-| `src/components/modals/MemberProfileModal.tsx` | Replace remaining hardcoded text with `t()` calls |
-| `src/pages/family/FamilyPage.tsx` | Fix remaining hardcoded text in member display |
-| `src/i18n/locales/en.json` | Add ~40 new translation keys |
-| `src/i18n/locales/es.json` | Add translations for all new keys |
-| `src/i18n/locales/zh.json` | Add translations for all new keys |
-| `src/i18n/locales/hi.json` | Add translations for all new keys |
-| `src/i18n/locales/ru.json` | Add translations for all new keys |
-| `src/i18n/locales/he.json` | Add translations for all new keys |
+### Translation keys to add:
+- `notification.taskReported`: "Task removed"
+- `notification.taskReportedBody`: "Your task '{{name}}' was removed because it was reported as: {{reason}}"
 
 ---
 
-## Technical Implementation
+## Problem 4: Remove `status` Column from Reports Table
 
-### Step 1: Fix Ghost Family Issue
+**Current behavior**: The `reports` table has a `status` column that is not used.
 
-Modify `src/hooks/useApp.tsx`:
-- Clean `allFamilyMembers` state when quitting
-- Add localStorage cleanup after successful Supabase delete
-- Force data reload from Supabase to ensure consistency
+**Fix**: Create a database migration to drop the `status` column.
 
-Add to `src/lib/storage.ts`:
-- `removeUserFamily(userId: string, familyId: string)` method
-- `removeFamily(familyId: string)` method (cleanup only if user's families)
-
-### Step 2: Add Missing Translation Keys
-
-Add new translation keys to all 6 locale files:
-- `auth.*` - authentication page strings
-- `onboarding.*` - onboarding flow strings  
-- `memberProfile.*` - member profile modal strings
-
-### Step 3: Update Components
-
-Replace hardcoded English strings with `t()` calls using the new translation keys.
+### Migration SQL:
+```sql
+ALTER TABLE public.reports DROP COLUMN IF EXISTS status;
+```
 
 ---
 
-## Impact Assessment
+## Problem 5: Add Task Name to Reports Table
 
-| Change | Risk Level | Functionality Preserved |
-|--------|-----------|------------------------|
-| Ghost family fix | Low | Yes - improves data consistency |
-| Translation keys | Low | Yes - no logic changes |
-| `useTranslation` additions | Low | Yes - only text output changes |
+**Current behavior**: The `reports` table only stores `content_id` but not the task name, making it harder to review reports if the task is deleted.
 
-All existing functionality remains intact. The changes only affect:
-1. State cleanup consistency when leaving families
-2. Text display using i18n system instead of hardcoded strings
+**Fix**: Add a `content_name` column to store the task name at the time of reporting.
+
+### Migration SQL:
+```sql
+ALTER TABLE public.reports ADD COLUMN content_name text NULL;
+```
+
+### File: `src/components/modals/ReportContentModal.tsx`
+
+**Change**: Include `content_name` in the insert:
+```typescript
+await supabase.from('reports').insert({
+  reporter_id: user.id,
+  family_id: familyId,
+  content_id: contentId,
+  content_type: contentType,
+  content_name: templateName, // NEW
+  reason,
+  details: details.trim() || null,
+});
+```
+
+---
+
+## Summary of Changes
+
+| File | Changes |
+|------|---------|
+| `supabase/migrations/...` | Drop `status` column, add `content_name` column |
+| `src/integrations/supabase/types.ts` | Update Reports type (auto-generated) |
+| `src/components/modals/ReportContentModal.tsx` | Add props for `templateName` and `createdBy`, delete template after report, send notification to creator |
+| `src/components/tasks/TaskCategorySection.tsx` | Hide 3-dots menu for default tasks, pass new props to ReportContentModal |
+| `src/i18n/locales/*.json` | Add translation keys for report notification |
+
+---
+
+## Flow Diagram
+
+```text
+User clicks Report on custom task
+         │
+         ▼
+   Report Modal opens
+         │
+         ▼
+  User selects reason
+         │
+         ▼
+  User clicks "Report"
+         │
+         ▼
+┌────────────────────────────────┐
+│ 1. Insert into reports table   │
+│    (with content_name)         │
+├────────────────────────────────┤
+│ 2. Delete task_template        │
+├────────────────────────────────┤
+│ 3. Insert task_event           │
+│    (type: "reported")          │
+├────────────────────────────────┤
+│ 4. Call send-push function     │
+│    (notify creator)            │
+├────────────────────────────────┤
+│ 5. Show success toast          │
+│ 6. Refresh UI (onReported)     │
+└────────────────────────────────┘
+```
+
+---
+
+## Testing Checklist
+
+After implementation:
+
+1. Verify default tasks (Clean the room, Do the dishes, etc.) do NOT show the 3-dots menu
+2. Verify custom tasks still show the 3-dots menu with Delete and Report options
+3. Report a custom task and verify:
+   - Report is created in `reports` table with `content_name`
+   - Task template is deleted from `task_templates` table
+   - Task disappears from UI
+   - Creator receives a push notification
+4. Verify the `reports` table no longer has the `status` column
+5. Verify all translations work in different languages
