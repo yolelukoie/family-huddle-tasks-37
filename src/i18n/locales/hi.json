@@ -62,7 +62,12 @@
     "categoryDeleted": "श्रेणी हटाई गई",
     "deleteCategorySuccess": "और इसके सभी कार्य हटा दिए गए हैं।",
     "deleteTemplate": "इस कार्य टेम्पलेट को हटाएं?",
-    "templates": "टेम्पलेट"
+    "templates": "टेम्पलेट",
+    "createCategory": "नई श्रेणी बनाएं",
+    "createCategoryDesc": "अपने कार्यों को व्यवस्थित करने के लिए एक कस्टम श्रेणी जोड़ें",
+    "categoryNameLabel": "श्रेणी का नाम",
+    "categoryNamePlaceholder": "श्रेणी का नाम दर्ज करें",
+    "createCategoryBtn": "श्रेणी बनाएं"
   },
   "goals": {
     "title": "लक्ष्य",

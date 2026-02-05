@@ -62,7 +62,12 @@
     "categoryDeleted": "הקטגוריה נמחקה",
     "deleteCategorySuccess": "וכל המשימות שלה נמחקו.",
     "deleteTemplate": "למחוק תבנית משימה זו?",
-    "templates": "תבניות"
+    "templates": "תבניות",
+    "createCategory": "צור קטגוריה חדשה",
+    "createCategoryDesc": "הוסף קטגוריה מותאמת אישית לארגון המשימות שלך",
+    "categoryNameLabel": "שם הקטגוריה",
+    "categoryNamePlaceholder": "הזן שם קטגוריה",
+    "createCategoryBtn": "צור קטגוריה"
   },
   "goals": {
     "title": "מטרות",

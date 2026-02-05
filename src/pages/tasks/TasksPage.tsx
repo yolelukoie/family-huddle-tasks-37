@@ -14,6 +14,7 @@ import { isToday, isFuture, formatDate } from '@/lib/utils';
 import { translateTaskName, translateCategoryName, translateTaskDescription } from '@/lib/translations';
 import { TaskHistoryModal } from '@/components/modals/TaskHistoryModal';
 import { AssignTaskModal } from '@/components/modals/AssignTaskModal';
+import { CreateCategoryModal } from '@/components/modals/CreateCategoryModal';
 import { TaskCategorySection } from '@/components/tasks/TaskCategorySection';
 import { BadgeCelebration } from '@/components/badges/BadgeCelebration';
 import { GoalCelebration } from '@/components/celebrations/GoalCelebration';
@@ -24,12 +25,13 @@ export default function TasksPage() {
   const { user } = useAuth();
   const { activeFamilyId } = useApp();
   const { updateGoalProgress } = useGoals();
-  const { tasks, categories, updateTask, addCategory } = useTasks();
+  const { tasks, categories, updateTask } = useTasks();
   const { currentCelebration, completeCelebration } = useCelebrations();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [showHistory, setShowHistory] = useState(false);
   const [showAssignTask, setShowAssignTask] = useState(false);
+  const [showCreateCategory, setShowCreateCategory] = useState(false);
 
   // Handle loading and missing data states
   if (!user) {
@@ -170,18 +172,7 @@ export default function TasksPage() {
             <div className="flex justify-between items-center">
               <CardTitle>{t('tasks.categories')}</CardTitle>
               <Button
-                onClick={async () => {
-                  const name = prompt(t('tasks.enterCategoryName'));
-                  if (name && name.trim() && activeFamilyId) {
-                    await addCategory({
-                      name: name.trim(),
-                      familyId: activeFamilyId,
-                      isHouseChores: false,
-                      isDefault: false,
-                      order: Date.now()
-                    });
-                  }
-                }}
+                onClick={() => setShowCreateCategory(true)}
                 variant="theme"
                 size="sm"
               >
@@ -225,6 +216,14 @@ export default function TasksPage() {
         open={showAssignTask}
         onOpenChange={setShowAssignTask}
       />
+
+      {activeFamilyId && (
+        <CreateCategoryModal
+          open={showCreateCategory}
+          onOpenChange={setShowCreateCategory}
+          familyId={activeFamilyId}
+        />
+      )}
 
       {/* Unified Celebrations */}
       {currentCelebration && currentCelebration.item.type === 'badge' && (

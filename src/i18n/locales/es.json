@@ -62,7 +62,12 @@
     "categoryDeleted": "Categoría eliminada",
     "deleteCategorySuccess": "y todas sus tareas han sido eliminadas.",
     "deleteTemplate": "¿Eliminar esta plantilla de tarea?",
-    "templates": "plantillas"
+    "templates": "plantillas",
+    "createCategory": "Crear nueva categoría",
+    "createCategoryDesc": "Añade una categoría personalizada para organizar tus tareas",
+    "categoryNameLabel": "Nombre de la categoría",
+    "categoryNamePlaceholder": "Ingresa el nombre de la categoría",
+    "createCategoryBtn": "Crear categoría"
   },
   "goals": {
     "title": "Objetivos",

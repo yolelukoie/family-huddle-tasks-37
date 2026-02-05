@@ -62,7 +62,12 @@
     "categoryDeleted": "类别已删除",
     "deleteCategorySuccess": "及其所有任务已被删除。",
     "deleteTemplate": "删除此任务模板？",
-    "templates": "模板"
+    "templates": "模板",
+    "createCategory": "创建新类别",
+    "createCategoryDesc": "添加自定义类别来组织你的任务",
+    "categoryNameLabel": "类别名称",
+    "categoryNamePlaceholder": "输入类别名称",
+    "createCategoryBtn": "创建类别"
   },
   "goals": {
     "title": "目标",

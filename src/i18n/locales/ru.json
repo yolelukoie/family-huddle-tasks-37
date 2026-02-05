@@ -62,7 +62,12 @@
     "categoryDeleted": "Категория удалена",
     "deleteCategorySuccess": "и все ее задачи были удалены.",
     "deleteTemplate": "Удалить этот шаблон задачи?",
-    "templates": "шаблонов"
+    "templates": "шаблонов",
+    "createCategory": "Создать новую категорию",
+    "createCategoryDesc": "Добавьте пользовательскую категорию для организации задач",
+    "categoryNameLabel": "Название категории",
+    "categoryNamePlaceholder": "Введите название категории",
+    "createCategoryBtn": "Создать категорию"
   },
   "goals": {
     "title": "Цели",
