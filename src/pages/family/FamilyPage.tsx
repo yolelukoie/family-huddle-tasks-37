@@ -17,7 +17,7 @@ import { Users, Share, Plus, Star, Settings, Ban, ShieldOff } from 'lucide-react
 import { useToast } from '@/hooks/use-toast';
 import { getCurrentStage, getStageName } from '@/lib/character';
 import { supabase } from '@/integrations/supabase/client';
-import { isBlocked, getBlockStatusText, type BlockReason, type BlockDuration } from '@/lib/blockUtils';
+import { isBlocked, getBlockStatusText, getBlockTimeRemaining, formatBlockTimeRemaining, type BlockReason, type BlockDuration } from '@/lib/blockUtils';
 
 export default function FamilyPage() {
   const { t } = useTranslation();
@@ -408,11 +408,18 @@ export default function FamilyPage() {
                           </div>
                         </DialogContent>
                       </Dialog>
-                    ) : (
-                      <Badge variant="destructive" className="text-xs">
-                        {t('block.noMembersAccess')}
-                      </Badge>
-                    )}
+                    ) : (() => {
+                      const membership = getUserFamily(family.id);
+                      const remaining = getBlockTimeRemaining(membership);
+                      const timeStr = remaining === Infinity ? '' : formatBlockTimeRemaining(remaining);
+                      return (
+                        <Badge variant="destructive" className="text-xs">
+                          {timeStr 
+                            ? t('block.noMembersAccessFor', { time: timeStr })
+                            : t('block.noMembersAccess')}
+                        </Badge>
+                      );
+                    })()}
 
                     <Dialog>
                       <DialogTrigger asChild>
