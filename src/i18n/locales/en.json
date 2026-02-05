@@ -553,5 +553,32 @@
     "memberLeftTitle": "Member Left",
     "familyNameChangedTitle": "Family Name Changed",
     "familyNameChanged": "Family \"{{oldName}}\" changed its name to \"{{newName}}\""
+  },
+  "report": {
+    "title": "Report Content",
+    "description": "Help us keep Family Huddle safe by reporting inappropriate content.",
+    "reasonLabel": "Reason",
+    "selectReason": "Select a reason",
+    "reasonSpam": "Spam",
+    "reasonHarassment": "Harassment / bullying",
+    "reasonHate": "Hate or abusive language",
+    "reasonSexual": "Sexual content",
+    "reasonViolence": "Violence / threats",
+    "reasonPersonalInfo": "Sharing personal info",
+    "reasonOther": "Other",
+    "detailsLabel": "Details (optional)",
+    "detailsPlaceholder": "Provide additional context...",
+    "submit": "Report",
+    "submitting": "Reporting...",
+    "successTitle": "Reported",
+    "successDesc": "Thank you for your report.",
+    "errorSubmitting": "Failed to submit report. Please try again."
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "report": "Report"
   }
 }

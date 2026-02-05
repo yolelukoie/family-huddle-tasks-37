@@ -3,8 +3,15 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
-import { ChevronDown, ChevronRight, Plus, Trash2 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { ChevronDown, ChevronRight, Plus, Trash2, MoreVertical, Flag } from 'lucide-react';
 import { TaskTemplateModal } from './TaskTemplateModal';
+import { ReportContentModal } from '@/components/modals/ReportContentModal';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useTasks } from '@/hooks/useTasks';
@@ -21,6 +28,7 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(category.isHouseChores); // House chores open by default
   const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [reportTarget, setReportTarget] = useState<TaskTemplate | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
   const { templates, addTodayTaskFromTemplate, deleteCategory, deleteTemplate } = useTasks();
@@ -111,22 +119,37 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
                   <Badge variant="warm" className="text-xs">
                     {template.starValue} ⭐
                   </Badge>
-                  {template.isDeletable && !template.isDefault && (
-                    <div
-                      onClick={async (e) => {
-                        e.stopPropagation();
-                        if (confirm(t('tasks.deleteTemplate'))) {
-                          const success = await deleteTemplate(template.id);
-                          if (success) {
-                            onTaskAdded?.(); // Refresh parent
-                          }
-                        }
-                      }}
-                      className="h-6 w-6 p-1 text-destructive hover:text-destructive hover:bg-destructive/10 rounded cursor-pointer flex items-center justify-center"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </div>
-                  )}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                      <div className="h-6 w-6 p-1 hover:bg-muted rounded cursor-pointer flex items-center justify-center">
+                        <MoreVertical className="h-3 w-3" />
+                      </div>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                      {template.isDeletable && !template.isDefault && (
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onClick={async () => {
+                            if (confirm(t('tasks.deleteTemplate'))) {
+                              const success = await deleteTemplate(template.id);
+                              if (success) {
+                                onTaskAdded?.();
+                              }
+                            }
+                          }}
+                        >
+                          <Trash2 className="h-3 w-3 mr-2" />
+                          {t('common.delete')}
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuItem
+                        onClick={() => setReportTarget(template)}
+                      >
+                        <Flag className="h-3 w-3 mr-2" />
+                        {t('common.report')}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
                 );
@@ -151,6 +174,18 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
         category={category}
         familyId={familyId}
         onTemplateCreated={() => onTaskAdded?.()}
+      />
+
+      <ReportContentModal
+        open={!!reportTarget}
+        onOpenChange={(open) => !open && setReportTarget(null)}
+        contentId={reportTarget?.id || ''}
+        contentType="task_template"
+        familyId={familyId}
+        onReported={() => {
+          setReportTarget(null);
+          onTaskAdded?.();
+        }}
       />
     </div>
   );

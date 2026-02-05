@@ -440,5 +440,32 @@
   "memberProfile": {
     "title": "Perfil de {{name}}",
     "defaultMemberName": "Miembro de la Familia"
+  },
+  "report": {
+    "title": "Reportar Contenido",
+    "description": "Ayúdanos a mantener Family Huddle seguro reportando contenido inapropiado.",
+    "reasonLabel": "Razón",
+    "selectReason": "Selecciona una razón",
+    "reasonSpam": "Spam",
+    "reasonHarassment": "Acoso / intimidación",
+    "reasonHate": "Lenguaje de odio o abusivo",
+    "reasonSexual": "Contenido sexual",
+    "reasonViolence": "Violencia / amenazas",
+    "reasonPersonalInfo": "Compartir información personal",
+    "reasonOther": "Otro",
+    "detailsLabel": "Detalles (opcional)",
+    "detailsPlaceholder": "Proporciona contexto adicional...",
+    "submit": "Reportar",
+    "submitting": "Reportando...",
+    "successTitle": "Reportado",
+    "successDesc": "Gracias por tu reporte.",
+    "errorSubmitting": "Error al enviar el reporte. Inténtalo de nuevo."
+  },
+  "common": {
+    "loading": "Cargando...",
+    "error": "Error",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "report": "Reportar"
   }
 }

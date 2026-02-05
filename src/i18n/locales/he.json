@@ -440,5 +440,32 @@
   "memberProfile": {
     "title": "הפרופיל של {{name}}",
     "defaultMemberName": "בן משפחה"
+  },
+  "report": {
+    "title": "דיווח על תוכן",
+    "description": "עזור לנו לשמור על Family Huddle בטוח על ידי דיווח על תוכן לא הולם.",
+    "reasonLabel": "סיבה",
+    "selectReason": "בחר סיבה",
+    "reasonSpam": "ספאם",
+    "reasonHarassment": "הטרדה / בריונות",
+    "reasonHate": "שפה של שנאה או פוגענית",
+    "reasonSexual": "תוכן מיני",
+    "reasonViolence": "אלימות / איומים",
+    "reasonPersonalInfo": "שיתוף מידע אישי",
+    "reasonOther": "אחר",
+    "detailsLabel": "פרטים (אופציונלי)",
+    "detailsPlaceholder": "ספק הקשר נוסף...",
+    "submit": "דווח",
+    "submitting": "מדווח...",
+    "successTitle": "דווח",
+    "successDesc": "תודה על הדיווח שלך.",
+    "errorSubmitting": "שליחת הדיווח נכשלה. נסה שוב."
+  },
+  "common": {
+    "loading": "טוען...",
+    "error": "שגיאה",
+    "cancel": "ביטול",
+    "delete": "מחק",
+    "report": "דווח"
   }
 }
