@@ -475,6 +475,10 @@
     "error": "错误",
     "cancel": "取消",
     "delete": "删除",
-    "report": "举报"
+    "report": "举报",
+    "creating": "创建中...",
+    "confirm": "确认",
+    "deleteCategoryTitle": "删除类别",
+    "deleteCategoryDesc": "这将永久删除该类别及其所有模板和任务。此操作无法撤销。"
   }
 }

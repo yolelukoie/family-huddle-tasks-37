@@ -4,12 +4,22 @@ import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ChevronDown, ChevronRight, Plus, Trash2, MoreVertical, Flag } from 'lucide-react';
+import { ChevronDown, ChevronRight, Plus, Trash2, MoreVertical, Flag, Loader2 } from 'lucide-react';
 import { TaskTemplateModal } from './TaskTemplateModal';
 import { ReportContentModal } from '@/components/modals/ReportContentModal';
 import { useToast } from '@/hooks/use-toast';
@@ -26,16 +36,17 @@ interface TaskCategorySectionProps {
 
 export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCategorySectionProps) {
   const { t } = useTranslation();
-  const [isOpen, setIsOpen] = useState(category.isHouseChores); // House chores open by default
+  const [isOpen, setIsOpen] = useState(category.isHouseChores);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [reportTarget, setReportTarget] = useState<TaskTemplate | null>(null);
+  const [showDeleteCategoryDialog, setShowDeleteCategoryDialog] = useState(false);
+  const [showDeleteTemplateDialog, setShowDeleteTemplateDialog] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
   const { templates, addTodayTaskFromTemplate, deleteCategory, deleteTemplate } = useTasks();
 
   const categoryTemplates = templates.filter(t => t.categoryId === category.id);
-  
-  // Translate category name
   const translatedCategoryName = translateCategoryName(category.name, t);
 
   const handleAddToToday = async (template: TaskTemplate) => {
@@ -49,8 +60,6 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
         title: t('tasks.addToToday'),
         description: `"${translatedTaskName}" ${t('tasks.addToTodayDesc')}`,
       });
-      
-      // Trigger refresh in parent component
       onTaskAdded?.();
     } else {
       toast({
@@ -58,6 +67,36 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
         description: "Failed to add task to today. Please try again.",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleDeleteCategory = async () => {
+    setIsDeleting(true);
+    try {
+      const success = await deleteCategory(category.id);
+      if (success) {
+        toast({
+          title: t('tasks.categoryDeleted'),
+          description: `"${translatedCategoryName}" ${t('tasks.deleteCategorySuccess')}`,
+        });
+        onTaskAdded?.();
+      }
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteCategoryDialog(false);
+    }
+  };
+
+  const handleDeleteTemplate = async (templateId: string) => {
+    setIsDeleting(true);
+    try {
+      const success = await deleteTemplate(templateId);
+      if (success) {
+        onTaskAdded?.();
+      }
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteTemplateDialog(null);
     }
   };
 
@@ -75,18 +114,9 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={async (e) => {
+                onClick={(e) => {
                   e.stopPropagation();
-                  if (confirm(t('tasks.deleteCategory'))) {
-                    const success = await deleteCategory(category.id);
-                    if (success) {
-                      toast({
-                        title: t('tasks.categoryDeleted'),
-                        description: `"${translatedCategoryName}" ${t('tasks.deleteCategorySuccess')}`,
-                      });
-                      onTaskAdded?.(); // Refresh parent
-                    }
-                  }
+                  setShowDeleteCategoryDialog(true);
                 }}
                 className="h-6 w-6 p-0 text-destructive hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
               >
@@ -99,61 +129,52 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
         <CollapsibleContent className="space-y-2 pt-2">
           <div className="ml-7 space-y-2">
             {categoryTemplates
-              .filter(template => template.name !== 'test') // Filter out the test task
+              .filter(template => template.name !== 'test')
               .map(template => {
                 const translatedTaskName = translateTaskName(template.name, t);
                 const translatedDescription = translateTaskDescription(template.description, t);
                 return (
-              <div 
-                key={template.id} 
-                className="flex items-center justify-between p-2 border rounded cursor-pointer hover:bg-accent transition-colors"
-                onClick={() => handleAddToToday(template)}
-              >
-                <div className="flex-1">
-                  <div className="font-medium text-sm">{translatedTaskName}</div>
-                  {translatedDescription && (
-                  <div className="text-xs text-muted-foreground">{translatedDescription}</div>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="warm" className="text-xs">
-                    {template.starValue} ⭐
-                  </Badge>
-                  {!template.isDefault && (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                        <div className="h-6 w-6 p-1 hover:bg-muted rounded cursor-pointer flex items-center justify-center">
-                          <MoreVertical className="h-3 w-3" />
-                        </div>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                        {template.isDeletable && (
-                          <DropdownMenuItem
-                            className="text-destructive focus:text-destructive"
-                            onClick={async () => {
-                              if (confirm(t('tasks.deleteTemplate'))) {
-                                const success = await deleteTemplate(template.id);
-                                if (success) {
-                                  onTaskAdded?.();
-                                }
-                              }
-                            }}
-                          >
-                            <Trash2 className="h-3 w-3 mr-2" />
-                            {t('common.delete')}
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem
-                          onClick={() => setReportTarget(template)}
-                        >
-                          <Flag className="h-3 w-3 mr-2" />
-                          {t('common.report')}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  )}
-                </div>
-              </div>
+                  <div 
+                    key={template.id} 
+                    className="flex items-center justify-between p-2 border rounded cursor-pointer hover:bg-accent transition-colors"
+                    onClick={() => handleAddToToday(template)}
+                  >
+                    <div className="flex-1">
+                      <div className="font-medium text-sm">{translatedTaskName}</div>
+                      {translatedDescription && (
+                        <div className="text-xs text-muted-foreground">{translatedDescription}</div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="warm" className="text-xs">
+                        {template.starValue} ⭐
+                      </Badge>
+                      {!template.isDefault && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                            <div className="h-6 w-6 p-1 hover:bg-muted rounded cursor-pointer flex items-center justify-center">
+                              <MoreVertical className="h-3 w-3" />
+                            </div>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                            {template.isDeletable && (
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                onClick={() => setShowDeleteTemplateDialog(template.id)}
+                              >
+                                <Trash2 className="h-3 w-3 mr-2" />
+                                {t('common.delete')}
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuItem onClick={() => setReportTarget(template)}>
+                              <Flag className="h-3 w-3 mr-2" />
+                              {t('common.report')}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                    </div>
+                  </div>
                 );
               })}
             
@@ -192,6 +213,60 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
           onTaskAdded?.();
         }}
       />
+
+      {/* Delete Category Confirmation Dialog */}
+      <AlertDialog open={showDeleteCategoryDialog} onOpenChange={setShowDeleteCategoryDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('common.deleteCategoryTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('common.deleteCategoryDesc')}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteCategory}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  {t('common.delete')}
+                </>
+              ) : (
+                t('common.delete')
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Template Confirmation Dialog */}
+      <AlertDialog open={!!showDeleteTemplateDialog} onOpenChange={(open) => !open && setShowDeleteTemplateDialog(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('tasks.deleteTemplate')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('tasks.deleteCategory')}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => showDeleteTemplateDialog && handleDeleteTemplate(showDeleteTemplateDialog)}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  {t('common.delete')}
+                </>
+              ) : (
+                t('common.delete')
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
