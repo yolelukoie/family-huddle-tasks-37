@@ -618,6 +618,8 @@
     "restricted": "Action Restricted",
     "cannotAssignTasks": "You are blocked and cannot assign tasks to other family members.",
     "blockedWithReason": "You are blocked in this family for {{reason}} and cannot assign tasks.",
+    "cannotCreateInDefaultCategory": "You cannot create tasks in shared categories while blocked. Use custom categories instead.",
+    "viewOnlyWhileBlocked": "View only - cannot add tasks while blocked",
     "noMembersAccess": "Members list restricted",
     "noMembersAccessFor": "Members list restricted for {{time}}",
     "reasons": {
