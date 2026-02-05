@@ -22,7 +22,7 @@ import { isBlocked, getBlockStatusText, type BlockReason, type BlockDuration } f
 export default function FamilyPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { activeFamilyId, userFamilies, families, setActiveFamilyId, createFamily, joinFamily, updateFamilyName, quitFamily, blockFamilyMember, unblockFamilyMember, getFamilyMembers, getUserProfile } = useApp();
+  const { activeFamilyId, userFamilies, families, setActiveFamilyId, createFamily, joinFamily, updateFamilyName, quitFamily, blockFamilyMember, unblockFamilyMember, getFamilyMembers, getUserProfile, getUserFamily } = useApp();
   const { toast } = useToast();
   const [showJoinFamily, setShowJoinFamily] = useState(false);
   const [inviteCode, setInviteCode] = useState('');
@@ -305,7 +305,7 @@ export default function FamilyPage() {
                   </div>
                   <div className="flex flex-wrap gap-2 pt-2 border-t">
                     {/* Only show Members button if user is NOT blocked */}
-                    {!isBlocked(userFamilies.find(uf => uf.familyId === family.id)) ? (
+                    {!isBlocked(getUserFamily(family.id)) ? (
                       <Dialog>
                         <DialogTrigger asChild>
                           <Button variant="theme" size="sm" className="flex-1 sm:flex-initial">
