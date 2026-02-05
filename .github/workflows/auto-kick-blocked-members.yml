@@ -2,7 +2,6 @@ name: Auto-kick blocked members
 
 on:
   schedule:
-    # GitHub schedules are UTC. Adjust as needed.
     - cron: "0 3 * * *"
   workflow_dispatch: {}
 
@@ -12,21 +11,26 @@ jobs:
     steps:
       - name: Call Supabase Edge Function
         env:
-          FUNCTION_URL: ${{ secrets.SUPABASE_URL }}
+          PROJECT_REF: zglvtspmrihotbfbjtvw
+          FUNCTION_NAME: auto-kick-blocked-members
           SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           set -euo pipefail
+
+          FUNCTION_URL="https://${PROJECT_REF}.supabase.co/functions/v1/${FUNCTION_NAME}"
           echo "Calling: $FUNCTION_URL"
-          # Call function and capture HTTP status
+
           RESP=$(curl -sS -w "\n%{http_code}" -X POST "$FUNCTION_URL" \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
             -d '{}')
+
           BODY=$(echo "$RESP" | head -n -1)
           CODE=$(echo "$RESP" | tail -n 1)
+
           echo "HTTP $CODE"
           echo "Response: $BODY"
-          # Fail workflow if not 2xx
+
           if [ "$CODE" -lt 200 ] || [ "$CODE" -ge 300 ]; then
             echo "Request failed"
             exit 1
