@@ -66,20 +66,8 @@ export function ReportContentModal({
 
     setIsSubmitting(true);
     try {
-      // 1. Insert report with content_name
-      const { error: reportError } = await supabase.from('reports').insert({
-        reporter_id: user.id,
-        family_id: familyId,
-        content_id: contentId,
-        content_type: contentType,
-        content_name: contentName || null,
-        reason,
-        details: details.trim() || null,
-      });
-
-      if (reportError) throw reportError;
-
-      // 2. Delete the task_template if it's a task_template report
+      // 1. Delete the task_template FIRST if it's a task_template report
+      // This ensures the task is removed before we create the report
       if (contentType === 'task_template' && contentId) {
         const { error: deleteError } = await supabase
           .from('task_templates')
@@ -88,9 +76,22 @@ export function ReportContentModal({
 
         if (deleteError) {
           console.error('Failed to delete task template:', deleteError);
-          // Continue anyway - the report was created
+          throw deleteError; // Fail if we can't delete
         }
       }
+
+      // 2. Insert report with content_name (store the name for audit purposes)
+      const { error: reportError } = await supabase.from('reports').insert({
+        reporter_id: user.id,
+        family_id: familyId,
+        content_id: contentId,
+        content_type: contentType,
+        content_name: contentName && contentName.trim() ? contentName.trim() : null,
+        reason,
+        details: details.trim() || null,
+      });
+
+      if (reportError) throw reportError;
 
       // 3. Notify the creator if we have their ID and it's not the reporter
       if (createdBy && createdBy !== user.id && contentType === 'task_template') {
