@@ -1,10 +1,12 @@
+import { useTranslation } from 'react-i18next';
 import { NavigationHeader } from '@/components/layout/NavigationHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function RefundPolicyPage() {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen bg-gradient-to-b from-[hsl(var(--section-tint))] to-background">
-      <NavigationHeader title="Refund Policy" showBackButton={true} />
+      <NavigationHeader title={t('legal.refundPolicy')} showBackButton={true} />
       
       <div className="max-w-3xl mx-auto p-4 space-y-6 pb-12">
         <Card>

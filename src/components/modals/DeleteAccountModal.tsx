@@ -88,35 +88,34 @@ export function DeleteAccountModal({ userId }: DeleteAccountModalProps) {
       <AlertDialogTrigger asChild>
         <Button variant="destructive" size="sm">
           <Trash2 className="h-4 w-4 mr-2" />
-          {t('personal.deleteAccount') || 'Delete Account'}
+          {t('personal.deleteAccount')}
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent className="max-w-md">
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2 text-destructive">
             <AlertTriangle className="h-5 w-5" />
-            {t('personal.deleteAccountTitle') || 'Delete Your Account'}
+            {t('personal.deleteAccountTitle')}
           </AlertDialogTitle>
           <AlertDialogDescription asChild>
             <div className="space-y-4 text-left">
               <p className="text-sm text-muted-foreground">
-                {t('personal.deleteAccountWarning') || 
-                  'This action is permanent and cannot be undone. All your data will be permanently deleted, including:'}
+                {t('personal.deleteAccountWarning')}
               </p>
               <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
-                <li>{t('personal.deleteDataProfile') || 'Your profile and personal information'}</li>
-                <li>{t('personal.deleteDataTasks') || 'All tasks and task history'}</li>
-                <li>{t('personal.deleteDataGoals') || 'Goals and progress'}</li>
-                <li>{t('personal.deleteDataBadges') || 'Badges and achievements'}</li>
-                <li>{t('personal.deleteDataCharacter') || 'Character customizations'}</li>
-                <li>{t('personal.deleteDataChat') || 'Chat messages'}</li>
-                <li>{t('personal.deleteDataFamily') || 'Family memberships'}</li>
+                <li>{t('personal.deleteDataProfile')}</li>
+                <li>{t('personal.deleteDataTasks')}</li>
+                <li>{t('personal.deleteDataGoals')}</li>
+                <li>{t('personal.deleteDataBadges')}</li>
+                <li>{t('personal.deleteDataCharacter')}</li>
+                <li>{t('personal.deleteDataChat')}</li>
+                <li>{t('personal.deleteDataFamily')}</li>
               </ul>
               
               <div className="flex items-center gap-2 p-3 bg-muted rounded-md">
                 <Mail className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                 <p className="text-xs text-muted-foreground">
-                  {t('personal.deleteAccountSupport') || 'Need help? Contact us at'}{' '}
+                  {t('personal.deleteAccountSupport')}{' '}
                   <a 
                     href="mailto:support@familyhuddletasks.com" 
                     className="text-primary hover:underline font-medium"
@@ -128,7 +127,7 @@ export function DeleteAccountModal({ userId }: DeleteAccountModalProps) {
 
               <div className="space-y-2 pt-2">
                 <Label htmlFor="confirm-delete" className="text-sm font-medium">
-                  {t('personal.deleteConfirmLabel') || 'Type DELETE to confirm:'}
+                  {t('personal.deleteConfirmLabel')}
                 </Label>
                 <Input
                   id="confirm-delete"
@@ -144,7 +143,7 @@ export function DeleteAccountModal({ userId }: DeleteAccountModalProps) {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isDeleting}>
-            {t('common.cancel') || 'Cancel'}
+            {t('common.cancel')}
           </AlertDialogCancel>
           <Button
             variant="destructive"
@@ -154,12 +153,12 @@ export function DeleteAccountModal({ userId }: DeleteAccountModalProps) {
             {isDeleting ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                {t('personal.deleting') || 'Deleting...'}
+                {t('personal.deleting')}
               </>
             ) : (
               <>
                 <Trash2 className="h-4 w-4 mr-2" />
-                {t('personal.deleteAccountConfirm') || 'Delete Account'}
+                {t('personal.deleteAccountConfirm')}
               </>
             )}
           </Button>

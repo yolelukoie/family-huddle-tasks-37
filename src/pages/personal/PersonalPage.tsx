@@ -483,12 +483,12 @@ export default function PersonalPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-destructive">
               <Trash2 className="h-5 w-5" />
-              {t('personal.deleteAccount') || 'Delete Account'}
+              {t('personal.deleteAccount')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground mb-4">
-              {t('personal.deleteAccountDesc') || 'Permanently delete your account and all associated data. This action cannot be undone.'}
+              {t('personal.deleteAccountDesc')}
             </p>
             <DeleteAccountModal userId={user.id} />
           </CardContent>
