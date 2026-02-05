@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-
+import { ScrollArea } from '@/components/ui/scroll-area';
 const StarIcon = () => (
   <svg viewBox="0 0 100 100" className="inline-block w-[1.2em] h-[1.2em] ml-1 align-middle">
     {/* Main star - centered */}
@@ -287,29 +287,68 @@ export function AuthPage() {
                       </Label>
                     </div>
                     
-                    <div className="flex items-start space-x-3">
-                      <Checkbox
-                        id="terms-agreement"
-                        checked={agreedToTerms}
-                        onCheckedChange={(checked) => {
-                          setAgreedToTerms(checked === true);
-                          if (checked) setShowSignupError(false);
-                        }}
-                        className="mt-0.5"
-                      />
-                      <Label 
-                        htmlFor="terms-agreement" 
-                        className="text-sm leading-tight cursor-pointer font-normal"
-                      >
-                        I agree to the{' '}
-                        <Link 
-                          to="/terms" 
-                          className="text-primary underline hover:text-primary/80"
-                          target="_blank"
+                    <div className="space-y-2">
+                      <div className="flex items-start space-x-3">
+                        <Checkbox
+                          id="terms-agreement"
+                          checked={agreedToTerms}
+                          onCheckedChange={(checked) => {
+                            setAgreedToTerms(checked === true);
+                            if (checked) setShowSignupError(false);
+                          }}
+                          className="mt-0.5"
+                        />
+                        <Label 
+                          htmlFor="terms-agreement" 
+                          className="text-sm leading-tight cursor-pointer font-normal"
                         >
-                          Terms of Use
-                        </Link>
-                      </Label>
+                          I agree to the Terms of Use
+                        </Label>
+                      </div>
+                      
+                      <ScrollArea className="h-32 w-full rounded-md border border-border bg-muted/30 p-3">
+                        <div className="text-xs text-muted-foreground space-y-3 pr-3">
+                          <p className="font-semibold text-foreground">Terms of Service – Family Huddle</p>
+                          <p className="text-[10px]">Last updated: 31 January 2026</p>
+                          
+                          <p>These Terms of Service ("Terms") govern your use of the Family Huddle application and any related services (together, the "Service"). The Service is owned and operated by Yana Sklyar, Tel Aviv, Israel ("we", "us", "our").</p>
+                          
+                          <p>By creating an account or using the Service, you agree to these Terms. If you do not agree, please do not use the Service.</p>
+                          
+                          <p className="font-medium text-foreground">1. What Family Huddle Is</p>
+                          <p>Family Huddle is a family and group task-management app that allows users to create, assign, and track tasks and goals, collaborate with family members and friends, and share progress and feedback.</p>
+                          
+                          <p className="font-medium text-foreground">2. Eligibility</p>
+                          <p>You may use the Service only if you are at least 13 years old, and if you are between 13 and 18 years old, you are using the Service with the permission and supervision of a parent or legal guardian.</p>
+                          
+                          <p className="font-medium text-foreground">3. Accounts and Security</p>
+                          <p>You agree to provide accurate information, keep your login credentials secure, and be responsible for all activity that occurs under your account.</p>
+                          
+                          <p className="font-medium text-foreground">4. Subscriptions, Payments, and Refunds</p>
+                          <p>The standard price for a Family Huddle Premium subscription is $4.90 USD per month. We may offer a free trial period (currently 4 days). Unless you cancel before the end of the free trial, your subscription will automatically start. We do not provide refunds for partial billing periods except where required by applicable law.</p>
+                          
+                          <p className="font-medium text-foreground">5. Acceptable Use</p>
+                          <p>You agree not to use the Service to violate any applicable laws, harass or harm others, share inappropriate content, or attempt unauthorized access to the Service.</p>
+                          
+                          <p className="font-medium text-foreground">6. User Content</p>
+                          <p>You retain ownership of your User Content. By using the Service, you grant us a worldwide, non-exclusive, royalty-free license to store, process, and display your User Content as necessary to operate the Service.</p>
+                          
+                          <p className="font-medium text-foreground">7. Privacy</p>
+                          <p>We collect account data, profile and family data, usage data, and technical data. We use your data to provide and maintain the Service, personalize your experience, enable collaboration, and comply with legal obligations. We do not sell your personal data to third parties.</p>
+                          
+                          <p className="font-medium text-foreground">8. Disclaimers</p>
+                          <p>The Service is provided on an "as is" and "as available" basis, without any warranties of any kind.</p>
+                          
+                          <p className="font-medium text-foreground">9. Limitation of Liability</p>
+                          <p>To the maximum extent permitted by law, we are not liable for any indirect, incidental, special, consequential, or punitive damages.</p>
+                          
+                          <p className="font-medium text-foreground">10. Governing Law</p>
+                          <p>These Terms are governed by the laws of Israel. Any disputes will be subject to the exclusive jurisdiction of the courts in Tel Aviv, Israel.</p>
+                          
+                          <p className="font-medium text-foreground">Contact</p>
+                          <p>Email: support@familyhuddletasks.com</p>
+                        </div>
+                      </ScrollArea>
                     </div>
                   </div>
                   
