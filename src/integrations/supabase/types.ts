@@ -729,6 +729,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      block_family_member: {
+        Args: {
+          p_blocked_indefinite: boolean
+          p_blocked_until: string
+          p_family_id: string
+          p_member_user_id: string
+          p_reason: string
+        }
+        Returns: boolean
+      }
       generate_invite_code: { Args: never; Returns: string }
       get_family_members: {
         Args: { p_family_id: string }
@@ -784,6 +794,10 @@ export type Database = {
       seed_family_defaults: {
         Args: { p_creator: string; p_family_id: string }
         Returns: undefined
+      }
+      unblock_family_member: {
+        Args: { p_family_id: string; p_member_user_id: string }
+        Returns: boolean
       }
     }
     Enums: {
