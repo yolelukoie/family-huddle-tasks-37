@@ -338,16 +338,26 @@ export default function FamilyPage() {
                                     }
                                   }}
                                 >
-                                  <Avatar className="h-10 w-10">
+                                <Avatar className="h-10 w-10">
                                     <AvatarImage src={memberProfile?.avatar_url} alt={memberProfile?.displayName} />
                                     <AvatarFallback>
                                       {getInitials(memberProfile?.displayName || 'FM')}
                                     </AvatarFallback>
                                   </Avatar>
-                                  <div className="flex flex-col">
-                                    <span className="font-medium">
-                                      {memberProfile?.displayName || t('memberProfile.defaultMemberName')}
-                                    </span>
+                                  <div className="flex flex-col min-w-0">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span className="font-medium truncate">
+                                        {memberProfile?.displayName || t('memberProfile.defaultMemberName')}
+                                      </span>
+                                      {isCurrentUser && (
+                                        <Badge variant="secondary" className="shrink-0">{t('family.you')}</Badge>
+                                      )}
+                                      {isBlocked(member) && (
+                                        <Badge variant="destructive" className="shrink-0 text-xs">
+                                          {getBlockStatusText(member, t)}
+                                        </Badge>
+                                      )}
+                                    </div>
                                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                       <Star className="h-3 w-3" />
                                       <span>{member.totalStars} {t('main.stars')}</span>
@@ -356,16 +366,7 @@ export default function FamilyPage() {
                                     </div>
                                   </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                  {isCurrentUser && (
-                                    <Badge variant="secondary">{t('family.you')}</Badge>
-                                  )}
-                                  {/* Show blocked status */}
-                                  {isBlocked(member) && (
-                                    <Badge variant="destructive" className="text-xs">
-                                      {getBlockStatusText(member, t)}
-                                    </Badge>
-                                  )}
+                                <div className="flex items-center gap-2 shrink-0">
                                   {!isCurrentUser && (
                                     <>
                                       {isBlocked(member) ? (

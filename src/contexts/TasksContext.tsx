@@ -1,10 +1,12 @@
 import React, { createContext, useContext, useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
 import { useApp } from '@/hooks/useApp';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useCelebrations } from '@/hooks/useCelebrations';
 import { getNewlyUnlockedBadges } from '@/lib/badges';
+import { isBlocked } from '@/lib/blockUtils';
 import type { Task, TaskCategory, TaskTemplate, Badge } from '@/lib/types';
 
 const MAX_CATEGORIES_PER_FAMILY = 10;
@@ -33,6 +35,7 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const { activeFamilyId, applyStarsDelta, getUserFamily } = useApp();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const { addCelebration } = useCelebrations();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [categories, setCategories] = useState<TaskCategory[]>([]);
@@ -205,6 +208,20 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
 
   const addTask = useCallback(async (task: Omit<Task, 'id' | 'createdAt'>) => {
     if (!activeFamilyId || !user) return null;
+
+    // Check if user is blocked and trying to assign to someone else
+    const userFamily = getUserFamily(activeFamilyId);
+    if (isBlocked(userFamily)) {
+      const targetUser = task.assignedTo ?? user.id;
+      if (targetUser !== user.id) {
+        toast({
+          title: t('block.restricted'),
+          description: t('block.cannotAssignTasks'),
+          variant: 'destructive',
+        });
+        return null;
+      }
+    }
   
     // Ensure due_date defaults to today if missing
     const ensureDate = (d?: string) => {

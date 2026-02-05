@@ -8,12 +8,14 @@ import { useAuth } from '@/hooks/useAuth';
 import { useApp } from '@/hooks/useApp';
 import { useChat } from '@/hooks/useChat';
 import { NavigationHeader } from '@/components/layout/NavigationHeader';
-import { Send, Trash2 } from 'lucide-react';
+import { Send, Trash2, Ban } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
+import { isBlocked } from '@/lib/blockUtils';
+import { ROUTES } from '@/lib/constants';
 
 export default function ChatPage() {
   const { user } = useAuth();
-  const { activeFamilyId } = useApp();
+  const { activeFamilyId, getUserFamily } = useApp();
   const { messages, sendMessage: sendChatMessage, clearChat } = useChat();
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -45,6 +47,30 @@ export default function ChatPage() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">{t('tasks.settingUpFamily')}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Check if user is blocked in this family
+  const userFamily = getUserFamily(activeFamilyId);
+  if (isBlocked(userFamily)) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[hsl(var(--section-tint))] to-background">
+        <NavigationHeader title={t('chat.title')} />
+        <div className="max-w-4xl mx-auto p-4">
+          <Card accent>
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <Ban className="h-12 w-12 text-destructive mb-4" />
+              <h2 className="text-lg font-semibold mb-2">{t('block.chatRestricted')}</h2>
+              <p className="text-muted-foreground text-center mb-4">
+                {t('block.cannotAccessWhileBlocked')}
+              </p>
+              <Button onClick={() => navigate(ROUTES.family)}>
+                {t('nav.family')}
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
