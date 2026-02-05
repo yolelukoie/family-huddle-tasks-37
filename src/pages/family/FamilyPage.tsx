@@ -304,108 +304,115 @@ export default function FamilyPage() {
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-2 pt-2 border-t">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="theme" size="sm" className="flex-1 sm:flex-initial">
-                          <Users className="h-4 w-4 mr-1" />
-                          <span className="sm:hidden">{t('family.members')}</span>
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-md">
-                        <DialogHeader>
-                          <DialogTitle>{t('family.familyMembers')}</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-2">
-                          {getFamilyMembers(family.id).map((member) => {
-                            const memberProfile = getUserProfile(member.userId);
-                            const isCurrentUser = member.userId === user.id;
-                            const currentStage = getCurrentStage(member.totalStars);
-                            const stageName = getStageName(currentStage);
-                            
-                            return (
-                              <div 
-                                key={member.userId}
-                                className="flex items-center justify-between p-3 border rounded-lg"
-                              >
+                    {/* Only show Members button if user is NOT blocked */}
+                    {!isBlocked(userFamilies.find(uf => uf.familyId === family.id)) ? (
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="theme" size="sm" className="flex-1 sm:flex-initial">
+                            <Users className="h-4 w-4 mr-1" />
+                            <span className="sm:hidden">{t('family.members')}</span>
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-md">
+                          <DialogHeader>
+                            <DialogTitle>{t('family.familyMembers')}</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-2">
+                            {getFamilyMembers(family.id).map((member) => {
+                              const memberProfile = getUserProfile(member.userId);
+                              const isCurrentUser = member.userId === user.id;
+                              const currentStage = getCurrentStage(member.totalStars);
+                              const stageName = getStageName(currentStage);
+                              
+                              return (
                                 <div 
-                                  className={`flex items-center gap-3 flex-1 ${
-                                    !isCurrentUser ? 'cursor-pointer hover:opacity-80' : ''
-                                  }`}
-                                  onClick={() => {
-                                    if (!isCurrentUser) {
-                                      setSelectedMember({ member, memberProfile });
-                                      setShowMemberProfile(true);
-                                    }
-                                  }}
+                                  key={member.userId}
+                                  className="flex items-center justify-between p-3 border rounded-lg"
                                 >
-                                <Avatar className="h-10 w-10">
-                                    <AvatarImage src={memberProfile?.avatar_url} alt={memberProfile?.displayName} />
-                                    <AvatarFallback>
-                                      {getInitials(memberProfile?.displayName || 'FM')}
-                                    </AvatarFallback>
-                                  </Avatar>
-                                  <div className="flex flex-col min-w-0">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                      <span className="font-medium truncate">
-                                        {memberProfile?.displayName || t('memberProfile.defaultMemberName')}
-                                      </span>
-                                      {isCurrentUser && (
-                                        <Badge variant="secondary" className="shrink-0">{t('family.you')}</Badge>
-                                      )}
-                                      {isBlocked(member) && (
-                                        <Badge variant="destructive" className="shrink-0 text-xs">
-                                          {getBlockStatusText(member, t)}
-                                        </Badge>
-                                      )}
-                                    </div>
-                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                      <Star className="h-3 w-3" />
-                                      <span>{member.totalStars} {t('main.stars')}</span>
-                                      <span>•</span>
-                                      <span>{stageName}</span>
+                                  <div 
+                                    className={`flex items-center gap-3 flex-1 ${
+                                      !isCurrentUser ? 'cursor-pointer hover:opacity-80' : ''
+                                    }`}
+                                    onClick={() => {
+                                      if (!isCurrentUser) {
+                                        setSelectedMember({ member, memberProfile });
+                                        setShowMemberProfile(true);
+                                      }
+                                    }}
+                                  >
+                                  <Avatar className="h-10 w-10">
+                                      <AvatarImage src={memberProfile?.avatar_url} alt={memberProfile?.displayName} />
+                                      <AvatarFallback>
+                                        {getInitials(memberProfile?.displayName || 'FM')}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex flex-col min-w-0">
+                                      <div className="flex items-center gap-2 flex-wrap">
+                                        <span className="font-medium truncate">
+                                          {memberProfile?.displayName || t('memberProfile.defaultMemberName')}
+                                        </span>
+                                        {isCurrentUser && (
+                                          <Badge variant="secondary" className="shrink-0">{t('family.you')}</Badge>
+                                        )}
+                                        {isBlocked(member) && (
+                                          <Badge variant="destructive" className="shrink-0 text-xs">
+                                            {getBlockStatusText(member, t)}
+                                          </Badge>
+                                        )}
+                                      </div>
+                                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                        <Star className="h-3 w-3" />
+                                        <span>{member.totalStars} {t('main.stars')}</span>
+                                        <span>•</span>
+                                        <span>{stageName}</span>
+                                      </div>
                                     </div>
                                   </div>
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    {!isCurrentUser && (
+                                      <>
+                                        {isBlocked(member) ? (
+                                          <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => handleUnblockMember(member.userId, family.id)}
+                                            className="h-8 text-primary hover:text-primary hover:bg-primary/10"
+                                          >
+                                            <ShieldOff className="h-4 w-4 mr-1" />
+                                            {t('block.unblockBtn')}
+                                          </Button>
+                                        ) : (
+                                          <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => {
+                                              setMemberToBlock({
+                                                userId: member.userId,
+                                                displayName: memberProfile?.displayName || t('memberProfile.defaultMemberName'),
+                                                familyId: family.id
+                                              });
+                                            }}
+                                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                          >
+                                            <Ban className="h-4 w-4" />
+                                          </Button>
+                                        )}
+                                      </>
+                                    )}
+                                  </div>
                                 </div>
-                                <div className="flex items-center gap-2 shrink-0">
-                                  {!isCurrentUser && (
-                                    <>
-                                      {isBlocked(member) ? (
-                                        <Button
-                                          type="button"
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() => handleUnblockMember(member.userId, family.id)}
-                                          className="h-8 text-primary hover:text-primary hover:bg-primary/10"
-                                        >
-                                          <ShieldOff className="h-4 w-4 mr-1" />
-                                          {t('block.unblockBtn')}
-                                        </Button>
-                                      ) : (
-                                        <Button
-                                          type="button"
-                                          variant="ghost"
-                                          size="icon"
-                                          onClick={() => {
-                                            setMemberToBlock({
-                                              userId: member.userId,
-                                              displayName: memberProfile?.displayName || t('memberProfile.defaultMemberName'),
-                                              familyId: family.id
-                                            });
-                                          }}
-                                          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                        >
-                                          <Ban className="h-4 w-4" />
-                                        </Button>
-                                      )}
-                                    </>
-                                  )}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </DialogContent>
-                    </Dialog>
+                              );
+                            })}
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    ) : (
+                      <Badge variant="destructive" className="text-xs">
+                        {t('block.noMembersAccess')}
+                      </Badge>
+                    )}
 
                     <Dialog>
                       <DialogTrigger asChild>
