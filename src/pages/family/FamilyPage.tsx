@@ -323,11 +323,11 @@ export default function FamilyPage() {
                                   </Avatar>
                                   <div className="flex flex-col">
                                     <span className="font-medium">
-                                      {memberProfile?.displayName || 'Family Member'}
+                                      {memberProfile?.displayName || t('memberProfile.defaultMemberName')}
                                     </span>
                                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                       <Star className="h-3 w-3" />
-                                      <span>{member.totalStars} stars</span>
+                                      <span>{member.totalStars} {t('main.stars')}</span>
                                       <span>•</span>
                                       <span>{stageName}</span>
                                     </div>
@@ -345,8 +345,8 @@ export default function FamilyPage() {
                                       onClick={() => {
                                         setMemberToRemove({
                                           userId: member.userId,
-                                          displayName: memberProfile?.displayName || 'Family Member',
-                                          familyId: family.id
+                                        displayName: memberProfile?.displayName || t('memberProfile.defaultMemberName'),
+                                        familyId: family.id
                                         });
                                       }}
                                       className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"

@@ -40,7 +40,7 @@ export function MemberProfileModal({ open, onOpenChange, member, memberProfile, 
   // Get member's active goal from context
   const activeGoal = goals.find(g => !g.completed && g.userId === member.userId && g.familyId === familyId);
 
-  const displayName = memberProfile?.displayName || `Family Member`;
+  const displayName = memberProfile?.displayName || t('memberProfile.defaultMemberName');
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -48,7 +48,7 @@ export function MemberProfileModal({ open, onOpenChange, member, memberProfile, 
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Star className="h-5 w-5 text-primary" />
-            {displayName}'s Profile
+            {t('memberProfile.title', { name: displayName })}
           </DialogTitle>
         </DialogHeader>
         
@@ -98,8 +98,8 @@ export function MemberProfileModal({ open, onOpenChange, member, memberProfile, 
               {/* Progress Bar */}
               <div className="space-y-2 mb-4">
                 <div className="flex justify-between text-sm">
-                  <span>Progress to next stage</span>
-                  <span>{stageProgress.current}/{stageProgress.target} stars</span>
+                  <span>{t('main.progressToNext')}</span>
+                  <span>{stageProgress.current}/{stageProgress.target} {t('main.stars')}</span>
                 </div>
                 <Progress value={stageProgress.percentage} className="h-3" />
               </div>
@@ -109,11 +109,11 @@ export function MemberProfileModal({ open, onOpenChange, member, memberProfile, 
               {activeGoal && (
                 <div className="mb-4">
                   <div className="p-3 bg-family-success/10 rounded-lg border border-family-success/20">
-                    <div className="text-sm font-medium text-family-success mb-1">Active Goal</div>
-                    <div className="text-sm mb-2">{activeGoal.currentStars}/{activeGoal.targetStars} stars</div>
+                    <div className="text-sm font-medium text-family-success mb-1">{t('main.activeGoal')}</div>
+                    <div className="text-sm mb-2">{activeGoal.currentStars}/{activeGoal.targetStars} {t('main.stars')}</div>
                     <Progress value={(activeGoal.currentStars / activeGoal.targetStars) * 100} className="h-2" />
                     {activeGoal.reward && (
-                      <div className="text-xs text-muted-foreground mt-1">Reward: {activeGoal.reward}</div>
+                      <div className="text-xs text-muted-foreground mt-1">{t('goals.reward')} {activeGoal.reward}</div>
                     )}
                   </div>
                 </div>
@@ -126,14 +126,14 @@ export function MemberProfileModal({ open, onOpenChange, member, memberProfile, 
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Calendar className="h-5 w-5" />
-                Today's Tasks
+                {t('main.todayTasks')}
                 <Badge variant="secondary">{todaysTasks.length}</Badge>
               </CardTitle>
             </CardHeader>
             <CardContent>
               {todaysTasks.length === 0 ? (
                 <div className="text-center py-4 text-muted-foreground">
-                  No tasks for today! 
+                  {t('main.noTasksToday')} 
                 </div>
               ) : (
                 <div className="space-y-2">

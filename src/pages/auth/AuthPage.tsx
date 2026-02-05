@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -27,6 +28,7 @@ const StarIcon = () => (
 );
 
 export function AuthPage() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -53,14 +55,14 @@ export function AuthPage() {
     
     if (error) {
       toast({
-        title: "Sign in failed",
+        title: t('auth.signInFailed'),
         description: error.message,
         variant: "destructive",
       });
     } else {
       toast({
-        title: "Welcome back!",
-        description: "Successfully signed in.",
+        title: t('auth.welcomeBack'),
+        description: t('auth.successfullySignedIn'),
       });
       // Let AppLayout handle routing based on user state
     }
@@ -83,14 +85,14 @@ export function AuthPage() {
     
     if (error) {
       toast({
-        title: "Sign up failed",
+        title: t('auth.signUpFailed'),
         description: error.message,
         variant: "destructive",
       });
     } else {
       toast({
-        title: "Check your email!",
-        description: "We've sent you a confirmation link.",
+        title: t('auth.checkEmail'),
+        description: t('auth.confirmationLinkSent'),
       });
     }
     
@@ -101,8 +103,8 @@ export function AuthPage() {
     e.preventDefault();
     if (!email) {
       toast({
-        title: "Email required",
-        description: "Please enter your email address first.",
+        title: t('auth.emailRequired'),
+        description: t('auth.enterEmailFirst'),
         variant: "destructive",
       });
       return;
@@ -113,14 +115,14 @@ export function AuthPage() {
     
     if (error) {
       toast({
-        title: "Password reset failed",
+        title: t('auth.passwordResetFailed'),
         description: error.message,
         variant: "destructive",
       });
     } else {
       toast({
-        title: "Check your email!",
-        description: "We've sent you a password reset link.",
+        title: t('auth.checkEmail'),
+        description: t('auth.passwordResetSent'),
       });
       setShowForgotPassword(false);
     }
@@ -133,7 +135,7 @@ export function AuthPage() {
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading...</p>
+          <p className="text-muted-foreground">{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -144,49 +146,49 @@ export function AuthPage() {
       <div className="max-w-4xl w-full">
         <div className="text-center mb-8">
           <h1 className="text-5xl font-bold text-primary mb-4">
-            Family Huddle<StarIcon />
+            {t('auth.appName')}<StarIcon />
           </h1>
           <p className="text-xl text-muted-foreground">
-            Create families with relatives or friends, assign tasks to each other, and earn stars to level up your characters. Build real habits—and tighter bonds—through play.
+            {t('auth.appDescription')}
           </p>
         </div>
 
         <Card className="max-w-md mx-auto">
           <CardHeader className="text-center">
-            <CardTitle>Join Family Huddle</CardTitle>
+            <CardTitle>{t('auth.joinTitle')}</CardTitle>
             <CardDescription>
-              Sign in to your account or create a new one
+              {t('auth.joinDescription')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="signin">
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="signin">Sign In</TabsTrigger>
-                <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                <TabsTrigger value="signin">{t('auth.signIn')}</TabsTrigger>
+                <TabsTrigger value="signup">{t('auth.signUp')}</TabsTrigger>
               </TabsList>
               
               <TabsContent value="signin">
                 {!showForgotPassword ? (
                   <form onSubmit={handleSignIn} className="space-y-4">
                     <div>
-                      <Label htmlFor="signin-email">Email</Label>
+                      <Label htmlFor="signin-email">{t('auth.email')}</Label>
                       <Input
                         id="signin-email"
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        placeholder="Enter your email"
+                        placeholder={t('auth.emailPlaceholder')}
                         required
                       />
                     </div>
                     <div>
-                      <Label htmlFor="signin-password">Password</Label>
+                      <Label htmlFor="signin-password">{t('auth.password')}</Label>
                       <Input
                         id="signin-password"
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        placeholder="Enter your password"
+                        placeholder={t('auth.passwordPlaceholder')}
                         required
                       />
                     </div>
@@ -195,7 +197,7 @@ export function AuthPage() {
                       className="w-full"
                       disabled={isLoading}
                     >
-                      {isLoading ? 'Signing in...' : 'Sign In'}
+                      {isLoading ? t('auth.signingIn') : t('auth.signIn')}
                     </Button>
                     <div className="text-center">
                       <Button
@@ -204,20 +206,20 @@ export function AuthPage() {
                         className="text-sm text-muted-foreground"
                         onClick={() => setShowForgotPassword(true)}
                       >
-                        Forgot password?
+                        {t('auth.forgotPassword')}
                       </Button>
                     </div>
                   </form>
                 ) : (
                   <form onSubmit={handleForgotPassword} className="space-y-4">
                     <div>
-                      <Label htmlFor="reset-email">Email</Label>
+                      <Label htmlFor="reset-email">{t('auth.email')}</Label>
                       <Input
                         id="reset-email"
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        placeholder="Enter your email"
+                        placeholder={t('auth.emailPlaceholder')}
                         required
                       />
                     </div>
@@ -226,7 +228,7 @@ export function AuthPage() {
                       className="w-full"
                       disabled={isLoading}
                     >
-                      {isLoading ? 'Sending reset link...' : 'Send Reset Link'}
+                      {isLoading ? t('auth.sendingResetLink') : t('auth.sendResetLink')}
                     </Button>
                     <div className="text-center">
                       <Button
@@ -235,7 +237,7 @@ export function AuthPage() {
                         className="text-sm text-muted-foreground"
                         onClick={() => setShowForgotPassword(false)}
                       >
-                        Back to sign in
+                        {t('auth.backToSignIn')}
                       </Button>
                     </div>
                   </form>
@@ -245,24 +247,24 @@ export function AuthPage() {
               <TabsContent value="signup">
                 <form onSubmit={handleSignUp} className="space-y-4">
                   <div>
-                    <Label htmlFor="signup-email">Email</Label>
+                    <Label htmlFor="signup-email">{t('auth.email')}</Label>
                     <Input
                       id="signup-email"
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="Enter your email"
+                      placeholder={t('auth.emailPlaceholder')}
                       required
                     />
                   </div>
                   <div>
-                    <Label htmlFor="signup-password">Password</Label>
+                    <Label htmlFor="signup-password">{t('auth.password')}</Label>
                     <Input
                       id="signup-password"
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Create a password"
+                      placeholder={t('auth.createPasswordPlaceholder')}
                       required
                       minLength={6}
                     />
@@ -283,7 +285,7 @@ export function AuthPage() {
                         htmlFor="age-confirmation" 
                         className="text-sm leading-tight cursor-pointer font-normal"
                       >
-                        I confirm that I am 13 years of age or older
+                        {t('auth.ageConfirmation')}
                       </Label>
                     </div>
                     
@@ -302,7 +304,7 @@ export function AuthPage() {
                           htmlFor="terms-agreement" 
                           className="text-sm leading-tight cursor-pointer font-normal"
                         >
-                          I agree to the Terms of Use
+                          {t('auth.termsAgreement')}
                         </Label>
                       </div>
                       
@@ -356,10 +358,10 @@ export function AuthPage() {
                     <Alert variant="destructive">
                       <AlertDescription>
                         {!confirmedAge && !agreedToTerms 
-                          ? "Please confirm your age and agree to the Terms of Use to create an account."
+                          ? t('auth.ageTermsError')
                           : !confirmedAge 
-                            ? "You must be 13 years or older to use Family Huddle."
-                            : "Please agree to the Terms of Use to create an account."}
+                            ? t('auth.ageError')
+                            : t('auth.termsError')}
                       </AlertDescription>
                     </Alert>
                   )}
@@ -369,7 +371,7 @@ export function AuthPage() {
                     className="w-full bg-gradient-to-r from-primary to-primary-foreground hover:from-primary/90 hover:to-primary-foreground/90"
                     disabled={isLoading}
                   >
-                    {isLoading ? 'Creating account...' : 'Sign Up'}
+                    {isLoading ? t('auth.creatingAccount') : t('auth.signUp')}
                   </Button>
                 </form>
               </TabsContent>
@@ -379,7 +381,7 @@ export function AuthPage() {
 
         <div className="text-center mt-8 text-sm text-muted-foreground">
           <p>
-            Made with ❤️ for families everywhere
+            {t('auth.madeWithLove')}
           </p>
         </div>
       </div>
