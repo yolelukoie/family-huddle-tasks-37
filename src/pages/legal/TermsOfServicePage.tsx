@@ -11,12 +11,12 @@ export default function TermsOfServicePage() {
       <div className="max-w-3xl mx-auto p-4 space-y-6 pb-12">
         <Card>
           <CardHeader>
-            <CardTitle>Terms of Service – Family Huddle</CardTitle>
+            <CardTitle>Terms of Use – Family Huddle</CardTitle>
             <p className="text-sm text-muted-foreground">Last updated: 31 January 2026</p>
           </CardHeader>
           <CardContent className="prose prose-sm dark:prose-invert max-w-none space-y-6">
             <p className="text-muted-foreground">
-              These Terms of Service ("Terms") govern your use of the Family Huddle application and any related services (together, the "Service"). The Service is owned and operated by Yana Sklyar, Tel Aviv, Israel ("we", "us", "our").
+              These Terms of Use ("Terms") govern your use of the Family Huddle application and any related services (together, the "Service"). The Service is owned and operated by Yana Sklyar, Tel Aviv, Israel ("we", "us", "our").
             </p>
             <p className="text-muted-foreground">
               By creating an account or using the Service, you agree to these Terms. If you do not agree, please do not use the Service.
