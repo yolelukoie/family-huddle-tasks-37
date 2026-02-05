@@ -345,19 +345,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const uid = getUserId(session);
       if (!user || !uid) return;
 
+      // Build DB update object only with fields that are being explicitly changed
+      // This prevents overwriting other fields with stale state values
+      const dbUpdates: Record<string, unknown> = {};
+      if ('displayName' in updates) dbUpdates.display_name = updates.displayName;
+      if ('gender' in updates) dbUpdates.gender = updates.gender;
+      if ('profileComplete' in updates) dbUpdates.profile_complete = updates.profileComplete;
+      if ('activeFamilyId' in updates) dbUpdates.active_family_id = updates.activeFamilyId ?? null;
+      if ('avatar_url' in updates) dbUpdates.avatar_url = updates.avatar_url ?? null;
+
+      // Merge updates with current state for local state update
       const updatedUser = { ...user, ...updates };
 
       try {
-        // Update in Supabase first
+        // Update only the specific fields in Supabase
         const { error } = await supabase
           .from("profiles")
-          .update({
-            display_name: updatedUser.displayName,
-            gender: updatedUser.gender,
-            profile_complete: updatedUser.profileComplete,
-            active_family_id: updatedUser.activeFamilyId ?? null,
-            avatar_url: updatedUser.avatar_url ?? null,
-          })
+          .update(dbUpdates)
           .eq("id", uid);
 
         if (error) {

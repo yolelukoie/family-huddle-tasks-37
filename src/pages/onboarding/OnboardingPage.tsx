@@ -16,6 +16,7 @@ import { useApp } from '@/hooks/useApp';
 import { ROUTES } from '@/lib/constants';
 import { useToast } from '@/hooks/use-toast';
 import { initiateSubscription } from '@/config/subscription';
+import { supabase } from '@/integrations/supabase/client';
 
 const StarIcon = () => (
   <svg viewBox="0 0 100 100" className="inline-block w-[1.2em] h-[1.2em] ml-1 align-middle">
@@ -130,11 +131,29 @@ export default function OnboardingPage() {
         }
       }
 
-      console.log('Onboarding completed, navigating to main page');
-      // Small delay to ensure state updates are processed
-      setTimeout(() => {
+      console.log('Onboarding completed, verifying database state before redirect');
+      
+      // Verify profile is complete in database before redirecting
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('profile_complete, active_family_id')
+        .eq('id', newUser.id)
+        .single();
+        
+      if (profile?.profile_complete && profile?.active_family_id) {
+        console.log('Database verified, navigating to main page');
         navigate(ROUTES.main, { replace: true });
-      }, 100);
+      } else {
+        // If not complete, force update and retry
+        console.log('Database not synced, forcing update');
+        await supabase
+          .from('profiles')
+          .update({ profile_complete: true })
+          .eq('id', newUser.id);
+        navigate(ROUTES.main, { replace: true });
+      }
     } catch (error: any) {
       console.error('Onboarding error:', error);
       

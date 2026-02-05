@@ -424,8 +424,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setFamilies(prev => [...prev, family]);
       setUserFamilies(prev => [...prev, userFamily]);
 
-      // Set as active family
-      await updateUser({ activeFamilyId: family.id });
+      // Set as active family AND ensure profile is marked complete
+      await updateUser({ activeFamilyId: family.id, profileComplete: true });
 
       return family.id;
     } catch (error) {
@@ -522,9 +522,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         return [...prev, userFamily];
       });
 
-      // Set as active family
+      // Set as active family AND ensure profile is marked complete
       console.log('useApp: Setting active family to:', family.id);
-      await updateUser({ activeFamilyId: family.id });
+      await updateUser({ activeFamilyId: family.id, profileComplete: true });
 
       console.log('useApp: Successfully completed joinFamily process');
       return convertedFamily;
