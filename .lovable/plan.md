@@ -1,198 +1,137 @@
 
-# Fix Plan: Report System Improvements
+
+# Fix Plan: Store Task Description & Verify Creator Notification
 
 ## Overview
 
-This plan addresses five issues with the task reporting system:
-
-1. Default tasks should not show the "Report" option
-2. Reported tasks should be deleted from the database
-3. Task creators should receive a notification when their task is reported
-4. Remove unused `status` column from reports table
-5. Add task name to reports table for audit purposes
+This plan addresses two issues:
+1. Store task description in reports table (for audit when content is offensive)
+2. Ensure task creators receive a notification when their task is reported
 
 ---
 
-## Problem 1: Default Tasks Showing Report Option
+## Issue 1: Store Task Description in Reports Table
 
-**Current behavior**: All tasks show the 3-dots menu with "Report" option, including default tasks like "Clean the room", "Do the dishes", etc.
+### Current State
+- The `reports` table has `content_name` but no field for the task description
+- The `ReportContentModal` only receives `contentName` prop, not the description
 
-**Fix**: Add a condition to only show the 3-dots menu for non-default tasks, OR only show the Report option for non-default tasks.
+### Changes Required
 
-### File: `src/components/tasks/TaskCategorySection.tsx`
+#### 1.1 Database Migration
+Add a `content_description` column to the `reports` table:
 
-**Change**: Wrap the DropdownMenu in a condition that checks if the template is not default. For default tasks, no menu is needed since they cannot be deleted or reported.
-
-```text
-BEFORE (lines 122-152):
-<DropdownMenu>
-  <DropdownMenuTrigger>...</DropdownMenuTrigger>
-  <DropdownMenuContent>
-    {template.isDeletable && !template.isDefault && (...Delete...)}
-    <DropdownMenuItem onClick={Report}>...</DropdownMenuItem>
-  </DropdownMenuContent>
-</DropdownMenu>
-
-AFTER:
-{!template.isDefault && (
-  <DropdownMenu>
-    <DropdownMenuTrigger>...</DropdownMenuTrigger>
-    <DropdownMenuContent>
-      {template.isDeletable && (...Delete...)}
-      <DropdownMenuItem onClick={Report}>...</DropdownMenuItem>
-    </DropdownMenuContent>
-  </DropdownMenu>
-)}
-```
-
----
-
-## Problem 2: Reported Tasks Should Be Deleted
-
-**Current behavior**: When a task is reported, only a report record is created. The task remains visible to everyone.
-
-**Fix**: After successfully inserting the report, also delete the task template from the database.
-
-### File: `src/components/modals/ReportContentModal.tsx`
-
-**Changes**:
-1. Pass additional prop `templateName` to the modal (for storing in reports table)
-2. Pass `createdBy` (the task creator's user ID) for notification purposes
-3. After inserting the report, delete the task template
-4. Insert a notification event for the task creator
-
-### File: `src/components/tasks/TaskCategorySection.tsx`
-
-**Changes**:
-- Pass `templateName={template.name}` and `createdBy={template.createdBy}` to `ReportContentModal`
-
----
-
-## Problem 3: Notify Task Creator When Reported
-
-**Current behavior**: Task creators don't know their task was deleted due to a report.
-
-**Fix**: After deleting the reported task, send a push notification and create a `task_events` record to notify the creator.
-
-### File: `src/components/modals/ReportContentModal.tsx`
-
-**Logic to add in `handleSubmit`**:
-
-```text
-1. Insert report (existing)
-2. Delete the task_template from Supabase
-3. Create task_event record for the creator with event_type = "reported"
-4. Call send-push edge function to notify the creator
-5. Show success toast and trigger UI refresh
-```
-
-**Notification message format**:
-- Title: "Task removed"
-- Body: "Your task '{task name}' was removed because it was reported as: {reason}"
-
-### Translation keys to add:
-- `notification.taskReported`: "Task removed"
-- `notification.taskReportedBody`: "Your task '{{name}}' was removed because it was reported as: {{reason}}"
-
----
-
-## Problem 4: Remove `status` Column from Reports Table
-
-**Current behavior**: The `reports` table has a `status` column that is not used.
-
-**Fix**: Create a database migration to drop the `status` column.
-
-### Migration SQL:
 ```sql
-ALTER TABLE public.reports DROP COLUMN IF EXISTS status;
+ALTER TABLE public.reports ADD COLUMN content_description text NULL;
 ```
 
----
+#### 1.2 Update ReportContentModal Props
+**File:** `src/components/modals/ReportContentModal.tsx`
 
-## Problem 5: Add Task Name to Reports Table
-
-**Current behavior**: The `reports` table only stores `content_id` but not the task name, making it harder to review reports if the task is deleted.
-
-**Fix**: Add a `content_name` column to store the task name at the time of reporting.
-
-### Migration SQL:
-```sql
-ALTER TABLE public.reports ADD COLUMN content_name text NULL;
-```
-
-### File: `src/components/modals/ReportContentModal.tsx`
-
-**Change**: Include `content_name` in the insert:
+Add new prop `contentDescription`:
 ```typescript
-await supabase.from('reports').insert({
+interface ReportContentModalProps {
+  // ... existing props
+  contentDescription?: string;  // NEW
+}
+```
+
+Update the insert to include description:
+```typescript
+const { error: reportError } = await supabase.from('reports').insert({
   reporter_id: user.id,
   family_id: familyId,
   content_id: contentId,
   content_type: contentType,
-  content_name: templateName, // NEW
+  content_name: contentName && contentName.trim() ? contentName.trim() : null,
+  content_description: contentDescription && contentDescription.trim() ? contentDescription.trim() : null, // NEW
   reason,
   details: details.trim() || null,
 });
 ```
 
+#### 1.3 Pass Description from TaskCategorySection
+**File:** `src/components/tasks/TaskCategorySection.tsx`
+
+Update the `ReportContentModal` component call to pass the description:
+```typescript
+<ReportContentModal
+  open={!!reportTarget}
+  onOpenChange={(open) => !open && setReportTarget(null)}
+  contentId={reportTarget?.id || ''}
+  contentType="task_template"
+  familyId={familyId}
+  contentName={reportTarget?.name || ''}
+  contentDescription={reportTarget?.description || ''}  // NEW
+  createdBy={reportTarget?.createdBy || ''}
+  onReported={() => {
+    setReportTarget(null);
+    onTaskAdded?.();
+  }}
+/>
+```
+
+---
+
+## Issue 2: Creator Notification Verification
+
+### Current State
+The notification logic **already exists** in `ReportContentModal.tsx` (lines 96-143):
+1. Creates a `task_event` record with `event_type: 'reported'`
+2. Calls `send-push` edge function with `recipientId: createdBy`
+3. Uses translations that exist in all locale files
+
+### Verification Needed
+The logic appears correct. Possible issues that could prevent notifications:
+1. `createdBy` prop not being passed correctly
+2. User has no FCM token registered
+3. Edge function errors (check logs)
+
+### Testing Steps
+1. Create a custom task with user A
+2. Report that task with user B
+3. Verify in Supabase:
+   - `task_events` table has a record with `event_type: 'reported'`
+   - `reports` table has the report with `content_name` and `content_description`
+4. Check edge function logs for send-push invocation
+5. Verify user A receives the push notification
+
 ---
 
 ## Summary of Changes
 
-| File | Changes |
-|------|---------|
-| `supabase/migrations/...` | Drop `status` column, add `content_name` column |
-| `src/integrations/supabase/types.ts` | Update Reports type (auto-generated) |
-| `src/components/modals/ReportContentModal.tsx` | Add props for `templateName` and `createdBy`, delete template after report, send notification to creator |
-| `src/components/tasks/TaskCategorySection.tsx` | Hide 3-dots menu for default tasks, pass new props to ReportContentModal |
-| `src/i18n/locales/*.json` | Add translation keys for report notification |
+| Location | Change |
+|----------|--------|
+| Database migration | Add `content_description` column to `reports` table |
+| `src/integrations/supabase/types.ts` | Auto-updated with new column |
+| `src/components/modals/ReportContentModal.tsx` | Add `contentDescription` prop and include in insert |
+| `src/components/tasks/TaskCategorySection.tsx` | Pass `contentDescription={reportTarget?.description}` |
 
 ---
 
-## Flow Diagram
+## Implementation Order
 
-```text
-User clicks Report on custom task
-         │
-         ▼
-   Report Modal opens
-         │
-         ▼
-  User selects reason
-         │
-         ▼
-  User clicks "Report"
-         │
-         ▼
-┌────────────────────────────────┐
-│ 1. Insert into reports table   │
-│    (with content_name)         │
-├────────────────────────────────┤
-│ 2. Delete task_template        │
-├────────────────────────────────┤
-│ 3. Insert task_event           │
-│    (type: "reported")          │
-├────────────────────────────────┤
-│ 4. Call send-push function     │
-│    (notify creator)            │
-├────────────────────────────────┤
-│ 5. Show success toast          │
-│ 6. Refresh UI (onReported)     │
-└────────────────────────────────┘
-```
+1. Run database migration to add `content_description` column
+2. Update `ReportContentModal.tsx`:
+   - Add `contentDescription` to props interface
+   - Include in Supabase insert
+3. Update `TaskCategorySection.tsx`:
+   - Pass `contentDescription` prop to modal
 
 ---
 
 ## Testing Checklist
 
 After implementation:
+1. Create a custom task template with a name AND description
+2. Report that task using a different family member account
+3. Verify in Supabase `reports` table:
+   - `content_name` contains the task name
+   - `content_description` contains the task description
+   - `reason` is set correctly
+4. Verify the task template is deleted from `task_templates`
+5. Verify `task_events` has a record with `event_type: 'reported'`
+6. Check edge function logs for push notification attempt
+7. Verify the creator receives a push notification with the message:
+   - "Your task '{name}' was removed because it was reported as: {reason}"
 
-1. Verify default tasks (Clean the room, Do the dishes, etc.) do NOT show the 3-dots menu
-2. Verify custom tasks still show the 3-dots menu with Delete and Report options
-3. Report a custom task and verify:
-   - Report is created in `reports` table with `content_name`
-   - Task template is deleted from `task_templates` table
-   - Task disappears from UI
-   - Creator receives a push notification
-4. Verify the `reports` table no longer has the `status` column
-5. Verify all translations work in different languages
