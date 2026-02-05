@@ -543,5 +543,32 @@
   "memberProfile": {
     "title": "Профиль {{name}}",
     "defaultMemberName": "Член семьи"
+  },
+  "report": {
+    "title": "Пожаловаться на контент",
+    "description": "Помогите нам сохранить Family Huddle безопасным, сообщая о неприемлемом контенте.",
+    "reasonLabel": "Причина",
+    "selectReason": "Выберите причину",
+    "reasonSpam": "Спам",
+    "reasonHarassment": "Травля / издевательства",
+    "reasonHate": "Язык ненависти или оскорбления",
+    "reasonSexual": "Сексуальный контент",
+    "reasonViolence": "Насилие / угрозы",
+    "reasonPersonalInfo": "Распространение личной информации",
+    "reasonOther": "Другое",
+    "detailsLabel": "Детали (необязательно)",
+    "detailsPlaceholder": "Предоставьте дополнительный контекст...",
+    "submit": "Пожаловаться",
+    "submitting": "Отправка...",
+    "successTitle": "Жалоба отправлена",
+    "successDesc": "Спасибо за вашу жалобу.",
+    "errorSubmitting": "Не удалось отправить жалобу. Попробуйте снова."
+  },
+  "common": {
+    "loading": "Загрузка...",
+    "error": "Ошибка",
+    "cancel": "Отмена",
+    "delete": "Удалить",
+    "report": "Пожаловаться"
   }
 }

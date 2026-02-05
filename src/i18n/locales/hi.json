@@ -440,5 +440,32 @@
   "memberProfile": {
     "title": "{{name}} का प्रोफ़ाइल",
     "defaultMemberName": "परिवार का सदस्य"
+  },
+  "report": {
+    "title": "सामग्री की रिपोर्ट करें",
+    "description": "अनुचित सामग्री की रिपोर्ट करके Family Huddle को सुरक्षित रखने में हमारी मदद करें।",
+    "reasonLabel": "कारण",
+    "selectReason": "एक कारण चुनें",
+    "reasonSpam": "स्पैम",
+    "reasonHarassment": "उत्पीड़न / धमकी",
+    "reasonHate": "घृणा या अपमानजनक भाषा",
+    "reasonSexual": "यौन सामग्री",
+    "reasonViolence": "हिंसा / धमकियां",
+    "reasonPersonalInfo": "व्यक्तिगत जानकारी साझा करना",
+    "reasonOther": "अन्य",
+    "detailsLabel": "विवरण (वैकल्पिक)",
+    "detailsPlaceholder": "अतिरिक्त संदर्भ प्रदान करें...",
+    "submit": "रिपोर्ट करें",
+    "submitting": "रिपोर्ट हो रही है...",
+    "successTitle": "रिपोर्ट किया गया",
+    "successDesc": "आपकी रिपोर्ट के लिए धन्यवाद।",
+    "errorSubmitting": "रिपोर्ट सबमिट करने में विफल। कृपया पुनः प्रयास करें।"
+  },
+  "common": {
+    "loading": "लोड हो रहा है...",
+    "error": "त्रुटि",
+    "cancel": "रद्द करें",
+    "delete": "हटाएं",
+    "report": "रिपोर्ट"
   }
 }

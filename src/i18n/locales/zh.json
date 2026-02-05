@@ -440,5 +440,32 @@
   "memberProfile": {
     "title": "{{name}}的资料",
     "defaultMemberName": "家庭成员"
+  },
+  "report": {
+    "title": "举报内容",
+    "description": "通过举报不当内容帮助我们保持Family Huddle的安全。",
+    "reasonLabel": "原因",
+    "selectReason": "选择原因",
+    "reasonSpam": "垃圾信息",
+    "reasonHarassment": "骚扰/欺凌",
+    "reasonHate": "仇恨或辱骂性语言",
+    "reasonSexual": "色情内容",
+    "reasonViolence": "暴力/威胁",
+    "reasonPersonalInfo": "分享个人信息",
+    "reasonOther": "其他",
+    "detailsLabel": "详情（可选）",
+    "detailsPlaceholder": "提供额外的背景信息...",
+    "submit": "举报",
+    "submitting": "正在举报...",
+    "successTitle": "已举报",
+    "successDesc": "感谢您的举报。",
+    "errorSubmitting": "提交举报失败。请重试。"
+  },
+  "common": {
+    "loading": "加载中...",
+    "error": "错误",
+    "cancel": "取消",
+    "delete": "删除",
+    "report": "举报"
   }
 }
