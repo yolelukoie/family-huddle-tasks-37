@@ -68,6 +68,17 @@ export function BlockMemberModal({
         </DialogHeader>
 
         <div className="space-y-4 py-4">
+          {/* Block restrictions info */}
+          <div className="text-sm text-muted-foreground bg-muted/50 rounded-md p-3 space-y-1">
+            <p className="font-medium text-foreground">{t('block.restrictionsTitle')}</p>
+            <ul className="list-disc list-inside space-y-0.5">
+              <li>{t('block.restrictionChat')}</li>
+              <li>{t('block.restrictionAssignTasks')}</li>
+              <li>{t('block.restrictionCreateTasks')}</li>
+              <li>{t('block.restrictionProfile')}</li>
+            </ul>
+          </div>
+
           {/* Reason Dropdown */}
           <div className="space-y-2">
             <Label htmlFor="block-reason">{t('block.reason')}</Label>
