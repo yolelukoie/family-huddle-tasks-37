@@ -119,37 +119,39 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
                   <Badge variant="warm" className="text-xs">
                     {template.starValue} ⭐
                   </Badge>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                      <div className="h-6 w-6 p-1 hover:bg-muted rounded cursor-pointer flex items-center justify-center">
-                        <MoreVertical className="h-3 w-3" />
-                      </div>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                      {template.isDeletable && !template.isDefault && (
-                        <DropdownMenuItem
-                          className="text-destructive focus:text-destructive"
-                          onClick={async () => {
-                            if (confirm(t('tasks.deleteTemplate'))) {
-                              const success = await deleteTemplate(template.id);
-                              if (success) {
-                                onTaskAdded?.();
+                  {!template.isDefault && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                        <div className="h-6 w-6 p-1 hover:bg-muted rounded cursor-pointer flex items-center justify-center">
+                          <MoreVertical className="h-3 w-3" />
+                        </div>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                        {template.isDeletable && (
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={async () => {
+                              if (confirm(t('tasks.deleteTemplate'))) {
+                                const success = await deleteTemplate(template.id);
+                                if (success) {
+                                  onTaskAdded?.();
+                                }
                               }
-                            }
-                          }}
+                            }}
+                          >
+                            <Trash2 className="h-3 w-3 mr-2" />
+                            {t('common.delete')}
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem
+                          onClick={() => setReportTarget(template)}
                         >
-                          <Trash2 className="h-3 w-3 mr-2" />
-                          {t('common.delete')}
+                          <Flag className="h-3 w-3 mr-2" />
+                          {t('common.report')}
                         </DropdownMenuItem>
-                      )}
-                      <DropdownMenuItem
-                        onClick={() => setReportTarget(template)}
-                      >
-                        <Flag className="h-3 w-3 mr-2" />
-                        {t('common.report')}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </div>
               </div>
                 );
@@ -182,6 +184,8 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
         contentId={reportTarget?.id || ''}
         contentType="task_template"
         familyId={familyId}
+        contentName={reportTarget?.name || ''}
+        createdBy={reportTarget?.createdBy || ''}
         onReported={() => {
           setReportTarget(null);
           onTaskAdded?.();

@@ -441,6 +441,10 @@
     "title": "{{name}}的资料",
     "defaultMemberName": "家庭成员"
   },
+  "notification": {
+    "taskReported": "任务已移除",
+    "taskReportedBody": "您的任务'{{name}}'因被举报为{{reason}}而被移除"
+  },
   "report": {
     "title": "举报内容",
     "description": "通过举报不当内容帮助我们保持Family Huddle的安全。",

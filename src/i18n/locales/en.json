@@ -554,6 +554,10 @@
     "familyNameChangedTitle": "Family Name Changed",
     "familyNameChanged": "Family \"{{oldName}}\" changed its name to \"{{newName}}\""
   },
+  "notification": {
+    "taskReported": "Task removed",
+    "taskReportedBody": "Your task '{{name}}' was removed because it was reported as: {{reason}}"
+  },
   "report": {
     "title": "Report Content",
     "description": "Help us keep Family Huddle safe by reporting inappropriate content.",

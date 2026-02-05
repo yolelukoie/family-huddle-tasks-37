@@ -29,6 +29,8 @@ interface ReportContentModalProps {
   contentId: string;
   contentType: 'task_template' | 'task' | 'chat_message';
   familyId: string;
+  contentName?: string;
+  createdBy?: string;
   onReported?: () => void;
 }
 
@@ -48,6 +50,8 @@ export function ReportContentModal({
   contentId,
   contentType,
   familyId,
+  contentName,
+  createdBy,
   onReported,
 }: ReportContentModalProps) {
   const { t } = useTranslation();
@@ -62,16 +66,80 @@ export function ReportContentModal({
 
     setIsSubmitting(true);
     try {
-      const { error } = await supabase.from('reports').insert({
+      // 1. Insert report with content_name
+      const { error: reportError } = await supabase.from('reports').insert({
         reporter_id: user.id,
         family_id: familyId,
         content_id: contentId,
         content_type: contentType,
+        content_name: contentName || null,
         reason,
         details: details.trim() || null,
       });
 
-      if (error) throw error;
+      if (reportError) throw reportError;
+
+      // 2. Delete the task_template if it's a task_template report
+      if (contentType === 'task_template' && contentId) {
+        const { error: deleteError } = await supabase
+          .from('task_templates')
+          .delete()
+          .eq('id', contentId);
+
+        if (deleteError) {
+          console.error('Failed to delete task template:', deleteError);
+          // Continue anyway - the report was created
+        }
+      }
+
+      // 3. Notify the creator if we have their ID and it's not the reporter
+      if (createdBy && createdBy !== user.id && contentType === 'task_template') {
+        // Get the translated reason label for notification
+        const reasonLabel = t(`report.reason${reason.charAt(0).toUpperCase() + reason.slice(1).replace('_', '')}`);
+        
+        // Create a task_event to notify the creator
+        const { error: eventError } = await supabase.from('task_events').insert({
+          task_id: contentId,
+          event_type: 'reported',
+          actor_id: user.id,
+          recipient_id: createdBy,
+          family_id: familyId,
+          payload: {
+            task_name: contentName,
+            reason: reason,
+            reason_label: reasonLabel,
+          },
+        });
+
+        if (eventError) {
+          console.error('Failed to create task event:', eventError);
+        }
+
+        // Send push notification to the creator
+        try {
+          const notificationTitle = t('notification.taskReported');
+          const notificationBody = t('notification.taskReportedBody', {
+            name: contentName,
+            reason: reasonLabel,
+          });
+
+          await supabase.functions.invoke('send-push', {
+            body: {
+              recipientId: createdBy,
+              title: notificationTitle,
+              body: notificationBody,
+              data: {
+                event_type: 'reported',
+                task_id: contentId,
+                family_id: familyId,
+              },
+            },
+          });
+        } catch (pushError) {
+          console.error('Failed to send push notification:', pushError);
+          // Continue anyway - notification is optional
+        }
+      }
 
       toast({
         title: t('report.successTitle'),

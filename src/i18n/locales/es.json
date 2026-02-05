@@ -441,6 +441,10 @@
     "title": "Perfil de {{name}}",
     "defaultMemberName": "Miembro de la Familia"
   },
+  "notification": {
+    "taskReported": "Tarea eliminada",
+    "taskReportedBody": "Tu tarea '{{name}}' fue eliminada porque fue reportada como: {{reason}}"
+  },
   "report": {
     "title": "Reportar Contenido",
     "description": "Ayúdanos a mantener Family Huddle seguro reportando contenido inapropiado.",
