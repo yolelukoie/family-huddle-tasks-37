@@ -12,15 +12,17 @@ import { useAuth } from '@/hooks/useAuth';
 import { useApp } from '@/hooks/useApp';
 import { NavigationHeader } from '@/components/layout/NavigationHeader';
 import { MemberProfileModal } from '@/components/modals/MemberProfileModal';
-import { Users, Share, Plus, Star, Settings, UserMinus } from 'lucide-react';
+import { BlockMemberModal } from '@/components/modals/BlockMemberModal';
+import { Users, Share, Plus, Star, Settings, Ban, ShieldOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getCurrentStage, getStageName } from '@/lib/character';
 import { supabase } from '@/integrations/supabase/client';
+import { isBlocked, getBlockStatusText, type BlockReason, type BlockDuration } from '@/lib/blockUtils';
 
 export default function FamilyPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { activeFamilyId, userFamilies, families, setActiveFamilyId, createFamily, joinFamily, updateFamilyName, quitFamily, removeFamilyMember, getFamilyMembers, getUserProfile } = useApp();
+  const { activeFamilyId, userFamilies, families, setActiveFamilyId, createFamily, joinFamily, updateFamilyName, quitFamily, blockFamilyMember, unblockFamilyMember, getFamilyMembers, getUserProfile } = useApp();
   const { toast } = useToast();
   const [showJoinFamily, setShowJoinFamily] = useState(false);
   const [inviteCode, setInviteCode] = useState('');
@@ -30,7 +32,7 @@ export default function FamilyPage() {
   const [editingFamilyName, setEditingFamilyName] = useState('');
   const [selectedMember, setSelectedMember] = useState<any>(null);
   const [showMemberProfile, setShowMemberProfile] = useState(false);
-  const [memberToRemove, setMemberToRemove] = useState<{ userId: string; displayName: string; familyId: string } | null>(null);
+  const [memberToBlock, setMemberToBlock] = useState<{ userId: string; displayName: string; familyId: string } | null>(null);
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
 
   if (!user) return null;
@@ -186,32 +188,53 @@ export default function FamilyPage() {
     }
   };
 
-  const handleRemoveMember = async () => {
-    if (!memberToRemove) return;
-
+  const handleBlockMember = async (memberId: string, familyId: string, reason: BlockReason, duration: BlockDuration) => {
     try {
-      const success = await removeFamilyMember(memberToRemove.familyId, memberToRemove.userId);
+      const success = await blockFamilyMember(familyId, memberId, reason, duration);
       
       if (success) {
         toast({
-          title: t('family.memberRemoved'),
-          description: `${memberToRemove.displayName} ${t('family.memberRemovedDesc')}`,
+          title: t('block.memberBlocked'),
+          description: t('block.memberBlockedDesc'),
         });
       } else {
         toast({
-          title: t('family.error'),
-          description: t('family.failedToRemove'),
+          title: t('common.error'),
+          description: t('block.failedToBlock'),
           variant: "destructive",
         });
       }
     } catch (error) {
       toast({
-        title: t('family.errorRemovingMember'),
-        description: t('family.errorRemovingMemberDesc'),
+        title: t('common.error'),
+        description: t('block.failedToBlock'),
         variant: "destructive",
       });
-    } finally {
-      setMemberToRemove(null);
+    }
+  };
+
+  const handleUnblockMember = async (memberId: string, familyId: string) => {
+    try {
+      const success = await unblockFamilyMember(familyId, memberId);
+      
+      if (success) {
+        toast({
+          title: t('block.memberUnblocked'),
+          description: t('block.memberUnblockedDesc'),
+        });
+      } else {
+        toast({
+          title: t('common.error'),
+          description: t('block.failedToUnblock'),
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: t('common.error'),
+        description: t('block.failedToUnblock'),
+        variant: "destructive",
+      });
     }
   };
 
@@ -337,22 +360,43 @@ export default function FamilyPage() {
                                   {isCurrentUser && (
                                     <Badge variant="secondary">{t('family.you')}</Badge>
                                   )}
+                                  {/* Show blocked status */}
+                                  {isBlocked(member) && (
+                                    <Badge variant="destructive" className="text-xs">
+                                      {getBlockStatusText(member, t)}
+                                    </Badge>
+                                  )}
                                   {!isCurrentUser && (
-                                    <Button
-                                      type="button"
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => {
-                                        setMemberToRemove({
-                                          userId: member.userId,
-                                        displayName: memberProfile?.displayName || t('memberProfile.defaultMemberName'),
-                                        familyId: family.id
-                                        });
-                                      }}
-                                      className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                    >
-                                      <UserMinus className="h-4 w-4" />
-                                    </Button>
+                                    <>
+                                      {isBlocked(member) ? (
+                                        <Button
+                                          type="button"
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => handleUnblockMember(member.userId, family.id)}
+                                          className="h-8 text-primary hover:text-primary hover:bg-primary/10"
+                                        >
+                                          <ShieldOff className="h-4 w-4 mr-1" />
+                                          {t('block.unblockBtn')}
+                                        </Button>
+                                      ) : (
+                                        <Button
+                                          type="button"
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() => {
+                                            setMemberToBlock({
+                                              userId: member.userId,
+                                              displayName: memberProfile?.displayName || t('memberProfile.defaultMemberName'),
+                                              familyId: family.id
+                                            });
+                                          }}
+                                          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                        >
+                                          <Ban className="h-4 w-4" />
+                                        </Button>
+                                      )}
+                                    </>
                                   )}
                                 </div>
                               </div>
@@ -512,23 +556,17 @@ export default function FamilyPage() {
         />
       )}
 
-      {/* Remove Member Confirmation Dialog */}
-      <AlertDialog open={!!memberToRemove} onOpenChange={(open) => !open && setMemberToRemove(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t("family.removeMember")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("family.removeConfirm")} <strong>{memberToRemove?.displayName}</strong> {t("family.fromFamily")}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t("family.cancel")}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleRemoveMember} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {t("family.remove")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Block Member Modal */}
+      {memberToBlock && (
+        <BlockMemberModal
+          open={!!memberToBlock}
+          onOpenChange={(open) => !open && setMemberToBlock(null)}
+          memberName={memberToBlock.displayName}
+          memberId={memberToBlock.userId}
+          familyId={memberToBlock.familyId}
+          onBlock={handleBlockMember}
+        />
+      )}
     </div>
   );
 }
