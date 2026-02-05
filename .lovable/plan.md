@@ -1,128 +1,69 @@
 
-# Legal Pages Accuracy Update
+# Fix: Signup Fails Due to Outdated Database Trigger
 
-## Overview
+## Problem
 
-After analyzing the codebase against the legal pages, I found several discrepancies between what data the app actually collects and what the legal documents state. The legal pages need updates to accurately reflect the app's current data practices.
+New users cannot sign up because the `handle_new_user()` database trigger is trying to insert into columns (`date_of_birth`, `age`) that were removed from the `profiles` table.
 
----
-
-## Findings
-
-### Data the App Actually Collects (from database/code)
-
-| Category | Data |
-|----------|------|
-| Account | Email address, password (hashed in Supabase Auth) |
-| Profile | Display name, gender, avatar URL, preferred language |
-| Family | Family names, membership relationships, invite codes |
-| Activity | Tasks, goals, templates, completion status, star values |
-| Chat | Messages with content, sender, and timestamps |
-| Progress | Stars earned, character stage, badges unlocked, celebrations |
-| Notifications | FCM push tokens, platform type (web/android) |
-| Custom Content | Uploaded character images, avatars |
-| Moderation | Block status, block reasons, content reports |
-
-### Data NOT Collected (but mentioned in legal pages)
-
-| Mentioned | Status |
-|-----------|--------|
-| Date of birth / Age | **NOT COLLECTED** - removed from app |
-| IP address, device type, OS version | **NOT COLLECTED** |
-| Usage analytics | **NOT ACTIVE** - Firebase measurementId exists but analytics not initialized |
-| Payment/billing data | **NOT YET** - subscription is TODO placeholder |
-
----
-
-## Changes Required
-
-### 1. Privacy Policy Page (`src/pages/legal/PrivacyPolicyPage.tsx`)
-
-**Section 1 - Information We Collect:**
-- Remove any reference to age/date of birth
-- Add: language preferences
-- Add: custom uploaded images (avatars, character images)
-
-**Section 4 - Data Storage:**
-- Already accurate (Supabase + RLS)
-
-**Section 7 - Your Rights:**
-- Fix delete account link (should link to Personal Settings page or just say "through the app's settings")
-
-**Section 9 - Contact:**
-- Add email: support@familyhuddletasks.com (to match other pages)
-
-### 2. Terms of Service Page (`src/pages/legal/TermsOfServicePage.tsx`)
-
-**Section 7.1 - Data We Collect:**
-- Remove: "IP address, device type, operating system, app version"
-- Remove or clarify: "basic usage analytics" (currently not active)
-- Keep payment data mention but note it applies when subscription is active
-- Add: FCM push notification tokens for notifications
-
----
-
-## Technical Implementation
-
-### File 1: Privacy Policy Updates
-
-```tsx
-// Section 1 - Update the data list:
-<ul className="list-disc pl-6 text-muted-foreground space-y-1">
-  <li>Account information (email address, display name)</li>
-  <li>Profile information (avatar, gender preference for character display, language preference)</li>
-  <li>Family and task data you create within the app</li>
-  <li>Chat messages shared within your family groups</li>
-  <li>Custom images you upload (profile pictures, character images)</li>
-  <li>Push notification tokens (if you enable notifications)</li>
-</ul>
-
-// Section 7 - Fix delete link:
-<li>Delete your account and associated data through the app's Personal Settings page</li>
-
-// Section 9 - Add email:
-<p className="text-muted-foreground">
-  If you have questions about this Privacy Policy, please contact us at{' '}
-  <a href="mailto:support@familyhuddletasks.com" className="text-primary hover:underline">
-    support@familyhuddletasks.com
-  </a>
-</p>
+**Error from auth logs:**
+```
+ERROR: column "date_of_birth" of relation "profiles" does not exist (SQLSTATE 42703)
 ```
 
-### File 2: Terms of Service Updates
+## Root Cause
 
-```tsx
-// Section 7.1 - Update data list:
-<h3>7.1 Data We Collect</h3>
-<ul className="list-disc pl-6 text-muted-foreground space-y-1">
-  <li><strong>Account data:</strong> email address, name or nickname, password (stored in hashed form), language preferences.</li>
-  <li><strong>Profile and family data:</strong> family or group names, member names or nicknames, and relationships you define in the app.</li>
-  <li><strong>Usage data:</strong> tasks you create or complete, schedules, progress, achievements, and app settings.</li>
-  <li><strong>Notification data:</strong> push notification tokens if you enable notifications, and your device platform (web, Android, iOS).</li>
-  <li><strong>Uploaded content:</strong> profile pictures and custom character images you choose to upload.</li>
-  <li><strong>Payment data:</strong> if you subscribe to Premium, limited information about your subscription status and billing history as provided by payment processors. We do not store your full payment card number.</li>
-</ul>
+The `profiles` table was modified at some point to remove the `date_of_birth` and `age` columns, but the trigger function that auto-creates profiles on signup was never updated to match.
+
+**Current trigger tries to insert:**
+- `id`, `display_name`, `date_of_birth`, `gender`, `age`, `profile_complete`
+
+**Current profiles table has:**
+- `id`, `display_name`, `gender`, `profile_complete`, `active_family_id`, `created_at`, `updated_at`, `avatar_url`, `preferred_language`
+
+## Solution
+
+Update the `handle_new_user()` trigger function to only insert columns that exist in the current schema.
+
+### Database Migration
+
+```sql
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+BEGIN
+  INSERT INTO public.profiles (
+    id, 
+    display_name, 
+    gender, 
+    profile_complete
+  )
+  VALUES (
+    NEW.id,
+    COALESCE(NEW.raw_user_meta_data ->> 'display_name', 'New User'),
+    COALESCE(NEW.raw_user_meta_data ->> 'gender', 'other'),
+    COALESCE((NEW.raw_user_meta_data ->> 'profile_complete')::boolean, false)
+  )
+  ON CONFLICT (id) DO NOTHING;
+
+  RETURN NEW;
+END;
+$$;
 ```
 
----
+## What This Fixes
 
-## Files to Modify
+1. Removes references to non-existent `date_of_birth` column
+2. Removes references to non-existent `age` column
+3. Keeps the essential profile creation logic intact
+4. New users will be able to sign up successfully
 
-1. **`src/pages/legal/PrivacyPolicyPage.tsx`**
-   - Update Section 1 (collected data list)
-   - Update Section 7 (delete account reference)
-   - Update Section 9 (add email contact)
+## Testing
 
-2. **`src/pages/legal/TermsOfServicePage.tsx`**
-   - Update Section 7.1 (remove false claims about IP/device tracking)
-   - Clarify payment data only applies when subscriptions are active
-
----
-
-## Summary
-
-These updates will ensure the legal pages accurately reflect:
-- What data is actually collected (no more, no less)
-- How users can delete their data (correct path)
-- Consistent contact information across all legal pages
-- Removal of claims about data we don't collect (IP, device info, analytics)
+After applying the fix:
+1. New user attempts to sign up with email/password
+2. Supabase Auth creates user in `auth.users`
+3. Trigger fires and creates matching row in `profiles` table
+4. User is logged in and can proceed to onboarding
