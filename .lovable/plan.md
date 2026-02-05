@@ -1,131 +1,201 @@
 
-# Fix: Family Members Not Displaying
+# Fix Plan: Ghost Families + Complete Translation Coverage
 
-## Problem Identified
+## Problem 1: Ghost Families After User Quits
 
-The "Family Members" list shows empty because the database function `get_family_members` is failing with an error:
+### Root Cause Analysis
 
-```
-ERROR: 42703: column p.age does not exist
-```
+When a user quits a family, the application performs these steps:
 
-The function references two columns (`age` and `date_of_birth`) that don't exist in the `profiles` table. This causes the RPC call to fail silently, resulting in empty member lists.
+1. Optimistically removes the family from local React state (`setFamilies`, `setUserFamilies`)
+2. Deletes the `user_families` row in Supabase
+3. Updates the user's `active_family_id` if needed
 
-## Database Evidence
+**Issue**: The `families` state is filtered **immediately** (`setFamilies(prev => prev.filter(f => f.id !== familyId))`), but this only affects memory. On page refresh or when `loadFamilyData()` runs:
+- The code fetches `user_families` for the user (correct - only shows families user belongs to)
+- Then fetches `families` where ID is in that list
+- **BUT** the local state may still contain stale family data from before the quit, or localStorage backup contains old data
 
-- **Family `cc5d9074-3e29-4c1d-ab3d-7ec5c846695e`** has 2 members in `user_families`:
-  - `50952e8b-8d46-4cc0-9701-a5fc9062be98` (Yana)
-  - `62e9c60d-1f5e-4c53-9d30-11237967f105` (Yana TAU)
+The ghost family appears because:
+1. **localStorage backup is not cleaned**: The code calls `storage.addFamily()` and `storage.addUserFamily()` when joining, but doesn't remove them when quitting
+2. **The `allFamilyMembers` state** isn't cleaned for the quit family
+3. **Race conditions**: If the UI renders before the async delete completes, stale data persists
 
-- **Actual `profiles` columns**: `id`, `display_name`, `gender`, `profile_complete`, `active_family_id`, `created_at`, `updated_at`, `avatar_url`, `preferred_language`
-
-- **Missing columns referenced by function**: `age`, `date_of_birth`
-
-## Solution
-
-Update the `get_family_members` function to remove references to non-existent columns:
+### Solution
 
 ```text
+CURRENT FLOW (BROKEN)
 ┌─────────────────────────────────────────────────────────────────┐
-│                    CURRENT (BROKEN)                             │
-├─────────────────────────────────────────────────────────────────┤
-│ SELECT                                                          │
-│   p.active_family_id,                                           │
-│   p.age,               ← DOES NOT EXIST                         │
-│   p.avatar_url,                                                 │
-│   uf.current_stage,                                             │
-│   CASE WHEN p.id = auth.uid()                                   │
-│     THEN p.date_of_birth ← DOES NOT EXIST                       │
-│     ELSE NULL END as date_of_birth,                             │
-│   ...                                                           │
+│ quitFamily() called                                             │
+│   → Optimistic state update (removes from React state)          │
+│   → Delete from Supabase user_families                          │
+│   → (localStorage NOT cleaned)                                  │
+│   → On refresh: localStorage fallback restores ghost family     │
 └─────────────────────────────────────────────────────────────────┘
 
+FIXED FLOW
 ┌─────────────────────────────────────────────────────────────────┐
-│                      FIXED                                      │
-├─────────────────────────────────────────────────────────────────┤
-│ SELECT                                                          │
-│   p.active_family_id,                                           │
-│   p.avatar_url,                                                 │
-│   uf.current_stage,                                             │
-│   p.display_name,                                               │
-│   uf.family_id,                                                 │
-│   p.gender,                                                     │
-│   uf.joined_at,                                                 │
-│   p.profile_complete,                                           │
-│   p.id as profile_id,                                           │
-│   uf.total_stars,                                               │
-│   uf.user_id                                                    │
-│   ...                                                           │
+│ quitFamily() called                                             │
+│   → Optimistic state update (removes from React state)          │
+│   → Clean allFamilyMembers state for this family                │
+│   → Delete from Supabase user_families                          │
+│   → Clean localStorage backup (storage.removeFamily)            │
+│   → Force reload family data from Supabase (source of truth)    │
 └─────────────────────────────────────────────────────────────────┘
 ```
+
+### Files to Modify
+
+| File | Change |
+|------|--------|
+| `src/hooks/useApp.tsx` | In `quitFamily()`: clean `allFamilyMembers` state, add localStorage cleanup, call `loadFamilyData()` to refresh from Supabase |
+| `src/lib/storage.ts` | Add `removeFamily()` and `removeUserFamily()` methods if they don't exist |
 
 ---
 
-## Technical Details
+## Problem 2: Non-Translatable UI Text
 
-### Database Migration
+### Analysis Summary
 
-Replace the `get_family_members` function with corrected version:
+After reviewing all pages and components, I found the following hardcoded English text that needs translation:
 
-```sql
-CREATE OR REPLACE FUNCTION public.get_family_members(p_family_id uuid)
-RETURNS TABLE(
-  active_family_id uuid,
-  avatar_url text,
-  current_stage integer,
-  display_name text,
-  family_id uuid,
-  gender text,
-  joined_at timestamp with time zone,
-  profile_complete boolean,
-  profile_id uuid,
-  total_stars integer,
-  user_id uuid
-)
-LANGUAGE sql
-STABLE SECURITY DEFINER
-SET search_path TO 'public'
-AS $$
-  SELECT
-    p.active_family_id,
-    p.avatar_url,
-    uf.current_stage,
-    p.display_name,
-    uf.family_id,
-    p.gender,
-    uf.joined_at,
-    p.profile_complete,
-    p.id as profile_id,
-    uf.total_stars,
-    uf.user_id
-  FROM user_families uf
-  JOIN profiles p ON p.id = uf.user_id
-  WHERE uf.family_id = p_family_id
-    AND EXISTS (
-      SELECT 1 FROM user_families 
-      WHERE user_id = auth.uid() 
-      AND family_id = p_family_id
-    );
-$$;
-```
+### AuthPage.tsx (Login/Signup)
 
-### Changes Summary
+| Line | Hardcoded Text | Translation Key Needed |
+|------|---------------|----------------------|
+| 56-57 | "Sign in failed" / error.message | `auth.signInFailed` |
+| 61-62 | "Welcome back!" / "Successfully signed in." | `auth.welcomeBack` |
+| 85-86 | "Sign up failed" | `auth.signUpFailed` |
+| 91-92 | "Check your email!" | `auth.checkEmail` |
+| 104-105 | "Email required" / "Please enter your email address first." | `auth.emailRequired` |
+| 115-116 | "Password reset failed" | `auth.passwordResetFailed` |
+| 121-122 | "Check your email!" (reset) | `auth.passwordResetSent` |
+| 136 | "Loading..." | `common.loading` |
+| 147 | "Family Huddle" | `app.name` |
+| 149-150 | App description | `auth.appDescription` |
+| 156 | "Join Family Huddle" | `auth.joinTitle` |
+| 158 | "Sign in to your account..." | `auth.joinDescription` |
+| 164-165 | "Sign In" / "Sign Up" tab labels | `auth.signIn` / `auth.signUp` |
+| 172 | "Email" label | `auth.email` |
+| 178-179 | "Enter your email" placeholder | `auth.emailPlaceholder` |
+| 182 | "Password" label | `auth.password` |
+| 189 | "Enter your password" placeholder | `auth.passwordPlaceholder` |
+| 198 | "Sign In" / "Signing in..." button | `auth.signInButton` |
+| 207 | "Forgot password?" | `auth.forgotPassword` |
+| 229 | "Send Reset Link" | `auth.sendResetLink` |
+| 238 | "Back to sign in" | `auth.backToSignIn` |
+| 254, 264 | "Create a password" placeholder | `auth.createPasswordPlaceholder` |
+| 286 | "I confirm that I am 13 years of age or older" | `auth.ageConfirmation` |
+| 305 | "I agree to the Terms of Use" | `auth.termsAgreement` |
+| 311-349 | Full Terms of Service text | Keep hardcoded (legal document) |
+| 358-362 | Age/Terms error messages | `auth.ageTermsError` variants |
+| 372 | "Sign Up" / "Creating account..." button | `auth.signUpButton` |
+| 382 | "Made with ❤️ for families everywhere" | `auth.madeWithLove` |
 
-| Change | Description |
-|--------|-------------|
-| Remove `p.age` | Column doesn't exist in profiles table |
-| Remove `date_of_birth` | Column doesn't exist, and its CASE expression |
-| Update return type | Remove `age integer` and `date_of_birth date` from return table |
-| Preserve security | Keep SECURITY DEFINER to allow cross-user profile access |
+### OnboardingPage.tsx
 
-### No Code Changes Required
+| Line | Hardcoded Text | Translation Key Needed |
+|------|---------------|----------------------|
+| 37-39 | Zod error messages | `onboarding.nameMinLength`, `onboarding.selectGender` |
+| 54 | "Please fill in the required family information" | `onboarding.familyInfoRequired` |
+| 108-109 | "Welcome to Family Huddle! ⭐" | `onboarding.welcomeTitle` |
+| 119 | "You've joined..." | `onboarding.joinedFamily` |
+| 122-123 | "Invalid invite code" | Use existing `family.invalidCode` |
+| 157 | "Session expired" | `auth.sessionExpired` |
+| 168 | "Error" / "Something went wrong" | `common.error` |
+| 180 | "Loading..." | `common.loading` |
+| 191 | "Welcome to Family Huddle!" | `onboarding.welcomeTitle` |
+| 194 | "Complete your profile..." | `onboarding.completeProfile` |
+| 201-203 | "Start your 4-day free trial" | `onboarding.trialTitle` / `onboarding.trialDesc` |
+| 210 | "Start free trial" | `onboarding.startTrial` |
+| 217 | "Set up your profile" | `onboarding.setupProfile` |
+| 219 | "Tell us about yourself..." | `onboarding.setupProfileDesc` |
+| 229 | "About you" | `onboarding.aboutYou` |
+| 237 | "Display Name" | `onboarding.displayName` |
+| 239 | "What should we call you?" | `onboarding.displayNamePlaceholder` |
+| 251 | "Gender" | `onboarding.gender` |
+| 255 | "Select your gender" | `onboarding.selectGenderPlaceholder` |
+| 259-261 | "Male" / "Female" / "Other" | `onboarding.male` / `onboarding.female` / `onboarding.other` |
+| 277 | "Join your family" | `onboarding.joinFamily` |
+| 289 | "Create Family" / "Join Family" | Use existing `family.createFamily` / `family.joinFamily` |
+| 299 | "Family Name" | Use existing `family.familyName` |
+| 302 | "The Smith Family" placeholder | `onboarding.familyNamePlaceholder` |
+| 315 | "Invite Code" | Use existing `family.inviteCode` |
+| 319 | "Enter family invite code" | Use existing `family.enterInviteCode` |
+| 336 | "Create Family & Get Started" / "Join Family & Get Started" | `onboarding.createAndStart` / `onboarding.joinAndStart` |
 
-The frontend code in `useApp.tsx` already handles missing fields gracefully:
-- `fetchFamilyMembers` maps data without expecting `age` or `date_of_birth`
-- No TypeScript types reference these removed fields
+### MemberProfileModal.tsx
 
-### Impact Assessment
+| Line | Hardcoded Text | Translation Key Needed |
+|------|---------------|----------------------|
+| 43 | "Family Member" fallback | `family.defaultMemberName` |
+| 51 | "{displayName}'s Profile" | `memberProfile.title` |
+| 101 | "Progress to next stage" | Use existing `main.progressToNext` |
+| 102 | "stars" | Use existing `main.stars` |
+| 112 | "Active Goal" | Use existing `main.activeGoal` |
+| 113 | "stars" (in goal) | Use existing `main.stars` |
+| 116 | "Reward:" | Use existing `goals.reward` |
+| 129 | "Today's Tasks" | Use existing `main.todayTasks` |
+| 136 | "No tasks for today!" | Use existing `main.noTasksToday` |
 
-- **Fix**: Family members will appear correctly after migration
-- **No breaking changes**: No existing functionality relies on `age` or `date_of_birth` fields
-- **No data loss**: Only fixes the function signature, no table changes
+### FamilyPage.tsx
+
+| Line | Hardcoded Text | Translation Key Needed |
+|------|---------------|----------------------|
+| 326-327 | "Family Member" fallback | `family.defaultMemberName` |
+| 330 | "stars" (in member stats) | Use existing `main.stars` |
+
+### Summary of Files to Modify
+
+| File | Type of Change |
+|------|---------------|
+| `src/pages/auth/AuthPage.tsx` | Add `useTranslation`, replace all hardcoded text with `t()` calls |
+| `src/pages/onboarding/OnboardingPage.tsx` | Add `useTranslation`, replace all hardcoded text |
+| `src/components/modals/MemberProfileModal.tsx` | Replace remaining hardcoded text with `t()` calls |
+| `src/pages/family/FamilyPage.tsx` | Fix remaining hardcoded text in member display |
+| `src/i18n/locales/en.json` | Add ~40 new translation keys |
+| `src/i18n/locales/es.json` | Add translations for all new keys |
+| `src/i18n/locales/zh.json` | Add translations for all new keys |
+| `src/i18n/locales/hi.json` | Add translations for all new keys |
+| `src/i18n/locales/ru.json` | Add translations for all new keys |
+| `src/i18n/locales/he.json` | Add translations for all new keys |
+
+---
+
+## Technical Implementation
+
+### Step 1: Fix Ghost Family Issue
+
+Modify `src/hooks/useApp.tsx`:
+- Clean `allFamilyMembers` state when quitting
+- Add localStorage cleanup after successful Supabase delete
+- Force data reload from Supabase to ensure consistency
+
+Add to `src/lib/storage.ts`:
+- `removeUserFamily(userId: string, familyId: string)` method
+- `removeFamily(familyId: string)` method (cleanup only if user's families)
+
+### Step 2: Add Missing Translation Keys
+
+Add new translation keys to all 6 locale files:
+- `auth.*` - authentication page strings
+- `onboarding.*` - onboarding flow strings  
+- `memberProfile.*` - member profile modal strings
+
+### Step 3: Update Components
+
+Replace hardcoded English strings with `t()` calls using the new translation keys.
+
+---
+
+## Impact Assessment
+
+| Change | Risk Level | Functionality Preserved |
+|--------|-----------|------------------------|
+| Ghost family fix | Low | Yes - improves data consistency |
+| Translation keys | Low | Yes - no logic changes |
+| `useTranslation` additions | Low | Yes - only text output changes |
+
+All existing functionality remains intact. The changes only affect:
+1. State cleanup consistency when leaving families
+2. Text display using i18n system instead of hardcoded strings
