@@ -62,7 +62,12 @@
     "categoryDeleted": "Category deleted",
     "deleteCategorySuccess": "and all its tasks have been deleted.",
     "deleteTemplate": "Delete this task template?",
-    "templates": "templates"
+    "templates": "templates",
+    "createCategory": "Create New Category",
+    "createCategoryDesc": "Add a custom category to organize your tasks",
+    "categoryNameLabel": "Category Name",
+    "categoryNamePlaceholder": "Enter category name",
+    "createCategoryBtn": "Create Category"
   },
   "goals": {
     "title": "Goals",

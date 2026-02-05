@@ -1,10 +1,18 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useTasks } from '@/hooks/useTasks';
 import { useAuth } from '@/hooks/useAuth';
+import { Loader2 } from 'lucide-react';
 
 interface CreateCategoryModalProps {
   open: boolean;
@@ -13,6 +21,7 @@ interface CreateCategoryModalProps {
 }
 
 export function CreateCategoryModal({ open, onOpenChange, familyId }: CreateCategoryModalProps) {
+  const { t } = useTranslation();
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const { addCategory } = useTasks();
@@ -27,10 +36,10 @@ export function CreateCategoryModal({ open, onOpenChange, familyId }: CreateCate
       const result = await addCategory({
         name: name.trim(),
         familyId,
-        userId: user.id, // Set user_id for user-owned category
+        userId: user.id,
         isHouseChores: false,
         isDefault: false,
-        order: 0, // Will be computed by the hook
+        order: Date.now(),
       });
       
       if (result) {
@@ -42,29 +51,45 @@ export function CreateCategoryModal({ open, onOpenChange, familyId }: CreateCate
     }
   };
 
+  const handleClose = () => {
+    if (!loading) {
+      setName('');
+      onOpenChange(false);
+    }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Create New Category</DialogTitle>
+          <DialogTitle>{t('tasks.createCategory')}</DialogTitle>
+          <DialogDescription>{t('tasks.createCategoryDesc')}</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="categoryName">Category Name</Label>
+          <div className="space-y-2">
+            <Label htmlFor="categoryName">{t('tasks.categoryNameLabel')}</Label>
             <Input
               id="categoryName"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Enter category name"
+              placeholder={t('tasks.categoryNamePlaceholder')}
+              autoFocus
               required
             />
           </div>
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+            <Button type="button" variant="outline" onClick={handleClose} disabled={loading}>
+              {t('common.cancel')}
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? 'Creating...' : 'Create Category'}
+            <Button type="submit" disabled={!name.trim() || loading} variant="theme">
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  {t('common.creating')}
+                </>
+              ) : (
+                t('tasks.createCategoryBtn')
+              )}
             </Button>
           </div>
         </form>
