@@ -857,21 +857,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const blockedIndefinite = duration === 'indefinite';
       const blockedAt = new Date().toISOString();
 
-      // Update user_families row with block status
-      const { error: updateError } = await supabase
-        .from('user_families')
-        .update({
-          blocked_at: blockedAt,
-          blocked_until: blockedUntil,
-          blocked_indefinite: blockedIndefinite,
-          blocked_reason: reason,
-          blocked_by: user.id,
-        })
-        .eq('user_id', memberUserId)
-        .eq('family_id', familyId);
+      // Use RPC function to bypass RLS and perform validated block
+      const { error: rpcError } = await supabase.rpc('block_family_member', {
+        p_family_id: familyId,
+        p_member_user_id: memberUserId,
+        p_reason: reason,
+        p_blocked_until: blockedUntil,
+        p_blocked_indefinite: blockedIndefinite,
+      });
 
-      if (updateError) {
-        console.error('Error blocking member:', updateError);
+      if (rpcError) {
+        console.error('Error blocking member:', rpcError);
         return false;
       }
 
@@ -973,21 +969,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         return false;
       }
 
-      // Clear block fields
-      const { error: updateError } = await supabase
-        .from('user_families')
-        .update({
-          blocked_at: null,
-          blocked_until: null,
-          blocked_indefinite: false,
-          blocked_reason: null,
-          blocked_by: null,
-        })
-        .eq('user_id', memberUserId)
-        .eq('family_id', familyId);
+      // Use RPC function to bypass RLS and perform validated unblock
+      const { error: rpcError } = await supabase.rpc('unblock_family_member', {
+        p_family_id: familyId,
+        p_member_user_id: memberUserId,
+      });
 
-      if (updateError) {
-        console.error('Error unblocking member:', updateError);
+      if (rpcError) {
+        console.error('Error unblocking member:', rpcError);
         return false;
       }
 
