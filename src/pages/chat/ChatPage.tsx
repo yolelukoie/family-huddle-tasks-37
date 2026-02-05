@@ -10,7 +10,7 @@ import { useChat } from '@/hooks/useChat';
 import { NavigationHeader } from '@/components/layout/NavigationHeader';
 import { Send, Trash2, Ban } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
-import { isBlocked } from '@/lib/blockUtils';
+import { isBlocked, getBlockTimeRemaining, formatBlockTimeRemaining } from '@/lib/blockUtils';
 import { ROUTES } from '@/lib/constants';
 
 export default function ChatPage() {
@@ -55,6 +55,9 @@ export default function ChatPage() {
   // Check if user is blocked in this family
   const userFamily = getUserFamily(activeFamilyId);
   if (isBlocked(userFamily)) {
+    const remaining = getBlockTimeRemaining(userFamily);
+    const timeStr = remaining === Infinity ? '' : formatBlockTimeRemaining(remaining);
+    
     return (
       <div className="min-h-screen bg-gradient-to-b from-[hsl(var(--section-tint))] to-background">
         <NavigationHeader title={t('chat.title')} />
@@ -64,7 +67,9 @@ export default function ChatPage() {
               <Ban className="h-12 w-12 text-destructive mb-4" />
               <h2 className="text-lg font-semibold mb-2">{t('block.chatRestricted')}</h2>
               <p className="text-muted-foreground text-center mb-4">
-                {t('block.cannotAccessWhileBlocked')}
+                {timeStr 
+                  ? t('block.accessRestrictedFor', { time: timeStr })
+                  : t('block.cannotAccessWhileBlocked')}
               </p>
               <Button onClick={() => navigate(ROUTES.family)}>
                 {t('nav.family')}
