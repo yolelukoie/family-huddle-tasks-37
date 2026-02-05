@@ -502,9 +502,23 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
 
   const addTemplate = useCallback(async (template: Omit<TaskTemplate, 'id' | 'createdAt'>) => {
     if (!activeFamilyId || !user) return null;
+
+    // Check if user is blocked and trying to add to default category
+    const userFamily = getUserFamily(activeFamilyId);
+    if (isBlocked(userFamily)) {
+      const category = categories.find(c => c.id === template.categoryId);
+      if (category?.isDefault || category?.isHouseChores) {
+        toast({
+          title: t('block.restricted'),
+          description: t('block.cannotCreateInDefaultCategory'),
+          variant: 'destructive',
+        });
+        return null;
+      }
+    }
   
     // Quick client-side guard by current state (same family + category)
-    const existingInCategory = templates.filter(t => t.familyId === activeFamilyId && t.categoryId === template.categoryId);
+    const existingInCategory = templates.filter(tpl => tpl.familyId === activeFamilyId && tpl.categoryId === template.categoryId);
     if (existingInCategory.length >= MAX_TEMPLATES_PER_CATEGORY) {
       toast({
         title: "Limit Reached",
@@ -574,10 +588,24 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
   const addTodayTaskFromTemplate = useCallback(async (templateId: string) => {
     if (!activeFamilyId || !user) return null;
   
-    const t = templates.find(x => x.id === templateId);
-    if (!t) {
+    const template = templates.find(x => x.id === templateId);
+    if (!template) {
       console.error('Template not found for Today:', templateId);
       return null;
+    }
+
+    // Check if user is blocked and trying to add to default category
+    const userFamily = getUserFamily(activeFamilyId);
+    if (isBlocked(userFamily)) {
+      const category = categories.find(c => c.id === template.categoryId);
+      if (category?.isDefault || category?.isHouseChores) {
+        toast({
+          title: t('block.restricted'),
+          description: t('block.cannotCreateInDefaultCategory'),
+          variant: 'destructive',
+        });
+        return null;
+      }
     }
   
     // today's date (YYYY-MM-DD)
@@ -589,12 +617,12 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
   
     try {
       const insertData = {
-        name: t.name,
-        description: t.description || null,
-        category_id: t.categoryId,
-        star_value: t.starValue,
+        name: template.name,
+        description: template.description || null,
+        category_id: template.categoryId,
+        star_value: template.starValue,
         family_id: activeFamilyId,
-        template_id: t.id,
+        template_id: template.id,
         assigned_to: user.id,
         assigned_by: user.id,
         due_date: todayDateStr,

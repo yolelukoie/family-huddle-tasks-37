@@ -24,7 +24,10 @@ import { TaskTemplateModal } from './TaskTemplateModal';
 import { ReportContentModal } from '@/components/modals/ReportContentModal';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useApp } from '@/hooks/useApp';
 import { useTasks } from '@/hooks/useTasks';
+import { isBlocked } from '@/lib/blockUtils';
+import { cn } from '@/lib/utils';
 import { translateCategoryName, translateTaskName, translateTaskDescription } from '@/lib/translations';
 import type { TaskCategory, TaskTemplate } from '@/lib/types';
 
@@ -44,10 +47,17 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { getUserFamily } = useApp();
   const { templates, addTodayTaskFromTemplate, deleteCategory, deleteTemplate } = useTasks();
 
   const categoryTemplates = templates.filter(t => t.categoryId === category.id);
   const translatedCategoryName = translateCategoryName(category.name, t);
+
+  // Block check for UI restrictions
+  const userFamily = familyId ? getUserFamily(familyId) : null;
+  const userIsBlocked = isBlocked(userFamily);
+  const isSharedCategory = category.isDefault || category.isHouseChores;
+  const canCreateInCategory = !userIsBlocked || !isSharedCategory;
 
   const handleAddToToday = async (template: TaskTemplate) => {
     if (!user) return;
@@ -136,8 +146,13 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
                 return (
                   <div 
                     key={template.id} 
-                    className="flex items-center justify-between p-2 border rounded cursor-pointer hover:bg-accent transition-colors"
-                    onClick={() => handleAddToToday(template)}
+                    className={cn(
+                      "flex items-center justify-between p-2 border rounded transition-colors",
+                      canCreateInCategory 
+                        ? "cursor-pointer hover:bg-accent" 
+                        : "opacity-60 cursor-not-allowed"
+                    )}
+                    onClick={() => canCreateInCategory ? handleAddToToday(template) : null}
                   >
                     <div className="flex-1">
                       <div className="font-medium text-sm">{translatedTaskName}</div>
@@ -178,15 +193,21 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
                 );
               })}
             
-            <Button
-              variant="theme"
-              size="sm"
-              onClick={() => setShowTemplateModal(true)}
-              className="w-full"
-            >
-              <Plus className="h-3 w-3 mr-2" />
-              {t('tasks.addTaskTemplate')}
-            </Button>
+            {canCreateInCategory ? (
+              <Button
+                variant="theme"
+                size="sm"
+                onClick={() => setShowTemplateModal(true)}
+                className="w-full"
+              >
+                <Plus className="h-3 w-3 mr-2" />
+                {t('tasks.addTaskTemplate')}
+              </Button>
+            ) : (
+              <p className="text-xs text-muted-foreground text-center py-2">
+                {t('block.viewOnlyWhileBlocked')}
+              </p>
+            )}
           </div>
         </CollapsibleContent>
       </Collapsible>
