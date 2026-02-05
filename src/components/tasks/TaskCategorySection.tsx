@@ -185,6 +185,7 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
         contentType="task_template"
         familyId={familyId}
         contentName={reportTarget?.name || ''}
+        contentDescription={reportTarget?.description || ''}
         createdBy={reportTarget?.createdBy || ''}
         onReported={() => {
           setReportTarget(null);

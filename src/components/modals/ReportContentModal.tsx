@@ -30,6 +30,7 @@ interface ReportContentModalProps {
   contentType: 'task_template' | 'task' | 'chat_message';
   familyId: string;
   contentName?: string;
+  contentDescription?: string;
   createdBy?: string;
   onReported?: () => void;
 }
@@ -51,6 +52,7 @@ export function ReportContentModal({
   contentType,
   familyId,
   contentName,
+  contentDescription,
   createdBy,
   onReported,
 }: ReportContentModalProps) {
@@ -80,13 +82,14 @@ export function ReportContentModal({
         }
       }
 
-      // 2. Insert report with content_name (store the name for audit purposes)
+      // 2. Insert report with content_name and content_description (store for audit purposes)
       const { error: reportError } = await supabase.from('reports').insert({
         reporter_id: user.id,
         family_id: familyId,
         content_id: contentId,
         content_type: contentType,
         content_name: contentName && contentName.trim() ? contentName.trim() : null,
+        content_description: contentDescription && contentDescription.trim() ? contentDescription.trim() : null,
         reason,
         details: details.trim() || null,
       });

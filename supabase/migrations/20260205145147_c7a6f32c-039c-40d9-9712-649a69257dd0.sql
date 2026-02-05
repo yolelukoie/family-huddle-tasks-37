@@ -1,0 +1,1 @@
+ALTER TABLE public.reports ADD COLUMN content_description text NULL;
