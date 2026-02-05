@@ -1,153 +1,128 @@
 
-# Fix: Block Restrictions Not Working for Task Creation in Default Categories
+# Legal Pages Accuracy Update
 
-## Root Cause Analysis
+## Overview
 
-After thorough code review, I've identified **two issues**:
+After analyzing the codebase against the legal pages, I found several discrepancies between what data the app actually collects and what the legal documents state. The legal pages need updates to accurately reflect the app's current data practices.
 
-### Issue 1: Stale Closure in TasksContext
-The `addTodayTaskFromTemplate` and `addTemplate` functions in `TasksContext.tsx` use `getUserFamily` from `useApp` hook. However, these functions are wrapped in `useCallback` which captures the function reference. When block status changes:
-- The `useApp` state updates correctly
-- But `TasksContext` callbacks may still use a stale `getUserFamily` reference that reads old state
+---
 
-### Issue 2: UI Component May Have Stale State
-The `TaskCategorySection` component checks block status at render time, but if the component doesn't re-render when block status changes, the check will be stale.
+## Findings
 
-## Solution: Multi-Layer Defense
+### Data the App Actually Collects (from database/code)
 
-### Layer 1: Fetch Fresh Data in TasksContext (Lines 597-609)
+| Category | Data |
+|----------|------|
+| Account | Email address, password (hashed in Supabase Auth) |
+| Profile | Display name, gender, avatar URL, preferred language |
+| Family | Family names, membership relationships, invite codes |
+| Activity | Tasks, goals, templates, completion status, star values |
+| Chat | Messages with content, sender, and timestamps |
+| Progress | Stars earned, character stage, badges unlocked, celebrations |
+| Notifications | FCM push tokens, platform type (web/android) |
+| Custom Content | Uploaded character images, avatars |
+| Moderation | Block status, block reasons, content reports |
 
-Instead of relying on `getUserFamily` which may be stale, fetch the membership data directly from Supabase at the time of the action:
+### Data NOT Collected (but mentioned in legal pages)
 
-**File: `src/contexts/TasksContext.tsx`**
+| Mentioned | Status |
+|-----------|--------|
+| Date of birth / Age | **NOT COLLECTED** - removed from app |
+| IP address, device type, OS version | **NOT COLLECTED** |
+| Usage analytics | **NOT ACTIVE** - Firebase measurementId exists but analytics not initialized |
+| Payment/billing data | **NOT YET** - subscription is TODO placeholder |
 
-```typescript
-const addTodayTaskFromTemplate = useCallback(async (templateId: string) => {
-  if (!activeFamilyId || !user) return null;
+---
 
-  const template = templates.find(x => x.id === templateId);
-  if (!template) {
-    console.error('Template not found for Today:', templateId);
-    return null;
-  }
+## Changes Required
 
-  // FRESH fetch of membership to check block status (not relying on cached state)
-  const { data: freshMembership, error: membershipError } = await supabase
-    .from('user_families')
-    .select('blocked_at, blocked_until, blocked_indefinite')
-    .eq('user_id', user.id)
-    .eq('family_id', activeFamilyId)
-    .single();
+### 1. Privacy Policy Page (`src/pages/legal/PrivacyPolicyPage.tsx`)
 
-  if (membershipError) {
-    console.error('Error fetching membership:', membershipError);
-  }
+**Section 1 - Information We Collect:**
+- Remove any reference to age/date of birth
+- Add: language preferences
+- Add: custom uploaded images (avatars, character images)
 
-  // Check if user is blocked using fresh data
-  const isUserBlocked = !!(
-    freshMembership?.blocked_indefinite || 
-    (freshMembership?.blocked_until && new Date(freshMembership.blocked_until) > new Date())
-  );
+**Section 4 - Data Storage:**
+- Already accurate (Supabase + RLS)
 
-  if (isUserBlocked) {
-    const category = categories.find(c => c.id === template.categoryId);
-    if (category?.isDefault || category?.isHouseChores) {
-      console.log('[TasksContext] BLOCKED: User attempted to create task in default category');
-      toast({
-        title: t('block.restricted'),
-        description: t('block.cannotCreateInDefaultCategory'),
-        variant: 'destructive',
-      });
-      return null;
-    }
-  }
+**Section 7 - Your Rights:**
+- Fix delete account link (should link to Personal Settings page or just say "through the app's settings")
 
-  // ... rest of the function
-}, [activeFamilyId, user, templates, categories, toast, t]);
+**Section 9 - Contact:**
+- Add email: support@familyhuddletasks.com (to match other pages)
+
+### 2. Terms of Service Page (`src/pages/legal/TermsOfServicePage.tsx`)
+
+**Section 7.1 - Data We Collect:**
+- Remove: "IP address, device type, operating system, app version"
+- Remove or clarify: "basic usage analytics" (currently not active)
+- Keep payment data mention but note it applies when subscription is active
+- Add: FCM push notification tokens for notifications
+
+---
+
+## Technical Implementation
+
+### File 1: Privacy Policy Updates
+
+```tsx
+// Section 1 - Update the data list:
+<ul className="list-disc pl-6 text-muted-foreground space-y-1">
+  <li>Account information (email address, display name)</li>
+  <li>Profile information (avatar, gender preference for character display, language preference)</li>
+  <li>Family and task data you create within the app</li>
+  <li>Chat messages shared within your family groups</li>
+  <li>Custom images you upload (profile pictures, character images)</li>
+  <li>Push notification tokens (if you enable notifications)</li>
+</ul>
+
+// Section 7 - Fix delete link:
+<li>Delete your account and associated data through the app's Personal Settings page</li>
+
+// Section 9 - Add email:
+<p className="text-muted-foreground">
+  If you have questions about this Privacy Policy, please contact us at{' '}
+  <a href="mailto:support@familyhuddletasks.com" className="text-primary hover:underline">
+    support@familyhuddletasks.com
+  </a>
+</p>
 ```
 
-### Layer 2: Same Fix for `addTemplate` (Lines 503-518)
+### File 2: Terms of Service Updates
 
-Apply the same fresh-fetch pattern to `addTemplate`:
-
-```typescript
-const addTemplate = useCallback(async (template: Omit<TaskTemplate, 'id' | 'createdAt'>) => {
-  if (!activeFamilyId || !user) return null;
-
-  // FRESH fetch of membership to check block status
-  const { data: freshMembership } = await supabase
-    .from('user_families')
-    .select('blocked_at, blocked_until, blocked_indefinite')
-    .eq('user_id', user.id)
-    .eq('family_id', activeFamilyId)
-    .single();
-
-  const isUserBlocked = !!(
-    freshMembership?.blocked_indefinite || 
-    (freshMembership?.blocked_until && new Date(freshMembership.blocked_until) > new Date())
-  );
-
-  if (isUserBlocked) {
-    const category = categories.find(c => c.id === template.categoryId);
-    if (category?.isDefault || category?.isHouseChores) {
-      toast({
-        title: t('block.restricted'),
-        description: t('block.cannotCreateInDefaultCategory'),
-        variant: 'destructive',
-      });
-      return null;
-    }
-  }
-
-  // ... rest of the function
-}, [activeFamilyId, user, templates, categories, toast, t]);
+```tsx
+// Section 7.1 - Update data list:
+<h3>7.1 Data We Collect</h3>
+<ul className="list-disc pl-6 text-muted-foreground space-y-1">
+  <li><strong>Account data:</strong> email address, name or nickname, password (stored in hashed form), language preferences.</li>
+  <li><strong>Profile and family data:</strong> family or group names, member names or nicknames, and relationships you define in the app.</li>
+  <li><strong>Usage data:</strong> tasks you create or complete, schedules, progress, achievements, and app settings.</li>
+  <li><strong>Notification data:</strong> push notification tokens if you enable notifications, and your device platform (web, Android, iOS).</li>
+  <li><strong>Uploaded content:</strong> profile pictures and custom character images you choose to upload.</li>
+  <li><strong>Payment data:</strong> if you subscribe to Premium, limited information about your subscription status and billing history as provided by payment processors. We do not store your full payment card number.</li>
+</ul>
 ```
 
-### Layer 3: Create Helper Function for Reuse
-
-To avoid code duplication, create a helper function:
-
-```typescript
-// Inside TasksProvider, before the callbacks:
-const checkUserBlocked = async (): Promise<boolean> => {
-  if (!activeFamilyId || !user) return false;
-  
-  const { data } = await supabase
-    .from('user_families')
-    .select('blocked_until, blocked_indefinite')
-    .eq('user_id', user.id)
-    .eq('family_id', activeFamilyId)
-    .single();
-    
-  return !!(
-    data?.blocked_indefinite || 
-    (data?.blocked_until && new Date(data.blocked_until) > new Date())
-  );
-};
-```
+---
 
 ## Files to Modify
 
-1. **`src/contexts/TasksContext.tsx`**
-   - Add `checkUserBlocked` helper function
-   - Update `addTodayTaskFromTemplate` to use fresh DB check
-   - Update `addTemplate` to use fresh DB check
-   - Remove dependency on `getUserFamily` for these functions
+1. **`src/pages/legal/PrivacyPolicyPage.tsx`**
+   - Update Section 1 (collected data list)
+   - Update Section 7 (delete account reference)
+   - Update Section 9 (add email contact)
 
-## Why This Works
+2. **`src/pages/legal/TermsOfServicePage.tsx`**
+   - Update Section 7.1 (remove false claims about IP/device tracking)
+   - Clarify payment data only applies when subscriptions are active
 
-1. **Fresh Data**: Every time a blocked user tries to create a task, we query the database directly for their current block status
-2. **No Stale Closures**: We don't rely on React state that may be stale in callback closures
-3. **Authoritative Source**: The database is the single source of truth for block status
-4. **UI Still Works**: The UI restrictions in `TaskCategorySection` provide immediate visual feedback, but the backend check is the enforcement layer
+---
 
-## Testing Checklist
+## Summary
 
-After implementation:
-1. User A blocks User B
-2. User B (without refreshing) navigates to Tasks page
-3. User B clicks on a template in "House Chores" category
-4. Expected: Toast appears with "You cannot create tasks in shared categories while blocked"
-5. Expected: No task is created
-6. User B creates a custom category and adds a template
-7. Expected: Task IS created successfully (custom categories are allowed)
+These updates will ensure the legal pages accurately reflect:
+- What data is actually collected (no more, no less)
+- How users can delete their data (correct path)
+- Consistent contact information across all legal pages
+- Removal of claims about data we don't collect (IP, device info, analytics)
