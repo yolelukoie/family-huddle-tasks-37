@@ -6,6 +6,7 @@ import { generateId } from '@/lib/utils';
 import { DEFAULT_CATEGORIES, DEFAULT_HOUSE_CHORES } from '@/lib/constants';
 import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { type BlockReason, type BlockDuration, calculateBlockUntil } from '@/lib/blockUtils';
 
 interface AppContextType {
   activeFamilyId: string | null;
@@ -21,6 +22,10 @@ interface AppContextType {
   updateFamilyName: (familyId: string, name: string) => Promise<void>;
   quitFamily: (familyId: string) => Promise<boolean>;
   removeFamilyMember: (familyId: string, userId: string) => Promise<boolean>;
+  
+  // Block actions
+  blockFamilyMember: (familyId: string, memberUserId: string, reason: BlockReason, duration: BlockDuration) => Promise<boolean>;
+  unblockFamilyMember: (familyId: string, memberUserId: string) => Promise<boolean>;
   
   // Utility
   getUserFamily: (familyId: string) => UserFamily | null;
@@ -150,6 +155,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         currentStage: uf.current_stage,
         lastReadTimestamp: uf.last_read_timestamp,
         seenCelebrations: uf.seen_celebrations,
+        // Block fields
+        blockedAt: uf.blocked_at ?? undefined,
+        blockedUntil: uf.blocked_until ?? undefined,
+        blockedIndefinite: uf.blocked_indefinite ?? false,
+        blockedReason: uf.blocked_reason ?? undefined,
+        blockedBy: uf.blocked_by ?? undefined,
       }));
 
       const convertedFamilies: Family[] = familyData.map(f => ({
@@ -483,6 +494,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           currentStage: userFamilyData.current_stage,
           lastReadTimestamp: userFamilyData.last_read_timestamp,
           seenCelebrations: userFamilyData.seen_celebrations,
+          // Block fields
+          blockedAt: userFamilyData.blocked_at ?? undefined,
+          blockedUntil: userFamilyData.blocked_until ?? undefined,
+          blockedIndefinite: userFamilyData.blocked_indefinite ?? false,
+          blockedReason: userFamilyData.blocked_reason ?? undefined,
+          blockedBy: userFamilyData.blocked_by ?? undefined,
         };
 
         // Upsert user family - update if exists, add if not
@@ -813,6 +830,240 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const blockFamilyMember = async (
+    familyId: string,
+    memberUserId: string,
+    reason: BlockReason,
+    duration: BlockDuration
+  ): Promise<boolean> => {
+    if (!user) return false;
+
+    try {
+      // Check if user is a family member
+      const isMember = userFamilies.some(uf => uf.familyId === familyId && uf.userId === user.id);
+      if (!isMember) {
+        console.error('Only family members can block other members');
+        return false;
+      }
+
+      // Cannot block yourself
+      if (memberUserId === user.id) {
+        console.error('Cannot block yourself');
+        return false;
+      }
+
+      // Calculate block fields
+      const blockedUntil = calculateBlockUntil(duration);
+      const blockedIndefinite = duration === 'indefinite';
+      const blockedAt = new Date().toISOString();
+
+      // Update user_families row with block status
+      const { error: updateError } = await supabase
+        .from('user_families')
+        .update({
+          blocked_at: blockedAt,
+          blocked_until: blockedUntil,
+          blocked_indefinite: blockedIndefinite,
+          blocked_reason: reason,
+          blocked_by: user.id,
+        })
+        .eq('user_id', memberUserId)
+        .eq('family_id', familyId);
+
+      if (updateError) {
+        console.error('Error blocking member:', updateError);
+        return false;
+      }
+
+      // Optimistic update: Update allFamilyMembers to show blocked state
+      setAllFamilyMembers(prev => ({
+        ...prev,
+        [familyId]: (prev[familyId] || []).map(uf =>
+          uf.userId === memberUserId
+            ? {
+                ...uf,
+                blockedAt,
+                blockedUntil: blockedUntil ?? undefined,
+                blockedIndefinite,
+                blockedReason: reason,
+                blockedBy: user.id,
+              }
+            : uf
+        ),
+      }));
+
+      // Get family name and blocked user's name for notifications
+      const family = families.find(f => f.id === familyId);
+      const blockedUserProfile = userProfiles[memberUserId];
+      const blockedUserName = blockedUserProfile?.displayName || 'A member';
+      const familyName = family?.name || 'Family';
+
+      // Get duration label for notification
+      const durationLabels: Record<BlockDuration, string> = {
+        '1hour': '1 hour',
+        '12hours': '12 hours',
+        '1day': '1 day',
+        '1week': '1 week',
+        'indefinite': 'indefinitely',
+      };
+      const durationText = durationLabels[duration];
+
+      // Send notification to blocked user
+      try {
+        await supabase.functions.invoke('send-push', {
+          body: {
+            recipientId: memberUserId,
+            title: blockedIndefinite ? 'You were blocked' : `You were blocked for ${durationText}`,
+            body: `You were blocked in ${familyName}. Reason: ${reason}`,
+            data: {
+              event_type: 'blocked',
+              family_id: familyId,
+              reason,
+              duration,
+            },
+          },
+        });
+      } catch (pushError) {
+        console.error('Failed to send blocked notification to user:', pushError);
+      }
+
+      // Notify other family members
+      const familyMembers = allFamilyMembers[familyId] || [];
+      const otherMembers = familyMembers.filter(m => m.userId !== memberUserId);
+
+      for (const member of otherMembers) {
+        try {
+          await supabase.functions.invoke('send-push', {
+            body: {
+              recipientId: member.userId,
+              title: 'Member blocked',
+              body: `${blockedUserName} was blocked in ${familyName}${blockedIndefinite ? '' : ` for ${durationText}`}. Reason: ${reason}`,
+              data: {
+                event_type: 'member_blocked',
+                family_id: familyId,
+                blocked_user_id: memberUserId,
+                reason,
+                duration,
+              },
+            },
+          });
+        } catch (pushError) {
+          console.error('Failed to send blocked notification to member:', pushError);
+        }
+      }
+
+      // Refresh family members to get server truth
+      await fetchFamilyMembers(familyId);
+
+      return true;
+    } catch (error) {
+      console.error('Failed to block family member:', error);
+      return false;
+    }
+  };
+
+  const unblockFamilyMember = async (familyId: string, memberUserId: string): Promise<boolean> => {
+    if (!user) return false;
+
+    try {
+      // Check if user is a family member
+      const isMember = userFamilies.some(uf => uf.familyId === familyId && uf.userId === user.id);
+      if (!isMember) {
+        console.error('Only family members can unblock other members');
+        return false;
+      }
+
+      // Clear block fields
+      const { error: updateError } = await supabase
+        .from('user_families')
+        .update({
+          blocked_at: null,
+          blocked_until: null,
+          blocked_indefinite: false,
+          blocked_reason: null,
+          blocked_by: null,
+        })
+        .eq('user_id', memberUserId)
+        .eq('family_id', familyId);
+
+      if (updateError) {
+        console.error('Error unblocking member:', updateError);
+        return false;
+      }
+
+      // Optimistic update
+      setAllFamilyMembers(prev => ({
+        ...prev,
+        [familyId]: (prev[familyId] || []).map(uf =>
+          uf.userId === memberUserId
+            ? {
+                ...uf,
+                blockedAt: undefined,
+                blockedUntil: undefined,
+                blockedIndefinite: false,
+                blockedReason: undefined,
+                blockedBy: undefined,
+              }
+            : uf
+        ),
+      }));
+
+      // Get family name and unblocked user's name for notifications
+      const family = families.find(f => f.id === familyId);
+      const unblockedUserProfile = userProfiles[memberUserId];
+      const unblockedUserName = unblockedUserProfile?.displayName || 'A member';
+      const familyName = family?.name || 'Family';
+
+      // Send notification to unblocked user
+      try {
+        await supabase.functions.invoke('send-push', {
+          body: {
+            recipientId: memberUserId,
+            title: 'You were unblocked',
+            body: `You were unblocked in ${familyName}`,
+            data: {
+              event_type: 'unblocked',
+              family_id: familyId,
+            },
+          },
+        });
+      } catch (pushError) {
+        console.error('Failed to send unblocked notification:', pushError);
+      }
+
+      // Notify other family members
+      const familyMembers = allFamilyMembers[familyId] || [];
+      const otherMembers = familyMembers.filter(m => m.userId !== memberUserId);
+
+      for (const member of otherMembers) {
+        try {
+          await supabase.functions.invoke('send-push', {
+            body: {
+              recipientId: member.userId,
+              title: 'Member unblocked',
+              body: `${unblockedUserName} was unblocked in ${familyName}`,
+              data: {
+                event_type: 'member_unblocked',
+                family_id: familyId,
+                unblocked_user_id: memberUserId,
+              },
+            },
+          });
+        } catch (pushError) {
+          console.error('Failed to send unblocked notification to member:', pushError);
+        }
+      }
+
+      // Refresh family members to get server truth
+      await fetchFamilyMembers(familyId);
+
+      return true;
+    } catch (error) {
+      console.error('Failed to unblock family member:', error);
+      return false;
+    }
+  };
+
   const [allFamilyMembers, setAllFamilyMembers] = useState<Record<string, UserFamily[]>>({});
   const [userProfiles, setUserProfiles] = useState<Record<string, User>>({});
 
@@ -855,6 +1106,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         currentStage: row.current_stage ?? 1,
         lastReadTimestamp: null,
         seenCelebrations: [],
+        // Block fields
+        blockedAt: row.blocked_at ?? undefined,
+        blockedUntil: row.blocked_until ?? undefined,
+        blockedIndefinite: row.blocked_indefinite ?? false,
+        blockedReason: row.blocked_reason ?? undefined,
+        blockedBy: row.blocked_by ?? undefined,
       }));
 
       const profiles: Record<string, User> = {};
@@ -1130,6 +1387,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       updateFamilyName,
       quitFamily,
       removeFamilyMember,
+      blockFamilyMember,
+      unblockFamilyMember,
       getUserFamily,
       getFamilyMembers,
       getUserProfile,
