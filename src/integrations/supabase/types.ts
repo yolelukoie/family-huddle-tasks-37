@@ -634,6 +634,11 @@ export type Database = {
       }
       user_families: {
         Row: {
+          blocked_at: string | null
+          blocked_by: string | null
+          blocked_indefinite: boolean
+          blocked_reason: string | null
+          blocked_until: string | null
           chat_cleared_at: string | null
           current_stage: number
           family_id: string
@@ -647,6 +652,11 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          blocked_at?: string | null
+          blocked_by?: string | null
+          blocked_indefinite?: boolean
+          blocked_reason?: string | null
+          blocked_until?: string | null
           chat_cleared_at?: string | null
           current_stage?: number
           family_id: string
@@ -660,6 +670,11 @@ export type Database = {
           user_id: string
         }
         Update: {
+          blocked_at?: string | null
+          blocked_by?: string | null
+          blocked_indefinite?: boolean
+          blocked_reason?: string | null
+          blocked_until?: string | null
           chat_cleared_at?: string | null
           current_stage?: number
           family_id?: string

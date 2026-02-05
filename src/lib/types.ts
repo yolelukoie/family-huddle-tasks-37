@@ -24,6 +24,12 @@ export interface UserFamily {
   lastReadTimestamp: number;
   lastReadAt?: string;
   seenCelebrations: string[];
+  // Block fields
+  blockedAt?: string;
+  blockedUntil?: string;
+  blockedIndefinite?: boolean;
+  blockedReason?: string;
+  blockedBy?: string;
 }
 
 export interface TaskCategory {
