@@ -1,197 +1,219 @@
 
-# Fix: Block Restrictions Not Being Enforced
+# Comprehensive Fix: Block Restrictions Enforcement
 
-## Problem Identified
-The blocking system updates the database correctly, but the restrictions are not being enforced because:
+## Problem Analysis
 
-1. **Stale State Issue**: The `getUserFamily()` function returns from `userFamilies` state, which is only loaded initially or on focus/visibility changes. When another user blocks the current user, the realtime subscription updates `allFamilyMembers` but NOT the current user's own `userFamilies` state.
+After thorough code analysis, I've identified the root cause and all affected areas:
 
-2. **Missing Realtime Refresh for Self**: The realtime subscription on `user_families` correctly calls `fetchFamilyMembers()`, but this only updates family member profiles - it does NOT refresh the current user's own membership data including block fields.
+### Root Cause
+The blocking system has **two separate data sources** that can become out of sync:
 
-3. **Result**: `isBlocked(userFamily)` returns `false` because `userFamily.blockedAt` is still `null` in stale local state.
+1. **`userFamilies`** - Contains the current user's memberships (used by `getUserFamily()`)
+2. **`allFamilyMembers`** - Contains all family members including block status (used by `getFamilyMembers()`)
 
-## Solution
+The block badge shows correctly because it uses `getFamilyMembers()` → `allFamilyMembers`, but access restrictions fail because they use `getUserFamily()` → `userFamilies` which may have stale data.
 
-### 1. Fix Realtime Subscription to Refresh User's Own Membership
-**File:** `src/hooks/useApp.tsx`
-
-Modify the existing realtime subscription to also refresh the current user's `userFamilies` state when their row is updated:
-
-- Add a new function `refreshUserMembership(familyId)` that fetches the current user's membership for a specific family and updates `userFamilies` state
-- In the realtime subscription callback, check if the changed row is the current user's row and if so, call `refreshUserMembership()`
-
-This ensures when the current user is blocked, their local state updates immediately.
-
-### 2. Add Block Check to Chat Page (Already Added but Fix State Issue)
-**File:** `src/pages/chat/ChatPage.tsx`
-
-The code already has the block check but it's using stale state. Once the realtime refresh is fixed, this will work correctly.
-
-### 3. Add Block Check to Task Assignment
-**File:** `src/contexts/TasksContext.tsx`
-
-The code already has the block check in `addTask`. Once the realtime refresh is fixed, this will work correctly.
-
-### 4. Restrict Family Members Access for Blocked Users
-**File:** `src/pages/family/FamilyPage.tsx`
-
-Add a block check that prevents blocked users from seeing the family members dialog:
-
-- Check `isBlocked(currentUserFamily)` before rendering the family members button/dialog
-- If blocked, hide or disable the members button
-- This matches the user requirement: "No access to list"
-
-### 5. Add Console Logging for Debugging
-Add console.log statements to trace the block status flow to help debug any remaining issues:
-
-- Log when realtime subscription receives an update
-- Log when `getUserFamily()` is called and what it returns
-- Log when `isBlocked()` is evaluated
+Additionally, multiple components lack block checks entirely:
+- Main page doesn't show block status
+- AssignTaskModal has no block check
+- TasksPage allows full access
 
 ---
 
-## Technical Implementation
+## Files to Modify
 
-### Step 1: Update useApp.tsx - Add Membership Refresh Function
+1. `src/pages/family/FamilyPage.tsx` - Fix members dialog check
+2. `src/pages/main/MainPage.tsx` - Show block status, restrict "Assign Task" button
+3. `src/pages/tasks/TasksPage.tsx` - Restrict "Assign Task" button
+4. `src/components/modals/AssignTaskModal.tsx` - Restrict modal for blocked users
+5. `src/hooks/useApp.tsx` - Ensure reliable state sync
+6. `src/i18n/locales/en.json` - Add missing translation keys
 
-Add a new function after `hydrateActiveFamily`:
+---
 
-```typescript
-// Refresh just the current user's membership for a family (for realtime block updates)
-const refreshUserMembership = async (familyId: string) => {
-  if (!user) return;
-  
-  console.log('[useApp] refreshUserMembership called for family:', familyId);
-  
-  const { data, error } = await supabase
-    .from('user_families')
-    .select('*')
-    .eq('user_id', user.id)
-    .eq('family_id', familyId)
-    .single();
-    
-  if (error) {
-    console.error('[useApp] Error refreshing user membership:', error);
-    return;
-  }
-  
-  if (data) {
-    console.log('[useApp] Refreshed membership data:', {
-      blockedAt: data.blocked_at,
-      blockedIndefinite: data.blocked_indefinite
-    });
-    
-    const updated: UserFamily = {
-      userId: data.user_id,
-      familyId: data.family_id,
-      joinedAt: data.joined_at,
-      totalStars: data.total_stars,
-      currentStage: data.current_stage,
-      lastReadTimestamp: data.last_read_timestamp,
-      seenCelebrations: data.seen_celebrations,
-      blockedAt: data.blocked_at ?? undefined,
-      blockedUntil: data.blocked_until ?? undefined,
-      blockedIndefinite: data.blocked_indefinite ?? false,
-      blockedReason: data.blocked_reason ?? undefined,
-      blockedBy: data.blocked_by ?? undefined,
-    };
-    
-    setUserFamilies(prev => 
-      prev.map(uf => 
-        uf.familyId === familyId && uf.userId === user.id 
-          ? updated 
-          : uf
-      )
-    );
-  }
-};
-```
+## Implementation Details
 
-### Step 2: Update Realtime Subscription
+### 1. FamilyPage.tsx - Fix Members Dialog Check
 
-Modify the existing realtime subscription (around line 77-89) to also refresh the current user's membership:
+**Problem**: The check `userFamilies.find(uf => uf.familyId === family.id)` doesn't use the `getUserFamily()` function which triggers proper state access.
 
-```typescript
-useEffect(() => {
-  if (!activeFamilyId || !user) return;
-  
-  const ch = supabase
-    .channel(`family-members-${activeFamilyId}`)
-    .on('postgres_changes', {
-      event: '*',
-      schema: 'public',
-      table: 'user_families',
-      filter: `family_id=eq.${activeFamilyId}`
-    }, (payload) => {
-      console.log('[useApp] Realtime user_families update:', payload);
-      
-      // Refresh family members for all users
-      fetchFamilyMembers(activeFamilyId);
-      
-      // If the update was for the current user, also refresh their membership state
-      const updatedRow = (payload as any).new || (payload as any).old;
-      if (updatedRow && updatedRow.user_id === user.id) {
-        console.log('[useApp] Update affects current user, refreshing membership');
-        refreshUserMembership(activeFamilyId);
-      }
-    })
-    .subscribe();
-    
-  return () => { supabase.removeChannel(ch); };
-}, [activeFamilyId, user]);
-```
-
-### Step 3: Hide Family Members Dialog for Blocked Users
-
-In `FamilyPage.tsx`, wrap the family members dialog trigger in a block check:
+**Solution**: Use `getUserFamily(family.id)` consistently:
 
 ```tsx
-{/* Only show Members button if user is NOT blocked */}
-{!isBlocked(userFamilies.find(uf => uf.familyId === family.id)) && (
-  <Dialog>
-    <DialogTrigger asChild>
-      <Button variant="theme" size="sm">
-        <Users className="h-4 w-4 mr-1" />
-        <span className="sm:hidden">{t('family.members')}</span>
-      </Button>
-    </DialogTrigger>
-    {/* ... dialog content ... */}
-  </Dialog>
-)}
+// Line ~308: Change from:
+{!isBlocked(userFamilies.find(uf => uf.familyId === family.id)) ? (
 
-{/* Show blocked message instead */}
-{isBlocked(userFamilies.find(uf => uf.familyId === family.id)) && (
-  <Badge variant="destructive" className="text-xs">
-    {t('block.noMembersAccess')}
-  </Badge>
-)}
+// To:
+const currentUserMembership = getUserFamily(family.id);
+{!isBlocked(currentUserMembership) ? (
 ```
 
-### Step 4: Add Translation Keys
+Also add `getUserFamily` to the destructured values from `useApp()` (line 25).
+
+### 2. MainPage.tsx - Show Block Status + Restrict Assignment
+
+**Changes needed**:
+
+a) Import block utilities:
+```tsx
+import { isBlocked, getBlockStatusText } from '@/lib/blockUtils';
+```
+
+b) Get user's family membership:
+```tsx
+const { getUserFamily } = useApp();
+const userMembership = activeFamilyId ? getUserFamily(activeFamilyId) : null;
+const userIsBlocked = isBlocked(userMembership);
+```
+
+c) Show block status next to family name (around line 191):
+```tsx
+<NavigationHeader 
+  title={
+    currentFamily?.name 
+      ? (userIsBlocked 
+          ? `${currentFamily.name} — ${getBlockStatusText(userMembership, t)}` 
+          : currentFamily.name)
+      : t('main.title')
+  } 
+  showBackButton={false} 
+/>
+```
+
+d) Conditionally render or disable "Assign Task" button (around line 311):
+```tsx
+<Button 
+  onClick={() => userIsBlocked ? null : setShowAssignTask(true)} 
+  variant="theme" 
+  className="h-14"
+  disabled={userIsBlocked}
+>
+  <Plus className="h-5 w-5 mr-2" />
+  {userIsBlocked ? t('block.cannotAssignTasks') : t('main.assignTask')}
+</Button>
+```
+
+### 3. TasksPage.tsx - Restrict Assignment Button
+
+**Changes needed**:
+
+a) Import block utilities and get membership:
+```tsx
+import { isBlocked } from '@/lib/blockUtils';
+
+const { activeFamilyId, getUserFamily } = useApp();
+const userMembership = activeFamilyId ? getUserFamily(activeFamilyId) : null;
+const userIsBlocked = isBlocked(userMembership);
+```
+
+b) Disable the "Assign Task" button (around line 199-207):
+```tsx
+<Button 
+  onClick={() => setShowAssignTask(true)}
+  variant="theme"
+  size="lg"
+  disabled={userIsBlocked}
+>
+  <Plus className="h-5 w-5 mr-2" />
+  {userIsBlocked ? t('block.cannotAssignTasks') : t('main.assignTask')}
+</Button>
+```
+
+### 4. AssignTaskModal.tsx - Block Check at Modal Level
+
+**Changes needed**:
+
+a) Import block utilities:
+```tsx
+import { isBlocked } from '@/lib/blockUtils';
+```
+
+b) Add block check after getting user data (around line 49-51):
+```tsx
+if (!user || !activeFamilyId) return null;
+
+// Check if current user is blocked
+const userMembership = activeFamilyId ? getUserFamily(activeFamilyId) : null;
+if (isBlocked(userMembership)) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>{t('block.restricted')}</DialogTitle>
+          <DialogDescription>{t('block.cannotAssignTasks')}</DialogDescription>
+        </DialogHeader>
+        <Button onClick={() => onOpenChange(false)}>{t('common.close')}</Button>
+      </DialogContent>
+    </Dialog>
+  );
+}
+```
+
+c) Add `getUserFamily` to the destructured values from `useApp()` (line 37).
+
+### 5. useApp.tsx - Ensure Reliable State Sync
+
+**Problem**: The `refreshUserMembership` function may not be called in all cases.
+
+**Solution**: Call `refreshUserMembership` ALSO in `hydrateActiveFamily()` to ensure block status is always current:
+
+```tsx
+// In hydrateActiveFamily function, after fetching data:
+// Also refresh block status
+await refreshUserMembership(activeFamilyId);
+```
+
+Additionally, ensure initial load also calls `refreshUserMembership` after setting `userFamilies`:
+
+```tsx
+// At end of loadFamilyData(), after setting state:
+if (user.activeFamilyId) {
+  await refreshUserMembership(user.activeFamilyId);
+}
+```
+
+### 6. Translation Keys
 
 Add to `src/i18n/locales/en.json`:
-
 ```json
 {
   "block": {
-    "noMembersAccess": "Members list restricted"
+    "cannotAccessWhileBlocked": "You cannot access this feature while blocked.",
+    "blockedInFamily": "Blocked in this family"
+  },
+  "common": {
+    "close": "Close"
   }
 }
 ```
 
 ---
 
-## Files to Modify
+## Summary of Changes
 
-1. `src/hooks/useApp.tsx` - Add realtime refresh for current user's membership
-2. `src/pages/family/FamilyPage.tsx` - Hide members dialog for blocked users
-3. `src/i18n/locales/en.json` - Add translation for members restriction
+| File | Change |
+|------|--------|
+| `FamilyPage.tsx` | Use `getUserFamily()` for block check |
+| `MainPage.tsx` | Show block status in header, disable Assign Task button |
+| `TasksPage.tsx` | Disable Assign Task button when blocked |
+| `AssignTaskModal.tsx` | Show restricted dialog when blocked |
+| `useApp.tsx` | Call `refreshUserMembership` in `hydrateActiveFamily` |
+| `en.json` | Add missing translation keys |
 
-## Expected Outcome
+## Testing Checklist
 
-1. When a user is blocked, their local state updates immediately via realtime subscription
-2. Blocked users cannot access the Chat page (shows restricted screen)
-3. Blocked users can still complete their own assigned tasks
-4. Blocked users cannot assign tasks to others (toast error)
-5. Blocked users cannot see the family members list (dialog is hidden)
-6. Console logs help trace the block flow for debugging
+After implementation, test the following scenarios:
+
+1. Block a user → they should immediately:
+   - See "BLOCKED for Xm" next to family name on main page
+   - Not be able to access Family Members dialog (see "Members list restricted" badge)
+   - Not be able to open AssignTaskModal
+   - See disabled "Assign Task" buttons
+   - See "Chat Access Restricted" on chat page
+
+2. The blocked user should STILL be able to:
+   - Complete their own existing tasks
+   - View their progress and stars
+   - Switch to other families where they're not blocked
+
+3. Unblock the user → restrictions should lift immediately
