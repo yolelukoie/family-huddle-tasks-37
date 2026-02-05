@@ -612,7 +612,10 @@
     "autoKicked": "You were automatically deleted from {{family}}",
     "memberAutoKicked": "{{name}} was automatically deleted from {{family}} after being blocked for a month",
     "accessRestricted": "You are blocked in this family {{until}}",
-    "cannotAccessWhileBlocked": "You cannot access this feature while blocked",
+    "cannotAccessWhileBlocked": "You cannot access this feature while blocked.",
+    "chatRestricted": "Chat Access Restricted",
+    "restricted": "Action Restricted",
+    "cannotAssignTasks": "You are blocked and cannot assign tasks to other family members.",
     "reasons": {
       "harassment": "Harassment / bullying",
       "hate": "Hate or abusive language",
