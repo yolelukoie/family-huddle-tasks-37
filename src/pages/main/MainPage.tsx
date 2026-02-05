@@ -24,6 +24,8 @@ import { isToday } from '@/lib/utils';
 import { AssignTaskModal } from '@/components/modals/AssignTaskModal';
 import { MilestoneCelebration } from '@/components/celebrations/MilestoneCelebration';
 import { Star, Calendar, Plus, RotateCcw, CheckCircle } from 'lucide-react';
+import { isBlocked, getBlockStatusText } from '@/lib/blockUtils';
+
 export default function MainPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const { t } = useTranslation();
@@ -44,7 +46,8 @@ export default function MainPage() {
     getTotalStars,
     resetCharacterProgress,
     addStars,
-    families
+    families,
+    getUserFamily
   } = useApp();
   const {
     unlockedBadges,
@@ -186,9 +189,18 @@ export default function MainPage() {
     }
   };
   const currentFamily = activeFamilyId ? families.find(f => f.id === activeFamilyId) : null;
+  const userMembership = activeFamilyId ? getUserFamily(activeFamilyId) : null;
+  const userIsBlocked = isBlocked(userMembership);
+
+  // Build header title with block status if applicable
+  const headerTitle = currentFamily?.name 
+    ? (userIsBlocked 
+        ? `${currentFamily.name} — ${getBlockStatusText(userMembership, t)}` 
+        : currentFamily.name)
+    : t('main.title');
 
   return <div className="min-h-screen bg-gradient-to-b from-[hsl(var(--section-tint))] to-background">
-      <NavigationHeader title={currentFamily?.name || t('main.title')} showBackButton={false} />
+      <NavigationHeader title={headerTitle} showBackButton={false} />
       
       <div className="max-w-4xl mx-auto p-4 space-y-6">
         {/* Greeting */}
@@ -308,9 +320,14 @@ export default function MainPage() {
           <Button onClick={() => navigate(ROUTES.tasks)} variant="theme" className="h-14">
             {t('main.goToTasks')}
           </Button>
-          <Button onClick={() => setShowAssignTask(true)} variant="theme" className="h-14">
+          <Button 
+            onClick={() => !userIsBlocked && setShowAssignTask(true)} 
+            variant="theme" 
+            className="h-14"
+            disabled={userIsBlocked}
+          >
             <Plus className="h-5 w-5 mr-2" />
-            {t('main.assignTask')}
+            {userIsBlocked ? t('block.cannotAssignTasks') : t('main.assignTask')}
           </Button>
         </div>
       </div>

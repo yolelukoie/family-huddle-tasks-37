@@ -20,10 +20,11 @@ import { BadgeCelebration } from '@/components/badges/BadgeCelebration';
 import { GoalCelebration } from '@/components/celebrations/GoalCelebration';
 import { NavigationHeader } from '@/components/layout/NavigationHeader';
 import { History, Plus, CheckCircle } from 'lucide-react';
+import { isBlocked } from '@/lib/blockUtils';
 
 export default function TasksPage() {
   const { user } = useAuth();
-  const { activeFamilyId } = useApp();
+  const { activeFamilyId, getUserFamily } = useApp();
   const { updateGoalProgress } = useGoals();
   const { tasks, categories, updateTask } = useTasks();
   const { currentCelebration, completeCelebration } = useCelebrations();
@@ -57,6 +58,10 @@ export default function TasksPage() {
       </div>
     );
   }
+
+  // Check if current user is blocked
+  const userMembership = activeFamilyId ? getUserFamily(activeFamilyId) : null;
+  const userIsBlocked = isBlocked(userMembership);
 
   // Filter out pending tasks - only show active (accepted) tasks
   const todaysTasks = tasks.filter(task => 
@@ -197,12 +202,13 @@ export default function TasksPage() {
         {/* Assign Task Button */}
         <div className="text-center">
           <Button 
-            onClick={() => setShowAssignTask(true)}
+            onClick={() => !userIsBlocked && setShowAssignTask(true)}
             variant="theme"
             size="lg"
+            disabled={userIsBlocked}
           >
             <Plus className="h-5 w-5 mr-2" />
-            {t('main.assignTask')}
+            {userIsBlocked ? t('block.cannotAssignTasks') : t('main.assignTask')}
           </Button>
         </div>
       </div>

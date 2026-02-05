@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useApp } from "@/hooks/useApp";
 import { useTasks } from "@/hooks/useTasks";
 import { useToast } from "@/hooks/use-toast";
+import { isBlocked } from "@/lib/blockUtils";
 import { supabase } from "@/integrations/supabase/client";
 
 const assignTaskSchema = z.object({
@@ -34,7 +35,8 @@ interface AssignTaskModalProps {
 export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTaskModalProps) {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { activeFamilyId, getFamilyMembers, getUserProfile } = useApp();
+  const { activeFamilyId, getFamilyMembers, getUserProfile, getUserFamily } = useApp();
+  
   const { toast } = useToast();
   const { addTask, ensureCategoryByName } = useTasks();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -47,6 +49,22 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
   });
 
   if (!user || !activeFamilyId) return null;
+
+  // Check if current user is blocked
+  const userMembership = getUserFamily(activeFamilyId);
+  if (isBlocked(userMembership)) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t('block.restricted')}</DialogTitle>
+            <DialogDescription>{t('block.cannotAssignTasks')}</DialogDescription>
+          </DialogHeader>
+          <Button onClick={() => onOpenChange(false)}>{t('common.close')}</Button>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   const members = activeFamilyId ? getFamilyMembers(activeFamilyId) : [];
   const otherMembers = members.filter((m) => m.userId !== user.id);
