@@ -735,6 +735,11 @@ export type Database = {
         Returns: {
           active_family_id: string
           avatar_url: string
+          blocked_at: string
+          blocked_by: string
+          blocked_indefinite: boolean
+          blocked_reason: string
+          blocked_until: string
           current_stage: number
           display_name: string
           family_id: string
