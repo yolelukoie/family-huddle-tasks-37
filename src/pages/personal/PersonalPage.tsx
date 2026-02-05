@@ -478,18 +478,16 @@ export default function PersonalPage() {
           </CardContent>
         </Card>
 
-        {/* Delete Account */}
-        <Card className="border-destructive/50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-destructive">
-              <Trash2 className="h-5 w-5" />
-              {t('personal.deleteAccount')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              {t('personal.deleteAccountDesc')}
-            </p>
+        {/* Delete Account - Compact */}
+        <Card className="border-destructive/30">
+          <CardContent className="py-4 px-4 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 min-w-0">
+              <Trash2 className="h-4 w-4 text-destructive shrink-0" />
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-destructive">{t('personal.deleteAccount')}</p>
+                <p className="text-xs text-muted-foreground truncate">{t('personal.deleteAccountDesc')}</p>
+              </div>
+            </div>
             <DeleteAccountModal userId={user.id} />
           </CardContent>
         </Card>
