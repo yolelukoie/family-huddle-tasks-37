@@ -2,16 +2,19 @@ import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useCustomCharacterImages } from '@/hooks/useCustomCharacterImages';
 import { useAuth } from '@/hooks/useAuth';
-import { getStageName, getCharacterImagePath } from '@/lib/character';
+import { useApp } from '@/hooks/useApp';
+import { getStageName, getCharacterImagePath, getCurrentStage } from '@/lib/character';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, RotateCcw, Loader2, ImageIcon, ChevronDown } from 'lucide-react';
+import { Upload, RotateCcw, Loader2, ImageIcon, ChevronDown, Star } from 'lucide-react';
 
 export function CharacterImageCustomizer() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { activeFamilyId, getTotalStars } = useApp();
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const {
@@ -34,7 +37,6 @@ export function CharacterImageCustomizer() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       toast({
         title: t('personal.invalidFileType'),
@@ -44,7 +46,6 @@ export function CharacterImageCustomizer() {
       return;
     }
 
-    // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       toast({
         title: t('personal.fileTooLarge'),
@@ -69,7 +70,6 @@ export function CharacterImageCustomizer() {
       });
     }
 
-    // Reset input
     if (fileInputRefs.current[stage]) {
       fileInputRefs.current[stage]!.value = '';
     }
@@ -95,8 +95,10 @@ export function CharacterImageCustomizer() {
   if (!user) return null;
 
   const gender = user.gender as 'male' | 'female' | 'other';
+  const totalStars = activeFamilyId ? getTotalStars(activeFamilyId) : 0;
+  const userCurrentStage = getCurrentStage(totalStars);
 
-  // Filter out Elder stage (1000) - it doesn't have editable images, it shows a celebration instead
+  // Filter out Elder stage (1000) - it shows a celebration instead
   const editableStages = allStages.filter(stage => stage.stage !== 1000);
 
   const getStageImagePath = (stage: number) => {
@@ -135,11 +137,16 @@ export function CharacterImageCustomizer() {
                   const imagePath = getStageImagePath(stageData.stage);
                   const hasCustom = hasCustomImage(stageData.stage);
                   const isUploadingThis = isUploading === stageData.stage;
+                  const isCurrentStage = stageData.stage === userCurrentStage;
 
                   return (
                     <div 
                       key={stageData.stage} 
-                      className="flex flex-col items-center gap-2 p-2 rounded-lg border border-border bg-card"
+                      className={`flex flex-col items-center gap-2 p-2 rounded-lg border bg-card ${
+                        isCurrentStage 
+                          ? 'border-primary ring-2 ring-primary/20' 
+                          : 'border-border'
+                      }`}
                     >
                       {/* Stage image */}
                       <div className="relative w-16 h-16">
@@ -149,7 +156,6 @@ export function CharacterImageCustomizer() {
                           className="w-full h-full object-contain rounded-lg"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
-                            // Fallback to stage 0 if image doesn't exist
                             if (!target.src.includes('stage_000')) {
                               target.src = getCharacterImagePath(gender, 0);
                             }
@@ -165,10 +171,21 @@ export function CharacterImageCustomizer() {
                         )}
                       </div>
 
-                      {/* Stage name */}
-                      <span className="text-xs font-medium text-center truncate w-full">
-                        {getStageName(stageData.stage)}
-                      </span>
+                      {/* Stage name + stars required */}
+                      <div className="flex flex-col items-center gap-0.5 w-full">
+                        <span className="text-xs font-medium text-center truncate w-full">
+                          {getStageName(stageData.stage)}
+                        </span>
+                        <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
+                          <Star className="h-2.5 w-2.5" />
+                          {stageData.requiredStars}
+                        </span>
+                        {isCurrentStage && (
+                          <Badge variant="default" className="text-[10px] px-1.5 py-0 h-4 mt-0.5">
+                            {t('personal.currentStage')}
+                          </Badge>
+                        )}
+                      </div>
 
                       {/* Actions */}
                       <div className="flex gap-1">
