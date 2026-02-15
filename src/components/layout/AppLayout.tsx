@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { useApp } from "@/hooks/useApp";
 import { useAuth } from "@/hooks/useAuth";
@@ -144,6 +144,68 @@ export function AppLayout() {
       unsubscribe?.();
     };
   }, [isAuthenticated, user?.id, toast, openAssignmentModal]);
+
+  /** 3) Recover pending task assignments missed while app was closed */
+  const pendingCheckedRef = useRef(false);
+  useEffect(() => {
+    if (!isAuthenticated || !user?.id || !activeFamilyId || pendingCheckedRef.current) return;
+    pendingCheckedRef.current = true;
+
+    const checkPendingTasks = async () => {
+      try {
+        const { data: pendingTasks } = await supabase
+          .from('tasks')
+          .select('*')
+          .eq('assigned_to', user.id)
+          .eq('family_id', activeFamilyId)
+          .eq('status', 'pending')
+          .eq('completed', false);
+
+        if (pendingTasks && pendingTasks.length > 0) {
+          console.log(`[TaskRecovery] Found ${pendingTasks.length} pending task(s)`);
+          // Show the first pending task modal
+          const task = pendingTasks[0];
+          openAssignmentModal({
+            id: task.id,
+            name: task.name,
+            description: task.description ?? '',
+            starValue: task.star_value ?? 0,
+            assignedBy: task.assigned_by,
+            assignedTo: task.assigned_to,
+            dueDate: task.due_date,
+            familyId: task.family_id,
+            categoryId: task.category_id,
+            completed: !!task.completed,
+          } as any);
+        }
+      } catch (err) {
+        console.error('[TaskRecovery] Error checking pending tasks:', err);
+      }
+    };
+
+    checkPendingTasks();
+
+    // Also check on app resume (Capacitor)
+    const handleResume = () => {
+      pendingCheckedRef.current = false;
+      checkPendingTasks();
+    };
+
+    if (isPlatform('capacitor')) {
+      import('@capacitor/app').then(({ App }) => {
+        App.addListener('resume', handleResume);
+      }).catch(() => {});
+    } else {
+      // Web: check on visibility change
+      const handleVisibility = () => {
+        if (document.visibilityState === 'visible') {
+          checkPendingTasks();
+        }
+      };
+      document.addEventListener('visibilitychange', handleVisibility);
+      return () => document.removeEventListener('visibilitychange', handleVisibility);
+    }
+  }, [isAuthenticated, user?.id, activeFamilyId, openAssignmentModal]);
 
   useEffect(() => {
     if (isAuthenticated && location.pathname.includes("reset-password")) {

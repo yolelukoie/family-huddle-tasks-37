@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 let registrationListenerAdded = false;
 let foregroundListenerAdded = false;
 let actionPerformedListenerAdded = false;
+let currentUserId: string | null = null;
 
 /**
  * Register for native push notifications on iOS/Android
@@ -18,6 +19,7 @@ export async function registerNativePush(userId: string): Promise<{ success: boo
   }
 
   console.log('[NativePush] Registering for native push notifications...');
+  currentUserId = userId;
 
   try {
     // Check current permission status
@@ -46,14 +48,20 @@ export async function registerNativePush(userId: string): Promise<{ success: boo
       PushNotifications.addListener('registration', async (token: Token) => {
         console.log('[NativePush] ✓ Token received:', token.value.slice(0, 20) + '...');
         
+        const uid = currentUserId;
+        if (!uid) {
+          console.error('[NativePush] ❌ No current user ID when token received');
+          return;
+        }
+        
         const platform = getCurrentPlatform(); // 'ios' or 'android'
-        console.log('[NativePush] Platform:', platform);
+        console.log('[NativePush] Platform:', platform, 'User:', uid);
         
         // Save token to database
         const { error } = await supabase
           .from('user_fcm_tokens')
           .upsert(
-            { user_id: userId, token: token.value, platform },
+            { user_id: uid, token: token.value, platform },
             { onConflict: 'user_id,token' }
           );
         

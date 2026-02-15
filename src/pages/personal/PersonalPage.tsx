@@ -12,7 +12,7 @@ import { useBadges } from '@/hooks/useBadges';
 import { NavigationHeader } from '@/components/layout/NavigationHeader';
 import { Edit, Settings, Upload, Loader2, Languages, Palette, RotateCcw, Bell, BellOff, Trash2 } from 'lucide-react';
 import { DeleteAccountModal } from '@/components/modals/DeleteAccountModal';
-import { requestAndSaveFcmToken } from '@/lib/fcm';
+import { requestPushPermission, getPushPermissionStatus } from '@/lib/pushNotifications';
 import { ThemeSelector } from '@/components/theme/ThemeSelector';
 import { CharacterImageCustomizer } from '@/components/character/CharacterImageCustomizer';
 import { useToast } from '@/hooks/use-toast';
@@ -44,15 +44,13 @@ export default function PersonalPage() {
       return 'en';
     }
   });
-  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
+  const [notificationPermission, setNotificationPermission] = useState<'granted' | 'denied' | 'prompt' | 'unavailable'>('prompt');
   const [isEnablingNotifications, setIsEnablingNotifications] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Check notification permission status
+  // Check notification permission status (platform-aware)
   useEffect(() => {
-    if ('Notification' in window) {
-      setNotificationPermission(Notification.permission);
-    }
+    getPushPermissionStatus().then(setNotificationPermission);
   }, []);
 
   // Load user's saved language preference and sync with cache
@@ -221,18 +219,20 @@ export default function PersonalPage() {
     
     setIsEnablingNotifications(true);
     
-    const { success, error } = await requestAndSaveFcmToken(user.id);
+    const { success, error } = await requestPushPermission(user.id);
     
     setIsEnablingNotifications(false);
     
+    // Re-check permission status after attempt
+    const newStatus = await getPushPermissionStatus();
+    setNotificationPermission(newStatus);
+    
     if (success) {
-      setNotificationPermission(Notification.permission);
       toast({
         title: t('notifications.enabled'),
         description: t('notifications.enabledDesc'),
       });
     } else {
-      setNotificationPermission(Notification.permission);
       toast({
         title: t('notifications.error'),
         description: error || t('notifications.errorDesc'),
@@ -397,17 +397,17 @@ export default function PersonalPage() {
                   <p className="text-sm font-medium mb-1">
                     {notificationPermission === 'granted' && (t('notifications.statusEnabled') || 'Push notifications enabled')}
                     {notificationPermission === 'denied' && (t('notifications.statusDenied') || 'Push notifications blocked')}
-                    {notificationPermission === 'default' && (t('notifications.statusDefault') || 'Push notifications not enabled')}
+                    {(notificationPermission === 'prompt' || notificationPermission === 'unavailable') && (t('notifications.statusDefault') || 'Push notifications not enabled')}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {notificationPermission === 'granted' && (t('notifications.statusEnabledDesc') || 'You will receive task and message notifications')}
                     {notificationPermission === 'denied' && (t('notifications.statusDeniedDesc') || 'Enable notifications in your browser settings to receive updates')}
-                    {notificationPermission === 'default' && (t('notifications.statusDefaultDesc') || 'Enable to receive task assignments and messages')}
+                    {(notificationPermission === 'prompt' || notificationPermission === 'unavailable') && (t('notifications.statusDefaultDesc') || 'Enable to receive task assignments and messages')}
                   </p>
                 </div>
               </div>
               
-              {notificationPermission !== 'granted' && (
+              {notificationPermission !== 'granted' && notificationPermission !== 'unavailable' && (
                 <Button 
                   variant={notificationPermission === 'denied' ? 'outline' : 'theme'}
                   onClick={handleEnableNotifications}

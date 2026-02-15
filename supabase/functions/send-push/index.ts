@@ -69,10 +69,49 @@ function cors(req: Request, resHeaders = new Headers()) {
   resHeaders.set("Access-Control-Allow-Headers", "authorization, x-client-info, apikey, content-type, x-push-secret, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version");
   resHeaders.set("Access-Control-Allow-Methods", "POST, OPTIONS");
   if (req.method === "OPTIONS") {
-    // 204 No Content must have null body, not empty string
     return new Response(null, { status: 204, headers: resHeaders });
   }
   return null;
+}
+
+/** Send a single FCM message and return success/failure info */
+async function sendToToken(
+  fcmToken: string,
+  title: string,
+  text: string,
+  stringifiedData: Record<string, string> | undefined,
+  image: string | undefined,
+  accessToken: string,
+  projectId: string,
+): Promise<{ token: string; ok: boolean; unregistered: boolean; error?: string }> {
+  const url = `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`;
+  const payload = {
+    message: {
+      token: fcmToken,
+      notification: { title, body: text, image },
+      data: stringifiedData,
+      android: { priority: "high" },
+      apns: { payload: { aps: { sound: "default" } } },
+    },
+  };
+
+  const resp = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const out = await resp.text();
+
+  if (!resp.ok) {
+    const unregistered = out.includes("UNREGISTERED") || out.includes("INVALID_ARGUMENT");
+    return { token: fcmToken, ok: false, unregistered, error: out };
+  }
+
+  return { token: fcmToken, ok: true, unregistered: false };
 }
 
 serve(async (req) => {
@@ -102,7 +141,6 @@ serve(async (req) => {
       });
     }
 
-    // Either token or recipientId must be provided
     if (!token && !recipientId) {
       console.error("[send-push] Missing token and recipientId");
       return new Response(JSON.stringify({ error: "token or recipientId is required" }), {
@@ -110,41 +148,12 @@ serve(async (req) => {
       });
     }
 
-    let fcmToken = token;
-
-    // If recipientId provided, look up FCM token from database
-    if (!fcmToken && recipientId) {
-      console.log("[send-push] Looking up FCM token for user:", recipientId);
-      
-      const supabaseUrl = Deno.env.get("SUPABASE_URL");
-      const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-      
-      if (!supabaseUrl || !serviceRoleKey) {
-        console.error("[send-push] Missing Supabase config");
-        return new Response(JSON.stringify({ error: "Server config missing" }), { status: 500, headers: h });
-      }
-
-      const supabase = createClient(supabaseUrl, serviceRoleKey);
-      
-      // Get the most recently updated token for this user
-      const { data: tokenData, error: tokenError } = await supabase
-        .from("user_fcm_tokens")
-        .select("token")
-        .eq("user_id", recipientId)
-        .order("updated_at", { ascending: false })
-        .limit(1)
-        .single();
-
-      if (tokenError || !tokenData?.token) {
-        console.log("[send-push] No FCM token found for user:", recipientId, tokenError?.message);
-        return new Response(JSON.stringify({ ok: false, reason: "no_token", message: "User has no FCM token registered" }), {
-          status: 200, headers: h, // Return 200 so client doesn't retry
-        });
-      }
-
-      fcmToken = tokenData.token;
-      console.log("[send-push] Found FCM token for user");
-    }
+    // Ensure all data values are strings for FCM
+    const stringifiedData = data
+      ? Object.fromEntries(
+          Object.entries(data).map(([k, v]) => [k, String(v)]),
+        )
+      : undefined;
 
     const saJsonRaw = Deno.env.get("FCM_SA_JSON");
     const projectId = Deno.env.get("FCM_PROJECT_ID");
@@ -153,56 +162,79 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "FCM config missing" }), { status: 500, headers: h });
     }
     const saJson = JSON.parse(saJsonRaw);
-
-    console.log("[send-push] Getting access token...");
     const accessToken = await getAccessToken(saJson);
 
-    // FCM v1 endpoint
-    const url = `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`;
-
-    // Ensure all data values are strings for FCM
-    const stringifiedData = data
-      ? Object.fromEntries(
-          Object.entries(data).map(([k, v]) => [k, String(v)]),
-        )
-      : undefined;
-    
-    console.log("[send-push] Payload data:", stringifiedData);
-    
-    const payload = {
-      message: {
-        token: fcmToken,
-        notification: { title, body: text, image },
-        data: stringifiedData,
-        android: { priority: "high" },
-        apns: { payload: { aps: { sound: "default" } } },
-      },
-    };
-
-    console.log("[send-push] Sending to FCM...");
-    const resp = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
-
-    const out = await resp.text();
-    console.log("[send-push] FCM response:", resp.status, out);
-    
-    if (!resp.ok) {
-      // Check if token is invalid/expired
-      if (out.includes("UNREGISTERED") || out.includes("INVALID_ARGUMENT")) {
-        console.log("[send-push] Token invalid, should be cleaned up");
+    // --- Direct token mode (single device) ---
+    if (token) {
+      console.log("[send-push] Sending to direct token...");
+      const result = await sendToToken(token, title, text, stringifiedData, image, accessToken, projectId);
+      console.log("[send-push] Result:", result.ok ? "success" : result.error);
+      if (!result.ok) {
+        return new Response(JSON.stringify({ ok: false, error: result.error }), { status: 500, headers: h });
       }
-      return new Response(JSON.stringify({ ok: false, status: resp.status, error: out }), {
-        status: 500, headers: h,
+      return new Response(JSON.stringify({ ok: true }), { status: 200, headers: h });
+    }
+
+    // --- Recipient mode: send to ALL tokens for this user ---
+    console.log("[send-push] Looking up ALL FCM tokens for user:", recipientId);
+    
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    
+    if (!supabaseUrl || !serviceRoleKey) {
+      console.error("[send-push] Missing Supabase config");
+      return new Response(JSON.stringify({ error: "Server config missing" }), { status: 500, headers: h });
+    }
+
+    const supabase = createClient(supabaseUrl, serviceRoleKey);
+    
+    const { data: tokenRows, error: tokenError } = await supabase
+      .from("user_fcm_tokens")
+      .select("id, token")
+      .eq("user_id", recipientId);
+
+    if (tokenError) {
+      console.error("[send-push] Token lookup error:", tokenError.message);
+      return new Response(JSON.stringify({ ok: false, reason: "token_lookup_error" }), { status: 200, headers: h });
+    }
+
+    if (!tokenRows || tokenRows.length === 0) {
+      console.log("[send-push] No FCM tokens found for user:", recipientId);
+      return new Response(JSON.stringify({ ok: false, reason: "no_token", message: "User has no FCM token registered" }), {
+        status: 200, headers: h,
       });
     }
 
-    return new Response(JSON.stringify({ ok: true, response: out }), { status: 200, headers: h });
+    console.log(`[send-push] Found ${tokenRows.length} token(s) for user, sending to all...`);
+
+    // Send to every registered token in parallel
+    const results = await Promise.all(
+      tokenRows.map((row) =>
+        sendToToken(row.token, title, text, stringifiedData, image, accessToken, projectId)
+      )
+    );
+
+    // Clean up invalid/unregistered tokens
+    const tokensToDelete = results
+      .filter((r) => r.unregistered)
+      .map((r) => r.token);
+
+    if (tokensToDelete.length > 0) {
+      console.log(`[send-push] Cleaning up ${tokensToDelete.length} invalid token(s)`);
+      await supabase
+        .from("user_fcm_tokens")
+        .delete()
+        .eq("user_id", recipientId)
+        .in("token", tokensToDelete);
+    }
+
+    const successCount = results.filter((r) => r.ok).length;
+    console.log(`[send-push] Delivered to ${successCount}/${tokenRows.length} device(s)`);
+
+    return new Response(
+      JSON.stringify({ ok: successCount > 0, delivered: successCount, total: tokenRows.length }),
+      { status: 200, headers: h }
+    );
   } catch (e: unknown) {
     console.error("[send-push] error:", e);
     const errorMessage = e instanceof Error ? e.message : String(e);
