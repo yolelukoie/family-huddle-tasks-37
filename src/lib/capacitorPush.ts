@@ -3,84 +3,112 @@ import { PushNotifications, Token, PushNotificationSchema, ActionPerformed } fro
 import { isPlatform, getCurrentPlatform } from './platform';
 import { supabase } from '@/integrations/supabase/client';
 
-let registrationListenerAdded = false;
-let foregroundListenerAdded = false;
-let actionPerformedListenerAdded = false;
+// Module-level state — survives the entire app lifecycle
 let currentUserId: string | null = null;
+let currentDeviceToken: string | null = null;
+let notificationHandler: ((data: any) => void) | null = null;
+let listenersInitialized = false;
 
 /**
- * Register for native push notifications on iOS/Android
- * This uses APNs on iOS and FCM on Android
+ * Initialize all Capacitor push listeners exactly once.
+ * They persist for the app lifecycle; mutable refs (currentUserId,
+ * notificationHandler) are read at call-time so they're never stale.
+ */
+function initListeners(): void {
+  if (listenersInitialized) return;
+  listenersInitialized = true;
+
+  // Token received from APNs / FCM
+  PushNotifications.addListener('registration', async (token: Token) => {
+    currentDeviceToken = token.value;
+    console.log('[NativePush] ✓ Token received:', token.value.slice(0, 20) + '...');
+
+    const uid = currentUserId;
+    if (!uid) {
+      console.error('[NativePush] ❌ No current user ID when token received');
+      return;
+    }
+
+    const platform = getCurrentPlatform();
+    console.log('[NativePush] Platform:', platform, 'User:', uid);
+
+    const { error } = await supabase
+      .from('user_fcm_tokens')
+      .upsert(
+        { user_id: uid, token: token.value, platform },
+        { onConflict: 'user_id,token' }
+      );
+
+    if (error) {
+      console.error('[NativePush] ❌ Failed to save token:', error);
+    } else {
+      console.log('[NativePush] ✓ Token saved successfully');
+    }
+  });
+
+  PushNotifications.addListener('registrationError', (error) => {
+    console.error('[NativePush] ❌ Registration error:', error);
+  });
+
+  // Foreground notification — delegates to mutable notificationHandler
+  PushNotifications.addListener('pushNotificationReceived', (notification: PushNotificationSchema) => {
+    console.log('[NativePush] Foreground notification:', notification);
+    const payload = {
+      notification: { title: notification.title, body: notification.body },
+      data: notification.data || {},
+    };
+    try {
+      notificationHandler?.(payload);
+    } catch (e) {
+      console.error('[NativePush] Error in notification handler:', e);
+    }
+  });
+
+  // Notification tap
+  PushNotifications.addListener('pushNotificationActionPerformed', (action: ActionPerformed) => {
+    console.log('[NativePush] Notification tapped:', action);
+    const payload = {
+      notification: { title: action.notification.title, body: action.notification.body },
+      data: action.notification.data || {},
+    };
+    try {
+      notificationHandler?.(payload);
+    } catch (e) {
+      console.error('[NativePush] Error in action handler:', e);
+    }
+  });
+
+  console.log('[NativePush] ✓ Listeners initialized (once)');
+}
+
+/**
+ * Register for native push notifications on iOS/Android.
  */
 export async function registerNativePush(userId: string): Promise<{ success: boolean; error?: string }> {
   if (!isPlatform('capacitor')) {
-    console.log('[NativePush] Not running on native platform, skipping');
     return { success: false, error: 'Not running on native platform' };
   }
 
-  console.log('[NativePush] Registering for native push notifications...');
+  console.log('[NativePush] Registering for user:', userId);
   currentUserId = userId;
 
   try {
-    // Check current permission status
     let permStatus = await PushNotifications.checkPermissions();
-    console.log('[NativePush] Current permission status:', permStatus.receive);
-
-    // Request permission if not granted
     if (permStatus.receive === 'prompt' || permStatus.receive === 'prompt-with-rationale') {
-      console.log('[NativePush] Requesting permission...');
       permStatus = await PushNotifications.requestPermissions();
-      console.log('[NativePush] Permission result:', permStatus.receive);
     }
 
     if (permStatus.receive !== 'granted') {
-      const error = permStatus.receive === 'denied' 
+      const error = permStatus.receive === 'denied'
         ? 'Push notifications are blocked. Please enable them in your device settings.'
         : 'Push notification permission was not granted';
       console.log('[NativePush] ❌', error);
       return { success: false, error };
     }
 
-    // Set up registration listener (only once)
-    if (!registrationListenerAdded) {
-      registrationListenerAdded = true;
-      
-      PushNotifications.addListener('registration', async (token: Token) => {
-        console.log('[NativePush] ✓ Token received:', token.value.slice(0, 20) + '...');
-        
-        const uid = currentUserId;
-        if (!uid) {
-          console.error('[NativePush] ❌ No current user ID when token received');
-          return;
-        }
-        
-        const platform = getCurrentPlatform(); // 'ios' or 'android'
-        console.log('[NativePush] Platform:', platform, 'User:', uid);
-        
-        // Save token to database
-        const { error } = await supabase
-          .from('user_fcm_tokens')
-          .upsert(
-            { user_id: uid, token: token.value, platform },
-            { onConflict: 'user_id,token' }
-          );
-        
-        if (error) {
-          console.error('[NativePush] ❌ Failed to save token:', error);
-        } else {
-          console.log('[NativePush] ✓ Token saved successfully');
-        }
-      });
-
-      PushNotifications.addListener('registrationError', (error) => {
-        console.error('[NativePush] ❌ Registration error:', error);
-      });
-    }
-
-    // Register with APNs/FCM
+    initListeners();
     await PushNotifications.register();
     console.log('[NativePush] ✓ Registration initiated');
-
     return { success: true };
   } catch (e: any) {
     console.error('[NativePush] ❌ Error:', e);
@@ -89,8 +117,8 @@ export async function registerNativePush(userId: string): Promise<{ success: boo
 }
 
 /**
- * Listen for foreground push notifications on native platforms
- * Returns cleanup function
+ * Set the foreground notification callback.
+ * Returns a cleanup that nulls the handler (listeners stay alive).
  */
 export function listenNativePush(
   onNotification: (data: any) => void
@@ -99,91 +127,56 @@ export function listenNativePush(
     return () => {};
   }
 
-  console.log('[NativePush] Setting up foreground listener...');
+  notificationHandler = onNotification;
+  console.log('[NativePush] ✓ Notification handler updated');
 
-  // Handle notifications received while app is in foreground
-  if (!foregroundListenerAdded) {
-    foregroundListenerAdded = true;
-    
-    PushNotifications.addListener('pushNotificationReceived', (notification: PushNotificationSchema) => {
-      console.log('[NativePush] Foreground notification:', notification);
-      
-      // Convert to format similar to FCM web payload
-      const payload = {
-        notification: {
-          title: notification.title,
-          body: notification.body,
-        },
-        data: notification.data || {},
-      };
-      
-      try {
-        onNotification(payload);
-      } catch (e) {
-        console.error('[NativePush] Error in notification handler:', e);
-      }
-    });
-  }
-
-  // Handle notification tap (when user taps on notification)
-  if (!actionPerformedListenerAdded) {
-    actionPerformedListenerAdded = true;
-    
-    PushNotifications.addListener('pushNotificationActionPerformed', (action: ActionPerformed) => {
-      console.log('[NativePush] Notification tapped:', action);
-      
-      // Convert to format similar to FCM web payload
-      const payload = {
-        notification: {
-          title: action.notification.title,
-          body: action.notification.body,
-        },
-        data: action.notification.data || {},
-      };
-      
-      try {
-        onNotification(payload);
-      } catch (e) {
-        console.error('[NativePush] Error in action handler:', e);
-      }
-    });
-  }
-
-  // Return cleanup function
   return () => {
-    console.log('[NativePush] Cleaning up listeners...');
-    PushNotifications.removeAllListeners();
-    registrationListenerAdded = false;
-    foregroundListenerAdded = false;
-    actionPerformedListenerAdded = false;
+    notificationHandler = null;
+    console.log('[NativePush] Notification handler cleared');
   };
 }
 
 /**
- * Delete native push token on logout
+ * Delete THIS device's push token on logout.
  */
 export async function deleteNativePushToken(userId: string): Promise<void> {
-  if (!isPlatform('capacitor')) {
-    return;
-  }
+  if (!isPlatform('capacitor')) return;
 
   console.log('[NativePush] Deleting token for user:', userId);
-  
+
   try {
-    // We don't have easy access to the current token, so delete all tokens for this user on this platform
-    const platform = getCurrentPlatform();
-    const { error } = await supabase
-      .from('user_fcm_tokens')
-      .delete()
-      .eq('user_id', userId)
-      .eq('platform', platform);
-    
-    if (error) {
-      console.error('[NativePush] Failed to delete token:', error);
+    if (currentDeviceToken) {
+      // Delete only this device's token
+      const { error } = await supabase
+        .from('user_fcm_tokens')
+        .delete()
+        .eq('user_id', userId)
+        .eq('token', currentDeviceToken);
+
+      if (error) {
+        console.error('[NativePush] Failed to delete token:', error);
+      } else {
+        console.log('[NativePush] ✓ Device token deleted');
+      }
     } else {
-      console.log('[NativePush] Token deleted successfully');
+      // Fallback: no cached token, delete by platform
+      const platform = getCurrentPlatform();
+      const { error } = await supabase
+        .from('user_fcm_tokens')
+        .delete()
+        .eq('user_id', userId)
+        .eq('platform', platform);
+
+      if (error) {
+        console.error('[NativePush] Failed to delete tokens (fallback):', error);
+      } else {
+        console.log('[NativePush] ✓ Platform tokens deleted (fallback)');
+      }
     }
   } catch (e) {
     console.error('[NativePush] deleteNativePushToken error:', e);
   }
+
+  currentDeviceToken = null;
+  currentUserId = null;
 }
