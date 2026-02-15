@@ -1,97 +1,125 @@
 
-# Fix: Android Push Notifications and Real-Time Task Delivery
 
-## Problems Found
+# Fix: Robust Push Notification Token & Listener Management
 
-1. **Personal Settings "Enable Notifications" button is broken on Android** -- It imports `requestAndSaveFcmToken` from `fcm.ts` (web-only), which immediately exits on Capacitor with "Use native push". The permission status also checks `window.Notification` (web API) instead of Capacitor's native API.
+## Overview
 
-2. **Notification permission dialog may not appear on Android** -- The dialog itself works correctly (uses the unified `pushNotifications.ts`), but the initial permission check in `AppLayout` could fail silently if the Capacitor plugin throws.
+All four issues share a single root cause: listeners are managed with independent boolean flags, cleanup tears everything down, and there's no device-specific token tracking. The optimal fix is to restructure `capacitorPush.ts` so that **listeners are registered exactly once for the app lifecycle** and all mutable state (user ID, device token, notification callback) lives in module-level variables that get swapped on sign-in/sign-out.
 
-3. **No Android FCM tokens are ever saved** -- Because neither the dialog nor the settings button successfully registers a native push token, there are zero Android tokens in the database. The `send-push` edge function finds no token and silently skips delivery.
+With this approach, **issue 2 resolves itself** -- there's no need to remove listeners at all. The cleanup function from `listenNativePush` simply nulls out the callback ref, and `registerNativePush` swaps `currentUserId`. No listener is ever torn down or re-added.
 
-4. **Background task assignments are permanently lost** -- When the app is backgrounded, Supabase Realtime is suspended. Without a registered FCM token, the push notification fallback also fails. Assigned tasks with status "pending" are never shown to the user.
+## Changes (single file: `src/lib/capacitorPush.ts`)
 
-5. **`send-push` only delivers to one token** -- Even when tokens exist, `LIMIT 1` means only one device gets notified. Users with multiple devices miss notifications.
+### Module-Level State
 
-## Solution
+Replace the three boolean flags with:
 
-### 1. Fix Personal Settings Page (`src/pages/personal/PersonalPage.tsx`)
+- `currentDeviceToken: string | null` -- stores the FCM token received by this specific device
+- `notificationHandler: ((data: any) => void) | null` -- mutable ref to the latest notification callback
+- `listenersInitialized: boolean` -- single flag, set once, never reset
 
-- Replace `requestAndSaveFcmToken` import with `requestPushPermission` from `@/lib/pushNotifications`
-- Replace web-only `Notification.permission` check with `getPushPermissionStatus()` from the unified API
-- This makes the "Enable Notifications" button work on Android, iOS, and web
+### `registerNativePush(userId)`
 
-### 2. Fix Permission Status Check (`src/pages/personal/PersonalPage.tsx`)
+1. Set `currentUserId = userId`
+2. If `!listenersInitialized`, add all four listeners once:
+   - `registration` -- saves token to DB for `currentUserId`, stores in `currentDeviceToken`
+   - `registrationError` -- logs error
+   - `pushNotificationReceived` -- calls `notificationHandler?.(payload)` (always latest ref)
+   - `pushNotificationActionPerformed` -- calls `notificationHandler?.(payload)`
+   - Set `listenersInitialized = true`
+3. Call `PushNotifications.register()` -- OS may fire `registration` event immediately with cached token, or async
 
-- Use `getPushPermissionStatus()` (async, platform-aware) instead of `window.Notification.permission` (web-only)
-- Map the result to the UI states (granted/denied/prompt)
+### `listenNativePush(onNotification)`
 
-### 3. Fix `send-push` Edge Function to Deliver to ALL Tokens
+1. Set `notificationHandler = onNotification` (this is the only thing it does now -- listeners are already registered)
+2. Return cleanup: `() => { notificationHandler = null; }`
+3. No `removeAllListeners()`, no flag resets
 
-- Change `LIMIT 1` + `.single()` to fetch ALL tokens for the recipient
-- Loop through each token and send the notification to every registered device
-- Clean up invalid tokens (UNREGISTERED responses) automatically
+### `deleteNativePushToken(userId)`
 
-### 4. Add Pending Task Check on App Resume
+1. If `currentDeviceToken` is set: delete from DB using `.eq('user_id', userId).eq('token', currentDeviceToken)` -- only removes THIS device's token
+2. If `currentDeviceToken` is null (edge case): fall back to `.eq('user_id', userId).eq('platform', platform)` for safety
+3. Reset `currentDeviceToken = null` and `currentUserId = null`
 
-- When the app comes to foreground (or on login), query the database for any pending tasks assigned to the current user
-- Show the assignment modal for any missed tasks
-- This ensures tasks assigned while the app was closed are never lost
+## How Each Issue Is Resolved
 
-### 5. Fix Build Errors in `delete-account` Edge Function
+| Issue | Fix |
+|-------|-----|
+| 1. Logout deletes all tokens | `deleteNativePushToken` now deletes only `currentDeviceToken` |
+| 2. Aggressive listener cleanup | Listeners are never removed -- they persist for the app lifecycle. Cleanup only nulls out `notificationHandler`. No flags to reset. |
+| 3. Stale `onNotification` closure | Foreground listener calls `notificationHandler?.()` which is a module-level variable updated by `listenNativePush` on every call |
+| 4. No re-registration for new user | `registerNativePush` always calls `PushNotifications.register()`. The `registration` listener reads `currentUserId` (already updated) and upserts the token for the new user |
 
-- Fix the TypeScript errors in `supabase/functions/delete-account/index.ts` (unrelated but blocking deployment)
+## Sign-Out / Sign-In Flow
 
----
+```text
+User A signs out on Device X:
+  signOut() -> deletePushToken(userA)
+    -> DELETE WHERE user_id=A AND token=<deviceX_token>
+    -> currentDeviceToken = null, currentUserId = null
+  Listeners remain active but notificationHandler = null (no-op)
 
-## Files to Change
-
-| File | Change |
-|------|--------|
-| `src/pages/personal/PersonalPage.tsx` | Use unified push API instead of web-only FCM; fix permission status check |
-| `supabase/functions/send-push/index.ts` | Send to ALL tokens for a user, not just one; auto-cleanup invalid tokens |
-| `src/components/layout/AppLayout.tsx` | Add pending task check on app resume for missed assignments |
-| `supabase/functions/delete-account/index.ts` | Fix TypeScript build errors |
-
----
+User B signs in on Device X:
+  registerNativePush(userB)
+    -> currentUserId = userB
+    -> PushNotifications.register() fires
+    -> registration callback: upserts token for userB
+    -> currentDeviceToken = <deviceX_token>
+  listenNativePush(callback)
+    -> notificationHandler = callback
+  Notifications now delivered to User B only
+```
 
 ## Technical Details
 
-### PersonalPage.tsx Changes
+The full rewritten file will have this structure:
 
 ```text
-Before:
-  import { requestAndSaveFcmToken } from '@/lib/fcm';
-  // checks Notification.permission (web-only)
+// Module state
+let currentUserId: string | null = null
+let currentDeviceToken: string | null = null
+let notificationHandler: ((data: any) => void) | null = null
+let listenersInitialized = false
 
-After:
-  import { requestPushPermission, getPushPermissionStatus } from '@/lib/pushNotifications';
-  // checks platform-aware permission status
-  // button calls requestPushPermission (routes to native on Android)
+function initListeners():
+  if listenersInitialized: return
+  listenersInitialized = true
+
+  on 'registration': (token) =>
+    currentDeviceToken = token.value
+    upsert { user_id: currentUserId, token: token.value, platform }
+
+  on 'registrationError': log error
+
+  on 'pushNotificationReceived': (notification) =>
+    notificationHandler?.({ notification: {...}, data: {...} })
+
+  on 'pushNotificationActionPerformed': (action) =>
+    notificationHandler?.({ notification: {...}, data: {...} })
+
+registerNativePush(userId):
+  currentUserId = userId
+  check/request permissions
+  initListeners()
+  PushNotifications.register()
+
+listenNativePush(onNotification):
+  notificationHandler = onNotification
+  return () => { notificationHandler = null }
+
+deleteNativePushToken(userId):
+  if currentDeviceToken:
+    DELETE WHERE user_id=userId AND token=currentDeviceToken
+  else:
+    DELETE WHERE user_id=userId AND platform=platform  (fallback)
+  currentDeviceToken = null
+  currentUserId = null
 ```
 
-### send-push Changes
+## Files to Modify
 
-```text
-Before:
-  .limit(1).single()  -->  sends to ONE token only
+| File | Change |
+|------|--------|
+| `src/lib/capacitorPush.ts` | Full rewrite with module-level token tracking, single-init listeners, mutable callback ref |
 
-After:
-  Fetch ALL tokens for recipientId
-  Loop and send to each token
-  Delete tokens that return UNREGISTERED
-```
-
-### Pending Task Recovery (AppLayout.tsx)
-
-```text
-On app resume / initial load:
-  Query tasks WHERE assigned_to = user.id AND status = 'pending'
-  For each pending task, show the assignment modal
-  This catches tasks assigned while the app was closed
-```
-
-This approach ensures:
-- Android users can enable notifications (dialog + settings button)
-- Push notifications reach all registered devices
-- Tasks assigned while offline are recovered on next app open
+No other files need changes -- `pushNotifications.ts`, `useAuth.tsx`, and `AppLayout.tsx` all call the same exported functions with the same signatures.
