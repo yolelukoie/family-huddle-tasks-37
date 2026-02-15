@@ -272,6 +272,7 @@ export default function FamilyPage() {
                   {isGeneratingCode ? t('common.loading') : t('family.shareCode')}
                 </Button>
               </div>
+              <p className="text-xs text-muted-foreground">{t('family.inviteHint')}</p>
             </CardContent>
           </Card>
         )}
