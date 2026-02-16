@@ -34,6 +34,16 @@ export default function FamilyPage() {
   const [showMemberProfile, setShowMemberProfile] = useState(false);
   const [memberToBlock, setMemberToBlock] = useState<{ userId: string; displayName: string; familyId: string } | null>(null);
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
+  const [dailyCodeCount, setDailyCodeCount] = useState(() => {
+    try {
+      const stored = localStorage.getItem('invite_code_gen');
+      if (stored) {
+        const { count, date } = JSON.parse(stored);
+        if (date === new Date().toISOString().slice(0, 10)) return count as number;
+      }
+    } catch {}
+    return 0;
+  });
 
   if (!user) return null;
 
@@ -150,10 +160,20 @@ export default function FamilyPage() {
     }
   };
 
+  const MAX_DAILY_CODES = 10;
+
   const generateAndShareCode = async (familyId: string) => {
+    if (dailyCodeCount >= MAX_DAILY_CODES) {
+      toast({
+        title: t('family.dailyLimitReached') || 'Daily limit reached',
+        description: t('family.dailyLimitDesc') || 'You can generate up to 10 invite codes per day.',
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsGeneratingCode(true);
     try {
-      // Call RPC to regenerate invite code with 24-hour expiry
       const { data, error } = await supabase
         .rpc('regenerate_invite_code', { p_family_id: familyId });
       
@@ -169,11 +189,23 @@ export default function FamilyPage() {
       
       if (data && data[0]) {
         const newCode = data[0].new_invite_code;
-        // Copy the new code to clipboard
-        await navigator.clipboard.writeText(newCode);
+        // Try clipboard, fall back gracefully on Android
+        try {
+          await navigator.clipboard.writeText(newCode);
+        } catch {
+          // Clipboard API may fail on some Android webviews — ignore
+        }
+
+        const newCount = dailyCodeCount + 1;
+        setDailyCodeCount(newCount);
+        localStorage.setItem('invite_code_gen', JSON.stringify({
+          count: newCount,
+          date: new Date().toISOString().slice(0, 10),
+        }));
+
         toast({
           title: t('family.inviteCodeCopied'),
-          description: `${t('family.inviteCodeCopiedDesc')} ${t('family.codeActiveFor24Hours') || 'The invite code will be active for 24 hours.'}`,
+          description: `${newCode} — ${t('family.codeActiveFor24Hours') || 'Active for 24 hours.'} (${newCount}/${MAX_DAILY_CODES})`,
         });
       }
     } catch (err) {
@@ -266,13 +298,15 @@ export default function FamilyPage() {
                 <Button 
                   variant="theme" 
                   onClick={() => generateAndShareCode(activeFamily.id)}
-                  disabled={isGeneratingCode}
+                  disabled={isGeneratingCode || dailyCodeCount >= MAX_DAILY_CODES}
                 >
                   <Share className="h-4 w-4 mr-2" />
                   {isGeneratingCode ? t('common.loading') : t('family.shareCode')}
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground">{t('family.inviteHint')}</p>
+              <p className="text-xs text-muted-foreground">
+                {t('family.inviteHint')} ({dailyCodeCount}/{MAX_DAILY_CODES})
+              </p>
             </CardContent>
           </Card>
         )}
