@@ -20,12 +20,12 @@ import { initiateSubscription } from '@/config/subscription';
 import { supabase } from '@/integrations/supabase/client';
 
 const LANGUAGES = [
-  { code: 'en', name: 'English' },
-  { code: 'es', name: 'Español' },
-  { code: 'zh', name: '中文' },
-  { code: 'hi', name: 'हिन्दी' },
-  { code: 'ru', name: 'Русский' },
-  { code: 'he', name: 'עברית' },
+  { code: 'en', name: 'English', flag: '🇬🇧' },
+  { code: 'es', name: 'Español', flag: '🇪🇸' },
+  { code: 'zh', name: '中文', flag: '🇨🇳' },
+  { code: 'hi', name: 'हिन्दी', flag: '🇮🇳' },
+  { code: 'ru', name: 'Русский', flag: '🇷🇺' },
+  { code: 'he', name: 'עברית', flag: '🇮🇱' },
 ];
 
 export default function PersonalPage() {
@@ -303,7 +303,7 @@ export default function PersonalPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Edit className="h-5 w-5" />
-              {t('personal.userProfile')}
+              {t('personal.displayName')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -344,7 +344,10 @@ export default function PersonalPage() {
                 <SelectContent>
                   {LANGUAGES.map((lang) => (
                     <SelectItem key={lang.code} value={lang.code}>
-                      {lang.name}
+                      <span className="flex items-center gap-2">
+                        <span>{lang.flag}</span>
+                        <span>{lang.name}</span>
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectContent>

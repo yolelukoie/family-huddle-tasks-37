@@ -28,8 +28,8 @@ export function ProfileStep({ onComplete }: ProfileStepProps) {
     resolver: zodResolver(profileSchema),
   });
 
-  const onSubmit = (data: ProfileForm) => {
-    createUser({
+  const onSubmit = async (data: ProfileForm) => {
+    await createUser({
       displayName: data.displayName,
       gender: data.gender,
     });
