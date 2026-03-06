@@ -218,6 +218,36 @@ export default function PersonalPage() {
   const handleEnableNotifications = async () => {
     if (!user?.id) return;
     
+    // If denied on native, open device settings (only way to recover)
+    if (notificationPermission === 'denied' && isPlatform('capacitor')) {
+      try {
+        const { App } = await import('@capacitor/app');
+        // This is intentionally not awaited — it opens settings externally
+        App.openUrl({ url: 'app-settings:' }).catch(() => {
+          // Fallback: some devices don't support app-settings URL scheme
+          toast({
+            title: t('notifications.openSettings') || 'Open Settings',
+            description: t('notifications.openSettingsDesc') || 'Please enable notifications in your device Settings > Apps > Family Huddle > Notifications',
+          });
+        });
+      } catch {
+        toast({
+          title: t('notifications.openSettings') || 'Open Settings',
+          description: t('notifications.openSettingsDesc') || 'Please enable notifications in your device Settings > Apps > Family Huddle > Notifications',
+        });
+      }
+      return;
+    }
+    
+    // If denied on web, show guidance
+    if (notificationPermission === 'denied' && !isPlatform('capacitor')) {
+      toast({
+        title: t('notifications.blockedInBrowser') || 'Blocked in Browser',
+        description: t('notifications.statusDeniedDesc') || 'Enable notifications in your browser settings to receive updates',
+      });
+      return;
+    }
+    
     setIsEnablingNotifications(true);
     
     const { success, error } = await requestPushPermission(user.id);
