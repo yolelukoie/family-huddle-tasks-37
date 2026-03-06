@@ -13,6 +13,7 @@ import { NavigationHeader } from '@/components/layout/NavigationHeader';
 import { Edit, Settings, Upload, Loader2, Languages, Palette, RotateCcw, Bell, BellOff, Trash2 } from 'lucide-react';
 import { DeleteAccountModal } from '@/components/modals/DeleteAccountModal';
 import { requestPushPermission, getPushPermissionStatus } from '@/lib/pushNotifications';
+import { isPlatform } from '@/lib/platform';
 import { ThemeSelector } from '@/components/theme/ThemeSelector';
 import { CharacterImageCustomizer } from '@/components/character/CharacterImageCustomizer';
 import { useToast } from '@/hooks/use-toast';
@@ -217,6 +218,29 @@ export default function PersonalPage() {
   const handleEnableNotifications = async () => {
     if (!user?.id) return;
     
+    // If denied on native, open device settings (only way to recover)
+    if (notificationPermission === 'denied' && isPlatform('capacitor')) {
+      try {
+        const { NativeSettings, AndroidSettings } = await import('capacitor-native-settings');
+        await NativeSettings.openAndroid({ option: AndroidSettings.ApplicationDetails });
+      } catch {
+        toast({
+          title: t('notifications.openSettings') || 'Open Settings',
+          description: t('notifications.openSettingsDesc') || 'Please enable notifications in your device Settings > Apps > Family Huddle > Notifications',
+        });
+      }
+      return;
+    }
+    
+    // If denied on web, show guidance
+    if (notificationPermission === 'denied' && !isPlatform('capacitor')) {
+      toast({
+        title: t('notifications.blockedInBrowser') || 'Blocked in Browser',
+        description: t('notifications.statusDeniedDesc') || 'Enable notifications in your browser settings to receive updates',
+      });
+      return;
+    }
+    
     setIsEnablingNotifications(true);
     
     const { success, error } = await requestPushPermission(user.id);
@@ -414,7 +438,7 @@ export default function PersonalPage() {
                 <Button 
                   variant={notificationPermission === 'denied' ? 'outline' : 'theme'}
                   onClick={handleEnableNotifications}
-                  disabled={notificationPermission === 'denied' || isEnablingNotifications}
+                  disabled={isEnablingNotifications}
                 >
                   {isEnablingNotifications ? (
                     <>
@@ -425,7 +449,9 @@ export default function PersonalPage() {
                     <>
                       <Bell className="h-4 w-4 mr-2" />
                       {notificationPermission === 'denied' 
-                        ? (t('notifications.blockedInBrowser') || 'Blocked in Browser') 
+                        ? (isPlatform('capacitor') 
+                            ? (t('notifications.openSettings') || 'Open Settings')
+                            : (t('notifications.blockedInBrowser') || 'Blocked in Browser'))
                         : (t('notifications.enable') || 'Enable Notifications')
                       }
                     </>

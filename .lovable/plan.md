@@ -1,57 +1,125 @@
 
 
-# Fix Push Notifications on Android (Native Capacitor)
+# Fix: Robust Push Notification Token & Listener Management
 
-## Root Causes Identified
+## Overview
 
-1. **Platform detection is fragile** -- `isPlatform('capacitor')` checks `window.Capacitor` which may not be set when code runs early. This causes the app to fall through to the web FCM path on Android native, which fails silently in WebView.
+All four issues share a single root cause: listeners are managed with independent boolean flags, cleanup tears everything down, and there's no device-specific token tracking. The optimal fix is to restructure `capacitorPush.ts` so that **listeners are registered exactly once for the app lifecycle** and all mutable state (user ID, device token, notification callback) lives in module-level variables that get swapped on sign-in/sign-out.
 
-2. **No automatic native push registration on auth** -- Native push registration only happens when user clicks "Enable Notifications" button. There is no automatic `registerNativePush()` call after login on native platforms.
+With this approach, **issue 2 resolves itself** -- there's no need to remove listeners at all. The cleanup function from `listenNativePush` simply nulls out the callback ref, and `registerNativePush` swaps `currentUserId`. No listener is ever torn down or re-added.
 
-3. **"Enable Notifications" button is disabled when `denied`** -- Line 417: `disabled={notificationPermission === 'denied'}`. On Android, if user denied once, they cannot recover from within the app.
+## Changes (single file: `src/lib/capacitorPush.ts`)
 
-4. **Notification dialog gated by localStorage + route** -- The dialog only shows on `/` (MainPage) route and uses `localStorage` flag. On native, this is unreliable and may never trigger native permission request.
+### Module-Level State
 
-5. **Firebase config mismatch** -- `firebase-messaging-sw.js` uses project `family-huddle-2062` while `fcm.ts` uses `family-huddle-app`. Only matters for web, but indicates config drift.
+Replace the three boolean flags with:
 
-6. **No Android notification channel** -- Modern Android (8+) requires a notification channel for reliable background delivery. None is created.
+- `currentDeviceToken: string | null` -- stores the FCM token received by this specific device
+- `notificationHandler: ((data: any) => void) | null` -- mutable ref to the latest notification callback
+- `listenersInitialized: boolean` -- single flag, set once, never reset
 
-## Implementation Plan
+### `registerNativePush(userId)`
 
-### 1. Fix platform detection (`src/lib/platform.ts`)
-- Import `Capacitor` from `@capacitor/core` directly instead of checking `window.Capacitor`
-- This ensures reliable detection even during early app bootstrap
+1. Set `currentUserId = userId`
+2. If `!listenersInitialized`, add all four listeners once:
+   - `registration` -- saves token to DB for `currentUserId`, stores in `currentDeviceToken`
+   - `registrationError` -- logs error
+   - `pushNotificationReceived` -- calls `notificationHandler?.(payload)` (always latest ref)
+   - `pushNotificationActionPerformed` -- calls `notificationHandler?.(payload)`
+   - Set `listenersInitialized = true`
+3. Call `PushNotifications.register()` -- OS may fire `registration` event immediately with cached token, or async
 
-### 2. Add automatic native push bootstrap (`src/components/layout/AppLayout.tsx`)
-- In the existing effect #2 (push listener setup), add: if `isPlatform('capacitor')` and user is authenticated, call `registerNativePush(userId)` directly
-- Also call on app resume via `@capacitor/app` listener
-- Remove dependency on localStorage `notification_prompt_shown` flag for native platforms
+### `listenNativePush(onNotification)`
 
-### 3. Create Android notification channel (`src/lib/capacitorPush.ts`)
-- On `initListeners()`, call `PushNotifications.createChannel()` with id `family_huddle_default`, name "Family Huddle", importance 5 (high)
-- This ensures background notifications have a channel to land on
+1. Set `notificationHandler = onNotification` (this is the only thing it does now -- listeners are already registered)
+2. Return cleanup: `() => { notificationHandler = null; }`
+3. No `removeAllListeners()`, no flag resets
 
-### 4. Fix "Enable Notifications" button for denied state (`src/pages/personal/PersonalPage.tsx`)
-- Remove `disabled` when permission is `denied`
-- When `denied` on native: use `import('@capacitor/app').then(({App}) => App.openSettings())` to open device settings (only way to recover on Android after denial)
-- When `denied` on web: show guidance text to open browser settings
-- Update button label for denied state to "Open Settings"
+### `deleteNativePushToken(userId)`
 
-### 5. Fix notification dialog for native (`src/components/layout/AppLayout.tsx`)
-- On native platforms, skip the educational dialog and directly call `registerNativePush` which triggers the OS-level permission prompt
-- The OS prompt IS the dialog on native; no need for a custom pre-prompt
+1. If `currentDeviceToken` is set: delete from DB using `.eq('user_id', userId).eq('token', currentDeviceToken)` -- only removes THIS device's token
+2. If `currentDeviceToken` is null (edge case): fall back to `.eq('user_id', userId).eq('platform', platform)` for safety
+3. Reset `currentDeviceToken = null` and `currentUserId = null`
 
-### 6. Add `channelId` to send-push payload (`supabase/functions/send-push/index.ts`)
-- In `sendToToken()`, add `android: { priority: "high", notification: { channel_id: "family_huddle_default" } }` to the FCM payload
+## How Each Issue Is Resolved
 
-### 7. Fix Firebase config in service worker (`public/firebase-messaging-sw.js`)
-- Update to match the `family-huddle-app` project credentials from `src/lib/fcm.ts`
+| Issue | Fix |
+|-------|-----|
+| 1. Logout deletes all tokens | `deleteNativePushToken` now deletes only `currentDeviceToken` |
+| 2. Aggressive listener cleanup | Listeners are never removed -- they persist for the app lifecycle. Cleanup only nulls out `notificationHandler`. No flags to reset. |
+| 3. Stale `onNotification` closure | Foreground listener calls `notificationHandler?.()` which is a module-level variable updated by `listenNativePush` on every call |
+| 4. No re-registration for new user | `registerNativePush` always calls `PushNotifications.register()`. The `registration` listener reads `currentUserId` (already updated) and upserts the token for the new user |
 
-## Files to Change
-- `src/lib/platform.ts` -- use `@capacitor/core` import
-- `src/lib/capacitorPush.ts` -- add channel creation in `initListeners()`
-- `src/components/layout/AppLayout.tsx` -- auto-register native push on auth, skip dialog on native
-- `src/pages/personal/PersonalPage.tsx` -- fix denied button, add openSettings for native
-- `supabase/functions/send-push/index.ts` -- add channelId to Android payload
-- `public/firebase-messaging-sw.js` -- fix Firebase project config
+## Sign-Out / Sign-In Flow
 
+```text
+User A signs out on Device X:
+  signOut() -> deletePushToken(userA)
+    -> DELETE WHERE user_id=A AND token=<deviceX_token>
+    -> currentDeviceToken = null, currentUserId = null
+  Listeners remain active but notificationHandler = null (no-op)
+
+User B signs in on Device X:
+  registerNativePush(userB)
+    -> currentUserId = userB
+    -> PushNotifications.register() fires
+    -> registration callback: upserts token for userB
+    -> currentDeviceToken = <deviceX_token>
+  listenNativePush(callback)
+    -> notificationHandler = callback
+  Notifications now delivered to User B only
+```
+
+## Technical Details
+
+The full rewritten file will have this structure:
+
+```text
+// Module state
+let currentUserId: string | null = null
+let currentDeviceToken: string | null = null
+let notificationHandler: ((data: any) => void) | null = null
+let listenersInitialized = false
+
+function initListeners():
+  if listenersInitialized: return
+  listenersInitialized = true
+
+  on 'registration': (token) =>
+    currentDeviceToken = token.value
+    upsert { user_id: currentUserId, token: token.value, platform }
+
+  on 'registrationError': log error
+
+  on 'pushNotificationReceived': (notification) =>
+    notificationHandler?.({ notification: {...}, data: {...} })
+
+  on 'pushNotificationActionPerformed': (action) =>
+    notificationHandler?.({ notification: {...}, data: {...} })
+
+registerNativePush(userId):
+  currentUserId = userId
+  check/request permissions
+  initListeners()
+  PushNotifications.register()
+
+listenNativePush(onNotification):
+  notificationHandler = onNotification
+  return () => { notificationHandler = null }
+
+deleteNativePushToken(userId):
+  if currentDeviceToken:
+    DELETE WHERE user_id=userId AND token=currentDeviceToken
+  else:
+    DELETE WHERE user_id=userId AND platform=platform  (fallback)
+  currentDeviceToken = null
+  currentUserId = null
+```
+
+## Files to Modify
+
+| File | Change |
+|------|--------|
+| `src/lib/capacitorPush.ts` | Full rewrite with module-level token tracking, single-init listeners, mutable callback ref |
+
+No other files need changes -- `pushNotifications.ts`, `useAuth.tsx`, and `AppLayout.tsx` all call the same exported functions with the same signatures.
