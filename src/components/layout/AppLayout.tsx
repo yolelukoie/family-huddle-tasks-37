@@ -71,14 +71,34 @@ export function AppLayout() {
     };
   }, []);
 
-  /** 2) Listen for push notifications (both web and native) */
+  /** 2) Listen for push notifications (both web and native) + auto-register on native */
   useEffect(() => {
     if (!isAuthenticated || !user?.id) return;
 
-    // For web: Check if already granted and silently register token
-    // For native: This will be handled by registerNativePush
-    if (!isPlatform('capacitor') && 'Notification' in window && Notification.permission === 'granted') {
+    // Native: automatically register for push on every auth (ensures token is in DB)
+    if (isPlatform('capacitor')) {
+      console.log('[Push] Native platform — auto-registering push for user:', user.id);
       requestPushPermission(user.id);
+
+      // Also re-register on app resume
+      let resumeCleanup: (() => void) | undefined;
+      import('@capacitor/app').then(({ App }) => {
+        const listener = App.addListener('resume', () => {
+          console.log('[Push] App resumed — re-registering native push');
+          requestPushPermission(user.id);
+        });
+        resumeCleanup = () => { listener.then(l => l.remove()); };
+      }).catch(() => {});
+
+      // Store cleanup for resume listener
+      const originalCleanup = resumeCleanup;
+      // We'll add this to the main cleanup below
+      var nativeResumeCleanup = () => { originalCleanup?.(); };
+    } else {
+      // Web: Check if already granted and silently register token
+      if ('Notification' in window && Notification.permission === 'granted') {
+        requestPushPermission(user.id);
+      }
     }
 
     // Handle push notifications - open modal for 'assigned', toast for others
