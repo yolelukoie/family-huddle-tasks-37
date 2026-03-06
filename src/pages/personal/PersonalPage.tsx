@@ -13,6 +13,7 @@ import { NavigationHeader } from '@/components/layout/NavigationHeader';
 import { Edit, Settings, Upload, Loader2, Languages, Palette, RotateCcw, Bell, BellOff, Trash2 } from 'lucide-react';
 import { DeleteAccountModal } from '@/components/modals/DeleteAccountModal';
 import { requestPushPermission, getPushPermissionStatus } from '@/lib/pushNotifications';
+import { isPlatform } from '@/lib/platform';
 import { ThemeSelector } from '@/components/theme/ThemeSelector';
 import { CharacterImageCustomizer } from '@/components/character/CharacterImageCustomizer';
 import { useToast } from '@/hooks/use-toast';
