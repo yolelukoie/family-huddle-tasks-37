@@ -279,8 +279,9 @@ export function AppLayout() {
     }
 
     // Show notification permission dialog for fully set up users who haven't seen it
+    // On native: skip dialog, OS prompt is triggered by auto-register above
     if (user?.profileComplete && user.activeFamilyId && location.pathname === ROUTES.main) {
-      if (!hasSeenNotificationPrompt()) {
+      if (!isPlatform('capacitor') && !hasSeenNotificationPrompt()) {
         // Check if permission is still promptable
         getPushPermissionStatus().then((status) => {
           if (status === 'prompt') {
@@ -290,6 +291,9 @@ export function AppLayout() {
             markNotificationPromptAsShown();
           }
         });
+      } else if (isPlatform('capacitor')) {
+        // Mark as shown on native since OS handles the prompt
+        markNotificationPromptAsShown();
       }
     }
   }, [user, isAuthenticated, authLoading, isLoading, navigate, location.pathname]);
