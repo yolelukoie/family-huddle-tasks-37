@@ -221,15 +221,8 @@ export default function PersonalPage() {
     // If denied on native, open device settings (only way to recover)
     if (notificationPermission === 'denied' && isPlatform('capacitor')) {
       try {
-        const { App } = await import('@capacitor/app');
-        // This is intentionally not awaited — it opens settings externally
-        App.openUrl({ url: 'app-settings:' }).catch(() => {
-          // Fallback: some devices don't support app-settings URL scheme
-          toast({
-            title: t('notifications.openSettings') || 'Open Settings',
-            description: t('notifications.openSettingsDesc') || 'Please enable notifications in your device Settings > Apps > Family Huddle > Notifications',
-          });
-        });
+        const { NativeSettings, AndroidSettings } = await import('capacitor-native-settings');
+        await NativeSettings.openAndroid({ option: AndroidSettings.ApplicationDetails });
       } catch {
         toast({
           title: t('notifications.openSettings') || 'Open Settings',
