@@ -445,7 +445,7 @@ export default function PersonalPage() {
                 <Button 
                   variant={notificationPermission === 'denied' ? 'outline' : 'theme'}
                   onClick={handleEnableNotifications}
-                  disabled={notificationPermission === 'denied' || isEnablingNotifications}
+                  disabled={isEnablingNotifications}
                 >
                   {isEnablingNotifications ? (
                     <>
@@ -456,7 +456,9 @@ export default function PersonalPage() {
                     <>
                       <Bell className="h-4 w-4 mr-2" />
                       {notificationPermission === 'denied' 
-                        ? (t('notifications.blockedInBrowser') || 'Blocked in Browser') 
+                        ? (isPlatform('capacitor') 
+                            ? (t('notifications.openSettings') || 'Open Settings')
+                            : (t('notifications.blockedInBrowser') || 'Blocked in Browser'))
                         : (t('notifications.enable') || 'Enable Notifications')
                       }
                     </>

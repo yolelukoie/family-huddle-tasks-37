@@ -90,7 +90,13 @@ async function sendToToken(
       token: fcmToken,
       notification: { title, body: text, image },
       data: stringifiedData,
-      android: { priority: "high" },
+      android: {
+        priority: "high",
+        notification: {
+          channel_id: "family_huddle_default",
+          sound: "default",
+        },
+      },
       apns: { payload: { aps: { sound: "default" } } },
     },
   };
