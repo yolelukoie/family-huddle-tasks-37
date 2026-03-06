@@ -1,5 +1,6 @@
 // Capacitor Native Push Notifications for iOS and Android
 import { PushNotifications, Token, PushNotificationSchema, ActionPerformed } from '@capacitor/push-notifications';
+import { Capacitor } from '@capacitor/core';
 import { isPlatform, getCurrentPlatform } from './platform';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -8,6 +9,35 @@ let currentUserId: string | null = null;
 let currentDeviceToken: string | null = null;
 let notificationHandler: ((data: any) => void) | null = null;
 let listenersInitialized = false;
+let channelCreated = false;
+
+/**
+ * Create Android notification channel for reliable background delivery.
+ * Required on Android 8+ (API 26+). Idempotent.
+ */
+async function ensureNotificationChannel(): Promise<void> {
+  if (channelCreated) return;
+  if (Capacitor.getPlatform() !== 'android') {
+    channelCreated = true;
+    return;
+  }
+
+  try {
+    await PushNotifications.createChannel({
+      id: 'family_huddle_default',
+      name: 'Family Huddle',
+      description: 'Task assignments and family notifications',
+      importance: 5, // max importance for heads-up display
+      visibility: 1, // public
+      sound: 'default',
+      vibration: true,
+    });
+    channelCreated = true;
+    console.log('[NativePush] ✓ Notification channel created');
+  } catch (e) {
+    console.error('[NativePush] Channel creation error:', e);
+  }
+}
 
 /**
  * Initialize all Capacitor push listeners exactly once.
@@ -17,6 +47,9 @@ let listenersInitialized = false;
 function initListeners(): void {
   if (listenersInitialized) return;
   listenersInitialized = true;
+
+  // Create notification channel before registering
+  ensureNotificationChannel();
 
   // Token received from APNs / FCM
   PushNotifications.addListener('registration', async (token: Token) => {
@@ -94,8 +127,11 @@ export async function registerNativePush(userId: string): Promise<{ success: boo
 
   try {
     let permStatus = await PushNotifications.checkPermissions();
+    console.log('[NativePush] Current permission:', permStatus.receive);
+    
     if (permStatus.receive === 'prompt' || permStatus.receive === 'prompt-with-rationale') {
       permStatus = await PushNotifications.requestPermissions();
+      console.log('[NativePush] After request, permission:', permStatus.receive);
     }
 
     if (permStatus.receive !== 'granted') {
