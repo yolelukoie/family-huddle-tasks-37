@@ -162,6 +162,7 @@ export function AppLayout() {
 
     return () => {
       unsubscribe?.();
+      if (typeof nativeResumeCleanup === 'function') nativeResumeCleanup();
     };
   }, [isAuthenticated, user?.id, toast, openAssignmentModal]);
 
