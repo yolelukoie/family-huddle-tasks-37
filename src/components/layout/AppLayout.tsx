@@ -81,19 +81,20 @@ export function AppLayout() {
       requestPushPermission(user.id);
 
       // Also re-register on app resume
-      let resumeCleanup: (() => void) | undefined;
+      let resumeListenerHandle: any = null;
       import('@capacitor/app').then(({ App }) => {
-        const listener = App.addListener('resume', () => {
+        resumeListenerHandle = App.addListener('resume', () => {
           console.log('[Push] App resumed — re-registering native push');
           requestPushPermission(user.id);
         });
-        resumeCleanup = () => { listener.then(l => l.remove()); };
       }).catch(() => {});
 
-      // Store cleanup for resume listener
-      const originalCleanup = resumeCleanup;
-      // We'll add this to the main cleanup below
-      var nativeResumeCleanup = () => { originalCleanup?.(); };
+      // Cleanup uses the mutable ref directly (not a snapshot)
+      var nativeResumeCleanup = () => {
+        if (resumeListenerHandle) {
+          resumeListenerHandle.then((l: any) => l.remove());
+        }
+      };
     } else {
       // Web: Check if already granted and silently register token
       if ('Notification' in window && Notification.permission === 'granted') {
