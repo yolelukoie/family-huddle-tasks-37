@@ -91,10 +91,11 @@ async function sendToToken(
       notification: { title, body: text, image },
       data: stringifiedData,
       android: {
-        priority: "high",
+        priority: "HIGH",
         notification: {
           channel_id: "family_huddle_default",
           sound: "default",
+          notification_priority: "PRIORITY_HIGH",
         },
       },
       apns: { payload: { aps: { sound: "default" } } },
