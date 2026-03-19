@@ -10,7 +10,7 @@ export function DevStatus() {
   const { activeFamilyId } = useApp();
   
   // Only show in development
-  if (process.env.NODE_ENV === 'production') return null;
+  if (import.meta.env.MODE === 'production') return null;
 
   return (
     <Card className="fixed bottom-4 right-4 w-80 opacity-90 z-50">
