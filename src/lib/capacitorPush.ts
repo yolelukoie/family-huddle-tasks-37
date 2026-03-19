@@ -81,6 +81,11 @@ function initListeners(): void {
 
   PushNotifications.addListener('registrationError', (error) => {
     console.error('[NativePush] ❌ Registration error:', error);
+    try {
+      console.error('[NativePush] ❌ Registration error (json):', JSON.stringify(error));
+    } catch {
+      // no-op
+    }
   });
 
   // Foreground notification — delegates to mutable notificationHandler
@@ -122,19 +127,30 @@ export async function registerNativePush(userId: string): Promise<{ success: boo
     return { success: false, error: 'Not running on native platform' };
   }
 
+  const runtimePlatform = Capacitor.getPlatform();
+  const isNative = Capacitor.isNativePlatform();
+  const isAndroid = runtimePlatform === 'android';
+
   console.log('[NativePush] Registering for user:', userId);
+  console.log('[NativePush] Runtime platform:', runtimePlatform);
+  console.log('[NativePush] Capacitor.isNativePlatform():', isNative);
+
   currentUserId = userId;
 
   try {
+    console.log('[NativePush] Before checkPermissions()');
     let permStatus = await PushNotifications.checkPermissions();
-    console.log('[NativePush] Current permission:', permStatus.receive);
-    
+    console.log('[NativePush] After checkPermissions():', permStatus.receive);
+
     if (permStatus.receive === 'prompt' || permStatus.receive === 'prompt-with-rationale') {
+      console.log('[NativePush] Before requestPermissions()');
       permStatus = await PushNotifications.requestPermissions();
-      console.log('[NativePush] After request, permission:', permStatus.receive);
+      console.log('[NativePush] After requestPermissions():', permStatus.receive);
     }
 
-    if (permStatus.receive !== 'granted') {
+    console.log('[NativePush] Final permission result:', permStatus.receive);
+
+    if (permStatus.receive !== 'granted' && !isAndroid) {
       const error = permStatus.receive === 'denied'
         ? 'Push notifications are blocked. Please enable them in your device settings.'
         : 'Push notification permission was not granted';
@@ -142,9 +158,30 @@ export async function registerNativePush(userId: string): Promise<{ success: boo
       return { success: false, error };
     }
 
+    if (permStatus.receive !== 'granted' && isAndroid) {
+      console.warn('[NativePush] ⚠️ Android permission is not granted; attempting register() anyway for diagnosis');
+    }
+
     initListeners();
-    await PushNotifications.register();
-    console.log('[NativePush] ✓ Registration initiated');
+
+    const tokenBeforeRegister = currentDeviceToken;
+    console.log('[NativePush] Before PushNotifications.register()');
+
+    try {
+      await PushNotifications.register();
+      console.log('[NativePush] After PushNotifications.register()');
+      console.log('[NativePush] ✓ PushNotifications.register() completed (token should arrive via registration listener)');
+    } catch (regError: any) {
+      console.error('[NativePush] ❌ PushNotifications.register() THREW:', regError?.message || regError);
+      return { success: false, error: regError?.message || 'register() failed' };
+    }
+
+    setTimeout(() => {
+      if (!currentDeviceToken || currentDeviceToken === tokenBeforeRegister) {
+        console.warn('[NativePush] ⚠️ No token received 10s after register(). Check Firebase setup / Google Play Services.');
+      }
+    }, 10000);
+
     return { success: true };
   } catch (e: any) {
     console.error('[NativePush] ❌ Error:', e);

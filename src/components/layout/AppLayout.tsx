@@ -78,14 +78,26 @@ export function AppLayout() {
     // Native: automatically register for push on every auth (ensures token is in DB)
     if (isPlatform('capacitor')) {
       console.log('[Push] Native platform — auto-registering push for user:', user.id);
-      requestPushPermission(user.id);
+      requestPushPermission(user.id)
+        .then((result) => {
+          console.log('[Push] Native registration result (initial):', JSON.stringify(result));
+        })
+        .catch((err) => {
+          console.error('[Push] Native registration call failed (initial):', err);
+        });
 
       // Also re-register on app resume
       let resumeListenerHandle: any = null;
       import('@capacitor/app').then(({ App }) => {
         resumeListenerHandle = App.addListener('resume', () => {
           console.log('[Push] App resumed — re-registering native push');
-          requestPushPermission(user.id);
+          requestPushPermission(user.id)
+            .then((result) => {
+              console.log('[Push] Native registration result (resume):', JSON.stringify(result));
+            })
+            .catch((err) => {
+              console.error('[Push] Native registration call failed (resume):', err);
+            });
         });
       }).catch(() => {});
 
