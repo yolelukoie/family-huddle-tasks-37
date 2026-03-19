@@ -463,6 +463,9 @@ export default function PersonalPage() {
           </CardContent>
         </Card>
 
+        {/* Push Debug (collapsible) */}
+        <PushDebugCard />
+
         {/* Subscription */}
         <Card>
           <CardHeader>
