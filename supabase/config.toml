@@ -11,3 +11,9 @@ verify_jwt = false
 
 [functions.auto-kick-blocked-members]
 verify_jwt = false
+
+[functions.notify-chat-message]
+verify_jwt = false
+
+[functions.notify-membership-change]
+verify_jwt = false

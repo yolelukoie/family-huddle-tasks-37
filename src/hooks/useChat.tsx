@@ -182,6 +182,18 @@ export function useChat() {
           return false;
         }
 
+        // Send push notifications to other family members (fire-and-forget)
+        supabase.functions.invoke('notify-chat-message', {
+          body: {
+            familyId: activeFamilyId,
+            senderId: user.id,
+            senderName: user.displayName || 'Family member',
+            content: content.trim(),
+          },
+        }).catch((err) => {
+          console.error('[chat] Failed to send chat push notifications:', err);
+        });
+
         return true;
       } catch (err) {
         console.error('[chat] Error in sendMessage:', err);
