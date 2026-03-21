@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 // Module-level state — survives the entire app lifecycle
 let currentUserId: string | null = null;
 let currentDeviceToken: string | null = null;
+let pendingToken: string | null = null; // Buffer token if userId not set yet
 let notificationHandler: ((data: any) => void) | null = null;
 let listenersInitialized = false;
 let channelCreated = false;
@@ -39,10 +40,27 @@ async function ensureNotificationChannel(): Promise<void> {
   }
 }
 
+/** Save a token to the database */
+async function saveTokenToDb(token: string, userId: string): Promise<void> {
+  const platform = getCurrentPlatform();
+  console.log('[NativePush] Saving token to DB. Platform:', platform, 'User:', userId);
+
+  const { error } = await supabase
+    .from('user_fcm_tokens')
+    .upsert(
+      { user_id: userId, token, platform },
+      { onConflict: 'user_id,token' }
+    );
+
+  if (error) {
+    console.error('[NativePush] ❌ Failed to save token:', error);
+  } else {
+    console.log('[NativePush] ✓ Token saved successfully');
+  }
+}
+
 /**
  * Initialize all Capacitor push listeners exactly once.
- * They persist for the app lifecycle; mutable refs (currentUserId,
- * notificationHandler) are read at call-time so they're never stale.
  */
 function initListeners(): void {
   if (listenersInitialized) return;
@@ -58,34 +76,16 @@ function initListeners(): void {
 
     const uid = currentUserId;
     if (!uid) {
-      console.error('[NativePush] ❌ No current user ID when token received');
+      console.warn('[NativePush] ⚠️ No current user ID when token received — buffering token');
+      pendingToken = token.value;
       return;
     }
 
-    const platform = getCurrentPlatform();
-    console.log('[NativePush] Platform:', platform, 'User:', uid);
-
-    const { error } = await supabase
-      .from('user_fcm_tokens')
-      .upsert(
-        { user_id: uid, token: token.value, platform },
-        { onConflict: 'user_id,token' }
-      );
-
-    if (error) {
-      console.error('[NativePush] ❌ Failed to save token:', error);
-    } else {
-      console.log('[NativePush] ✓ Token saved successfully');
-    }
+    await saveTokenToDb(token.value, uid);
   });
 
   PushNotifications.addListener('registrationError', (error) => {
-    console.error('[NativePush] ❌ Registration error:', error);
-    try {
-      console.error('[NativePush] ❌ Registration error (json):', JSON.stringify(error));
-    } catch {
-      // no-op
-    }
+    console.error('[NativePush] ❌ Registration error:', JSON.stringify(error));
   });
 
   // Foreground notification — delegates to mutable notificationHandler
@@ -94,6 +94,7 @@ function initListeners(): void {
     const payload = {
       notification: { title: notification.title, body: notification.body },
       data: notification.data || {},
+      meta: { tapped: false },
     };
     try {
       notificationHandler?.(payload);
@@ -102,12 +103,13 @@ function initListeners(): void {
     }
   });
 
-  // Notification tap
+  // Notification tap — includes meta.tapped = true
   PushNotifications.addListener('pushNotificationActionPerformed', (action: ActionPerformed) => {
     console.log('[NativePush] Notification tapped:', action);
     const payload = {
       notification: { title: action.notification.title, body: action.notification.body },
       data: action.notification.data || {},
+      meta: { tapped: true },
     };
     try {
       notificationHandler?.(payload);
@@ -132,50 +134,61 @@ export async function registerNativePush(userId: string): Promise<{ success: boo
   const isAndroid = runtimePlatform === 'android';
 
   console.log('[NativePush] Registering for user:', userId);
-  console.log('[NativePush] Runtime platform:', runtimePlatform);
+  console.log('[NativePush] Capacitor.getPlatform():', runtimePlatform);
   console.log('[NativePush] Capacitor.isNativePlatform():', isNative);
 
   currentUserId = userId;
 
+  // Flush any buffered token from before userId was set
+  if (pendingToken) {
+    console.log('[NativePush] Flushing buffered token to DB');
+    await saveTokenToDb(pendingToken, userId);
+    currentDeviceToken = pendingToken;
+    pendingToken = null;
+    return { success: true };
+  }
+
+  // Initialize listeners first (idempotent)
+  initListeners();
+
   try {
     console.log('[NativePush] Before checkPermissions()');
     let permStatus = await PushNotifications.checkPermissions();
-    console.log('[NativePush] After checkPermissions():', permStatus.receive);
+    console.log('[NativePush] After checkPermissions():', JSON.stringify(permStatus));
 
     if (permStatus.receive === 'prompt' || permStatus.receive === 'prompt-with-rationale') {
       console.log('[NativePush] Before requestPermissions()');
       permStatus = await PushNotifications.requestPermissions();
-      console.log('[NativePush] After requestPermissions():', permStatus.receive);
+      console.log('[NativePush] After requestPermissions():', JSON.stringify(permStatus));
     }
 
     console.log('[NativePush] Final permission result:', permStatus.receive);
 
-    if (permStatus.receive !== 'granted' && !isAndroid) {
-      const error = permStatus.receive === 'denied'
-        ? 'Push notifications are blocked. Please enable them in your device settings.'
-        : 'Push notification permission was not granted';
+    // On iOS, if denied, we cannot proceed
+    if (permStatus.receive === 'denied' && !isAndroid) {
+      const error = 'Push notifications are blocked. Please enable them in your device settings.';
       console.log('[NativePush] ❌', error);
       return { success: false, error };
     }
 
-    if (permStatus.receive !== 'granted' && isAndroid) {
-      console.warn('[NativePush] ⚠️ Android permission is not granted; attempting register() anyway for diagnosis');
+    // On Android: ALWAYS attempt register regardless of permission status
+    // checkPermissions() can return confusing values like 'unavailable'
+    if (permStatus.receive !== 'granted') {
+      console.warn(`[NativePush] ⚠️ Permission is "${permStatus.receive}" — attempting register() anyway`);
     }
-
-    initListeners();
 
     const tokenBeforeRegister = currentDeviceToken;
     console.log('[NativePush] Before PushNotifications.register()');
 
     try {
       await PushNotifications.register();
-      console.log('[NativePush] After PushNotifications.register()');
-      console.log('[NativePush] ✓ PushNotifications.register() completed (token should arrive via registration listener)');
+      console.log('[NativePush] ✓ PushNotifications.register() completed');
     } catch (regError: any) {
-      console.error('[NativePush] ❌ PushNotifications.register() THREW:', regError?.message || regError);
+      console.error('[NativePush] ❌ PushNotifications.register() THREW:', regError?.message || JSON.stringify(regError));
       return { success: false, error: regError?.message || 'register() failed' };
     }
 
+    // 10s timeout warning
     setTimeout(() => {
       if (!currentDeviceToken || currentDeviceToken === tokenBeforeRegister) {
         console.warn('[NativePush] ⚠️ No token received 10s after register(). Check Firebase setup / Google Play Services.');
@@ -219,7 +232,6 @@ export async function deleteNativePushToken(userId: string): Promise<void> {
 
   try {
     if (currentDeviceToken) {
-      // Delete only this device's token
       const { error } = await supabase
         .from('user_fcm_tokens')
         .delete()
@@ -232,7 +244,6 @@ export async function deleteNativePushToken(userId: string): Promise<void> {
         console.log('[NativePush] ✓ Device token deleted');
       }
     } else {
-      // Fallback: no cached token, delete by platform
       const platform = getCurrentPlatform();
       const { error } = await supabase
         .from('user_fcm_tokens')
@@ -252,4 +263,9 @@ export async function deleteNativePushToken(userId: string): Promise<void> {
 
   currentDeviceToken = null;
   currentUserId = null;
+}
+
+/** Expose current token for debug UI */
+export function getNativeDeviceToken(): string | null {
+  return currentDeviceToken;
 }
