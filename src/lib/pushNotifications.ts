@@ -73,11 +73,15 @@ export async function getPushPermissionStatus(): Promise<'granted' | 'denied' | 
     try {
       const { PushNotifications } = await import('@capacitor/push-notifications');
       const status = await PushNotifications.checkPermissions();
+      console.log('[Push] Native permission status:', status.receive);
       if (status.receive === 'granted') return 'granted';
       if (status.receive === 'denied') return 'denied';
+      // Treat 'prompt', 'prompt-with-rationale', or anything else as 'prompt'
+      // Do NOT return 'unavailable' on native — it blocks the UI
       return 'prompt';
     } catch {
-      return 'unavailable';
+      // Even on error, return 'prompt' so the button stays active
+      return 'prompt';
     }
   }
   
