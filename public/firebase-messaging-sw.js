@@ -16,28 +16,49 @@ const messaging = firebase.messaging();
 
 /** Background handler (when the page is closed/inactive) */
 messaging.onBackgroundMessage((payload) => {
-  // Expecting payload.notification.{title, body} or payload.data
   const title = payload?.notification?.title || payload?.data?.title || "Family Huddle";
   const body = payload?.notification?.body || payload?.data?.body || "You have a new update";
-  const icon = "/favicon.ico"; // put your own icon path if you like
+  const icon = "/favicon.ico";
+  const data = payload?.data || {};
+  
+  // Build a route URL based on notification type
+  let route = "/";
+  const eventType = data.event_type || data.type;
+  if (eventType === "assigned" || eventType === "task_assigned") {
+    route = data.task_id ? `/tasks?taskId=${data.task_id}` : "/tasks";
+  } else if (eventType === "chat_message") {
+    route = data.family_id ? `/chat?familyId=${data.family_id}` : "/chat";
+  } else if (eventType === "kicked" || eventType === "member_removed") {
+    route = "/onboarding";
+  }
 
-  self.registration.showNotification(title, { body, icon, data: payload?.data || {} });
+  self.registration.showNotification(title, { body, icon, data: { ...data, route } });
 });
 
-/** (Optional) Click behavior: focus existing window or open root */
+/** Click behavior: navigate to the correct route */
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
+  const route = event.notification.data?.route || "/";
+  
   event.waitUntil(
     (async () => {
       const allClients = await self.clients.matchAll({ includeUncontrolled: true, type: "window" });
-      const url = "/";
+      
+      // Try to find an existing window and navigate it
       for (const c of allClients) {
         if ("focus" in c) {
-          c.focus();
+          await c.focus();
+          if (c.url && "navigate" in c) {
+            await c.navigate(route);
+          }
           return;
         }
       }
-      if (self.clients.openWindow) await self.clients.openWindow(url);
+      
+      // No existing window — open a new one
+      if (self.clients.openWindow) {
+        await self.clients.openWindow(route);
+      }
     })(),
   );
 });

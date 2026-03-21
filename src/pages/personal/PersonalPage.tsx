@@ -30,6 +30,36 @@ const LANGUAGES = [
   { code: 'he', name: 'עברית', flag: '🇮🇱' },
 ];
 
+/** Open the OS notification settings for this app */
+async function openAppNotificationSettings() {
+  if (!isPlatform('capacitor')) return false;
+  try {
+    const { NativeSettings, AndroidSettings, IOSSettings } = await import('capacitor-native-settings');
+    const platform = (await import('@capacitor/core')).Capacitor.getPlatform();
+    if (platform === 'android') {
+      await NativeSettings.openAndroid({ option: AndroidSettings.AppNotification });
+    } else {
+      await NativeSettings.openIOS({ option: IOSSettings.App });
+    }
+    return true;
+  } catch (e) {
+    console.error('[Settings] Failed to open native settings:', e);
+    return false;
+  }
+}
+
+/** Open battery optimization / autostart settings (Android only, best-effort) */
+async function openBatterySettings() {
+  if (!isPlatform('capacitor')) return false;
+  try {
+    const { NativeSettings, AndroidSettings } = await import('capacitor-native-settings');
+    await NativeSettings.openAndroid({ option: AndroidSettings.BatteryOptimization });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export default function PersonalPage() {
   const { user, updateUser } = useAuth();
   const { activeFamilyId, resetCharacterProgress } = useApp();
@@ -39,7 +69,6 @@ export default function PersonalPage() {
   const [newDisplayName, setNewDisplayName] = useState(user?.displayName || '');
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState<string>(() => {
-    // Initialize from cache for immediate UI consistency
     try {
       return localStorage.getItem('app-language') || i18n.language || 'en';
     } catch {
@@ -69,7 +98,6 @@ export default function PersonalPage() {
       if (data?.preferred_language && !error) {
         setSelectedLanguage(data.preferred_language);
         await i18n.changeLanguage(data.preferred_language);
-        // Update cache to match DB
         try {
           localStorage.setItem('app-language', data.preferred_language);
         } catch (e) {
@@ -102,106 +130,62 @@ export default function PersonalPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
-      toast({
-        title: t('personal.invalidFileType'),
-        description: t('personal.invalidFileTypeDesc'),
-        variant: "destructive",
-      });
+      toast({ title: t('personal.invalidFileType'), description: t('personal.invalidFileTypeDesc'), variant: "destructive" });
       return;
     }
-
-    // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      toast({
-        title: t('personal.fileTooLarge'),
-        description: t('personal.fileTooLargeDesc'),
-        variant: "destructive",
-      });
+      toast({ title: t('personal.fileTooLarge'), description: t('personal.fileTooLargeDesc'), variant: "destructive" });
       return;
     }
 
     setIsUploadingAvatar(true);
-
     try {
-      // Create a unique file name
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}-${Date.now()}.${fileExt}`;
       const filePath = `avatars/${fileName}`;
 
-      // Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from('character-images')
         .upload(filePath, file, { upsert: true });
-
       if (uploadError) throw uploadError;
 
-      // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('character-images')
         .getPublicUrl(filePath);
 
-      // Update user profile with avatar URL
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ avatar_url: publicUrl })
         .eq('id', user.id);
-
       if (updateError) throw updateError;
 
-      // Update local user state
       await updateUser({ ...user, avatar_url: publicUrl } as any);
-
-      toast({
-        title: t('personal.avatarUpdated'),
-        description: t('personal.avatarUpdatedDesc'),
-      });
+      toast({ title: t('personal.avatarUpdated'), description: t('personal.avatarUpdatedDesc') });
     } catch (error) {
       console.error('Error uploading avatar:', error);
-      toast({
-        title: t('personal.uploadFailed'),
-        description: t('personal.uploadFailedDesc'),
-        variant: "destructive",
-      });
+      toast({ title: t('personal.uploadFailed'), description: t('personal.uploadFailedDesc'), variant: "destructive" });
     } finally {
       setIsUploadingAvatar(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
   const handleLanguageChange = async (language: string) => {
     setSelectedLanguage(language);
     await i18n.changeLanguage(language);
-    
-    // Cache in localStorage for immediate use on next page load
-    try {
-      localStorage.setItem('app-language', language);
-    } catch (e) {
-      console.warn('Failed to cache language preference:', e);
-    }
+    try { localStorage.setItem('app-language', language); } catch {}
     
     try {
       const { error } = await supabase
         .from('profiles')
         .update({ preferred_language: language })
         .eq('id', user.id);
-
       if (error) throw error;
-
-      toast({
-        title: t('personal.languageUpdated'),
-        description: t('personal.languageUpdatedDesc'),
-      });
+      toast({ title: t('personal.languageUpdated'), description: t('personal.languageUpdatedDesc') });
     } catch (error) {
       console.error('Error updating language:', error);
-      toast({
-        title: t('personal.updateFailed'),
-        description: t('personal.updateFailedDesc'),
-        variant: "destructive",
-      });
+      toast({ title: t('personal.updateFailed'), description: t('personal.updateFailedDesc'), variant: "destructive" });
     }
   };
 
@@ -209,71 +193,73 @@ export default function PersonalPage() {
     if (window.confirm(t('main.resetConfirm'))) {
       await resetCharacterProgress(activeFamilyId);
       resetBadgeProgress();
-      toast({
-        title: t('personal.characterReset'),
-        description: t('personal.characterResetDesc'),
-      });
+      toast({ title: t('personal.characterReset'), description: t('personal.characterResetDesc') });
     }
   };
 
   const handleEnableNotifications = async () => {
     if (!user?.id) return;
-    
-    // If denied on native, open device settings (only way to recover)
-    if (notificationPermission === 'denied' && isPlatform('capacitor')) {
-      try {
-        const { NativeSettings, AndroidSettings } = await import('capacitor-native-settings');
-        await NativeSettings.openAndroid({ option: AndroidSettings.ApplicationDetails });
-      } catch {
+
+    // On native: always open OS notification settings so user can toggle
+    if (isPlatform('capacitor')) {
+      // First try to register (in case permission was granted externally)
+      setIsEnablingNotifications(true);
+      const { success } = await requestPushPermission(user.id);
+      setIsEnablingNotifications(false);
+
+      if (success) {
+        const newStatus = await getPushPermissionStatus();
+        setNotificationPermission(newStatus);
+        if (newStatus === 'granted') {
+          toast({
+            title: t('notifications.enabled') || 'Notifications enabled',
+            description: t('notifications.enabledDesc') || 'You will receive notifications',
+          });
+          return;
+        }
+      }
+
+      // Open OS settings
+      const opened = await openAppNotificationSettings();
+      if (!opened) {
         toast({
           title: t('notifications.openSettings') || 'Open Settings',
-          description: t('notifications.openSettingsDesc') || 'Please enable notifications in your device Settings > Apps > Family Huddle > Notifications',
+          description: t('notifications.openSettingsDesc') || 'Please enable notifications in Settings > Apps > Family Huddle > Notifications',
         });
       }
       return;
     }
     
-    // If denied on web, show guidance
-    if (notificationPermission === 'denied' && !isPlatform('capacitor')) {
+    // Web: if denied, show guidance
+    if (notificationPermission === 'denied') {
       toast({
         title: t('notifications.blockedInBrowser') || 'Blocked in Browser',
-        description: t('notifications.statusDeniedDesc') || 'Enable notifications in your browser settings to receive updates',
+        description: t('notifications.statusDeniedDesc') || 'Enable notifications in your browser settings',
       });
       return;
     }
     
     setIsEnablingNotifications(true);
-    
     const { success, error } = await requestPushPermission(user.id);
-    
     setIsEnablingNotifications(false);
     
-    // Re-check permission status after attempt
     const newStatus = await getPushPermissionStatus();
     setNotificationPermission(newStatus);
     
     if (success) {
-      toast({
-        title: t('notifications.enabled'),
-        description: t('notifications.enabledDesc'),
-      });
+      toast({ title: t('notifications.enabled'), description: t('notifications.enabledDesc') });
     } else {
-      toast({
-        title: t('notifications.error'),
-        description: error || t('notifications.errorDesc'),
-        variant: 'destructive',
-      });
+      toast({ title: t('notifications.error'), description: error || t('notifications.errorDesc'), variant: 'destructive' });
     }
   };
 
   const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
+
+  const isNative = isPlatform('capacitor');
+  // Treat 'unavailable' same as 'not enabled' — button should ALWAYS be active unless granted
+  const isNotificationEnabled = notificationPermission === 'granted';
 
   return (
     <div className="min-h-screen bg-background">
@@ -292,9 +278,7 @@ export default function PersonalPage() {
             <div className="relative">
               <Avatar className="h-32 w-32 cursor-pointer" onClick={handleAvatarClick}>
                 <AvatarImage src={user.avatar_url} alt={user.displayName} />
-                <AvatarFallback className="text-3xl">
-                  {getInitials(user.displayName)}
-                </AvatarFallback>
+                <AvatarFallback className="text-3xl">{getInitials(user.displayName)}</AvatarFallback>
               </Avatar>
               {isUploadingAvatar && (
                 <div className="absolute inset-0 flex items-center justify-center bg-background/80 rounded-full">
@@ -302,24 +286,12 @@ export default function PersonalPage() {
                 </div>
               )}
             </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleAvatarUpload}
-              className="hidden"
-            />
-            <Button 
-              variant="theme" 
-              onClick={handleAvatarClick}
-              disabled={isUploadingAvatar}
-            >
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
+            <Button variant="theme" onClick={handleAvatarClick} disabled={isUploadingAvatar}>
               <Upload className="h-4 w-4 mr-2" />
               {isUploadingAvatar ? t('personal.uploading') : t('personal.uploadPhoto')}
             </Button>
-            <p className="text-sm text-muted-foreground text-center">
-              {t('personal.uploadHint')}
-            </p>
+            <p className="text-sm text-muted-foreground text-center">{t('personal.uploadHint')}</p>
           </CardContent>
         </Card>
 
@@ -336,15 +308,8 @@ export default function PersonalPage() {
               <div>
                 <Label htmlFor="displayName">{t('personal.displayName')}</Label>
                 <div className="flex gap-2">
-                  <Input
-                    id="displayName"
-                    value={newDisplayName}
-                    onChange={(e) => setNewDisplayName(e.target.value)}
-                    placeholder={t('personal.displayNamePlaceholder')}
-                  />
-                  <Button type="submit" variant="theme">
-                    {t('personal.update')}
-                  </Button>
+                  <Input id="displayName" value={newDisplayName} onChange={(e) => setNewDisplayName(e.target.value)} placeholder={t('personal.displayNamePlaceholder')} />
+                  <Button type="submit" variant="theme">{t('personal.update')}</Button>
                 </div>
               </div>
             </form>
@@ -409,13 +374,9 @@ export default function PersonalPage() {
             <div className="space-y-4">
               <div className="flex items-start gap-3">
                 <div className={`rounded-full p-2 ${
-                  notificationPermission === 'granted' 
-                    ? 'bg-green-500/10' 
-                    : notificationPermission === 'denied'
-                    ? 'bg-destructive/10'
-                    : 'bg-muted'
+                  isNotificationEnabled ? 'bg-green-500/10' : 'bg-muted'
                 }`}>
-                  {notificationPermission === 'granted' ? (
+                  {isNotificationEnabled ? (
                     <Bell className="h-4 w-4 text-green-500" />
                   ) : (
                     <BellOff className="h-4 w-4 text-muted-foreground" />
@@ -423,41 +384,70 @@ export default function PersonalPage() {
                 </div>
                 <div className="flex-1">
                   <p className="text-sm font-medium mb-1">
-                    {notificationPermission === 'granted' && (t('notifications.statusEnabled') || 'Push notifications enabled')}
-                    {notificationPermission === 'denied' && (t('notifications.statusDenied') || 'Push notifications blocked')}
-                    {(notificationPermission === 'prompt' || notificationPermission === 'unavailable') && (t('notifications.statusDefault') || 'Push notifications not enabled')}
+                    {isNotificationEnabled
+                      ? (t('notifications.statusEnabled') || 'Push notifications enabled')
+                      : (t('notifications.statusDefault') || 'Push notifications not enabled')}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {notificationPermission === 'granted' && (t('notifications.statusEnabledDesc') || 'You will receive task and message notifications')}
-                    {notificationPermission === 'denied' && (t('notifications.statusDeniedDesc') || 'Enable notifications in your browser settings to receive updates')}
-                    {(notificationPermission === 'prompt' || notificationPermission === 'unavailable') && (t('notifications.statusDefaultDesc') || 'Enable to receive task assignments and messages')}
+                    {isNotificationEnabled
+                      ? (t('notifications.statusEnabledDesc') || 'You will receive task and message notifications')
+                      : (t('notifications.statusDefaultDesc') || 'Enable to receive task assignments and messages')}
                   </p>
                 </div>
               </div>
               
-              {notificationPermission !== 'granted' && notificationPermission !== 'unavailable' && (
-                <Button 
-                  variant={notificationPermission === 'denied' ? 'outline' : 'theme'}
-                  onClick={handleEnableNotifications}
-                  disabled={isEnablingNotifications}
-                >
-                  {isEnablingNotifications ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      {t('notifications.enabling') || 'Enabling...'}
-                    </>
-                  ) : (
-                    <>
-                      <Bell className="h-4 w-4 mr-2" />
-                      {notificationPermission === 'denied' 
-                        ? (isPlatform('capacitor') 
-                            ? (t('notifications.openSettings') || 'Open Settings')
-                            : (t('notifications.blockedInBrowser') || 'Blocked in Browser'))
-                        : (t('notifications.enable') || 'Enable Notifications')
-                      }
-                    </>
+              {/* Button: ALWAYS active unless notifications are granted */}
+              {isNotificationEnabled ? (
+                // Granted: show "Manage in settings" on native
+                isNative && (
+                  <Button
+                    variant="outline"
+                    onClick={() => openAppNotificationSettings()}
+                    size="sm"
+                  >
+                    <Settings className="h-4 w-4 mr-2" />
+                    {t('notifications.manageInSettings') || 'Manage in Settings'}
+                  </Button>
+                )
+              ) : (
+                <div className="flex flex-col gap-2">
+                  <Button 
+                    variant="theme"
+                    onClick={handleEnableNotifications}
+                    disabled={isEnablingNotifications}
+                  >
+                    {isEnablingNotifications ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        {t('notifications.enabling') || 'Enabling...'}
+                      </>
+                    ) : (
+                      <>
+                        <Bell className="h-4 w-4 mr-2" />
+                        {t('notifications.enable') || 'Enable Notifications'}
+                      </>
+                    )}
+                  </Button>
+                  
+                  {/* Battery/Autostart shortcut for Android */}
+                  {isNative && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        const opened = await openBatterySettings();
+                        if (!opened) {
+                          toast({
+                            title: t('notifications.batterySettings') || 'Battery Settings',
+                            description: t('notifications.batterySettingsDesc') || 'Go to Settings > Battery > App battery usage > Family Huddle > No restrictions',
+                          });
+                        }
+                      }}
+                    >
+                      {t('notifications.batteryOptimization') || 'Battery / Autostart Settings'}
+                    </Button>
                   )}
-                </Button>
+                </div>
               )}
             </div>
           </CardContent>
@@ -475,14 +465,8 @@ export default function PersonalPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              {t('personal.subscriptionDesc')}
-            </p>
-            <Button 
-              variant="theme" 
-              onClick={() => user?.id && initiateSubscription(user.id)}
-              disabled={!user?.id}
-            >
+            <p className="text-sm text-muted-foreground mb-4">{t('personal.subscriptionDesc')}</p>
+            <Button variant="theme" onClick={() => user?.id && initiateSubscription(user.id)} disabled={!user?.id}>
               {t('personal.manageSubscription')}
             </Button>
           </CardContent>
@@ -497,14 +481,8 @@ export default function PersonalPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              {t('personal.resetCharacterDesc')}
-            </p>
-            <Button 
-              onClick={handleResetCharacter}
-              variant="destructive"
-              size="sm"
-            >
+            <p className="text-sm text-muted-foreground mb-4">{t('personal.resetCharacterDesc')}</p>
+            <Button onClick={handleResetCharacter} variant="destructive" size="sm">
               <RotateCcw className="h-4 w-4 mr-2" />
               {t('personal.resetCharacter')}
             </Button>
@@ -527,17 +505,11 @@ export default function PersonalPage() {
 
         {/* Legal Links */}
         <div className="flex justify-center gap-4 text-sm text-muted-foreground py-4 flex-wrap">
-          <a href="/privacy" className="hover:text-foreground transition-colors">
-            {t('legal.privacyPolicy')}
-          </a>
+          <a href="/privacy" className="hover:text-foreground transition-colors">{t('legal.privacyPolicy')}</a>
           <span>•</span>
-          <a href="/terms" className="hover:text-foreground transition-colors">
-            {t('legal.termsOfUse')}
-          </a>
+          <a href="/terms" className="hover:text-foreground transition-colors">{t('legal.termsOfUse')}</a>
           <span>•</span>
-          <a href="/refund" className="hover:text-foreground transition-colors">
-            {t('legal.refundPolicy')}
-          </a>
+          <a href="/refund" className="hover:text-foreground transition-colors">{t('legal.refundPolicy')}</a>
         </div>
       </div>
     </div>

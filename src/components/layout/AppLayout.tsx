@@ -17,7 +17,6 @@ import PrivacyPolicyPage from "@/pages/legal/PrivacyPolicyPage";
 import TermsOfServicePage from "@/pages/legal/TermsOfServicePage";
 import RefundPolicyPage from "@/pages/legal/RefundPolicyPage";
 import NotFound from "@/pages/NotFound";
-import { DevTestButton } from "@/components/dev/DevTestButton";
 import { useKickedFromFamily } from "@/hooks/useKickedFromFamily";
 import { useAssignmentModal } from "@/contexts/AssignmentModalContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,9 +25,12 @@ import {
   hasSeenNotificationPrompt,
   markNotificationPromptAsShown,
 } from "@/components/notifications/NotificationPermissionDialog";
+import {
+  NativePushPrompt,
+  hasSeenNativePushPrompt,
+} from "@/components/notifications/NativePushPrompt";
 
 export function AppLayout() {
-  // Mount notifications hook globally for all authenticated users
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const { activeFamilyId } = useApp();
   const { isLoading } = useApp();
@@ -37,15 +39,15 @@ export function AppLayout() {
   const { toast } = useToast();
   const { openAssignmentModal } = useAssignmentModal();
   
-  // State for notification permission dialog
+  // State for notification permission dialogs
   const [showNotificationDialog, setShowNotificationDialog] = useState(false);
+  const [showNativePushPrompt, setShowNativePushPrompt] = useState(false);
 
   // Global listener for when user is kicked from a family
   useKickedFromFamily();
 
   /** 1) Register the service worker for web FCM (skip on native) */
   useEffect(() => {
-    // Skip service worker registration on native platforms
     if (isPlatform('capacitor')) {
       console.log('[Push] Native platform detected, skipping SW registration');
       return;
@@ -55,10 +57,8 @@ export function AppLayout() {
     (async () => {
       if (!("serviceWorker" in navigator)) return;
       try {
-        // Ensure the SW at the site root is registered (file must be in /public/)
         const reg = await navigator.serviceWorker.register("/firebase-messaging-sw.js", { scope: "/" });
         if (!cancelled) {
-          // Wait until it's active so getToken can attach to it
           await navigator.serviceWorker.ready;
           console.log("[FCM] SW registered:", reg.scope);
         }
@@ -66,16 +66,14 @@ export function AppLayout() {
         console.error("[FCM] SW register failed:", e);
       }
     })();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, []);
 
   /** 2) Listen for push notifications (both web and native) + auto-register on native */
   useEffect(() => {
     if (!isAuthenticated || !user?.id) return;
 
-    // Native: automatically register for push on every auth (ensures token is in DB)
+    // Native: automatically register for push on every auth
     if (isPlatform('capacitor')) {
       console.log('[Push] Native platform — auto-registering push for user:', user.id);
       requestPushPermission(user.id)
@@ -101,7 +99,6 @@ export function AppLayout() {
         });
       }).catch(() => {});
 
-      // Cleanup uses the mutable ref directly (not a snapshot)
       var nativeResumeCleanup = () => {
         if (resumeListenerHandle) {
           resumeListenerHandle.then((l: any) => l.remove());
@@ -114,16 +111,71 @@ export function AppLayout() {
       }
     }
 
-    // Handle push notifications - open modal for 'assigned', toast for others
+    // Handle push notifications — routing on tap vs foreground
     let unsubscribe: (() => void) | null = null;
     
     const handleNotification = async (p: any) => {
       console.log('[Push] Notification received:', p);
       
       const eventType = p?.data?.event_type || p?.data?.type;
+      const tapped = p?.meta?.tapped === true;
       
-      // Handle 'assigned' events by opening the modal - NO toast
-      if (eventType === 'assigned') {
+      // === TAPPED notifications: route to correct screen ===
+      if (tapped) {
+        if (eventType === 'assigned' || eventType === 'task_assigned') {
+          const taskId = p?.data?.task_id;
+          const familyId = p?.data?.family_id;
+          if (taskId) {
+            navigate(`/tasks?taskId=${taskId}`, { replace: true });
+            // Also try to open assignment modal
+            if (taskId && familyId) {
+              try {
+                const { data: task, error } = await supabase
+                  .from('tasks')
+                  .select('*')
+                  .eq('id', taskId)
+                  .single();
+                if (task && !error && task.assigned_to === user?.id) {
+                  openAssignmentModal({
+                    id: task.id, name: task.name, description: task.description ?? '',
+                    starValue: task.star_value ?? 0, assignedBy: task.assigned_by,
+                    assignedTo: task.assigned_to, dueDate: task.due_date,
+                    familyId, categoryId: task.category_id, completed: !!task.completed,
+                  } as any);
+                }
+              } catch (err) {
+                console.error('[Push] Failed to fetch task for tap routing:', err);
+              }
+            }
+          }
+          return;
+        }
+        
+        if (eventType === 'chat_message') {
+          const familyId = p?.data?.family_id;
+          navigate(familyId ? `/chat?familyId=${familyId}` : '/chat', { replace: true });
+          return;
+        }
+        
+        if (eventType === 'kicked' || eventType === 'member_removed') {
+          navigate('/onboarding', { replace: true });
+          toast({
+            title: p?.notification?.title || 'Removed from family',
+            description: p?.notification?.body || 'You have been removed from a family.',
+            variant: 'destructive',
+          });
+          return;
+        }
+        
+        // Default tap: just show toast
+        const title = p?.notification?.title || p?.data?.title || "Family Huddle";
+        const body = p?.notification?.body || p?.data?.body || "";
+        toast({ title, description: body });
+        return;
+      }
+      
+      // === FOREGROUND notifications (not tapped) ===
+      if (eventType === 'assigned' || eventType === 'task_assigned') {
         const taskId = p?.data?.task_id;
         const familyId = p?.data?.family_id;
         
@@ -135,26 +187,13 @@ export function AppLayout() {
               .eq('id', taskId)
               .single();
             
-            if (task && !error) {
-              // CRITICAL: Only show modal if current user is the ASSIGNEE
-              if (task.assigned_to !== user?.id) {
-                console.log('[Push] Ignoring assigned event - current user is not the assignee');
-                return;
-              }
-              
-              const taskForModal = {
-                id: task.id,
-                name: task.name,
-                description: task.description ?? '',
-                starValue: task.star_value ?? 0,
-                assignedBy: task.assigned_by,
-                assignedTo: task.assigned_to,
-                dueDate: task.due_date,
-                familyId: familyId,
-                categoryId: task.category_id,
-                completed: !!task.completed,
-              };
-              openAssignmentModal(taskForModal as any);
+            if (task && !error && task.assigned_to === user?.id) {
+              openAssignmentModal({
+                id: task.id, name: task.name, description: task.description ?? '',
+                starValue: task.star_value ?? 0, assignedBy: task.assigned_by,
+                assignedTo: task.assigned_to, dueDate: task.due_date,
+                familyId, categoryId: task.category_id, completed: !!task.completed,
+              } as any);
             }
           } catch (err) {
             console.error('[Push] Failed to fetch task:', err);
@@ -163,10 +202,22 @@ export function AppLayout() {
         return; // Don't show toast for assigned events
       }
       
-      // For other events, show toast
+      if (eventType === 'kicked' || eventType === 'member_removed') {
+        toast({
+          title: p?.notification?.title || 'Removed from family',
+          description: p?.notification?.body || 'You have been removed from a family.',
+          variant: 'destructive',
+        });
+        navigate('/onboarding', { replace: true });
+        return;
+      }
+      
+      // For other foreground events, show toast
       const title = p?.notification?.title || p?.data?.title || "Family Huddle";
       const body = p?.notification?.body || p?.data?.body || "";
-      toast({ title, description: body });
+      if (body) {
+        toast({ title, description: body });
+      }
     };
     
     listenForPushNotifications(handleNotification).then((unsub) => {
@@ -177,7 +228,7 @@ export function AppLayout() {
       unsubscribe?.();
       if (typeof nativeResumeCleanup === 'function') nativeResumeCleanup();
     };
-  }, [isAuthenticated, user?.id, toast, openAssignmentModal]);
+  }, [isAuthenticated, user?.id, toast, openAssignmentModal, navigate]);
 
   /** 3) Recover pending task assignments missed while app was closed */
   const pendingCheckedRef = useRef(false);
@@ -197,18 +248,12 @@ export function AppLayout() {
 
         if (pendingTasks && pendingTasks.length > 0) {
           console.log(`[TaskRecovery] Found ${pendingTasks.length} pending task(s)`);
-          // Show the first pending task modal
           const task = pendingTasks[0];
           openAssignmentModal({
-            id: task.id,
-            name: task.name,
-            description: task.description ?? '',
-            starValue: task.star_value ?? 0,
-            assignedBy: task.assigned_by,
-            assignedTo: task.assigned_to,
-            dueDate: task.due_date,
-            familyId: task.family_id,
-            categoryId: task.category_id,
+            id: task.id, name: task.name, description: task.description ?? '',
+            starValue: task.star_value ?? 0, assignedBy: task.assigned_by,
+            assignedTo: task.assigned_to, dueDate: task.due_date,
+            familyId: task.family_id, categoryId: task.category_id,
             completed: !!task.completed,
           } as any);
         }
@@ -219,7 +264,6 @@ export function AppLayout() {
 
     checkPendingTasks();
 
-    // Also check on app resume (Capacitor)
     const handleResume = () => {
       pendingCheckedRef.current = false;
       checkPendingTasks();
@@ -230,11 +274,8 @@ export function AppLayout() {
         App.addListener('resume', handleResume);
       }).catch(() => {});
     } else {
-      // Web: check on visibility change
       const handleVisibility = () => {
-        if (document.visibilityState === 'visible') {
-          checkPendingTasks();
-        }
+        if (document.visibilityState === 'visible') checkPendingTasks();
       };
       document.addEventListener('visibilitychange', handleVisibility);
       return () => document.removeEventListener('visibilitychange', handleVisibility);
@@ -243,26 +284,19 @@ export function AppLayout() {
 
   useEffect(() => {
     if (isAuthenticated && location.pathname.includes("reset-password")) {
-      try {
-        window.history.replaceState({}, "", "/");
-      } catch {}
-      // Hard redirect avoids odd cases with ad-blockers/SW/router races
+      try { window.history.replaceState({}, "", "/"); } catch {}
       window.location.replace("/");
-      // If you prefer SPA navigation, you could do:
-      // navigate("/", { replace: true });
     }
   }, [isAuthenticated, location.pathname, navigate]);
 
   useEffect(() => {
     if (authLoading || isLoading) return;
 
-    // If not authenticated, redirect to auth page
     if (!isAuthenticated) {
       navigate("/auth", { replace: true });
       return;
     }
 
-    // If authenticated but no user profile, redirect to onboarding
     if (isAuthenticated && !user) {
       if (location.pathname !== ROUTES.onboarding) {
         navigate(ROUTES.onboarding, { replace: true });
@@ -270,7 +304,6 @@ export function AppLayout() {
       return;
     }
 
-    // If user exists but hasn't completed profile setup, redirect to onboarding
     if (user && !user.profileComplete) {
       if (location.pathname !== ROUTES.onboarding) {
         navigate(ROUTES.onboarding, { replace: true });
@@ -278,7 +311,6 @@ export function AppLayout() {
       return;
     }
 
-    // If user has completed profile but no active family, and not on onboarding, redirect to onboarding
     if (user && user.profileComplete && !user.activeFamilyId) {
       if (location.pathname !== ROUTES.onboarding) {
         navigate(ROUTES.onboarding, { replace: true });
@@ -286,27 +318,26 @@ export function AppLayout() {
       return;
     }
 
-    // If fully set up user is on onboarding page, redirect to main
     if (user?.profileComplete && user.activeFamilyId && location.pathname === ROUTES.onboarding) {
       navigate(ROUTES.main, { replace: true });
     }
 
-    // Show notification permission dialog for fully set up users who haven't seen it
-    // On native: skip dialog, OS prompt is triggered by auto-register above
+    // Show notification permission dialog for fully set up users
     if (user?.profileComplete && user.activeFamilyId && location.pathname === ROUTES.main) {
-      if (!isPlatform('capacitor') && !hasSeenNotificationPrompt()) {
-        // Check if permission is still promptable
+      if (isPlatform('capacitor')) {
+        // Native: show our custom prompt on first run
+        if (!hasSeenNativePushPrompt()) {
+          setShowNativePushPrompt(true);
+        }
+      } else if (!hasSeenNotificationPrompt()) {
+        // Web: existing dialog
         getPushPermissionStatus().then((status) => {
           if (status === 'prompt') {
             setShowNotificationDialog(true);
           } else {
-            // Already granted or denied, mark as shown
             markNotificationPromptAsShown();
           }
         });
-      } else if (isPlatform('capacitor')) {
-        // Mark as shown on native since OS handles the prompt
-        markNotificationPromptAsShown();
       }
     }
   }, [user, isAuthenticated, authLoading, isLoading, navigate, location.pathname]);
@@ -338,11 +369,20 @@ export function AppLayout() {
         <Route path="*" element={<NotFound />} />
       </Routes>
 
-      {/* One-time notification permission dialog */}
+      {/* Web: one-time notification permission dialog */}
       {user?.id && (
         <NotificationPermissionDialog
           open={showNotificationDialog}
           onClose={() => setShowNotificationDialog(false)}
+          userId={user.id}
+        />
+      )}
+
+      {/* Native: first-run push prompt */}
+      {user?.id && (
+        <NativePushPrompt
+          open={showNativePushPrompt}
+          onClose={() => setShowNativePushPrompt(false)}
           userId={user.id}
         />
       )}

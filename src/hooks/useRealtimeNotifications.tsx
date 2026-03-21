@@ -51,7 +51,7 @@ export function useRealtimeNotifications() {
     }, 150);
   }, [refreshData]);
 
-  // TASK EVENTS - Simple pattern matching useChat.tsx
+  // TASK EVENTS
   useEffect(() => {
     if (!user?.id) return;
 
@@ -67,19 +67,8 @@ export function useRealtimeNotifications() {
           const row = (e as any).new as TaskEvent | undefined;
           if (!row) return;
 
-          // Deduplicate events
           if (row.id && handledEventIds.current.has(row.id)) return;
           if (row.id) handledEventIds.current.add(row.id);
-
-          console.log('[MODAL-DEBUG] 1. task_events INSERT received:', {
-            eventId: row.id,
-            eventType: row.event_type,
-            taskId: row.task_id,
-            familyId: row.family_id,
-            recipientId: row.recipient_id,
-            actorId: row.actor_id,
-            timestamp: new Date().toISOString()
-          });
 
           if (row.event_type === 'assigned') {
             try {
@@ -89,40 +78,23 @@ export function useRealtimeNotifications() {
                 .eq('id', row.task_id)
                 .single();
 
-              if (error || !data) {
-                console.error('[REALTIME] Task fetch failed:', error?.message);
-                return;
-              }
-
-              // CRITICAL: Only show modal if current user is the ASSIGNEE
-              if (data.assigned_to !== user.id) {
-                console.log('[REALTIME] Ignoring assigned event - current user is not the assignee');
-                return;
-              }
+              if (error || !data) return;
+              if (data.assigned_to !== user.id) return;
 
               const taskFamilyId = row.family_id || data.family_id;
-              
-              const taskForModal = {
-                id: data.id,
-                name: data.name,
-                description: data.description ?? '',
-                starValue: data.star_value ?? 0,
-                assignedBy: data.assigned_by,
-                assignedTo: data.assigned_to,
-                dueDate: data.due_date,
-                familyId: taskFamilyId,
-                categoryId: data.category_id,
+              openAssignmentModal({
+                id: data.id, name: data.name, description: data.description ?? '',
+                starValue: data.star_value ?? 0, assignedBy: data.assigned_by,
+                assignedTo: data.assigned_to, dueDate: data.due_date,
+                familyId: taskFamilyId, categoryId: data.category_id,
                 completed: !!data.completed,
-              };
-              
-              openAssignmentModal(taskForModal as any);
+              } as any);
             } catch (err) {
               console.error('[REALTIME] Error in assigned handler:', err);
             }
-            return; // NO TOAST for 'assigned' - only the modal
+            return; // NO TOAST for 'assigned'
           }
 
-          // accepted / rejected / completed → toast for the assigner
           const actor = row.payload?.actor_name ?? 'Someone';
           const taskName = row.payload?.name ?? 'your task';
           if (row.event_type === 'accepted') {
@@ -135,52 +107,22 @@ export function useRealtimeNotifications() {
         }
       )
       .subscribe((status, err) => {
-        console.log('[REALTIME-DEBUG] Subscription status changed:', { status, err, userId: user.id });
         if (status === 'SUBSCRIBED') {
-          console.log('[task-events] ✓ Successfully subscribed - READY to receive INSERT events');
+          console.log('[task-events] ✓ Subscribed');
         } else if (status === 'CHANNEL_ERROR') {
           console.error('[task-events] Channel error:', err);
-        } else {
-          console.log(`[task-events] Channel status: ${status}`);
         }
       });
 
     return () => {
-      console.log('[task-events] Cleaning up channel');
       supabase.removeChannel(ch);
     };
   }, [user?.id, openAssignmentModal, toast]);
 
-  // CHAT EVENTS - Simple pattern
-  useEffect(() => {
-    if (!user?.id || !activeFamilyId) return;
+  // CHAT EVENTS — NO toast here. useChat already handles chat toasts.
+  // Removed to prevent duplicate toasts.
 
-    const channelName = `chat-global:${activeFamilyId}`;
-
-    const ch = supabase
-      .channel(channelName)
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `family_id=eq.${activeFamilyId}` },
-        (e) => {
-          const row = (e as any).new as { user_id: string; content: string } | undefined;
-          if (!row || row.user_id === user.id) return;
-          const name = getUserProfile(row.user_id)?.displayName ?? 'Family member';
-          toast({ title: 'New chat message', description: `${name}: ${row.content}` });
-        }
-      )
-      .subscribe((status) => {
-        if (status !== 'SUBSCRIBED') {
-          console.warn(`[chat-global] Channel status: ${status}`);
-        }
-      });
-
-    return () => {
-      supabase.removeChannel(ch);
-    };
-  }, [user?.id, activeFamilyId, toast, getUserProfile]);
-
-  // FAMILY SYNC (categories/templates) - Simple pattern
+  // FAMILY SYNC (categories/templates)
   useEffect(() => {
     if (!user?.id || !activeFamilyId) return;
 
@@ -193,10 +135,7 @@ export function useRealtimeNotifications() {
         { event: 'INSERT', schema: 'public', table: 'family_sync_events', filter: `family_id=eq.${activeFamilyId}` },
         (e) => {
           const row = (e as any).new as FamilySyncEvent | undefined;
-          if (!row) {
-            console.error('[family_sync] Missing .new in realtime event:', e);
-            return;
-          }
+          if (!row) return;
           debounceRefresh();
         }
       )
