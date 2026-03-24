@@ -84,10 +84,7 @@ export function AppLayout() {
         }
       };
     } else {
-      // Web: Check if already granted and silently register token
-      if ('Notification' in window && Notification.permission === 'granted') {
-        requestPushPermission(user.id);
-      }
+      // Web: push disabled under mobile-only policy — no-op
     }
 
     // Handle push notifications — routing on tap vs foreground
