@@ -46,28 +46,7 @@ export function AppLayout() {
   // Global listener for when user is kicked from a family
   useKickedFromFamily();
 
-  /** 1) Register the service worker for web FCM (skip on native) */
-  useEffect(() => {
-    if (isPlatform('capacitor')) {
-      console.log('[Push] Native platform detected, skipping SW registration');
-      return;
-    }
-    
-    let cancelled = false;
-    (async () => {
-      if (!("serviceWorker" in navigator)) return;
-      try {
-        const reg = await navigator.serviceWorker.register("/firebase-messaging-sw.js", { scope: "/" });
-        if (!cancelled) {
-          await navigator.serviceWorker.ready;
-          console.log("[FCM] SW registered:", reg.scope);
-        }
-      } catch (e) {
-        console.error("[FCM] SW register failed:", e);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, []);
+  /** 1) Web SW registration disabled — mobile-only push policy */
 
   /** 2) Listen for push notifications (both web and native) + auto-register on native */
   useEffect(() => {
