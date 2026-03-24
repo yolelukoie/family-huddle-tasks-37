@@ -9,6 +9,7 @@ import { CelebrationsProvider } from "@/contexts/CelebrationsContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthPage } from "@/pages/auth/AuthPage";
 import ResetPasswordPage from "@/pages/auth/ResetPasswordPage";
+import NativeResetPasswordPage from "@/pages/auth/NativeResetPasswordPage";
 import { ROUTES } from "@/lib/constants";
 import MainPage from "./pages/main/MainPage";
 import OnboardingPage from "./pages/onboarding/OnboardingPage";
@@ -40,6 +41,7 @@ const App = () => (
                   <RealtimeRoot />
                   <Routes>
                     <Route path="/auth" element={<AuthPage />} />
+                    <Route path="/auth/reset" element={<NativeResetPasswordPage />} />
                     <Route path="/reset-password" element={<ResetPasswordPage />} />
                     <Route path="/*" element={<AppLayout />} />
                   </Routes>
