@@ -264,7 +264,7 @@ export function AppLayout() {
   }, [isAuthenticated, user?.id, activeFamilyId, openAssignmentModal]);
 
   useEffect(() => {
-    if (isAuthenticated && location.pathname.includes("reset-password")) {
+    if (isAuthenticated && location.pathname.includes("reset-password") && !location.pathname.includes("/auth/reset")) {
       try { window.history.replaceState({}, "", "/"); } catch {}
       window.location.replace("/");
     }
