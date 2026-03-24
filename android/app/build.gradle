@@ -42,5 +42,5 @@ dependencies {
     implementation 'com.google.firebase:firebase-messaging'
 }
 
-apply from: '../capacitor.build.gradle'
+apply from: 'capacitor.build.gradle'
 apply plugin: 'com.google.gms.google-services'
