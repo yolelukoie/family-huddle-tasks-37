@@ -102,26 +102,31 @@ export function AppLayout() {
           const taskId = p?.data?.task_id;
           const familyId = p?.data?.family_id;
           if (taskId) {
+            console.log('[Push] Tapped task notification — navigating to /tasks');
             navigate(`/tasks?taskId=${taskId}`, { replace: true });
-            // Also try to open assignment modal
+            // Delay modal open to let navigation + UI settle
             if (taskId && familyId) {
-              try {
-                const { data: task, error } = await supabase
-                  .from('tasks')
-                  .select('*')
-                  .eq('id', taskId)
-                  .single();
-                if (task && !error && task.assigned_to === user?.id) {
-                  openAssignmentModal({
-                    id: task.id, name: task.name, description: task.description ?? '',
-                    starValue: task.star_value ?? 0, assignedBy: task.assigned_by,
-                    assignedTo: task.assigned_to, dueDate: task.due_date,
-                    familyId, categoryId: task.category_id, completed: !!task.completed,
-                  } as any);
+              setTimeout(async () => {
+                try {
+                  console.log('[Push] Fetching task for assignment modal...');
+                  const { data: task, error } = await supabase
+                    .from('tasks')
+                    .select('*')
+                    .eq('id', taskId)
+                    .single();
+                  if (task && !error && task.assigned_to === user?.id) {
+                    console.log('[Push] Opening assignment modal from tap');
+                    openAssignmentModal({
+                      id: task.id, name: task.name, description: task.description ?? '',
+                      starValue: task.star_value ?? 0, assignedBy: task.assigned_by,
+                      assignedTo: task.assigned_to, dueDate: task.due_date,
+                      familyId, categoryId: task.category_id, completed: !!task.completed,
+                    } as any);
+                  }
+                } catch (err) {
+                  console.error('[Push] Failed to fetch task for tap routing:', err);
                 }
-              } catch (err) {
-                console.error('[Push] Failed to fetch task for tap routing:', err);
-              }
+              }, 400);
             }
           }
           return;

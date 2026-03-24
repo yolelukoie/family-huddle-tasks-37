@@ -1,72 +1,63 @@
-// Unified Push Notifications API - Hybrid Web/Native
-// This module provides a single API that works on both web (FCM) and native (Capacitor)
+// Unified Push Notifications API — NATIVE ONLY (mobile-only policy)
+// Web FCM registration is intentionally disabled to prevent duplicate notifications.
 
 import { isPlatform } from './platform';
-import { requestAndSaveFcmToken, listenForegroundMessages, deleteFcmToken } from './fcm';
 import { registerNativePush, listenNativePush, deleteNativePushToken } from './capacitorPush';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
- * Request push notification permission and register token
- * Automatically uses the correct implementation based on platform
+ * Request push notification permission and register token.
+ * Only works on native (Capacitor). Web is a no-op.
  */
 export async function requestPushPermission(userId: string): Promise<{ success: boolean; error?: string }> {
   if (isPlatform('capacitor')) {
     console.log('[Push] Using native push (Capacitor)');
+
+    // One-time cleanup: delete any legacy web tokens for this user
+    cleanupWebTokens(userId);
+
     return registerNativePush(userId);
-  } else {
-    console.log('[Push] Using web push (FCM)');
-    return requestAndSaveFcmToken(userId);
   }
+
+  // Web: intentionally disabled to prevent duplicate notifications
+  console.log('[Push] Web push disabled (mobile-only policy)');
+  return { success: false, error: 'Push notifications are only available on the mobile app' };
 }
 
 /**
- * Listen for foreground push notifications
- * Returns cleanup function
+ * Listen for foreground push notifications.
+ * Only works on native. Web returns null.
  */
 export async function listenForPushNotifications(
   onNotification: (payload: any) => void
 ): Promise<(() => void) | null> {
   if (isPlatform('capacitor')) {
     console.log('[Push] Setting up native foreground listener');
-    const cleanup = listenNativePush(onNotification);
-    return cleanup;
-  } else {
-    console.log('[Push] Setting up web foreground listener');
-    return listenForegroundMessages(onNotification);
+    return listenNativePush(onNotification);
   }
+  // Web: no-op
+  return null;
 }
 
 /**
- * Delete push token on logout
- * Cleans up the current device's token from the database
+ * Delete push token on logout.
  */
 export async function deletePushToken(userId: string): Promise<void> {
   if (isPlatform('capacitor')) {
     await deleteNativePushToken(userId);
-  } else {
-    await deleteFcmToken(userId);
   }
+  // Web: nothing to delete
 }
 
 /**
- * Check if push notifications are available on this platform
+ * Check if push notifications are available on this platform.
  */
 export function isPushAvailable(): boolean {
-  if (isPlatform('capacitor')) {
-    // Native platforms always support push
-    return true;
-  }
-  
-  // Web: Check for service worker and notification support
-  if (typeof window === 'undefined') return false;
-  if (!('serviceWorker' in navigator)) return false;
-  if (!('Notification' in window)) return false;
-  
-  return true;
+  return isPlatform('capacitor');
 }
 
 /**
- * Check current push notification permission status
+ * Check current push notification permission status.
  */
 export async function getPushPermissionStatus(): Promise<'granted' | 'denied' | 'prompt' | 'unavailable'> {
   if (isPlatform('capacitor')) {
@@ -76,22 +67,38 @@ export async function getPushPermissionStatus(): Promise<'granted' | 'denied' | 
       console.log('[Push] Native permission status:', status.receive);
       if (status.receive === 'granted') return 'granted';
       if (status.receive === 'denied') return 'denied';
-      // Treat 'prompt', 'prompt-with-rationale', or anything else as 'prompt'
-      // Do NOT return 'unavailable' on native — it blocks the UI
+      // Treat 'prompt', 'prompt-with-rationale', 'unavailable' as 'prompt'
       return 'prompt';
     } catch {
-      // Even on error, return 'prompt' so the button stays active
       return 'prompt';
     }
   }
-  
-  // Web
-  if (typeof window === 'undefined' || !('Notification' in window)) {
-    return 'unavailable';
-  }
-  
-  const permission = Notification.permission;
-  if (permission === 'granted') return 'granted';
-  if (permission === 'denied') return 'denied';
-  return 'prompt';
+
+  // Web: always unavailable under mobile-only policy
+  return 'unavailable';
+}
+
+/**
+ * One-time cleanup of legacy web tokens for this user.
+ * Runs in background, non-blocking.
+ */
+function cleanupWebTokens(userId: string): void {
+  const key = `web_tokens_cleaned_${userId}`;
+  try {
+    if (localStorage.getItem(key)) return;
+  } catch { /* ignore */ }
+
+  supabase
+    .from('user_fcm_tokens')
+    .delete()
+    .eq('user_id', userId)
+    .eq('platform', 'web')
+    .then(({ error }) => {
+      if (error) {
+        console.warn('[Push] Failed to cleanup web tokens:', error);
+      } else {
+        console.log('[Push] ✓ Legacy web tokens cleaned up');
+        try { localStorage.setItem(key, 'true'); } catch { /* ignore */ }
+      }
+    });
 }
