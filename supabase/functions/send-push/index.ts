@@ -195,10 +195,12 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, serviceRoleKey);
     
+    // Mobile-only policy: only send to native tokens (android/ios), never web
     const { data: tokenRows, error: tokenError } = await supabase
       .from("user_fcm_tokens")
       .select("id, token")
-      .eq("user_id", recipientId);
+      .eq("user_id", recipientId)
+      .in("platform", ["android", "ios"]);
 
     if (tokenError) {
       console.error("[send-push] Token lookup error:", tokenError.message);

@@ -46,28 +46,7 @@ export function AppLayout() {
   // Global listener for when user is kicked from a family
   useKickedFromFamily();
 
-  /** 1) Register the service worker for web FCM (skip on native) */
-  useEffect(() => {
-    if (isPlatform('capacitor')) {
-      console.log('[Push] Native platform detected, skipping SW registration');
-      return;
-    }
-    
-    let cancelled = false;
-    (async () => {
-      if (!("serviceWorker" in navigator)) return;
-      try {
-        const reg = await navigator.serviceWorker.register("/firebase-messaging-sw.js", { scope: "/" });
-        if (!cancelled) {
-          await navigator.serviceWorker.ready;
-          console.log("[FCM] SW registered:", reg.scope);
-        }
-      } catch (e) {
-        console.error("[FCM] SW register failed:", e);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, []);
+  /** 1) Web SW registration disabled — mobile-only push policy */
 
   /** 2) Listen for push notifications (both web and native) + auto-register on native */
   useEffect(() => {
@@ -105,10 +84,7 @@ export function AppLayout() {
         }
       };
     } else {
-      // Web: Check if already granted and silently register token
-      if ('Notification' in window && Notification.permission === 'granted') {
-        requestPushPermission(user.id);
-      }
+      // Web: push disabled under mobile-only policy — no-op
     }
 
     // Handle push notifications — routing on tap vs foreground
@@ -126,26 +102,31 @@ export function AppLayout() {
           const taskId = p?.data?.task_id;
           const familyId = p?.data?.family_id;
           if (taskId) {
+            console.log('[Push] Tapped task notification — navigating to /tasks');
             navigate(`/tasks?taskId=${taskId}`, { replace: true });
-            // Also try to open assignment modal
+            // Delay modal open to let navigation + UI settle
             if (taskId && familyId) {
-              try {
-                const { data: task, error } = await supabase
-                  .from('tasks')
-                  .select('*')
-                  .eq('id', taskId)
-                  .single();
-                if (task && !error && task.assigned_to === user?.id) {
-                  openAssignmentModal({
-                    id: task.id, name: task.name, description: task.description ?? '',
-                    starValue: task.star_value ?? 0, assignedBy: task.assigned_by,
-                    assignedTo: task.assigned_to, dueDate: task.due_date,
-                    familyId, categoryId: task.category_id, completed: !!task.completed,
-                  } as any);
+              setTimeout(async () => {
+                try {
+                  console.log('[Push] Fetching task for assignment modal...');
+                  const { data: task, error } = await supabase
+                    .from('tasks')
+                    .select('*')
+                    .eq('id', taskId)
+                    .single();
+                  if (task && !error && task.assigned_to === user?.id) {
+                    console.log('[Push] Opening assignment modal from tap');
+                    openAssignmentModal({
+                      id: task.id, name: task.name, description: task.description ?? '',
+                      starValue: task.star_value ?? 0, assignedBy: task.assigned_by,
+                      assignedTo: task.assigned_to, dueDate: task.due_date,
+                      familyId, categoryId: task.category_id, completed: !!task.completed,
+                    } as any);
+                  }
+                } catch (err) {
+                  console.error('[Push] Failed to fetch task for tap routing:', err);
                 }
-              } catch (err) {
-                console.error('[Push] Failed to fetch task for tap routing:', err);
-              }
+              }, 400);
             }
           }
           return;
@@ -283,7 +264,7 @@ export function AppLayout() {
   }, [isAuthenticated, user?.id, activeFamilyId, openAssignmentModal]);
 
   useEffect(() => {
-    if (isAuthenticated && location.pathname.includes("reset-password")) {
+    if (isAuthenticated && location.pathname.includes("reset-password") && !location.pathname.includes("/auth/reset")) {
       try { window.history.replaceState({}, "", "/"); } catch {}
       window.location.replace("/");
     }
