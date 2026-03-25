@@ -142,13 +142,26 @@ function initListeners(): void {
   });
 
   // Notification tap — includes meta.tapped = true
+  // ALSO persists intent to localStorage for cold-start recovery
   PushNotifications.addListener('pushNotificationActionPerformed', (action: ActionPerformed) => {
     console.log('[NativePush] Notification tapped:', action);
+    const data = action.notification.data || {};
+    const eventType = data.event_type || data.type;
     const payload = {
       notification: { title: action.notification.title, body: action.notification.body },
-      data: action.notification.data || {},
+      data,
       meta: { tapped: true },
     };
+
+    // Persist intent for deterministic processing when app is ready
+    if (eventType === 'assigned' || eventType === 'task_assigned') {
+      setPushIntent({ type: 'assigned', taskId: data.task_id, familyId: data.family_id, ts: Date.now() });
+    } else if (eventType === 'chat_message') {
+      setPushIntent({ type: 'chat', familyId: data.family_id, ts: Date.now() });
+    } else if (eventType === 'kicked' || eventType === 'member_removed') {
+      setPushIntent({ type: 'kicked', familyId: data.family_id, ts: Date.now() });
+    }
+
     if (notificationHandler) {
       try {
         notificationHandler(payload);
