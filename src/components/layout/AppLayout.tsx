@@ -4,6 +4,7 @@ import { useApp } from "@/hooks/useApp";
 import { useAuth } from "@/hooks/useAuth";
 import { isPlatform } from "@/lib/platform";
 import { requestPushPermission, listenForPushNotifications, getPushPermissionStatus } from "@/lib/pushNotifications";
+import { getPushIntent, clearPushIntent } from "@/lib/capacitorPush";
 import { useToast } from "@/hooks/use-toast";
 import { ROUTES } from "@/lib/constants";
 import MainPage from "@/pages/main/MainPage";
@@ -32,7 +33,7 @@ import {
 
 export function AppLayout() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
-  const { activeFamilyId } = useApp();
+  const { activeFamilyId, setActiveFamilyId } = useApp();
   const { isLoading } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
@@ -96,39 +97,13 @@ export function AppLayout() {
       const eventType = p?.data?.event_type || p?.data?.type;
       const tapped = p?.meta?.tapped === true;
       
-      // === TAPPED notifications: route to correct screen ===
+      // === TAPPED notifications: persist intent, let the dedicated effect handle it ===
       if (tapped) {
         if (eventType === 'assigned' || eventType === 'task_assigned') {
+          console.log('[Push] Tapped task notification — intent already persisted by capacitorPush');
+          // Navigate immediately for visual feedback; modal will be opened by intent effect
           const taskId = p?.data?.task_id;
-          const familyId = p?.data?.family_id;
-          if (taskId) {
-            console.log('[Push] Tapped task notification — navigating to /tasks');
-            navigate(`/tasks?taskId=${taskId}`, { replace: true });
-            // Delay modal open to let navigation + UI settle
-            if (taskId && familyId) {
-              setTimeout(async () => {
-                try {
-                  console.log('[Push] Fetching task for assignment modal...');
-                  const { data: task, error } = await supabase
-                    .from('tasks')
-                    .select('*')
-                    .eq('id', taskId)
-                    .single();
-                  if (task && !error && task.assigned_to === user?.id) {
-                    console.log('[Push] Opening assignment modal from tap');
-                    openAssignmentModal({
-                      id: task.id, name: task.name, description: task.description ?? '',
-                      starValue: task.star_value ?? 0, assignedBy: task.assigned_by,
-                      assignedTo: task.assigned_to, dueDate: task.due_date,
-                      familyId, categoryId: task.category_id, completed: !!task.completed,
-                    } as any);
-                  }
-                } catch (err) {
-                  console.error('[Push] Failed to fetch task for tap routing:', err);
-                }
-              }, 600);
-            }
-          }
+          if (taskId) navigate(`/tasks?taskId=${taskId}`, { replace: true });
           return;
         }
         
@@ -268,6 +243,93 @@ export function AppLayout() {
       return () => document.removeEventListener('visibilitychange', handleVisibility);
     }
   }, [isAuthenticated, user?.id, activeFamilyId, openAssignmentModal]);
+
+  /** 4) Process persistent push intent when app is fully ready */
+  const intentProcessedRef = useRef(false);
+  useEffect(() => {
+    if (!isAuthenticated || !user?.id || authLoading || isLoading) return;
+
+    const intent = getPushIntent();
+    if (!intent) {
+      intentProcessedRef.current = false;
+      return;
+    }
+    if (intentProcessedRef.current) return;
+    intentProcessedRef.current = true;
+
+    console.log('[PushIntent] Processing pending push intent:', JSON.stringify(intent));
+
+    const processIntent = async () => {
+      try {
+        if (intent.type === 'assigned' && intent.taskId) {
+          if (intent.familyId && intent.familyId !== activeFamilyId) {
+            console.log('[PushIntent] Switching family to', intent.familyId);
+            await setActiveFamilyId(intent.familyId);
+            await new Promise(r => setTimeout(r, 500));
+          }
+
+          navigate(`/tasks?taskId=${intent.taskId}`, { replace: true });
+
+          let task: any = null;
+          for (let attempt = 1; attempt <= 5; attempt++) {
+            console.log(`[PushIntent] Fetching task attempt ${attempt}/5...`);
+            const { data, error } = await supabase
+              .from('tasks')
+              .select('*')
+              .eq('id', intent.taskId)
+              .single();
+            if (error) console.error(`[PushIntent] Fetch error (attempt ${attempt}):`, error.message);
+            if (data) { task = data; break; }
+            await new Promise(r => setTimeout(r, 300));
+          }
+
+          if (!task) {
+            console.error('[PushIntent] ❌ Failed to fetch task after 5 retries:', intent.taskId);
+            clearPushIntent();
+            intentProcessedRef.current = false;
+            return;
+          }
+
+          if (task.assigned_to !== user.id) {
+            console.log('[PushIntent] Task not assigned to current user, skipping');
+            clearPushIntent();
+            intentProcessedRef.current = false;
+            return;
+          }
+
+          await new Promise(r => setTimeout(r, 300));
+
+          console.log('[PushIntent] ✓ Opening assignment modal for task:', task.id);
+          openAssignmentModal({
+            id: task.id, name: task.name, description: task.description ?? '',
+            starValue: task.star_value ?? 0, assignedBy: task.assigned_by,
+            assignedTo: task.assigned_to, dueDate: task.due_date,
+            familyId: task.family_id, categoryId: task.category_id,
+            completed: !!task.completed,
+          } as any);
+          clearPushIntent();
+
+        } else if (intent.type === 'chat') {
+          if (intent.familyId && intent.familyId !== activeFamilyId) {
+            await setActiveFamilyId(intent.familyId);
+          }
+          navigate(intent.familyId ? `/chat?familyId=${intent.familyId}` : '/chat', { replace: true });
+          clearPushIntent();
+        } else if (intent.type === 'kicked') {
+          navigate('/onboarding', { replace: true });
+          toast({ title: 'Removed from family', description: 'You have been removed from a family.', variant: 'destructive' });
+          clearPushIntent();
+        } else {
+          clearPushIntent();
+        }
+      } catch (err) {
+        console.error('[PushIntent] Error processing intent:', err);
+        intentProcessedRef.current = false;
+      }
+    };
+
+    processIntent();
+  }, [isAuthenticated, user?.id, activeFamilyId, authLoading, isLoading, openAssignmentModal, navigate, setActiveFamilyId, toast]);
 
   useEffect(() => {
     if (isAuthenticated && location.pathname.includes("reset-password") && !location.pathname.includes("/auth/reset")) {

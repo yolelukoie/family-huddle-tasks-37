@@ -13,6 +13,43 @@ let pendingTapAction: any = null; // Buffer tap if handler not yet connected
 let listenersInitialized = false;
 let channelCreated = false;
 
+// ── Persistent push intent ──
+// Survives cold starts via localStorage; processed by AppLayout when app is ready
+export interface PushIntent {
+  type: 'assigned' | 'chat' | 'kicked';
+  taskId?: string;
+  familyId?: string;
+  ts: number;
+}
+
+const PUSH_INTENT_KEY = 'fh_pending_push_intent';
+
+export function setPushIntent(intent: PushIntent): void {
+  console.log('[NativePush] Setting push intent:', JSON.stringify(intent));
+  localStorage.setItem(PUSH_INTENT_KEY, JSON.stringify(intent));
+}
+
+export function getPushIntent(): PushIntent | null {
+  try {
+    const raw = localStorage.getItem(PUSH_INTENT_KEY);
+    if (!raw) return null;
+    const intent = JSON.parse(raw) as PushIntent;
+    // Expire intents older than 2 minutes
+    if (Date.now() - intent.ts > 120_000) {
+      clearPushIntent();
+      return null;
+    }
+    return intent;
+  } catch {
+    return null;
+  }
+}
+
+export function clearPushIntent(): void {
+  localStorage.removeItem(PUSH_INTENT_KEY);
+  console.log('[NativePush] Push intent cleared');
+}
+
 /**
  * Create Android notification channel for reliable background delivery.
  * Required on Android 8+ (API 26+). Idempotent.
@@ -105,13 +142,26 @@ function initListeners(): void {
   });
 
   // Notification tap — includes meta.tapped = true
+  // ALSO persists intent to localStorage for cold-start recovery
   PushNotifications.addListener('pushNotificationActionPerformed', (action: ActionPerformed) => {
     console.log('[NativePush] Notification tapped:', action);
+    const data = action.notification.data || {};
+    const eventType = data.event_type || data.type;
     const payload = {
       notification: { title: action.notification.title, body: action.notification.body },
-      data: action.notification.data || {},
+      data,
       meta: { tapped: true },
     };
+
+    // Persist intent for deterministic processing when app is ready
+    if (eventType === 'assigned' || eventType === 'task_assigned') {
+      setPushIntent({ type: 'assigned', taskId: data.task_id, familyId: data.family_id, ts: Date.now() });
+    } else if (eventType === 'chat_message') {
+      setPushIntent({ type: 'chat', familyId: data.family_id, ts: Date.now() });
+    } else if (eventType === 'kicked' || eventType === 'member_removed') {
+      setPushIntent({ type: 'kicked', familyId: data.family_id, ts: Date.now() });
+    }
+
     if (notificationHandler) {
       try {
         notificationHandler(payload);
