@@ -126,7 +126,7 @@ export function AppLayout() {
                 } catch (err) {
                   console.error('[Push] Failed to fetch task for tap routing:', err);
                 }
-              }, 400);
+              }, 600);
             }
           }
           return;
@@ -156,6 +156,12 @@ export function AppLayout() {
       }
       
       // === FOREGROUND notifications (not tapped) ===
+      // Skip types already handled by realtime subscriptions
+      if (eventType === 'accepted' || eventType === 'rejected' || eventType === 'completed') {
+        console.log('[Push] Skipping foreground toast for', eventType, '— handled by realtime');
+        return;
+      }
+
       if (eventType === 'assigned' || eventType === 'task_assigned') {
         const taskId = p?.data?.task_id;
         const familyId = p?.data?.family_id;

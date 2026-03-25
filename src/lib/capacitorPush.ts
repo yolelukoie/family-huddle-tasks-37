@@ -9,6 +9,7 @@ let currentUserId: string | null = null;
 let currentDeviceToken: string | null = null;
 let pendingToken: string | null = null; // Buffer token if userId not set yet
 let notificationHandler: ((data: any) => void) | null = null;
+let pendingTapAction: any = null; // Buffer tap if handler not yet connected
 let listenersInitialized = false;
 let channelCreated = false;
 
@@ -111,10 +112,15 @@ function initListeners(): void {
       data: action.notification.data || {},
       meta: { tapped: true },
     };
-    try {
-      notificationHandler?.(payload);
-    } catch (e) {
-      console.error('[NativePush] Error in action handler:', e);
+    if (notificationHandler) {
+      try {
+        notificationHandler(payload);
+      } catch (e) {
+        console.error('[NativePush] Error in action handler:', e);
+      }
+    } else {
+      console.warn('[NativePush] No handler — buffering tap action');
+      pendingTapAction = payload;
     }
   });
 
@@ -215,6 +221,16 @@ export function listenNativePush(
 
   notificationHandler = onNotification;
   console.log('[NativePush] ✓ Notification handler updated');
+
+  // Replay any buffered tap action from cold start
+  if (pendingTapAction) {
+    console.log('[NativePush] Replaying buffered tap action');
+    const action = pendingTapAction;
+    pendingTapAction = null;
+    setTimeout(() => {
+      try { onNotification(action); } catch (e) { console.error('[NativePush] Replay error:', e); }
+    }, 100);
+  }
 
   return () => {
     notificationHandler = null;
