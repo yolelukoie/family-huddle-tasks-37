@@ -4,6 +4,7 @@ import { useApp } from "@/hooks/useApp";
 import { useAuth } from "@/hooks/useAuth";
 import { isPlatform } from "@/lib/platform";
 import { requestPushPermission, listenForPushNotifications, getPushPermissionStatus } from "@/lib/pushNotifications";
+import { getPushIntent, clearPushIntent } from "@/lib/capacitorPush";
 import { useToast } from "@/hooks/use-toast";
 import { ROUTES } from "@/lib/constants";
 import MainPage from "@/pages/main/MainPage";
