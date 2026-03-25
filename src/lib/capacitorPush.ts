@@ -13,6 +13,43 @@ let pendingTapAction: any = null; // Buffer tap if handler not yet connected
 let listenersInitialized = false;
 let channelCreated = false;
 
+// ── Persistent push intent ──
+// Survives cold starts via localStorage; processed by AppLayout when app is ready
+export interface PushIntent {
+  type: 'assigned' | 'chat' | 'kicked';
+  taskId?: string;
+  familyId?: string;
+  ts: number;
+}
+
+const PUSH_INTENT_KEY = 'fh_pending_push_intent';
+
+export function setPushIntent(intent: PushIntent): void {
+  console.log('[NativePush] Setting push intent:', JSON.stringify(intent));
+  localStorage.setItem(PUSH_INTENT_KEY, JSON.stringify(intent));
+}
+
+export function getPushIntent(): PushIntent | null {
+  try {
+    const raw = localStorage.getItem(PUSH_INTENT_KEY);
+    if (!raw) return null;
+    const intent = JSON.parse(raw) as PushIntent;
+    // Expire intents older than 2 minutes
+    if (Date.now() - intent.ts > 120_000) {
+      clearPushIntent();
+      return null;
+    }
+    return intent;
+  } catch {
+    return null;
+  }
+}
+
+export function clearPushIntent(): void {
+  localStorage.removeItem(PUSH_INTENT_KEY);
+  console.log('[NativePush] Push intent cleared');
+}
+
 /**
  * Create Android notification channel for reliable background delivery.
  * Required on Android 8+ (API 26+). Idempotent.
