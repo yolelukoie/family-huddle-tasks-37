@@ -33,7 +33,7 @@ import {
 
 export function AppLayout() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
-  const { activeFamilyId } = useApp();
+  const { activeFamilyId, setActiveFamilyId } = useApp();
   const { isLoading } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
