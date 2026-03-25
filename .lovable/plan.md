@@ -1,125 +1,83 @@
 
 
-# Fix: Robust Push Notification Token & Listener Management
+# Fix: Duplicate Notifications + Push Tap Modal Not Opening
 
-## Overview
+## Root Cause Analysis
 
-All four issues share a single root cause: listeners are managed with independent boolean flags, cleanup tears everything down, and there's no device-specific token tracking. The optimal fix is to restructure `capacitorPush.ts` so that **listeners are registered exactly once for the app lifecycle** and all mutable state (user ID, device token, notification callback) lives in module-level variables that get swapped on sign-in/sign-out.
+### Problem 1: Duplicate foreground toasts
+Two independent systems both fire for the same event:
+1. **Realtime** (`useRealtimeNotifications.tsx` line 100-106): listens to `task_events` INSERT → shows toast for accepted/rejected/completed
+2. **FCM foreground** (`capacitorPush.ts` line 92-104): `pushNotificationReceived` fires → calls `handleNotification` in AppLayout → shows toast again
 
-With this approach, **issue 2 resolves itself** -- there's no need to remove listeners at all. The cleanup function from `listenNativePush` simply nulls out the callback ref, and `registerNativePush` swaps `currentUserId`. No listener is ever torn down or re-added.
+Both trigger simultaneously when the app is in the foreground.
 
-## Changes (single file: `src/lib/capacitorPush.ts`)
+**Fix**: In `capacitorPush.ts`, suppress the foreground notification callback for event types that realtime already handles (`accepted`, `rejected`, `completed`). Only forward foreground pushes for types NOT handled by realtime, or let the handler in AppLayout skip toasting for those types.
 
-### Module-Level State
+The cleanest approach: in AppLayout's `handleNotification`, for foreground (non-tapped) notifications with `event_type` of `accepted`, `rejected`, or `completed` — do nothing (realtime already handles them). This is a 3-line guard.
 
-Replace the three boolean flags with:
+### Problem 2: Modal doesn't open when tapping push notification
+When the app is killed/backgrounded and user taps a notification:
+1. `pushNotificationActionPerformed` fires immediately on app launch
+2. But `notificationHandler` is **null** — AppLayout's `useEffect` hasn't run yet because auth is still loading
+3. The tap payload is **silently dropped** (line 114: `notificationHandler?.(payload)` — optional chaining swallows it)
+4. The 400ms delay approach only works if the handler is already connected
 
-- `currentDeviceToken: string | null` -- stores the FCM token received by this specific device
-- `notificationHandler: ((data: any) => void) | null` -- mutable ref to the latest notification callback
-- `listenersInitialized: boolean` -- single flag, set once, never reset
+**Fix**: Buffer the last tap action in `capacitorPush.ts` at module level. When `listenNativePush` sets the handler, replay the buffered action immediately. This guarantees no tap is lost regardless of timing.
 
-### `registerNativePush(userId)`
+---
 
-1. Set `currentUserId = userId`
-2. If `!listenersInitialized`, add all four listeners once:
-   - `registration` -- saves token to DB for `currentUserId`, stores in `currentDeviceToken`
-   - `registrationError` -- logs error
-   - `pushNotificationReceived` -- calls `notificationHandler?.(payload)` (always latest ref)
-   - `pushNotificationActionPerformed` -- calls `notificationHandler?.(payload)`
-   - Set `listenersInitialized = true`
-3. Call `PushNotifications.register()` -- OS may fire `registration` event immediately with cached token, or async
+## Changes
 
-### `listenNativePush(onNotification)`
+### 1. `src/lib/capacitorPush.ts` — Buffer tap actions
 
-1. Set `notificationHandler = onNotification` (this is the only thing it does now -- listeners are already registered)
-2. Return cleanup: `() => { notificationHandler = null; }`
-3. No `removeAllListeners()`, no flag resets
+Add a module-level `pendingTapAction` variable. In `pushNotificationActionPerformed`, if `notificationHandler` is null, store the payload. In `listenNativePush`, after setting the handler, check and replay any buffered tap.
 
-### `deleteNativePushToken(userId)`
+```typescript
+// Module level
+let pendingTapAction: any = null;
 
-1. If `currentDeviceToken` is set: delete from DB using `.eq('user_id', userId).eq('token', currentDeviceToken)` -- only removes THIS device's token
-2. If `currentDeviceToken` is null (edge case): fall back to `.eq('user_id', userId).eq('platform', platform)` for safety
-3. Reset `currentDeviceToken = null` and `currentUserId = null`
+// In pushNotificationActionPerformed listener:
+if (notificationHandler) {
+  notificationHandler(payload);
+} else {
+  console.warn('[NativePush] No handler — buffering tap action');
+  pendingTapAction = payload;
+}
 
-## How Each Issue Is Resolved
-
-| Issue | Fix |
-|-------|-----|
-| 1. Logout deletes all tokens | `deleteNativePushToken` now deletes only `currentDeviceToken` |
-| 2. Aggressive listener cleanup | Listeners are never removed -- they persist for the app lifecycle. Cleanup only nulls out `notificationHandler`. No flags to reset. |
-| 3. Stale `onNotification` closure | Foreground listener calls `notificationHandler?.()` which is a module-level variable updated by `listenNativePush` on every call |
-| 4. No re-registration for new user | `registerNativePush` always calls `PushNotifications.register()`. The `registration` listener reads `currentUserId` (already updated) and upserts the token for the new user |
-
-## Sign-Out / Sign-In Flow
-
-```text
-User A signs out on Device X:
-  signOut() -> deletePushToken(userA)
-    -> DELETE WHERE user_id=A AND token=<deviceX_token>
-    -> currentDeviceToken = null, currentUserId = null
-  Listeners remain active but notificationHandler = null (no-op)
-
-User B signs in on Device X:
-  registerNativePush(userB)
-    -> currentUserId = userB
-    -> PushNotifications.register() fires
-    -> registration callback: upserts token for userB
-    -> currentDeviceToken = <deviceX_token>
-  listenNativePush(callback)
-    -> notificationHandler = callback
-  Notifications now delivered to User B only
+// In listenNativePush(), after setting handler:
+notificationHandler = onNotification;
+if (pendingTapAction) {
+  console.log('[NativePush] Replaying buffered tap action');
+  const action = pendingTapAction;
+  pendingTapAction = null;
+  setTimeout(() => onNotification(action), 100);
+}
 ```
 
-## Technical Details
+### 2. `src/components/layout/AppLayout.tsx` — Deduplicate foreground toasts
 
-The full rewritten file will have this structure:
+In `handleNotification`, for **foreground** (non-tapped) events of type `accepted`, `rejected`, `completed` — return early since realtime already handles these.
 
-```text
-// Module state
-let currentUserId: string | null = null
-let currentDeviceToken: string | null = null
-let notificationHandler: ((data: any) => void) | null = null
-let listenersInitialized = false
-
-function initListeners():
-  if listenersInitialized: return
-  listenersInitialized = true
-
-  on 'registration': (token) =>
-    currentDeviceToken = token.value
-    upsert { user_id: currentUserId, token: token.value, platform }
-
-  on 'registrationError': log error
-
-  on 'pushNotificationReceived': (notification) =>
-    notificationHandler?.({ notification: {...}, data: {...} })
-
-  on 'pushNotificationActionPerformed': (action) =>
-    notificationHandler?.({ notification: {...}, data: {...} })
-
-registerNativePush(userId):
-  currentUserId = userId
-  check/request permissions
-  initListeners()
-  PushNotifications.register()
-
-listenNativePush(onNotification):
-  notificationHandler = onNotification
-  return () => { notificationHandler = null }
-
-deleteNativePushToken(userId):
-  if currentDeviceToken:
-    DELETE WHERE user_id=userId AND token=currentDeviceToken
-  else:
-    DELETE WHERE user_id=userId AND platform=platform  (fallback)
-  currentDeviceToken = null
-  currentUserId = null
+```typescript
+// After the tapped block, at start of FOREGROUND section:
+if (eventType === 'accepted' || eventType === 'rejected' || eventType === 'completed') {
+  console.log('[Push] Skipping foreground toast for', eventType, '— handled by realtime');
+  return;
+}
 ```
 
-## Files to Modify
+### 3. `src/components/layout/AppLayout.tsx` — Increase tap delay + add retry
+
+Change the 400ms delay to 600ms for the modal open from tap, and add a safety net: if the modal context isn't ready, retry once after another 500ms.
+
+---
+
+## Summary
 
 | File | Change |
 |------|--------|
-| `src/lib/capacitorPush.ts` | Full rewrite with module-level token tracking, single-init listeners, mutable callback ref |
+| `src/lib/capacitorPush.ts` | Buffer tap action when handler is null; replay on handler connect |
+| `src/components/layout/AppLayout.tsx` | Skip foreground toasts for accepted/rejected/completed; increase tap-to-modal delay |
 
-No other files need changes -- `pushNotifications.ts`, `useAuth.tsx`, and `AppLayout.tsx` all call the same exported functions with the same signatures.
+No other files need changes. Existing realtime, modal context, and edge function logic remain untouched.
+
