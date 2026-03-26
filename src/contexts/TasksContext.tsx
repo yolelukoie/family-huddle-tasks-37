@@ -368,7 +368,7 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
               recipientId: prev.assignedBy,
               title: "Task completed",
               body: `${user!.displayName ?? "Someone"} completed "${prev.name}"`,
-              data: { type: "completed", taskId },
+              data: { type: "task_completed", event_type: "completed", taskId, task_id: taskId, familyId: updated.family_id, family_id: updated.family_id },
             },
           }).catch(e => console.error("[send-push] invoke failed:", e));
         } else {

@@ -94,22 +94,20 @@ export function AppLayout() {
     const handleNotification = async (p: any) => {
       console.log('[Push] Notification received:', p);
       
-      const eventType = p?.data?.event_type || p?.data?.type;
+      const eventType = p?.data?.type || p?.data?.event_type;
       const tapped = p?.meta?.tapped === true;
       
-      // === TAPPED notifications: persist intent, let the dedicated effect handle it ===
+      // === TAPPED notifications: intent already persisted by capacitorPush, just navigate ===
       if (tapped) {
         if (eventType === 'assigned' || eventType === 'task_assigned') {
-          console.log('[Push] Tapped task notification — intent already persisted by capacitorPush');
-          // Navigate immediately for visual feedback; modal will be opened by intent effect
-          const taskId = p?.data?.task_id;
-          if (taskId) navigate(`/tasks?taskId=${taskId}`, { replace: true });
+          console.log('[Push] Tapped task notification — intent persisted, letting effect handle modal');
+          // Don't navigate here; the intent effect will handle family switch + navigate + modal
           return;
         }
         
         if (eventType === 'chat_message') {
-          const familyId = p?.data?.family_id;
-          navigate(familyId ? `/chat?familyId=${familyId}` : '/chat', { replace: true });
+          const familyId = p?.data?.familyId || p?.data?.family_id;
+          // Don't navigate here; let the intent effect handle family switch + navigate
           return;
         }
         
@@ -138,8 +136,8 @@ export function AppLayout() {
       }
 
       if (eventType === 'assigned' || eventType === 'task_assigned') {
-        const taskId = p?.data?.task_id;
-        const familyId = p?.data?.family_id;
+        const taskId = p?.data?.taskId || p?.data?.task_id;
+        const familyId = p?.data?.familyId || p?.data?.family_id;
         
         if (taskId && familyId) {
           try {
@@ -261,31 +259,39 @@ export function AppLayout() {
 
     const processIntent = async () => {
       try {
-        if (intent.type === 'assigned' && intent.taskId) {
-          if (intent.familyId && intent.familyId !== activeFamilyId) {
-            console.log('[PushIntent] Switching family to', intent.familyId);
-            await setActiveFamilyId(intent.familyId);
-            await new Promise(r => setTimeout(r, 500));
-          }
+        // Step 1: Switch family if needed
+        if (intent.familyId && intent.familyId !== activeFamilyId) {
+          console.log('[PushIntent] Switching family to', intent.familyId);
+          await setActiveFamilyId(intent.familyId);
+          // Wait for family context to propagate — the effect will re-run with updated activeFamilyId
+          return;
+        }
 
+        if (intent.type === 'task_assigned' && intent.taskId) {
           navigate(`/tasks?taskId=${intent.taskId}`, { replace: true });
 
+          // Fetch with exponential backoff: 300, 800, 1500, 2500, 4000ms
+          const delays = [300, 800, 1500, 2500, 4000];
           let task: any = null;
-          for (let attempt = 1; attempt <= 5; attempt++) {
-            console.log(`[PushIntent] Fetching task attempt ${attempt}/5...`);
-            const { data, error } = await supabase
-              .from('tasks')
-              .select('*')
-              .eq('id', intent.taskId)
-              .single();
-            if (error) console.error(`[PushIntent] Fetch error (attempt ${attempt}):`, error.message);
-            if (data) { task = data; break; }
-            await new Promise(r => setTimeout(r, 300));
+          for (let attempt = 0; attempt < delays.length; attempt++) {
+            console.log(`[PushIntent] Fetching task attempt ${attempt + 1}/${delays.length}...`);
+            try {
+              const { data, error } = await supabase
+                .from('tasks')
+                .select('*')
+                .eq('id', intent.taskId)
+                .single();
+              if (error) console.error(`[PushIntent] Fetch error (attempt ${attempt + 1}):`, JSON.stringify(error));
+              if (data) { task = data; break; }
+            } catch (fetchErr) {
+              console.error(`[PushIntent] Fetch threw (attempt ${attempt + 1}):`, String(fetchErr));
+            }
+            await new Promise(r => setTimeout(r, delays[attempt]));
           }
 
           if (!task) {
-            console.error('[PushIntent] ❌ Failed to fetch task after 5 retries:', intent.taskId);
-            clearPushIntent();
+            console.error('[PushIntent] ❌ Failed to fetch task after retries:', intent.taskId);
+            // Keep intent for TaskRecovery fallback
             intentProcessedRef.current = false;
             return;
           }
@@ -297,8 +303,6 @@ export function AppLayout() {
             return;
           }
 
-          await new Promise(r => setTimeout(r, 300));
-
           console.log('[PushIntent] ✓ Opening assignment modal for task:', task.id);
           openAssignmentModal({
             id: task.id, name: task.name, description: task.description ?? '',
@@ -309,10 +313,7 @@ export function AppLayout() {
           } as any);
           clearPushIntent();
 
-        } else if (intent.type === 'chat') {
-          if (intent.familyId && intent.familyId !== activeFamilyId) {
-            await setActiveFamilyId(intent.familyId);
-          }
+        } else if (intent.type === 'chat_message') {
           navigate(intent.familyId ? `/chat?familyId=${intent.familyId}` : '/chat', { replace: true });
           clearPushIntent();
         } else if (intent.type === 'kicked') {
@@ -323,7 +324,7 @@ export function AppLayout() {
           clearPushIntent();
         }
       } catch (err) {
-        console.error('[PushIntent] Error processing intent:', err);
+        console.error('[PushIntent] Error processing intent:', String(err));
         intentProcessedRef.current = false;
       }
     };

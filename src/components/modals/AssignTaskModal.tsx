@@ -163,8 +163,11 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
                 title: "New task assigned",
                 body: `${(user as any)?.displayName ?? "Someone"} assigned "${createdName}" to you`,
                 data: { 
+                  type: "task_assigned",
                   event_type: "assigned", 
+                  taskId: createdId,
                   task_id: createdId,
+                  familyId: familyId,
                   family_id: familyId,
                 },
               },

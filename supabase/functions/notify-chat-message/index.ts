@@ -69,9 +69,13 @@ serve(async (req) => {
               title,
               body,
               data: {
+                type: "chat_message",
                 event_type: "chat_message",
+                familyId: familyId,
                 family_id: familyId,
-                sender_id: senderId,
+                chatMessageId: chatMessageId || "",
+                senderId: senderId,
+                preview: messagePreview,
               },
             }),
           });
