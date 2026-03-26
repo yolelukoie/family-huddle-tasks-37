@@ -106,8 +106,8 @@ export function AppLayout() {
         }
         
         if (eventType === 'chat_message') {
-          const familyId = p?.data?.family_id;
-          navigate(familyId ? `/chat?familyId=${familyId}` : '/chat', { replace: true });
+          const familyId = p?.data?.familyId || p?.data?.family_id;
+          // Don't navigate here; let the intent effect handle family switch + navigate
           return;
         }
         
