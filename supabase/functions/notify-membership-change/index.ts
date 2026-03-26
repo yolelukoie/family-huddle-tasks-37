@@ -30,19 +30,15 @@ serve(async (req) => {
 
     let title = "Family Huddle";
     let body = "";
-    let eventType = type;
 
     if (type === "kicked") {
       title = "Removed from family";
       body = familyName
         ? `You have been removed from "${familyName}".`
         : "You have been removed from a family.";
-      eventType = "kicked";
     } else if (type === "left") {
-      // Notify remaining members that someone left
       title = "Member left";
       body = "A member has left the family.";
-      eventType = "member_left";
     }
 
     // Send push to the target user
@@ -57,9 +53,11 @@ serve(async (req) => {
         title,
         body,
         data: {
-          event_type: eventType,
+          type: "kicked",
+          event_type: type === "kicked" ? "kicked" : "member_left",
+          familyId: familyId,
           family_id: familyId,
-          actor_id: actorId || "",
+          actorId: actorId || "",
         },
       }),
     });

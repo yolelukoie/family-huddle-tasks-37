@@ -85,10 +85,10 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
         await supabase.functions
           .invoke("send-push", {
             body: {
-              recipientId: task.assignedBy, // notify assigner
+              recipientId: task.assignedBy,
               title: "Task accepted",
               body: `${(user as any)?.displayName ?? "Someone"} accepted "${task.name}"`,
-              data: { type: "accepted", taskId: task.id },
+              data: { type: "task_accepted", event_type: "accepted", taskId: task.id, task_id: task.id, familyId: familyId, family_id: familyId },
             },
           })
           .catch((e) => console.error("[send-push] invoke failed:", e));
@@ -146,10 +146,10 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
         await supabase.functions
           .invoke("send-push", {
             body: {
-              recipientId: task.assignedBy, // notify assigner
+              recipientId: task.assignedBy,
               title: "Task rejected",
               body: `${(user as any)?.displayName ?? "Someone"} rejected "${task.name}"`,
-              data: { type: "rejected", taskId: task.id },
+              data: { type: "task_rejected", event_type: "rejected", taskId: task.id, task_id: task.id, familyId: familyId, family_id: familyId },
             },
           })
           .catch((e) => console.error("[send-push] invoke failed:", e));
