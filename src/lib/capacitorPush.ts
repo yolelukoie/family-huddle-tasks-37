@@ -16,8 +16,9 @@ let channelCreated = false;
 // ── Persistent push intent ──
 // Survives cold starts via localStorage; processed by AppLayout when app is ready
 export interface PushIntent {
-  type: 'assigned' | 'chat' | 'kicked';
+  type: 'task_assigned' | 'chat_message' | 'kicked';
   taskId?: string;
+  chatMessageId?: string;
   familyId?: string;
   ts: number;
 }
@@ -146,20 +147,24 @@ function initListeners(): void {
   PushNotifications.addListener('pushNotificationActionPerformed', (action: ActionPerformed) => {
     console.log('[NativePush] Notification tapped:', action);
     const data = action.notification.data || {};
-    const eventType = data.event_type || data.type;
+    const eventType = data.type || data.event_type;
+    const familyId = data.familyId || data.family_id;
+    const taskId = data.taskId || data.task_id;
+    const chatMessageId = data.chatMessageId || data.chat_message_id;
+    
     const payload = {
       notification: { title: action.notification.title, body: action.notification.body },
       data,
       meta: { tapped: true },
     };
 
-    // Persist intent for deterministic processing when app is ready
+    // Persist intent IMMEDIATELY for deterministic processing when app is ready
     if (eventType === 'assigned' || eventType === 'task_assigned') {
-      setPushIntent({ type: 'assigned', taskId: data.task_id, familyId: data.family_id, ts: Date.now() });
+      setPushIntent({ type: 'task_assigned', taskId, familyId, ts: Date.now() });
     } else if (eventType === 'chat_message') {
-      setPushIntent({ type: 'chat', familyId: data.family_id, ts: Date.now() });
+      setPushIntent({ type: 'chat_message', familyId, chatMessageId, ts: Date.now() });
     } else if (eventType === 'kicked' || eventType === 'member_removed') {
-      setPushIntent({ type: 'kicked', familyId: data.family_id, ts: Date.now() });
+      setPushIntent({ type: 'kicked', familyId, ts: Date.now() });
     }
 
     if (notificationHandler) {
@@ -169,7 +174,7 @@ function initListeners(): void {
         console.error('[NativePush] Error in action handler:', e);
       }
     } else {
-      console.warn('[NativePush] No handler — buffering tap action');
+      console.warn('[NativePush] No handler — intent persisted to localStorage for cold-start recovery');
       pendingTapAction = payload;
     }
   });
