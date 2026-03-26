@@ -94,16 +94,14 @@ export function AppLayout() {
     const handleNotification = async (p: any) => {
       console.log('[Push] Notification received:', p);
       
-      const eventType = p?.data?.event_type || p?.data?.type;
+      const eventType = p?.data?.type || p?.data?.event_type;
       const tapped = p?.meta?.tapped === true;
       
-      // === TAPPED notifications: persist intent, let the dedicated effect handle it ===
+      // === TAPPED notifications: intent already persisted by capacitorPush, just navigate ===
       if (tapped) {
         if (eventType === 'assigned' || eventType === 'task_assigned') {
-          console.log('[Push] Tapped task notification — intent already persisted by capacitorPush');
-          // Navigate immediately for visual feedback; modal will be opened by intent effect
-          const taskId = p?.data?.task_id;
-          if (taskId) navigate(`/tasks?taskId=${taskId}`, { replace: true });
+          console.log('[Push] Tapped task notification — intent persisted, letting effect handle modal');
+          // Don't navigate here; the intent effect will handle family switch + navigate + modal
           return;
         }
         
