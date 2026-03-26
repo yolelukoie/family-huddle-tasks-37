@@ -261,7 +261,7 @@ export function AppLayout() {
 
     const processIntent = async () => {
       try {
-        if (intent.type === 'assigned' && intent.taskId) {
+        if (intent.type === 'task_assigned' && intent.taskId) {
           if (intent.familyId && intent.familyId !== activeFamilyId) {
             console.log('[PushIntent] Switching family to', intent.familyId);
             await setActiveFamilyId(intent.familyId);
@@ -309,7 +309,7 @@ export function AppLayout() {
           } as any);
           clearPushIntent();
 
-        } else if (intent.type === 'chat') {
+        } else if (intent.type === 'chat_message') {
           if (intent.familyId && intent.familyId !== activeFamilyId) {
             await setActiveFamilyId(intent.familyId);
           }
