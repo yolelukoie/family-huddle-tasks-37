@@ -139,17 +139,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (event === "PASSWORD_RECOVERY") {
             if (!handlingRecovery.current) {
               handlingRecovery.current = true;
+              console.log('[useAuth] PASSWORD_RECOVERY event — redirecting to /auth/reset');
               try {
-                window.history.replaceState({}, "", "/reset-password");
+                window.history.replaceState({}, "", "/auth/reset");
               } catch {}
-              window.location.replace("/reset-password");
+              window.location.replace("/auth/reset");
             }
             return; // don't run the "normal" flow for this tick
           }
 
           // B) After updateUser({password}), Supabase emits USER_UPDATED (and often SIGNED_IN).
-          //    If we're still on /reset-password, force-leave that page.
-          if ((event === "USER_UPDATED" || event === "SIGNED_IN") && location.pathname.includes("reset-password")) {
+          //    If we're still on /auth/reset, force-leave that page.
+          if ((event === "USER_UPDATED" || event === "SIGNED_IN") && location.pathname.includes("/auth/reset")) {
             try {
               window.history.replaceState({}, "", "/");
             } catch {}
@@ -292,7 +293,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [session]);
 
   const resetPassword = useCallback(async (email: string) => {
-    const redirectUrl = `${window.location.origin}/reset-password`;
+    const redirectUrl = `${window.location.origin}/auth/reset`;
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: redirectUrl,
     });
