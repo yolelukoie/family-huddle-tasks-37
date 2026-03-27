@@ -8,7 +8,6 @@ import { TasksProvider } from "@/contexts/TasksContext";
 import { CelebrationsProvider } from "@/contexts/CelebrationsContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthPage } from "@/pages/auth/AuthPage";
-import ResetPasswordPage from "@/pages/auth/ResetPasswordPage";
 import NativeResetPasswordPage from "@/pages/auth/NativeResetPasswordPage";
 import { ROUTES } from "@/lib/constants";
 import MainPage from "./pages/main/MainPage";
@@ -42,7 +41,7 @@ const App = () => (
                   <Routes>
                     <Route path="/auth" element={<AuthPage />} />
                     <Route path="/auth/reset" element={<NativeResetPasswordPage />} />
-                    <Route path="/reset-password" element={<ResetPasswordPage />} />
+                    <Route path="/reset-password" element={<NativeResetPasswordPage />} />
                     <Route path="/*" element={<AppLayout />} />
                   </Routes>
                 </AssignmentModalProvider>
