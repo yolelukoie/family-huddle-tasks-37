@@ -239,9 +239,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             handlingRecovery.current = false;
             return;
           }
-          // Clean URL - keep on reset-password for recovery, otherwise go home
+          // Clean URL - keep on /auth/reset for recovery, otherwise go home
           if (type === "recovery") {
-            window.history.replaceState({}, "", "/reset-password");
+            window.history.replaceState({}, "", "/auth/reset");
           } else {
             window.history.replaceState({}, "", "/");
           }

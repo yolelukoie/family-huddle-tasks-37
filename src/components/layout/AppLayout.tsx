@@ -333,11 +333,13 @@ export function AppLayout() {
   }, [isAuthenticated, user?.id, activeFamilyId, authLoading, isLoading, openAssignmentModal, navigate, setActiveFamilyId, toast]);
 
   useEffect(() => {
-    if (isAuthenticated && location.pathname.includes("reset-password") && !location.pathname.includes("/auth/reset")) {
-      try { window.history.replaceState({}, "", "/"); } catch {}
-      window.location.replace("/");
+    // Legacy /reset-password route — redirect to canonical /auth/reset
+    if (location.pathname.includes("reset-password")) {
+      const search = window.location.search;
+      const hash = window.location.hash;
+      window.location.replace(`/auth/reset${search}${hash}`);
     }
-  }, [isAuthenticated, location.pathname, navigate]);
+  }, [location.pathname]);
 
   useEffect(() => {
     if (authLoading || isLoading) return;
