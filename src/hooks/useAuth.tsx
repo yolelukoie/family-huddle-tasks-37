@@ -305,7 +305,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [session]);
 
   const resetPassword = useCallback(async (email: string) => {
-    const redirectUrl = `${window.location.origin}/auth/reset`;
+    // Always use the production domain for reset emails, not window.location.origin
+    // (which may be a Capacitor webview URL)
+    const redirectUrl = 'https://familyhuddletasks.com/auth/reset';
+    console.log('[Auth] resetPasswordForEmail redirectTo:', redirectUrl);
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: redirectUrl,
     });
