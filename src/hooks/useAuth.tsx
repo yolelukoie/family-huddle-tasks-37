@@ -277,18 +277,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
+    console.log('[Auth] signOut called');
     try {
       // Delete push token before signing out to prevent stale tokens
       if (session?.user?.id) {
         await deletePushToken(session.user.id);
       }
       await supabase.auth.signOut({ scope: "global" });
+      console.log('[Auth] Supabase signOut complete');
+    } catch (err) {
+      console.error('[Auth] signOut error:', err);
     } finally {
       setUser(null);
       setSession(null);
-      // drop any hash leftovers & go to the auth screen
-      if (window.location.hash) window.history.replaceState({}, "", "/auth");
-      window.location.assign("/auth");
+      // Clear cached app data
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key?.startsWith(USER_KEY) || key?.startsWith('sb-') || key === 'fh_pending_push_intent') {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach((key) => localStorage.removeItem(key));
+      console.log('[Auth] State cleared, AppLayout will redirect to /auth');
+      // Do NOT use window.location.assign — let AppLayout's effect navigate via router
     }
   }, [session]);
 
