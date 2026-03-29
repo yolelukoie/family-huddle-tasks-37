@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -6,11 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { Star, User, Calendar, Clock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useApp } from "@/hooks/useApp";
-import { useTasks } from "@/hooks/useTasks";
 import { useToast } from "@/hooks/use-toast";
 import { translateTaskName } from "@/lib/translations";
 import { Task } from "@/lib/types";
-import { format, isToday, isFuture } from "date-fns";
+import { format, isToday } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 
 interface TaskAssignmentModalProps {
@@ -24,75 +23,126 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
   const { t } = useTranslation();
   const { user } = useAuth();
   const { getUserProfile } = useApp();
-  const { updateTask, deleteTask, ensureCategoryByName } = useTasks();
   const { toast } = useToast();
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  if (!task || !user) {
-    return null;
-  }
+  if (!task || !user) return null;
 
-  // Defense in depth: Only render for the actual assignee
   if (task.assignedTo !== user.id) {
     console.warn('[TaskAssignmentModal] User is not the assignee, not rendering');
     return null;
   }
 
+  if (!task.familyId) {
+    console.error('[TaskAssignmentModal] task.familyId is missing, cannot render');
+    return null;
+  }
+
   const assignerProfile = getUserProfile(task.assignedBy);
   const assignerName = assignerProfile?.displayName || t('common.someone', 'Someone');
-
   const familyId = task.familyId;
-  const canRespond = !!familyId; // Actions are disabled if familyId is missing
+
+  // Direct Supabase: find or create "Assigned" category for this family
+  const findOrCreateAssignedCategory = async (): Promise<string | null> => {
+    console.log('[TaskAssignmentModal] findOrCreateAssignedCategory for family:', familyId);
+    try {
+      const { data: existing } = await supabase
+        .from('task_categories')
+        .select('id')
+        .eq('family_id', familyId)
+        .ilike('name', 'assigned')
+        .limit(1)
+        .maybeSingle();
+
+      if (existing) return existing.id;
+
+      // Create it
+      const { data: created, error } = await supabase
+        .from('task_categories')
+        .insert({ name: 'Assigned', family_id: familyId, is_default: true, order_index: 0 })
+        .select('id')
+        .single();
+
+      if (error) {
+        console.error('[TaskAssignmentModal] Failed to create Assigned category:', JSON.stringify(error));
+        return null;
+      }
+      return created.id;
+    } catch (e) {
+      console.error('[TaskAssignmentModal] findOrCreateAssignedCategory threw:', String(e));
+      return null;
+    }
+  };
 
   const handleAccept = async () => {
-    if (!familyId) {
-      toast({
-        title: t('taskAssignment.cannotNotify'),
-        description: t('taskAssignment.familyNotLoaded'),
-        variant: "destructive",
-      });
-      return;
-    }
+    if (isProcessing) return;
+    setIsProcessing(true);
+    console.log('[TaskAssignmentModal] ACCEPT CLICK', { taskId: task.id, familyId, userId: user.id });
+
     try {
-      // Move task to "Assigned" category and set status to 'active'
-      const cat = await ensureCategoryByName("Assigned");
+      // 1) Find/create "Assigned" category
+      const categoryId = await findOrCreateAssignedCategory();
+      console.log('[TaskAssignmentModal] Category resolved:', categoryId);
 
-      if (cat) {
-        await updateTask(task.id, { categoryId: cat.id, status: 'active' });
-      } else {
-        // Still set status to active even if category lookup fails
-        await updateTask(task.id, { status: 'active' });
+      // 2) Direct update with assignee guard
+      const patch: any = { status: 'active' };
+      if (categoryId) patch.category_id = categoryId;
+
+      console.log('[TaskAssignmentModal] Updating task...');
+      const { data: updated, error: updateErr } = await supabase
+        .from('tasks')
+        .update(patch)
+        .eq('id', task.id)
+        .eq('assigned_to', user.id)
+        .select('id')
+        .maybeSingle();
+
+      if (updateErr) {
+        console.error('[TaskAssignmentModal] Update error:', JSON.stringify(updateErr));
+        toast({ title: t('taskAssignment.error'), description: updateErr.message, variant: "destructive" });
+        return;
       }
+      if (!updated) {
+        console.error('[TaskAssignmentModal] Update returned 0 rows — not the assignee or task gone');
+        toast({ title: t('taskAssignment.error'), description: t('taskAssignment.acceptError'), variant: "destructive" });
+        return;
+      }
+      console.log('[TaskAssignmentModal] Task updated successfully');
 
-      // INSERT a notification event for the assigner
+      // 3) Insert task_event
+      console.log('[TaskAssignmentModal] Inserting task_event (accepted)...');
       const { error: evErr } = await supabase.from("task_events").insert({
         task_id: task.id,
         family_id: familyId,
-        recipient_id: task.assignedBy, // notify the assigner
-        actor_id: user!.id, // me, the acceptor/rejector
-        event_type: "accepted", // or 'rejected' in the reject handler
+        recipient_id: task.assignedBy,
+        actor_id: user.id,
+        event_type: "accepted",
         payload: {
           name: task.name,
           stars: task.starValue,
           due_date: task.dueDate,
-          actor_name: user!.displayName, // avoid undefined
+          actor_name: (user as any)?.displayName ?? "Someone",
         },
       });
-      if (evErr) {
-        console.error("task_events insert failed", evErr);
-      }
+      if (evErr) console.error("[TaskAssignmentModal] task_events insert failed:", JSON.stringify(evErr));
 
+      // 4) Push notify assigner
       if (!evErr) {
+        console.log('[TaskAssignmentModal] Sending push to assigner...');
         await supabase.functions
           .invoke("send-push", {
             body: {
               recipientId: task.assignedBy,
               title: "Task accepted",
               body: `${(user as any)?.displayName ?? "Someone"} accepted "${task.name}"`,
-              data: { type: "task_accepted", event_type: "accepted", taskId: task.id, task_id: task.id, familyId: familyId, family_id: familyId },
+              data: { type: "task_accepted", event_type: "accepted", taskId: task.id, task_id: task.id, familyId, family_id: familyId },
             },
           })
-          .catch((e) => console.error("[send-push] invoke failed:", e));
+          .catch((e) => console.error("[TaskAssignmentModal] send-push failed:", String(e)));
       }
+
+      // 5) Dispatch refresh event
+      window.dispatchEvent(new CustomEvent('tasks:changed'));
 
       toast({
         title: t('taskAssignment.accepted'),
@@ -100,60 +150,77 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
       });
 
       onTaskResponse?.(task.id, true);
+      console.log('[TaskAssignmentModal] Closing modal after accept');
       onOpenChange(false);
     } catch (error) {
-      console.error("Error accepting task:", error);
-      toast({
-        title: t('taskAssignment.error'),
-        description: t('taskAssignment.acceptError'),
-        variant: "destructive",
-      });
+      console.error("[TaskAssignmentModal] Accept threw:", String(error));
+      toast({ title: t('taskAssignment.error'), description: t('taskAssignment.acceptError'), variant: "destructive" });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
   const handleReject = async () => {
-    if (!familyId) {
-      toast({
-        title: t('taskAssignment.cannotNotify'),
-        description: t('taskAssignment.familyNotLoaded'),
-        variant: "destructive",
-      });
-      return;
-    }
-    try {
-      // Delete the task since it was rejected
-      await deleteTask(task.id);
+    if (isProcessing) return;
+    setIsProcessing(true);
+    console.log('[TaskAssignmentModal] REJECT CLICK', { taskId: task.id, familyId, userId: user.id });
 
-      // INSERT a notification event for the assigner
+    try {
+      // 1) Direct delete with assignee guard
+      console.log('[TaskAssignmentModal] Deleting task...');
+      const { data: deleted, error: delErr } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', task.id)
+        .eq('assigned_to', user.id)
+        .select('id');
+
+      if (delErr) {
+        console.error('[TaskAssignmentModal] Delete error:', JSON.stringify(delErr));
+        toast({ title: t('taskAssignment.error'), description: delErr.message, variant: "destructive" });
+        return;
+      }
+      if (!deleted || deleted.length === 0) {
+        console.error('[TaskAssignmentModal] Delete returned 0 rows — not the assignee or task gone');
+        toast({ title: t('taskAssignment.error'), description: t('taskAssignment.rejectError'), variant: "destructive" });
+        return;
+      }
+      console.log('[TaskAssignmentModal] Task deleted successfully');
+
+      // 2) Insert task_event
+      console.log('[TaskAssignmentModal] Inserting task_event (rejected)...');
       const { error: evErr } = await supabase.from("task_events").insert({
         task_id: task.id,
         family_id: familyId,
-        recipient_id: task.assignedBy, // notify the assigner
-        actor_id: user!.id, // me, the acceptor/rejector
-        event_type: "rejected", // or 'rejected' in the reject handler
+        recipient_id: task.assignedBy,
+        actor_id: user.id,
+        event_type: "rejected",
         payload: {
           name: task.name,
           stars: task.starValue,
           due_date: task.dueDate,
-          actor_name: user!.displayName, // avoid undefined
+          actor_name: (user as any)?.displayName ?? "Someone",
         },
       });
-      if (evErr) {
-        console.error("task_events insert failed", evErr);
-      }
+      if (evErr) console.error("[TaskAssignmentModal] task_events insert failed:", JSON.stringify(evErr));
 
+      // 3) Push notify assigner
       if (!evErr) {
+        console.log('[TaskAssignmentModal] Sending push to assigner...');
         await supabase.functions
           .invoke("send-push", {
             body: {
               recipientId: task.assignedBy,
               title: "Task rejected",
               body: `${(user as any)?.displayName ?? "Someone"} rejected "${task.name}"`,
-              data: { type: "task_rejected", event_type: "rejected", taskId: task.id, task_id: task.id, familyId: familyId, family_id: familyId },
+              data: { type: "task_rejected", event_type: "rejected", taskId: task.id, task_id: task.id, familyId, family_id: familyId },
             },
           })
-          .catch((e) => console.error("[send-push] invoke failed:", e));
+          .catch((e) => console.error("[TaskAssignmentModal] send-push failed:", String(e)));
       }
+
+      // 4) Dispatch refresh event
+      window.dispatchEvent(new CustomEvent('tasks:changed'));
 
       toast({
         title: t('taskAssignment.rejected'),
@@ -161,14 +228,13 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
       });
 
       onTaskResponse?.(task.id, false);
+      console.log('[TaskAssignmentModal] Closing modal after reject');
       onOpenChange(false);
     } catch (error) {
-      console.error("Error rejecting task:", error);
-      toast({
-        title: t('taskAssignment.error'),
-        description: t('taskAssignment.rejectError'),
-        variant: "destructive",
-      });
+      console.error("[TaskAssignmentModal] Reject threw:", String(error));
+      toast({ title: t('taskAssignment.error'), description: t('taskAssignment.rejectError'), variant: "destructive" });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -184,7 +250,6 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Task Details */}
           <div className="p-4 border rounded-lg space-y-3">
             <div>
               <h3 className="font-semibold text-lg">{translateTaskName(task.name, t)}</h3>
@@ -196,12 +261,10 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
                 <Star className="h-4 w-4 text-yellow-500" />
                 <span className="font-medium">{task.starValue} {t('taskAssignment.stars')}</span>
               </div>
-
               <div className="flex items-center gap-1">
                 <Calendar className="h-4 w-4" />
                 <span>{format(new Date(task.dueDate), "MMM dd, yyyy")}</span>
               </div>
-
               {isToday(new Date(task.dueDate)) && (
                 <Badge variant="secondary" className="text-xs">
                   <Clock className="h-3 w-3 mr-1" />
@@ -213,30 +276,23 @@ export function TaskAssignmentModal({ open, onOpenChange, task, onTaskResponse }
             <div className="text-xs text-muted-foreground">{t('taskAssignment.from')}: {assignerName}</div>
           </div>
 
-          {/* Action Buttons */}
           <div className="flex gap-2">
-            <Button 
-              onClick={handleAccept} 
-              disabled={!canRespond}
+            <Button
+              onClick={handleAccept}
+              disabled={isProcessing}
               className="flex-1 bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
             >
-              {t('taskAssignment.accept')}
+              {isProcessing ? t('common.loading') : t('taskAssignment.accept')}
             </Button>
-            <Button 
-              onClick={handleReject} 
-              disabled={!canRespond}
-              variant="destructive" 
+            <Button
+              onClick={handleReject}
+              disabled={isProcessing}
+              variant="destructive"
               className="flex-1"
             >
-              {t('taskAssignment.reject')}
+              {isProcessing ? t('common.loading') : t('taskAssignment.reject')}
             </Button>
           </div>
-
-          {!canRespond && (
-            <p className="text-xs text-destructive text-center">
-              {t('taskAssignment.familyNotLoaded', 'Unable to load family data. Please try again.')}
-            </p>
-          )}
 
           <p className="text-xs text-muted-foreground text-center">
             {t('taskAssignment.acceptHint')}
