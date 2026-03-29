@@ -148,11 +148,17 @@ export function AppLayout() {
               .single();
             
             if (task && !error && task.assigned_to === user?.id) {
+              const resolvedFamilyId = task.family_id || familyId;
+              if (!resolvedFamilyId) {
+                console.error('[Push] No familyId for task, skipping modal');
+                return;
+              }
+              setShowNativePushPrompt(false);
               openAssignmentModal({
                 id: task.id, name: task.name, description: task.description ?? '',
                 starValue: task.star_value ?? 0, assignedBy: task.assigned_by,
                 assignedTo: task.assigned_to, dueDate: task.due_date,
-                familyId, categoryId: task.category_id, completed: !!task.completed,
+                familyId: resolvedFamilyId, categoryId: task.category_id, completed: !!task.completed,
               } as any);
             }
           } catch (err) {
@@ -303,12 +309,19 @@ export function AppLayout() {
             return;
           }
 
+          const resolvedFamilyId = task.family_id || intent.familyId;
+          if (!resolvedFamilyId) {
+            console.error('[PushIntent] No familyId on task or intent, skipping modal');
+            clearPushIntent();
+            return;
+          }
           console.log('[PushIntent] ✓ Opening assignment modal for task:', task.id);
+          setShowNativePushPrompt(false);
           openAssignmentModal({
             id: task.id, name: task.name, description: task.description ?? '',
             starValue: task.star_value ?? 0, assignedBy: task.assigned_by,
             assignedTo: task.assigned_to, dueDate: task.due_date,
-            familyId: task.family_id, categoryId: task.category_id,
+            familyId: resolvedFamilyId, categoryId: task.category_id,
             completed: !!task.completed,
           } as any);
           clearPushIntent();

@@ -25,22 +25,12 @@ export function AssignmentModalProvider({ children }: { children: React.ReactNod
   }, [task]);
 
   const openAssignmentModal = useCallback((t: Task) => {
-    console.log('[MODAL-DEBUG] 5. openAssignmentModal invoked:', {
-      incomingTaskId: t.id,
-      incomingTaskName: t.name,
-      incomingFamilyId: t.familyId,
-      timestamp: new Date().toISOString()
-    });
-    
-    setTask((current) => {
-      const willUpdate = current?.id !== t.id;
-      console.log('[MODAL-DEBUG] 5b. setTask callback:', {
-        currentTaskId: current?.id,
-        willUpdate,
-        newTaskId: t.id
-      });
-      return willUpdate ? t : current;
-    });
+    if (!t.familyId) {
+      console.error('[AssignmentModal] REJECTED — task has no familyId:', t.id, t.name);
+      return;
+    }
+    console.log('[AssignmentModal] openAssignmentModal:', { id: t.id, name: t.name, familyId: t.familyId });
+    setTask((current) => (current?.id !== t.id ? t : current));
   }, []);
 
   const closeAssignmentModal = useCallback(() => {
