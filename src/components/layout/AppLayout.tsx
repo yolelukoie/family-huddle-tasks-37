@@ -53,16 +53,22 @@ export function AppLayout() {
   useEffect(() => {
     if (!isAuthenticated || !user?.id) return;
 
-    // Native: automatically register for push on every auth
+    // Native: auto-register push ONLY if user already accepted the prompt before.
+    // On first run, NativePushPrompt handles the permission flow to avoid double-prompting.
     if (isPlatform('capacitor')) {
-      console.log('[Push] Native platform — auto-registering push for user:', user.id);
-      requestPushPermission(user.id)
-        .then((result) => {
-          console.log('[Push] Native registration result (initial):', JSON.stringify(result));
-        })
-        .catch((err) => {
-          console.error('[Push] Native registration call failed (initial):', err);
-        });
+      const alreadyPrompted = hasSeenNativePushPrompt();
+      if (alreadyPrompted) {
+        console.log('[Push] Native platform — auto-registering push for user:', user.id);
+        requestPushPermission(user.id)
+          .then((result) => {
+            console.log('[Push] Native registration result (initial):', JSON.stringify(result));
+          })
+          .catch((err) => {
+            console.error('[Push] Native registration call failed (initial):', err);
+          });
+      } else {
+        console.log('[Push] Native platform — skipping auto-register, NativePushPrompt will handle first-run');
+      }
 
       // Also re-register on app resume
       let resumeListenerHandle: any = null;

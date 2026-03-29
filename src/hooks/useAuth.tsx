@@ -148,13 +148,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             return; // don't run the "normal" flow for this tick
           }
 
-          // B) After updateUser({password}), Supabase emits USER_UPDATED (and often SIGNED_IN).
-          //    If we're still on /auth/reset, force-leave that page.
-          if ((event === "USER_UPDATED" || event === "SIGNED_IN") && location.pathname.includes("/auth/reset")) {
-            try {
-              window.history.replaceState({}, "", "/");
-            } catch {}
-            window.location.replace("/");
+          // B) While on /auth/reset, ignore SIGNED_IN (session was established for recovery,
+          //    not a real sign-in). The NativeResetPasswordPage handles navigation after
+          //    the password is actually updated.
+          if (event === "SIGNED_IN" && location.pathname.includes("/auth/reset")) {
+            console.log('[useAuth] Ignoring SIGNED_IN on /auth/reset — recovery in progress');
+            // Still update session state so updateUser({ password }) works
+            if (!isMounted) return;
+            setSession(session);
+            await loadUserData(session?.user ?? null);
             return;
           }
 
