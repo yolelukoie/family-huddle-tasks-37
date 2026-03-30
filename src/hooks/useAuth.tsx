@@ -130,50 +130,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false);
 
       // 2) Listen for auth changes
+      const syncAuthState = (nextSession: Session | null) => {
+        if (!isMounted) return;
+
+        setSession(nextSession);
+        setIsLoading(false);
+
+        window.setTimeout(() => {
+          if (!isMounted) return;
+          void loadUserData(nextSession?.user ?? null).catch((error) => {
+            console.error("[useAuth] deferred loadUserData error:", error);
+          });
+        }, 0);
+      };
+
       const {
         data: { subscription },
-      } = supabase.auth.onAuthStateChange(async (event, session) => {
+      } = supabase.auth.onAuthStateChange((event, session) => {
         try {
-          // A) When user clicks the email link, Supabase emits PASSWORD_RECOVERY.
-          //    Push to /reset-password exactly once to avoid loops.
+          // IMPORTANT: keep this callback synchronous.
+          // Awaiting Supabase calls in here can deadlock exchangeCodeForSession/setSession.
           if (event === "PASSWORD_RECOVERY") {
-            if (!handlingRecovery.current) {
-              handlingRecovery.current = true;
-              console.log('[useAuth] PASSWORD_RECOVERY event');
-              // On web, navigate to reset page; on native, deep link handler already routed there
-              if (!location.pathname.includes('/auth/reset')) {
-                try { window.history.replaceState({}, "", "/auth/reset"); } catch {}
-                window.location.replace("/auth/reset");
-              }
+            handlingRecovery.current = true;
+            console.log('[useAuth] PASSWORD_RECOVERY event');
+
+            if (!location.pathname.includes('/auth/reset')) {
+              try { window.history.replaceState({}, "", "/auth/reset"); } catch {}
+              window.location.replace("/auth/reset");
             }
-            // IMPORTANT: Still update session state so the reset form can call updateUser
-            if (!isMounted) return;
-            setSession(session);
-            await loadUserData(session?.user ?? null);
+
+            syncAuthState(session);
             return;
           }
 
-          // B) While on /auth/reset, ignore SIGNED_IN (session was established for recovery,
-          //    not a real sign-in). The NativeResetPasswordPage handles navigation after
-          //    the password is actually updated.
           if (event === "SIGNED_IN" && location.pathname.includes("/auth/reset")) {
-            console.log('[useAuth] Ignoring SIGNED_IN on /auth/reset — recovery in progress');
-            // Still update session state so updateUser({ password }) works
-            if (!isMounted) return;
-            setSession(session);
-            await loadUserData(session?.user ?? null);
+            console.log('[useAuth] Ignoring SIGNED_IN redirect on /auth/reset — recovery in progress');
+            syncAuthState(session);
             return;
           }
 
-          // C) Your existing flow
-          if (!isMounted) return;
-          setSession(session);
-
-          const uid2 = getUserId(session);
-          await loadUserData(uid2 ? (session?.user ?? null) : null);
-
-          if (!isMounted) return;
-          setIsLoading(false);
+          handlingRecovery.current = false;
+          syncAuthState(session);
         } catch (e) {
           console.error("[useAuth] onAuthStateChange handler error:", e);
           if (isMounted) setIsLoading(false);
