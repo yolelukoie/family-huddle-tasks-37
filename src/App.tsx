@@ -35,30 +35,59 @@ function DeepLinkHandler() {
   useEffect(() => {
     if (!isPlatform('capacitor')) return;
 
+    let isActive = true;
     let cleanup: (() => void) | null = null;
 
-    import('@capacitor/app').then(({ App }) => {
-      const listener = App.addListener('appUrlOpen', (event) => {
-        console.log('[DeepLink] appUrlOpen:', event.url);
-        try {
-          const url = new URL(event.url);
-          const path = url.pathname;
-          const search = url.search;
-          const hash = url.hash;
+    const routeDeepLink = (incomingUrl?: string | null) => {
+      if (!incomingUrl) return;
 
-          if (path.startsWith('/auth/reset') || path.startsWith('/reset-password')) {
-            navigate(`/auth/reset${search}${hash}`, { replace: true });
-          } else if (path.startsWith('/auth/callback')) {
-            navigate(`/auth/callback${search}${hash}`, { replace: true });
-          }
-        } catch (err) {
-          console.error('[DeepLink] Failed to parse URL:', err);
+      console.log('[DeepLink] routing URL:', incomingUrl);
+
+      try {
+        const url = new URL(incomingUrl);
+        const path = url.pathname;
+        const search = url.search;
+        const hash = url.hash;
+
+        if (path.startsWith('/auth/reset') || path.startsWith('/reset-password')) {
+          navigate(`/auth/reset${search}${hash}`, { replace: true });
+          return;
         }
+
+        if (path.startsWith('/auth/callback')) {
+          navigate(`/auth/callback${search}${hash}`, { replace: true });
+        }
+      } catch (err) {
+        console.error('[DeepLink] Failed to parse URL:', err);
+      }
+    };
+
+    import('@capacitor/app').then(async ({ App }) => {
+      const launchUrl = await App.getLaunchUrl().catch(() => null);
+      if (isActive && launchUrl?.url) {
+        console.log('[DeepLink] launchUrl:', launchUrl.url);
+        routeDeepLink(launchUrl.url);
+      }
+
+      const handle = await App.addListener('appUrlOpen', (event) => {
+        console.log('[DeepLink] appUrlOpen:', event.url);
+        routeDeepLink(event.url);
       });
-      listener.then(handle => { cleanup = () => handle.remove(); });
+
+      if (!isActive) {
+        await handle.remove();
+        return;
+      }
+
+      cleanup = () => {
+        void handle.remove();
+      };
     }).catch(() => {});
 
-    return () => { cleanup?.(); };
+    return () => {
+      isActive = false;
+      cleanup?.();
+    };
   }, [navigate]);
 
   return null;
