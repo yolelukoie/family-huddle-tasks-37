@@ -139,13 +139,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (event === "PASSWORD_RECOVERY") {
             if (!handlingRecovery.current) {
               handlingRecovery.current = true;
-              console.log('[useAuth] PASSWORD_RECOVERY event — redirecting to /auth/reset');
-              try {
-                window.history.replaceState({}, "", "/auth/reset");
-              } catch {}
-              window.location.replace("/auth/reset");
+              console.log('[useAuth] PASSWORD_RECOVERY event');
+              // On web, navigate to reset page; on native, deep link handler already routed there
+              if (!location.pathname.includes('/auth/reset')) {
+                try { window.history.replaceState({}, "", "/auth/reset"); } catch {}
+                window.location.replace("/auth/reset");
+              }
             }
-            return; // don't run the "normal" flow for this tick
+            // IMPORTANT: Still update session state so the reset form can call updateUser
+            if (!isMounted) return;
+            setSession(session);
+            await loadUserData(session?.user ?? null);
+            return;
           }
 
           // B) While on /auth/reset, ignore SIGNED_IN (session was established for recovery,
