@@ -8,18 +8,6 @@ export interface SubscriptionStatus {
   plan?: 'free' | 'premium';
 }
 
-// Placeholder function - will be replaced with RevenueCat integration
-export const checkSubscriptionStatus = async (userId: string): Promise<SubscriptionStatus> => {
-  // TODO: Implement RevenueCat API call to check subscription status
-  // Use userId to identify the customer in RevenueCat
-  console.log('Checking subscription status for user:', userId);
-  
-  return {
-    isActive: false,
-    plan: 'free',
-  };
-};
-
 // Placeholder function for initiating subscription purchase
 export const initiateSubscription = async (userId: string): Promise<void> => {
   // TODO: Implement RevenueCat purchase flow

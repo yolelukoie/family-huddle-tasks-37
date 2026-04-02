@@ -122,30 +122,6 @@ export function getBlockStatusText(
 }
 
 /**
- * Formats the family name with blocked status appended if applicable
- */
-export function formatFamilyDisplayName(
-  familyName: string,
-  membership: UserFamily | null | undefined,
-  t: TFunction
-): string {
-  const blockStatus = getBlockStatusText(membership, t);
-  
-  if (blockStatus) {
-    return `${familyName} — ${blockStatus}`;
-  }
-  
-  return familyName;
-}
-
-/**
- * Gets human-readable duration label
- */
-export function getDurationLabel(duration: BlockDuration, t: TFunction): string {
-  return t(`block.${duration}`);
-}
-
-/**
  * Gets human-readable reason label
  */
 export function getReasonLabel(reason: BlockReason, t: TFunction): string {

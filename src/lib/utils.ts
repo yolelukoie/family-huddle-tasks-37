@@ -20,12 +20,6 @@ export function generateId(): string {
   });
 }
 
-// This function is no longer needed as Supabase generates invite codes
-// Keep for backward compatibility but recommend using Supabase function
-export function generateInviteCode(): string {
-  return Math.random().toString(36).substr(2, 8).toUpperCase();
-}
-
 export function formatDate(date: string | Date): string {
   const d = new Date(date);
   return d.toLocaleDateString();

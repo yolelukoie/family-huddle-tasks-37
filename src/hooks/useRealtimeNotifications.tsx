@@ -32,7 +32,7 @@ export function useRealtimeNotifications() {
   const { user } = useAuth();
   const { toast } = useToast();
   const { refreshData } = useTasks();
-  const { activeFamilyId, getUserProfile } = useApp();
+  const { activeFamilyId } = useApp();
   const { openAssignmentModal } = useAssignmentModal();
 
   const handledEventIds = useRef<Set<string>>(new Set());

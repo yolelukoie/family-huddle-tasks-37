@@ -336,7 +336,3 @@ export async function deleteNativePushToken(userId: string): Promise<void> {
   currentUserId = null;
 }
 
-/** Expose current token for debug UI */
-export function getNativeDeviceToken(): string | null {
-  return currentDeviceToken;
-}

@@ -49,12 +49,6 @@ export async function deletePushToken(userId: string): Promise<void> {
   // Web: nothing to delete
 }
 
-/**
- * Check if push notifications are available on this platform.
- */
-export function isPushAvailable(): boolean {
-  return isPlatform('capacitor');
-}
 
 /**
  * Check current push notification permission status.
