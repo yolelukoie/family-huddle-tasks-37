@@ -72,9 +72,9 @@ export function AppLayout() {
       }
 
       // Also re-register on app resume
-      let resumeListenerHandle: any = null;
+      let nativeResumeListenerHandle: { remove: () => void } | undefined;
       import('@capacitor/app').then(({ App }) => {
-        resumeListenerHandle = App.addListener('resume', () => {
+        App.addListener('resume', () => {
           console.log('[Push] App resumed — re-registering native push');
           requestPushPermission(user.id)
             .then((result) => {
@@ -83,13 +83,11 @@ export function AppLayout() {
             .catch((err) => {
               console.error('[Push] Native registration call failed (resume):', err);
             });
-        });
+        }).then(h => { nativeResumeListenerHandle = h; });
       }).catch(() => {});
 
-      var nativeResumeCleanup = () => {
-        if (resumeListenerHandle) {
-          resumeListenerHandle.then((l: any) => l.remove());
-        }
+      let nativeResumeCleanup = () => {
+        nativeResumeListenerHandle?.remove();
       };
     } else {
       // Web: push disabled under mobile-only policy — no-op
@@ -143,30 +141,7 @@ export function AppLayout() {
       }
 
       if (eventType === 'assigned' || eventType === 'task_assigned') {
-        const taskId = p?.data?.taskId || p?.data?.task_id;
-        const familyId = p?.data?.familyId || p?.data?.family_id;
-        
-        if (taskId && familyId) {
-          try {
-            const { data: task, error } = await supabase
-              .from('tasks')
-              .select('*')
-              .eq('id', taskId)
-              .single();
-            
-            if (task && !error && task.assigned_to === user?.id) {
-              const resolvedFamilyId = task.family_id || familyId;
-              if (!resolvedFamilyId) {
-                console.error('[Push] No familyId for task, skipping modal');
-                return;
-              }
-              setShowNativePushPrompt(false);
-              openAssignmentModal(taskFromRow(task, { familyId: resolvedFamilyId }));
-            }
-          } catch (err) {
-            console.error('[Push] Failed to fetch task:', err);
-          }
-        }
+        // Modal is handled by realtime subscription in useRealtimeNotifications — skip here to avoid duplicates
         return; // Don't show toast for assigned events
       }
       
@@ -232,9 +207,11 @@ export function AppLayout() {
     };
 
     if (isPlatform('capacitor')) {
+      let listenerHandle: { remove: () => void } | undefined;
       import('@capacitor/app').then(({ App }) => {
-        App.addListener('resume', handleResume);
+        App.addListener('resume', handleResume).then(h => { listenerHandle = h; });
       }).catch(() => {});
+      return () => { listenerHandle?.remove(); };
     } else {
       const handleVisibility = () => {
         if (document.visibilityState === 'visible') checkPendingTasks();
@@ -265,6 +242,7 @@ export function AppLayout() {
         if (intent.familyId && intent.familyId !== activeFamilyId) {
           console.log('[PushIntent] Switching family to', intent.familyId);
           await setActiveFamilyId(intent.familyId);
+          intentProcessedRef.current = false;  // allow re-entry after family switch
           // Wait for family context to propagate — the effect will re-run with updated activeFamilyId
           return;
         }
