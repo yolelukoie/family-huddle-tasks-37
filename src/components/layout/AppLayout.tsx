@@ -21,6 +21,7 @@ import NotFound from "@/pages/NotFound";
 import { useKickedFromFamily } from "@/hooks/useKickedFromFamily";
 import { useAssignmentModal } from "@/contexts/AssignmentModalContext";
 import { supabase } from "@/integrations/supabase/client";
+import { taskFromRow } from "@/lib/taskMapper";
 import {
   NotificationPermissionDialog,
   hasSeenNotificationPrompt,
@@ -160,12 +161,7 @@ export function AppLayout() {
                 return;
               }
               setShowNativePushPrompt(false);
-              openAssignmentModal({
-                id: task.id, name: task.name, description: task.description ?? '',
-                starValue: task.star_value ?? 0, assignedBy: task.assigned_by,
-                assignedTo: task.assigned_to, dueDate: task.due_date,
-                familyId: resolvedFamilyId, categoryId: task.category_id, completed: !!task.completed,
-              } as any);
+              openAssignmentModal(taskFromRow(task, { familyId: resolvedFamilyId }));
             }
           } catch (err) {
             console.error('[Push] Failed to fetch task:', err);
@@ -221,13 +217,7 @@ export function AppLayout() {
         if (pendingTasks && pendingTasks.length > 0) {
           console.log(`[TaskRecovery] Found ${pendingTasks.length} pending task(s)`);
           const task = pendingTasks[0];
-          openAssignmentModal({
-            id: task.id, name: task.name, description: task.description ?? '',
-            starValue: task.star_value ?? 0, assignedBy: task.assigned_by,
-            assignedTo: task.assigned_to, dueDate: task.due_date,
-            familyId: task.family_id, categoryId: task.category_id,
-            completed: !!task.completed,
-          } as any);
+          openAssignmentModal(taskFromRow(task));
         }
       } catch (err) {
         console.error('[TaskRecovery] Error checking pending tasks:', err);
@@ -323,13 +313,7 @@ export function AppLayout() {
           }
           console.log('[PushIntent] ✓ Opening assignment modal for task:', task.id);
           setShowNativePushPrompt(false);
-          openAssignmentModal({
-            id: task.id, name: task.name, description: task.description ?? '',
-            starValue: task.star_value ?? 0, assignedBy: task.assigned_by,
-            assignedTo: task.assigned_to, dueDate: task.due_date,
-            familyId: resolvedFamilyId, categoryId: task.category_id,
-            completed: !!task.completed,
-          } as any);
+          openAssignmentModal(taskFromRow(task, { familyId: resolvedFamilyId }));
           clearPushIntent();
 
         } else if (intent.type === 'chat_message') {
