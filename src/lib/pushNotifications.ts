@@ -3,6 +3,7 @@
 
 import { isPlatform } from './platform';
 import { registerNativePush, listenNativePush, deleteNativePushToken } from './capacitorPush';
+import { PushNotifications } from '@capacitor/push-notifications';
 import { supabase } from '@/integrations/supabase/client';
 
 /**
@@ -56,7 +57,6 @@ export async function deletePushToken(userId: string): Promise<void> {
 export async function getPushPermissionStatus(): Promise<'granted' | 'denied' | 'prompt' | 'unavailable'> {
   if (isPlatform('capacitor')) {
     try {
-      const { PushNotifications } = await import('@capacitor/push-notifications');
       const status = await PushNotifications.checkPermissions();
       console.log('[Push] Native permission status:', status.receive);
       if (status.receive === 'granted') return 'granted';

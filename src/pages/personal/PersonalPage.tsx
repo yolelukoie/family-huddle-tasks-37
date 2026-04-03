@@ -14,7 +14,7 @@ import { Edit, Settings, Upload, Loader2, Languages, Palette, RotateCcw, Bell, B
 import { DeleteAccountModal } from '@/components/modals/DeleteAccountModal';
 import { PushDebugCard } from '@/components/dev/PushDebugCard';
 import { requestPushPermission, getPushPermissionStatus } from '@/lib/pushNotifications';
-import { isPlatform } from '@/lib/platform';
+import { isPlatform, getCurrentPlatform } from '@/lib/platform';
 import { ThemeSelector } from '@/components/theme/ThemeSelector';
 import { CharacterImageCustomizer } from '@/components/character/CharacterImageCustomizer';
 import { useToast } from '@/hooks/use-toast';
@@ -35,7 +35,7 @@ async function openAppNotificationSettings() {
   if (!isPlatform('capacitor')) return false;
   try {
     const { NativeSettings, AndroidSettings, IOSSettings } = await import('capacitor-native-settings');
-    const platform = (await import('@capacitor/core')).Capacitor.getPlatform();
+    const platform = getCurrentPlatform();
     if (platform === 'android') {
       await NativeSettings.openAndroid({ option: AndroidSettings.AppNotification });
     } else {
