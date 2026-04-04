@@ -478,6 +478,34 @@
     "successDesc": "Gracias por tu reporte.",
     "errorSubmitting": "Error al enviar el reporte. Inténtalo de nuevo."
   },
+  "subscription": {
+    "status": {
+      "free": "Gratis",
+      "trial": "Prueba ({{days}} días restantes)",
+      "premium": "Premium",
+      "lifetime": "Vitalicio"
+    },
+    "activated": "¡Suscripción activada!",
+    "activeDesc": "Tienes acceso completo a todas las funciones de Family Huddle.",
+    "freeDesc": "Suscríbete para desbloquear todas las funciones de Family Huddle.",
+    "lifetimeDesc": "Tienes acceso vitalicio a todas las funciones premium.",
+    "renewsOn": "Se renueva el {{date}}",
+    "subscribeNow": "Suscribirse ahora",
+    "manageOnGooglePlay": "Gestionar en Google Play",
+    "restore": "Restaurar compras",
+    "restoreSuccess": "Compras restauradas correctamente",
+    "restoreFailed": "No se pudieron restaurar las compras",
+    "purchaseFailed": "Error en la compra",
+    "disclosure": "Después de tu prueba gratuita de 4 días, $4.90/mes. Cancela en cualquier momento. Al suscribirte aceptas nuestros Términos de Uso.",
+    "promo": {
+      "haveCode": "¿Tienes un código promocional?",
+      "placeholder": "Ingresa el código",
+      "apply": "Aplicar",
+      "success": "¡Código promocional aplicado!",
+      "invalid": "Código promocional no válido",
+      "failed": "Error al aplicar el código"
+    }
+  },
   "common": {
     "loading": "Cargando...",
     "error": "Error",

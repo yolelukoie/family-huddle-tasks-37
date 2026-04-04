@@ -406,7 +406,7 @@
     "welcomeTitle": "Welcome to Family Huddle!",
     "completeProfile": "Complete your profile to start your family adventure",
     "trialTitle": "Start your 4-day free trial",
-    "trialDesc": "Try Family Huddle with all features free for 4 days. No commitment. After that you can continue on a paid plan or cancel anytime from the Personal Settings page.",
+    "trialDesc": "Try Family Huddle with all features free for 4 days. After your trial, just $4.90/month. Cancel anytime from the Settings page.",
     "startTrial": "Start free trial",
     "setupProfile": "Set up your profile",
     "setupProfileDesc": "Tell us about yourself and join your family",
@@ -648,6 +648,34 @@
       "spam": "Spam / scam",
       "personalInfo": "Sharing personal info",
       "other": "Other"
+    }
+  },
+  "subscription": {
+    "status": {
+      "free": "Free",
+      "trial": "Trial ({{days}} days left)",
+      "premium": "Premium",
+      "lifetime": "Lifetime"
+    },
+    "activated": "Subscription activated!",
+    "activeDesc": "You have full access to all Family Huddle features.",
+    "freeDesc": "Subscribe to unlock all Family Huddle features.",
+    "lifetimeDesc": "You have lifetime access to all premium features.",
+    "renewsOn": "Renews on {{date}}",
+    "subscribeNow": "Subscribe Now",
+    "manageOnGooglePlay": "Manage on Google Play",
+    "restore": "Restore Purchases",
+    "restoreSuccess": "Purchases restored successfully",
+    "restoreFailed": "Could not restore purchases",
+    "purchaseFailed": "Purchase failed",
+    "disclosure": "After your 4-day free trial, $4.90/month. Cancel anytime. By subscribing you agree to our Terms of Use.",
+    "promo": {
+      "haveCode": "Have a promo code?",
+      "placeholder": "Enter promo code",
+      "apply": "Apply",
+      "success": "Promo code applied successfully!",
+      "invalid": "Invalid promo code",
+      "failed": "Failed to apply promo code"
     }
   },
   "common": {

@@ -478,6 +478,34 @@
     "successDesc": "感谢您的举报。",
     "errorSubmitting": "提交举报失败。请重试。"
   },
+  "subscription": {
+    "status": {
+      "free": "免费",
+      "trial": "试用（剩余 {{days}} 天）",
+      "premium": "高级版",
+      "lifetime": "终身"
+    },
+    "activated": "订阅已激活！",
+    "activeDesc": "您可以使用 Family Huddle 的所有功能。",
+    "freeDesc": "订阅以解锁 Family Huddle 的所有功能。",
+    "lifetimeDesc": "您拥有所有高级功能的终身访问权。",
+    "renewsOn": "续订日期：{{date}}",
+    "subscribeNow": "立即订阅",
+    "manageOnGooglePlay": "在 Google Play 管理",
+    "restore": "恢复购买",
+    "restoreSuccess": "购买已成功恢复",
+    "restoreFailed": "无法恢复购买",
+    "purchaseFailed": "购买失败",
+    "disclosure": "4 天免费试用后，$4.90/月。随时取消。订阅即表示您同意我们的使用条款。",
+    "promo": {
+      "haveCode": "有促销码？",
+      "placeholder": "输入促销码",
+      "apply": "应用",
+      "success": "促销码已成功应用！",
+      "invalid": "促销码无效",
+      "failed": "应用促销码失败"
+    }
+  },
   "common": {
     "loading": "加载中...",
     "error": "错误",

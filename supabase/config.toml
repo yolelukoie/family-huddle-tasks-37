@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.notify-membership-change]
 verify_jwt = false
+
+[functions.redeem-promo-code]
+verify_jwt = false

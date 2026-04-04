@@ -22,6 +22,7 @@ import NotFound from "./pages/NotFound";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import { AssignmentModalProvider } from "@/contexts/AssignmentModalContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { SubscriptionProvider } from "@/hooks/useSubscription";
 import { isPlatform } from "@/lib/platform";
 
 function RealtimeRoot() {
@@ -102,6 +103,7 @@ const App = () => (
         <AuthProvider>
           <CelebrationsProvider>
             <AppProvider>
+              <SubscriptionProvider>
               <TasksProvider>
                 <AssignmentModalProvider>
                   <DeepLinkHandler />
@@ -115,6 +117,7 @@ const App = () => (
                   </Routes>
                 </AssignmentModalProvider>
               </TasksProvider>
+              </SubscriptionProvider>
             </AppProvider>
           </CelebrationsProvider>
         </AuthProvider>

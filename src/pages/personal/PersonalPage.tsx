@@ -18,7 +18,7 @@ import { isPlatform, getCurrentPlatform } from '@/lib/platform';
 import { ThemeSelector } from '@/components/theme/ThemeSelector';
 import { CharacterImageCustomizer } from '@/components/character/CharacterImageCustomizer';
 import { useToast } from '@/hooks/use-toast';
-import { initiateSubscription } from '@/config/subscription';
+import { SubscriptionStatusCard } from '@/components/subscription/SubscriptionStatusCard';
 import { supabase } from '@/integrations/supabase/client';
 
 const LANGUAGES = [
@@ -457,20 +457,7 @@ export default function PersonalPage() {
         <PushDebugCard />
 
         {/* Subscription */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Settings className="h-5 w-5" />
-              {t('personal.subscription')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">{t('personal.subscriptionDesc')}</p>
-            <Button variant="theme" onClick={() => user?.id && initiateSubscription(user.id)} disabled={!user?.id}>
-              {t('personal.manageSubscription')}
-            </Button>
-          </CardContent>
-        </Card>
+        <SubscriptionStatusCard />
 
         {/* Reset Character */}
         <Card>
