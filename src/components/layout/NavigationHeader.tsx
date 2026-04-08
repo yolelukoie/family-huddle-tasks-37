@@ -66,7 +66,7 @@ export function NavigationHeader({ title, showBackButton = true }: NavigationHea
             <DropdownMenuContent className="w-56" align="end" forceMount>
               <DropdownMenuItem 
                 className="font-medium cursor-pointer"
-                onClick={() => navigate(ROUTES.personal)}
+                onClick={() => navigate(ROUTES.personal, { replace: true })}
               >
                 <div className="flex items-center justify-between w-full">
                   <div className="flex flex-col space-y-1">
@@ -92,7 +92,7 @@ export function NavigationHeader({ title, showBackButton = true }: NavigationHea
                 key={route}
                 variant={isActive ? "default" : "outline"}
                 size="sm"
-                onClick={() => navigate(route)}
+                onClick={() => navigate(route, { replace: true })}
                 className={cn(
                   "flex items-center gap-2 whitespace-nowrap transition-all",
                   isActive && "shadow-md bg-gradient-to-br from-primary to-[hsl(var(--icon-tint))]"

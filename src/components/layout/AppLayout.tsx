@@ -31,6 +31,7 @@ import {
   NativePushPrompt,
   hasSeenNativePushPrompt,
 } from "@/components/notifications/NativePushPrompt";
+import { PaywallOverlay } from '@/components/subscription/PaywallOverlay';
 
 export function AppLayout() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
@@ -56,6 +57,8 @@ export function AppLayout() {
 
     // Native: auto-register push ONLY if user already accepted the prompt before.
     // On first run, NativePushPrompt handles the permission flow to avoid double-prompting.
+    let nativeResumeCleanup: (() => void) | undefined;
+
     if (isPlatform('capacitor')) {
       const alreadyPrompted = hasSeenNativePushPrompt();
       if (alreadyPrompted) {
@@ -86,7 +89,7 @@ export function AppLayout() {
         }).then(h => { nativeResumeListenerHandle = h; });
       }).catch(() => {});
 
-      let nativeResumeCleanup = () => {
+      nativeResumeCleanup = () => {
         nativeResumeListenerHandle?.remove();
       };
     } else {
@@ -169,7 +172,7 @@ export function AppLayout() {
 
     return () => {
       unsubscribe?.();
-      if (typeof nativeResumeCleanup === 'function') nativeResumeCleanup();
+      nativeResumeCleanup?.();
     };
   }, [isAuthenticated, user?.id, toast, openAssignmentModal, navigate]);
 
@@ -388,6 +391,7 @@ export function AppLayout() {
 
   return (
     <div>
+      <PaywallOverlay />
       <Routes>
         <Route index element={<MainPage />} />
         <Route path={ROUTES.onboarding.slice(1)} element={<OnboardingPage />} />

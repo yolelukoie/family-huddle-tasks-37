@@ -42,6 +42,7 @@ const DEFAULT_STATUS: SubscriptionStatus = {
 // ---------------------------------------------------------------------------
 
 let initialized = false;
+let currentUserId: string | null = null;
 const listeners: Set<StatusListener> = new Set();
 
 // ---------------------------------------------------------------------------
@@ -76,8 +77,19 @@ function notifyListeners(status: SubscriptionStatus) {
 // ---------------------------------------------------------------------------
 
 export async function initRevenueCat(userId: string): Promise<void> {
-  if (!isNative() || initialized) return;
+  if (!isNative()) return;
 
+  // Already configured for this user — nothing to do
+  if (initialized && currentUserId === userId) return;
+
+  // Already configured but for a different user — switch via logIn
+  if (initialized && currentUserId !== userId) {
+    await Purchases.logIn({ appUserID: userId });
+    currentUserId = userId;
+    return;
+  }
+
+  // First-time init
   await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG });
   await Purchases.configure({ apiKey: API_KEY, appUserID: userId });
 
@@ -87,6 +99,13 @@ export async function initRevenueCat(userId: string): Promise<void> {
   });
 
   initialized = true;
+  currentUserId = userId;
+}
+
+export function resetRevenueCat(): void {
+  initialized = false;
+  currentUserId = null;
+  listeners.clear();
 }
 
 export async function getSubscriptionStatus(): Promise<SubscriptionStatus> {

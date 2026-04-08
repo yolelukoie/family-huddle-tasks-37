@@ -429,7 +429,7 @@
     "welcomeTitle": "¡Bienvenido a Family Huddle!",
     "completeProfile": "Completa tu perfil para comenzar tu aventura familiar",
     "trialTitle": "Comienza tu prueba gratuita de 4 días",
-    "trialDesc": "Prueba Family Huddle con todas las funciones gratis durante 4 días. Sin compromiso. Después puedes continuar con un plan de pago o cancelar en cualquier momento desde la página de Configuración Personal.",
+    "trialDesc": "Disfruta todas las funciones de Family Huddle gratis durante 4 días. No se requiere tarjeta de crédito.",
     "startTrial": "Comenzar prueba gratuita",
     "setupProfile": "Configura tu perfil",
     "setupProfileDesc": "Cuéntanos sobre ti y únete a tu familia",
@@ -497,6 +497,7 @@
     "restoreFailed": "No se pudieron restaurar las compras",
     "purchaseFailed": "Error en la compra",
     "disclosure": "Después de tu prueba gratuita de 4 días, $4.90/mes. Cancela en cualquier momento. Al suscribirte aceptas nuestros Términos de Uso.",
+    "trialEndsOn": "Tu prueba gratuita termina el {{date}}",
     "promo": {
       "haveCode": "¿Tienes un código promocional?",
       "placeholder": "Ingresa el código",
@@ -505,6 +506,11 @@
       "invalid": "Código promocional no válido",
       "failed": "Error al aplicar el código"
     }
+  },
+  "paywall": {
+    "title": "Tu prueba gratuita ha terminado",
+    "description": "Suscríbete para seguir usando Family Huddle con todas las funciones.",
+    "subscribe": "Suscribirse — $4.90/mes"
   },
   "common": {
     "loading": "Cargando...",

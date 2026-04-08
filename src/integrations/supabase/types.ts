@@ -279,6 +279,7 @@ export type Database = {
           id: string
           preferred_language: string | null
           profile_complete: boolean
+          trial_started_at: string | null
           updated_at: string
         }
         Insert: {
@@ -290,6 +291,7 @@ export type Database = {
           id: string
           preferred_language?: string | null
           profile_complete?: boolean
+          trial_started_at?: string | null
           updated_at?: string
         }
         Update: {
@@ -301,6 +303,7 @@ export type Database = {
           id?: string
           preferred_language?: string | null
           profile_complete?: boolean
+          trial_started_at?: string | null
           updated_at?: string
         }
         Relationships: [

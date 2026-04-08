@@ -1,9 +1,10 @@
-import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useMemo, type ReactNode } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { isPlatform } from '@/lib/platform';
 import {
   initRevenueCat,
+  resetRevenueCat,
   getSubscriptionStatus,
   purchaseDefaultPackage,
   purchasePromoOffering,
@@ -15,6 +16,12 @@ import {
 } from '@/config/subscription';
 
 // ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+const TRIAL_DURATION_MS = 4 * 24 * 60 * 60 * 1000; // 4 days
+
+// ---------------------------------------------------------------------------
 // Context type
 // ---------------------------------------------------------------------------
 
@@ -22,6 +29,10 @@ interface SubscriptionContextType {
   status: SubscriptionStatus;
   isPremium: boolean;
   isLoading: boolean;
+  isTrialActive: boolean;
+  trialExpiresAt: Date | null;
+  isTrialExpired: boolean;
+  shouldShowPaywall: boolean;
   purchase: () => Promise<PurchaseResult>;
   purchaseWithPromo: () => Promise<PurchaseResult>;
   redeemLifetimeCode: (code: string) => Promise<{ success: boolean; error?: string }>;
@@ -46,6 +57,28 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [status, setStatus] = useState<SubscriptionStatus>(DEFAULT_STATUS);
   const [isLoading, setIsLoading] = useState(true);
+
+  // -- Trial computation --
+
+  const trialExpiresAt = useMemo(() => {
+    if (!user?.trialStartedAt) return null;
+    return new Date(new Date(user.trialStartedAt).getTime() + TRIAL_DURATION_MS);
+  }, [user?.trialStartedAt]);
+
+  const [, forceRender] = useState(0);
+
+  useEffect(() => {
+    if (!trialExpiresAt) return;
+    const msUntilExpiry = trialExpiresAt.getTime() - Date.now();
+    if (msUntilExpiry <= 0) return; // already expired
+    const timer = setTimeout(() => forceRender((n) => n + 1), msUntilExpiry + 100);
+    return () => clearTimeout(timer);
+  }, [trialExpiresAt]);
+
+  const isTrialExpired = trialExpiresAt ? Date.now() > trialExpiresAt.getTime() : false;
+  const isTrialActive = trialExpiresAt ? !isTrialExpired : false;
+  const isPremium = status.isActive;
+  const shouldShowPaywall = isTrialExpired && !isPremium;
 
   // Initialize RevenueCat and fetch initial status
   useEffect(() => {
@@ -84,6 +117,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
       removeStatusListener(listener);
+      setStatus(DEFAULT_STATUS);
     };
   }, [user?.id]);
 
@@ -122,6 +156,14 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         if (isPlatform('capacitor')) {
           const restored = await restoreRC();
           setStatus(restored);
+        } else {
+          // On web, trust the server response and set status directly
+          setStatus({
+            isActive: true,
+            isTrialing: false,
+            isLifetime: true,
+            plan: 'premium',
+          });
         }
 
         return { success: true };
@@ -146,8 +188,12 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     <SubscriptionContext.Provider
       value={{
         status,
-        isPremium: status.isActive,
+        isPremium,
         isLoading,
+        isTrialActive,
+        trialExpiresAt,
+        isTrialExpired,
+        shouldShowPaywall,
         purchase,
         purchaseWithPromo,
         redeemLifetimeCode,

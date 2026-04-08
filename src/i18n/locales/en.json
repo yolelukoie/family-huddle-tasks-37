@@ -406,7 +406,7 @@
     "welcomeTitle": "Welcome to Family Huddle!",
     "completeProfile": "Complete your profile to start your family adventure",
     "trialTitle": "Start your 4-day free trial",
-    "trialDesc": "Try Family Huddle with all features free for 4 days. After your trial, just $4.90/month. Cancel anytime from the Settings page.",
+    "trialDesc": "Enjoy all Family Huddle features free for 4 days. No credit card required.",
     "startTrial": "Start free trial",
     "setupProfile": "Set up your profile",
     "setupProfileDesc": "Tell us about yourself and join your family",
@@ -669,6 +669,7 @@
     "restoreFailed": "Could not restore purchases",
     "purchaseFailed": "Purchase failed",
     "disclosure": "After your 4-day free trial, $4.90/month. Cancel anytime. By subscribing you agree to our Terms of Use.",
+    "trialEndsOn": "Your free trial ends on {{date}}",
     "promo": {
       "haveCode": "Have a promo code?",
       "placeholder": "Enter promo code",
@@ -677,6 +678,11 @@
       "invalid": "Invalid promo code",
       "failed": "Failed to apply promo code"
     }
+  },
+  "paywall": {
+    "title": "Your free trial has ended",
+    "description": "Subscribe to continue using Family Huddle with all features.",
+    "subscribe": "Subscribe — $4.90/month"
   },
   "common": {
     "loading": "Loading...",

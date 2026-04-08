@@ -11,7 +11,7 @@ import { isPlatform } from '@/lib/platform';
 
 export function SubscriptionStatusCard() {
   const { t } = useTranslation();
-  const { status, isLoading, purchase, restore } = useSubscription();
+  const { status, isLoading, purchase, restore, isTrialActive, trialExpiresAt } = useSubscription();
   const { toast } = useToast();
   const [restoring, setRestoring] = useState(false);
   const [purchasing, setPurchasing] = useState(false);
@@ -59,6 +59,10 @@ export function SubscriptionStatusCard() {
         : 0;
       return <Badge className="bg-blue-500 text-white">{t('subscription.status.trial', { days: daysLeft })}</Badge>;
     }
+    if (isTrialActive && trialExpiresAt) {
+      const daysLeft = Math.max(0, Math.ceil((trialExpiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+      return <Badge className="bg-blue-500 text-white">{t('subscription.status.trial', { days: daysLeft })}</Badge>;
+    }
     if (status.isActive) {
       return <Badge className="bg-green-500 text-white">{t('subscription.status.premium')}</Badge>;
     }
@@ -103,7 +107,13 @@ export function SubscriptionStatusCard() {
           </p>
         )}
 
-        {!status.isActive && (
+        {isTrialActive && trialExpiresAt && (
+          <p className="text-sm text-muted-foreground">
+            {t('subscription.trialEndsOn', { date: trialExpiresAt.toLocaleDateString() })}
+          </p>
+        )}
+
+        {!status.isActive && !isTrialActive && (
           <p className="text-sm text-muted-foreground">{t('subscription.freeDesc')}</p>
         )}
 

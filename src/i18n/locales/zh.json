@@ -429,7 +429,7 @@
     "welcomeTitle": "欢迎来到 Family Huddle！",
     "completeProfile": "完成您的个人资料以开始家庭冒险",
     "trialTitle": "开始4天免费试用",
-    "trialDesc": "免费试用 Family Huddle 的所有功能4天。无需承诺。之后您可以继续付费计划或随时从个人设置页面取消。",
+    "trialDesc": "免费享用 Family Huddle 的所有功能4天。无需信用卡。",
     "startTrial": "开始免费试用",
     "setupProfile": "设置您的个人资料",
     "setupProfileDesc": "告诉我们关于您的信息并加入您的家庭",
@@ -497,6 +497,7 @@
     "restoreFailed": "无法恢复购买",
     "purchaseFailed": "购买失败",
     "disclosure": "4 天免费试用后，$4.90/月。随时取消。订阅即表示您同意我们的使用条款。",
+    "trialEndsOn": "您的免费试用将于 {{date}} 结束",
     "promo": {
       "haveCode": "有促销码？",
       "placeholder": "输入促销码",
@@ -505,6 +506,11 @@
       "invalid": "促销码无效",
       "failed": "应用促销码失败"
     }
+  },
+  "paywall": {
+    "title": "您的免费试用已结束",
+    "description": "订阅以继续使用 Family Huddle 的所有功能。",
+    "subscribe": "订阅 — $4.90/月"
   },
   "common": {
     "loading": "加载中...",

@@ -212,9 +212,121 @@ import { Task } from "@/lib/types";
 
 ---
 
+## PM Interview Protocol
+
+When the user says `pm:` followed by a request, **do NOT launch the PM agent immediately**. First run the interview protocol below. The PM agent cannot interact with the user (it runs as an isolated subprocess), so the main agent must conduct the interview and pass a complete brief.
+
+### Step 1: Classify the request
+
+Identify the request type — it determines which questions to ask:
+- **Feature request**: Something new to build (new page, new flow, new capability)
+- **Bug fix**: Something broken (symptom, reproduction steps, expected vs actual)
+- **Investigation**: Something suspected wrong (area of concern, triggering symptom)
+- **Cleanup / optimization**: Reducing debt or improving performance (goal, constraints)
+
+### Step 2: Quick codebase check
+
+Before asking questions, use Read/Glob/Grep to check what already exists in the relevant area. Do not ask the user about something you can discover yourself.
+
+### Step 3: Interview the user
+
+Group ALL questions into a single message. Never ask one question at a time.
+
+**For EVERY request, ask about:**
+- **Exact scope**: Which pages, flows, components, or data are affected?
+- **Exact behavior**: What should the end result look, feel, and work like — step by step?
+- **Priority**: If multiple things are requested, what order?
+- **Constraints**: What must NOT change? What is explicitly out of scope?
+- **Platform**: Android (Capacitor) only? Web only? Both?
+- **Edge cases**: What happens on logout, no network, expired session, first-time use?
+
+**For feature requests, also ask about:**
+- User-visible placement (which page? which menu? which button?)
+- Persistence (does this setting survive logout? app restart?)
+- Permissions (who can use this feature — all users, admins, premium only?)
+- Fallback (what happens if the feature fails or is unavailable?)
+
+**For bug fixes, also ask about:**
+- Exact reproduction steps
+- How often does it happen? Always, or intermittently?
+- Which users are affected? All users, or specific conditions?
+- Is there a workaround currently?
+
+**Question format:**
+```
+Before I hand this off to the PM, I need to understand a few things:
+
+1. **[Topic]**: [Question] (this affects [why it matters to the plan])
+2. **[Topic]**: [Question] (this affects [...])
+3. ...
+```
+
+**Stopping criteria:**
+- After 2 rounds of questions, stop asking even if gaps remain
+- Fill remaining gaps with reasonable defaults and mark them as assumptions
+
+**Contradiction handling:**
+If the user says something that contradicts an earlier statement, surface it immediately:
+"Earlier you said [X], but now you said [Y]. These conflict — which should I go with?"
+
+### Step 4: Build the technical plan and get approval
+
+Present the plan to the user:
+
+```
+## Technical Plan: [Feature/Fix Name]
+
+### What you asked for
+[Restate the request in your own words]
+
+### What will change
+- [Specific technical change, with the affected file or component named]
+
+### What will NOT change
+- [Explicitly out-of-scope items]
+
+### My assumptions
+- [Assumption — I assumed X because you did not specify. Correct me if wrong.]
+
+### Success criteria
+- [Concrete, testable statement of done]
+```
+
+**The user must confirm this plan before the PM agent is launched.**
+
+### Step 5: Launch PM with the complete brief
+
+Once the user approves, launch the PM agent with this exact handoff format:
+
+```
+## Pre-Interview Complete — Skip to codebase exploration
+
+### Original request
+[What the user said verbatim]
+
+### Request type
+[feature / bug fix / investigation / cleanup]
+
+### Interview answers
+[All clarified answers from the user, organized by topic]
+
+### Approved technical plan
+[The full plan the user approved]
+
+### Assumptions marked by user
+[Any defaults the user did not override — PM should treat these as confirmed]
+
+Proceed directly to codebase exploration and agent pipeline selection.
+Do NOT re-interview the user. The interview is complete.
+```
+
+---
+
 ## Agents Available
 
 Three global agents are configured for this project:
+
+**`@pm`** — Product Manager agent. Coordinates the full agent pipeline: selects the right agent team, orchestrates their work in sequence, passes payloads between agents, reports progress, and gets user approval at checkpoints. **Always launched via the PM Interview Protocol above** — never directly.
 
 **`@archaeologist`** — Find dead code AND cross-file inconsistencies. Scans whole project. Read-only. Use before any cleanup PR.
 
