@@ -34,7 +34,7 @@ interface SubscriptionContextType {
   isTrialExpired: boolean;
   shouldShowPaywall: boolean;
   purchase: () => Promise<PurchaseResult>;
-  purchaseWithPromo: () => Promise<PurchaseResult>;
+  purchaseWithPromo: (offeringId: string) => Promise<PurchaseResult>;
   redeemLifetimeCode: (code: string) => Promise<{ success: boolean; error?: string }>;
   restore: () => Promise<void>;
   refreshStatus: () => Promise<void>;
@@ -129,8 +129,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     return result;
   }, []);
 
-  const purchaseWithPromo = useCallback(async (): Promise<PurchaseResult> => {
-    const result = await purchasePromoOffering();
+  const purchaseWithPromo = useCallback(async (offeringId: string): Promise<PurchaseResult> => {
+    const result = await purchasePromoOffering(offeringId);
     if (result.status) setStatus(result.status);
     return result;
   }, []);

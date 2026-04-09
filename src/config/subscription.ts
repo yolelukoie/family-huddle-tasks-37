@@ -139,14 +139,14 @@ export async function purchaseDefaultPackage(): Promise<PurchaseResult> {
   }
 }
 
-export async function purchasePromoOffering(): Promise<PurchaseResult> {
+export async function purchasePromoOffering(offeringId: string): Promise<PurchaseResult> {
   if (!isNative() || !initialized) {
     return { success: false, error: 'Subscriptions are only available on Android' };
   }
 
   try {
     const offerings = await Purchases.getOfferings();
-    const offering = offerings.all['30'];
+    const offering = offerings.all[offeringId];
     if (!offering || offering.availablePackages.length === 0) {
       return { success: false, error: 'Promo offering not available' };
     }

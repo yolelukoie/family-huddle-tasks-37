@@ -26,9 +26,14 @@ export function PromoCodeInput({ alwaysOpen = false }: PromoCodeInputProps) {
 
     setIsLoading(true);
     try {
-      // Check if this is the Google Play promo code
-      if (trimmed.toUpperCase() === '30FOR3') {
-        const result = await purchaseWithPromo();
+      // Codes that map to a RevenueCat offering (Google Play billing flow)
+      const OFFERING_CODES: Record<string, string> = {
+        '30FOR3': '30',
+        'BETATESTER': 'testers',
+      };
+      const offeringId = OFFERING_CODES[trimmed.toUpperCase()];
+      if (offeringId) {
+        const result = await purchaseWithPromo(offeringId);
         if (result.success) {
           toast({ title: t('subscription.promo.success') });
           setCode('');

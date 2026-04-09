@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 // Lifetime promo codes — add any valid codes here
-const LIFETIME_CODES = new Set(["FAMILYFREE", "BETATESTER"]);
+const LIFETIME_CODES = new Set(["FAMILYFREE"]);
 
 Deno.serve(async (req) => {
   // Handle CORS preflight
