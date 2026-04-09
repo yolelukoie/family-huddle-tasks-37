@@ -13,7 +13,7 @@ interface PromoCodeInputProps {
 
 export function PromoCodeInput({ alwaysOpen = false }: PromoCodeInputProps) {
   const { t } = useTranslation();
-  const { purchaseWithPromo, redeemLifetimeCode, refreshStatus } = useSubscription();
+  const { purchaseWithPromo, redeemLifetimeCode } = useSubscription();
   const { toast } = useToast();
 
   const [code, setCode] = useState('');
@@ -50,7 +50,6 @@ export function PromoCodeInput({ alwaysOpen = false }: PromoCodeInputProps) {
         if (result.success) {
           toast({ title: t('subscription.promo.success') });
           setCode('');
-          await refreshStatus();
         } else {
           toast({
             title: t('subscription.promo.invalid'),

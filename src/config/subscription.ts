@@ -130,7 +130,11 @@ export async function purchaseDefaultPackage(): Promise<PurchaseResult> {
     const pkg = offering.availablePackages[0];
     const { customerInfo } = await Purchases.purchasePackage({ aPackage: pkg });
     const status = parseStatus(customerInfo);
-    return { success: status.isActive, status };
+    return {
+      success: status.isActive,
+      status,
+      ...(!status.isActive && { error: 'Purchase completed but entitlement not activated. Try restoring purchases.' }),
+    };
   } catch (e: any) {
     if (e?.code === PURCHASES_ERROR_CODE.PURCHASE_CANCELLED_ERROR) {
       return { success: false, cancelled: true };

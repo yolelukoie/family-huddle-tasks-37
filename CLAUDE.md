@@ -212,11 +212,27 @@ import { Task } from "@/lib/types";
 
 ---
 
-## PM Interview Protocol
+## PM Protocol — Main Agent Acts as Product Manager
 
-When the user says `pm:` followed by a request, **do NOT launch the PM agent immediately**. First run the interview protocol below. The PM agent cannot interact with the user (it runs as an isolated subprocess), so the main agent must conduct the interview and pass a complete brief.
+When the user says `pm:` followed by a request, the main agent becomes the PM. You orchestrate the full agent pipeline yourself — interviewing the user, calling specialist agents one at a time, showing every report in chat, and getting approval at each step.
 
-### Step 1: Classify the request
+**Why you do this directly (not via a PM subagent):** Only the main agent can talk to the user. Subagents run in isolated subprocesses — their output is hidden from the user, they cannot ask questions, and they cannot get mid-execution approval. You are the only entity that can show reports, get approvals, and conduct interviews.
+
+### PM Rules — Read Before Doing Anything
+
+1. **Interview first** — never call an agent without completing the interview and getting plan approval
+2. **Never read/analyze code yourself** — if code analysis is needed, call Analyst or Archaeologist
+3. **Never modify files yourself** — that's the Implementer's job
+4. **Call ONE agent at a time** — after each agent returns, show the full report in chat and STOP
+5. **Always get approval** before calling the next agent (except Debugger after test failures)
+6. **Pass complete YAML payloads** — never summarize or truncate handoffs between agents
+7. **Respect agent boundaries** — don't ask the Analyst to fix code, don't ask the Tester to debug
+
+---
+
+### Phase 1: Interview
+
+#### Step 1: Classify the request
 
 Identify the request type — it determines which questions to ask:
 - **Feature request**: Something new to build (new page, new flow, new capability)
@@ -224,11 +240,11 @@ Identify the request type — it determines which questions to ask:
 - **Investigation**: Something suspected wrong (area of concern, triggering symptom)
 - **Cleanup / optimization**: Reducing debt or improving performance (goal, constraints)
 
-### Step 2: Quick codebase check
+#### Step 2: Quick codebase check
 
 Before asking questions, use Read/Glob/Grep to check what already exists in the relevant area. Do not ask the user about something you can discover yourself.
 
-### Step 3: Interview the user
+#### Step 3: Interview the user
 
 Group ALL questions into a single message. Never ask one question at a time.
 
@@ -254,22 +270,18 @@ Group ALL questions into a single message. Never ask one question at a time.
 
 **Question format:**
 ```
-Before I hand this off to the PM, I need to understand a few things:
+Before I start, I need to understand a few things:
 
 1. **[Topic]**: [Question] (this affects [why it matters to the plan])
 2. **[Topic]**: [Question] (this affects [...])
 3. ...
 ```
 
-**Stopping criteria:**
-- After 2 rounds of questions, stop asking even if gaps remain
-- Fill remaining gaps with reasonable defaults and mark them as assumptions
+**Stopping criteria:** After 2 rounds of questions, stop. Fill remaining gaps with reasonable defaults and mark them as assumptions.
 
-**Contradiction handling:**
-If the user says something that contradicts an earlier statement, surface it immediately:
-"Earlier you said [X], but now you said [Y]. These conflict — which should I go with?"
+**Contradiction handling:** If the user contradicts an earlier statement, surface it immediately and resolve before proceeding.
 
-### Step 4: Build the technical plan and get approval
+#### Step 4: Build the technical plan and get approval
 
 Present the plan to the user:
 
@@ -285,6 +297,11 @@ Present the plan to the user:
 ### What will NOT change
 - [Explicitly out-of-scope items]
 
+### Agent pipeline
+1. [Agent name]: [what they will do]
+2. [Agent name]: [what they will do]
+...
+
 ### My assumptions
 - [Assumption — I assumed X because you did not specify. Correct me if wrong.]
 
@@ -292,49 +309,145 @@ Present the plan to the user:
 - [Concrete, testable statement of done]
 ```
 
-**The user must confirm this plan before the PM agent is launched.**
+**The user must confirm this plan before any agent is called.** If the user corrects an assumption, update the plan and re-present.
 
-### Step 5: Launch PM with the complete brief
+---
 
-Once the user approves, launch the PM agent with this exact handoff format:
+### Phase 2: Select Pipeline
+
+Choose the pipeline based on request type:
+
+| Request type | Pipeline |
+|-------------|----------|
+| Feature / Bug fix | Analyst → Implementer → Tester → (if failures) Debugger loop |
+| Cleanup / dead code | Archaeologist → Implementer → Tester → (if failures) Debugger loop |
+| Performance | Optimizer → Implementer → Tester → (if failures) Debugger loop |
+| Investigation only | Analyst → report to user (no implementation) |
+
+Pipeline constraints:
+- Tester must come AFTER Implementer
+- Debugger must come AFTER Tester
+- Every pipeline with Tester must include Debugger loop for failures
+- You may chain Analyst + Optimizer if a feature has performance concerns
+
+---
+
+### Phase 3: Execute
+
+#### Calling agents
+
+When calling each agent via the Agent tool, you MUST:
+1. Write a **complete, self-contained prompt** — the agent starts fresh with no prior context
+2. Include the **full YAML handoff payload** from the previous agent — copy it verbatim
+3. Specify the project path: `/Users/yanasklar/GitHub/Family Huddle`
+4. Include environment setup: `export PATH="/Users/yanasklar/.nvm/versions/node/v22.22.0/bin:$PATH"` for agents that run npm/npx
+
+#### Payload passing
+
+Each agent produces a structured YAML handoff. Pass it verbatim to the next agent:
 
 ```
-## Pre-Interview Complete — Skip to codebase exploration
-
-### Original request
-[What the user said verbatim]
-
-### Request type
-[feature / bug fix / investigation / cleanup]
-
-### Interview answers
-[All clarified answers from the user, organized by topic]
-
-### Approved technical plan
-[The full plan the user approved]
-
-### Assumptions marked by user
-[Any defaults the user did not override — PM should treat these as confirmed]
-
-Proceed directly to codebase exploration and agent pipeline selection.
-Do NOT re-interview the user. The interview is complete.
+Analyst/Archaeologist/Optimizer → Implementer:  handoff.subtasks[] + testableConditions
+Implementer → Tester:                           handoff.changedFiles[] + subtaskCompletions
+Tester → Debugger:                              handoff.failureReport[]
+Debugger → Implementer:                         handoff.fixSpecs[] + shouldLoop
 ```
+
+Include the payload in the next agent's prompt as:
+```
+## Input from [previous agent]
+<paste the full YAML handoff block here>
+```
+
+#### Reporting — MANDATORY after every agent
+
+After EACH agent completes, you MUST output the full report in chat. The user cannot see agent work directly — you are the user's ONLY window into what happened.
+
+```
+## [Agent Name] Complete — Step [N] of [Total]
+
+### What happened
+- [Technical finding] → Impact: [plain-language explanation]
+- [Another finding] → Impact: [...]
+
+### Numbers
+- Issues found: [N critical, N high, N medium]
+  — or — Files changed: N
+  — or — Tests: N passed, N failed
+
+### Key decisions
+- [Any judgment calls, in plain language]
+
+### What is next
+I plan to [next step]. Estimated scope: [N files, risk level].
+
+Shall I proceed?
+```
+
+The "→ Impact:" line is mandatory for every technical finding. Then **STOP and wait for approval**.
+
+#### The fix loop
+
+When the Tester reports failures:
+1. **Auto-proceed to Debugger** (no approval needed — expected flow). Pass ALL THREE payloads: Tester's, Implementer's, and Analyst's/Archaeologist's/Optimizer's.
+2. **HARD STOP after Debugger** — report findings, suggest fix plan, wait for approval.
+3. If approved: send fixSpecs to Implementer, then re-run Tester.
+4. **Maximum 3 iterations.** After 3, escalate to user with full context.
+
+#### Handling partial implementations
+
+If the Implementer reports `status: partial` or `status: skipped` for any subtask: report the incomplete items with the stated reason, ask whether to proceed to Tester or re-run Implementer.
+
+#### Error escalation
+
+When something unexpected happens:
+```
+## Problem Encountered
+
+### What happened
+[Plain language]
+
+### What I tried
+[Steps so far]
+
+### Why I am stopping
+[Concrete reason]
+
+### Options
+1. [Option A — effort estimate]
+2. [Option B — effort estimate]
+3. Stop and investigate manually
+
+Which would you prefer?
+```
+
+---
+
+### Phase 4: Deliver
+
+When all agents complete successfully:
+1. Summarize everything that was done
+2. List all files changed
+3. Note any manual testing needed
+4. Ask if the user wants to commit the changes
 
 ---
 
 ## Agents Available
 
-Three global agents are configured for this project:
+Five specialist agents are configured for this project. The main agent orchestrates them directly via the PM Protocol above.
 
-**`@pm`** — Product Manager agent. Coordinates the full agent pipeline: selects the right agent team, orchestrates their work in sequence, passes payloads between agents, reports progress, and gets user approval at checkpoints. **Always launched via the PM Interview Protocol above** — never directly.
+**`@analyst`** — Cross-file investigation. Builds mutation/subscription/event bus/auth maps to find race conditions, stale closures, orphaned events, initialization bugs. Read-only. Produces YAML handoff with subtasks + testableConditions.
 
-**`@archaeologist`** — Find dead code AND cross-file inconsistencies. Scans whole project. Read-only. Use before any cleanup PR.
+**`@archaeologist`** — Dead code + cross-file consistency. Finds unused exports, code litter, orphaned events, divergent implementations. Read-only. Produces YAML handoff with subtasks + deletion batches.
 
-**`@analyst`** — Build cross-reference matrices (mutation map, subscription map, event bus map, auth assumption map) to find race conditions, stale closures, orphaned events, and initialization ordering bugs. Read-only. Use before any fix involving shared state or realtime.
+**`@optimizer`** — Performance specialist. Scans for unnecessary re-renders, N+1 queries, bundle bloat, memory leaks, battery drain. Read-only. Produces YAML handoff with subtasks ranked by severity.
 
-**`@implementer`** — Execute an approved plan. Makes minimal edits, runs lint+typecheck after every file change, produces a handoff summary. Use only after analyst/archaeologist has given you a plan.
+**`@implementer`** — Executes approved plans. Makes minimal edits, runs lint+typecheck after every change. Produces YAML handoff with changedFiles + subtaskCompletions. Use only after a read-only agent has produced a plan.
 
-Pipeline: **archaeologist/analyst → you review → implementer**
+**`@tester`** — Generates and runs tests. Consumes Implementer's changedFiles and Analyst's testableConditions. Never modifies source code. Produces YAML handoff with test results + failures.
+
+**`@debugger`** — Root cause analysis of test failures. Classifies failures, identifies the critical failure step, produces fixSpecs for the Implementer. Read-only.
 
 ---
 
