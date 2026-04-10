@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Home, CheckSquare, Target, MessageCircle, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -14,6 +15,18 @@ interface NavigationHeaderProps {
 }
 
 export function NavigationHeader({ title }: NavigationHeaderProps) {
+  const headerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(() => {
+      document.documentElement.style.setProperty('--nav-height', `${el.offsetHeight}px`);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t } = useTranslation();
@@ -34,7 +47,7 @@ export function NavigationHeader({ title }: NavigationHeaderProps) {
   ];
 
   return (
-    <div className="bg-gradient-to-r from-[hsl(var(--gradient-start))]/30 to-[hsl(var(--gradient-end))]/30 border-b border-[hsl(var(--card-accent))]/20 sticky z-10 backdrop-blur-sm" style={{ top: 'env(safe-area-inset-top)' }}>
+    <div ref={headerRef} className="bg-gradient-to-r from-[hsl(var(--gradient-start))]/30 to-[hsl(var(--gradient-end))]/30 border-b border-[hsl(var(--card-accent))]/20 sticky z-10 backdrop-blur-sm" style={{ top: 'env(safe-area-inset-top)' }}>
       <div className="max-w-4xl mx-auto px-4 py-3">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">

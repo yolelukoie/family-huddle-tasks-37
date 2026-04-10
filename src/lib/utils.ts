@@ -25,6 +25,11 @@ export function formatDate(date: string | Date): string {
   return d.toLocaleDateString();
 }
 
+export const formatMessageTime = (date: string | Date): string => {
+  const d = new Date(date);
+  return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+};
+
 export function isToday(date: string | Date): boolean {
   const today = new Date();
   const compareDate = new Date(date);

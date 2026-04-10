@@ -8,6 +8,7 @@ import { AppProvider } from "@/hooks/useApp";
 import { TasksProvider } from "@/contexts/TasksContext";
 import { CelebrationsProvider } from "@/contexts/CelebrationsContext";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { ScrollToTop } from "@/components/layout/ScrollToTop";
 import { AuthPage } from "@/pages/auth/AuthPage";
 import AuthCallbackPage from "@/pages/auth/AuthCallbackPage";
 import NativeResetPasswordPage from "@/pages/auth/NativeResetPasswordPage";
@@ -106,6 +107,7 @@ const App = () => (
               <SubscriptionProvider>
               <TasksProvider>
                 <AssignmentModalProvider>
+                  <ScrollToTop />
                   <DeepLinkHandler />
                   <RealtimeRoot />
                   <Routes>
