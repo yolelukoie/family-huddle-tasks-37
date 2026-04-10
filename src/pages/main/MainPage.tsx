@@ -23,8 +23,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { isToday } from '@/lib/utils';
 import { AssignTaskModal } from '@/components/modals/AssignTaskModal';
 import { MilestoneCelebration } from '@/components/celebrations/MilestoneCelebration';
-import { Star, Calendar, Plus, RotateCcw, CheckCircle } from 'lucide-react';
-import { isBlocked, getBlockStatusText } from '@/lib/blockUtils';
+import { Star, Calendar, Plus, CheckCircle } from 'lucide-react';
+import { isBlocked } from '@/lib/blockUtils';
+import { useFeatureGate } from '@/hooks/useFeatureGate';
 
 export default function MainPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -46,7 +47,6 @@ export default function MainPage() {
     getTotalStars,
     resetCharacterProgress,
     addStars,
-    families,
     getUserFamily
   } = useApp();
   const {
@@ -181,26 +181,12 @@ export default function MainPage() {
     // Refresh component to show updated goal progress
     setRefreshKey(prev => prev + 1);
   };
-  const handleResetCharacter = async () => {
-    if (window.confirm(t('main.resetConfirm'))) {
-      await resetCharacterProgress(activeFamilyId);
-      resetBadgeProgress();
-      setPreviousStars(0);
-    }
-  };
-  const currentFamily = activeFamilyId ? families.find(f => f.id === activeFamilyId) : null;
+  const { gate } = useFeatureGate();
   const userMembership = activeFamilyId ? getUserFamily(activeFamilyId) : null;
   const userIsBlocked = isBlocked(userMembership);
 
-  // Build header title with block status if applicable
-  const headerTitle = currentFamily?.name 
-    ? (userIsBlocked 
-        ? `${currentFamily.name} — ${getBlockStatusText(userMembership, t)}` 
-        : currentFamily.name)
-    : t('main.title');
-
   return <div className="min-h-screen bg-gradient-to-b from-[hsl(var(--section-tint))] to-background">
-      <NavigationHeader title={headerTitle} showBackButton={false} />
+      <NavigationHeader title={t('main.title')} />
       
       <div className="max-w-4xl mx-auto p-4 space-y-6">
         {/* Greeting */}
@@ -321,7 +307,7 @@ export default function MainPage() {
             {t('main.goToTasks')}
           </Button>
           <Button 
-            onClick={() => !userIsBlocked && setShowAssignTask(true)} 
+            onClick={() => !userIsBlocked && gate(() => setShowAssignTask(true))}
             variant="theme" 
             className="h-14"
             disabled={userIsBlocked}

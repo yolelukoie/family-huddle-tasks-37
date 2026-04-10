@@ -34,7 +34,7 @@ interface SubscriptionContextType {
   isTrialExpired: boolean;
   shouldShowPaywall: boolean;
   purchase: () => Promise<PurchaseResult>;
-  purchaseWithPromo: (offeringId: string) => Promise<PurchaseResult>;
+  purchaseWithPromo: (offeringId: string, offerOptionId?: string) => Promise<PurchaseResult>;
   redeemLifetimeCode: (code: string) => Promise<{ success: boolean; error?: string }>;
   restore: () => Promise<void>;
   refreshStatus: () => Promise<void>;
@@ -129,8 +129,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     return result;
   }, []);
 
-  const purchaseWithPromo = useCallback(async (offeringId: string): Promise<PurchaseResult> => {
-    const result = await purchasePromoOffering(offeringId);
+  const purchaseWithPromo = useCallback(async (offeringId: string, offerOptionId?: string): Promise<PurchaseResult> => {
+    const result = await purchasePromoOffering(offeringId, offerOptionId);
     if (result.status) setStatus(result.status);
     return result;
   }, []);
@@ -145,25 +145,32 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         });
 
         if (error) {
-          return { success: false, error: error.message ?? 'Redemption failed' };
+          // Try to extract the actual error body from the edge function response
+          let detail = error.message ?? 'Redemption failed';
+          try {
+            const body = await (error as any).context?.json?.();
+            if (body?.error) detail = body.error;
+          } catch {}
+          return { success: false, error: detail };
         }
 
         if (data?.error) {
           return { success: false, error: data.error };
         }
 
-        // Refresh status from RevenueCat after server-side grant
+        // Trust the server response immediately — dismiss the paywall now
+        setStatus({
+          isActive: true,
+          isTrialing: false,
+          isLifetime: true,
+          plan: 'premium',
+        });
+
+        // Also sync RevenueCat in the background (it may have a short delay)
         if (isPlatform('capacitor')) {
-          const restored = await restoreRC();
-          setStatus(restored);
-        } else {
-          // On web, trust the server response and set status directly
-          setStatus({
-            isActive: true,
-            isTrialing: false,
-            isLifetime: true,
-            plan: 'premium',
-          });
+          restoreRC().then((s) => {
+            if (s.isActive) setStatus(s);
+          }).catch(() => {});
         }
 
         return { success: true };

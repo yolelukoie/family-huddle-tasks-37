@@ -8,6 +8,22 @@ Built with Lovable (AI-assisted dev platform). Actively developed — treat rece
 
 ---
 
+## Work Delegation Rules
+
+These rules apply to ALL work, not just `pm:` requests.
+
+| Scope of change | What to do |
+|----------------|-----------|
+| Trivial (1-2 lines, obvious fix, typo, config tweak) | Do it directly |
+| Requires code analysis (understanding control flow, finding root cause, checking cross-file impacts) | Delegate to Analyst or Archaeologist — never analyze code yourself |
+| Requires code changes across 2+ files | Full PM Protocol (interview → plan → approval → agents) |
+| Requires code changes in 1 file but logic is non-trivial | Delegate to Implementer with a clear plan |
+| Performance investigation | Delegate to Optimizer |
+
+**When in doubt, delegate.** It is always better to delegate to a specialist agent than to attempt complex work directly. You coordinate and communicate — agents do the technical work.
+
+---
+
 ## Commands
 
 ```bash

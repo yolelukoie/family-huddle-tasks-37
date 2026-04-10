@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useAuth } from '@/hooks/useAuth';
 import { useApp } from '@/hooks/useApp';
+import { useFeatureGate } from '@/hooks/useFeatureGate';
 import { NavigationHeader } from '@/components/layout/NavigationHeader';
 import { MemberProfileModal } from '@/components/modals/MemberProfileModal';
 import { BlockMemberModal } from '@/components/modals/BlockMemberModal';
@@ -23,6 +24,7 @@ export default function FamilyPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { activeFamilyId, userFamilies, families, setActiveFamilyId, createFamily, joinFamily, updateFamilyName, quitFamily, blockFamilyMember, unblockFamilyMember, getFamilyMembers, getUserProfile, getUserFamily } = useApp();
+  const { gate } = useFeatureGate();
   const { toast } = useToast();
   const [showJoinFamily, setShowJoinFamily] = useState(false);
   const [inviteCode, setInviteCode] = useState('');
@@ -47,9 +49,14 @@ export default function FamilyPage() {
 
   if (!user) return null;
 
-  const activeFamily = activeFamilyId ? families.find(f => f.id === activeFamilyId) : null;
   const userFamilyIds = userFamilies.map(uf => uf.familyId);
-  const allUserFamilies = families.filter(f => userFamilyIds.includes(f.id));
+  const allUserFamilies = families
+    .filter(f => userFamilyIds.includes(f.id))
+    .sort((a, b) => {
+      if (a.id === activeFamilyId) return -1;
+      if (b.id === activeFamilyId) return 1;
+      return 0;
+    });
 
   const getInitials = (name: string) => {
     return name
@@ -60,82 +67,88 @@ export default function FamilyPage() {
       .slice(0, 2);
   };
 
-  const handleJoinFamily = async (e: React.FormEvent) => {
+  const handleJoinFamily = (e: React.FormEvent) => {
     e.preventDefault();
     if (!inviteCode.trim()) return;
 
-    try {
-      const family = await joinFamily(inviteCode.trim());
-      if (family) {
-        setInviteCode('');
-        setShowJoinFamily(false);
+    gate(async () => {
+      try {
+        const family = await joinFamily(inviteCode.trim());
+        if (family) {
+          setInviteCode('');
+          setShowJoinFamily(false);
+          toast({
+            title: t('family.joinedSuccess'),
+            description: `${t('family.welcomeTo')} ${family.name}`,
+          });
+        } else {
+          toast({
+            title: t('family.invalidCode'),
+            description: t('family.invalidCodeDesc'),
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
         toast({
-          title: t('family.joinedSuccess'),
-          description: `${t('family.welcomeTo')} ${family.name}`,
-        });
-      } else {
-        toast({
-          title: t('family.invalidCode'),
-          description: t('family.invalidCodeDesc'),
+          title: t('family.errorJoining'),
+          description: t('family.errorJoiningDesc'),
           variant: "destructive",
         });
       }
-    } catch (error) {
-      toast({
-        title: t('family.errorJoining'),
-        description: t('family.errorJoiningDesc'),
-        variant: "destructive",
-      });
-    }
+    });
   };
 
-  const handleCreateFamily = async (e: React.FormEvent) => {
+  const handleCreateFamily = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newFamilyName.trim()) return;
 
-    try {
-      await createFamily(newFamilyName.trim());
-      setNewFamilyName('');
-      setShowCreateFamily(false);
-      toast({
-        title: t('family.createdSuccess'),
-        description: `${t('family.welcomeTo')} ${newFamilyName.trim()}`,
-      });
-    } catch (error) {
-      toast({
-        title: t('family.errorCreating'),
-        description: t('family.errorCreatingDesc'),
-        variant: "destructive",
-      });
-    }
+    gate(async () => {
+      try {
+        await createFamily(newFamilyName.trim());
+        setNewFamilyName('');
+        setShowCreateFamily(false);
+        toast({
+          title: t('family.createdSuccess'),
+          description: `${t('family.welcomeTo')} ${newFamilyName.trim()}`,
+        });
+      } catch (error) {
+        toast({
+          title: t('family.errorCreating'),
+          description: t('family.errorCreatingDesc'),
+          variant: "destructive",
+        });
+      }
+    });
   };
 
   const handleUpdateFamilyName = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingFamilyId || !editingFamilyName.trim()) return;
 
-    try {
-      await updateFamilyName(editingFamilyId, editingFamilyName.trim());
-      setEditingFamilyId(null);
-      setEditingFamilyName('');
-      toast({
-        title: t('family.nameUpdated'),
-        description: t('family.nameUpdatedDesc'),
-      });
-    } catch (error) {
-      console.error('Error updating family name:', error);
-      toast({
-        title: t('family.errorUpdatingName'),
-        description: t('family.errorUpdatingNameDesc'),
-        variant: "destructive",
-      });
-    }
+    gate(async () => {
+      try {
+        await updateFamilyName(editingFamilyId, editingFamilyName.trim());
+        setEditingFamilyId(null);
+        setEditingFamilyName('');
+        toast({
+          title: t('family.nameUpdated'),
+          description: t('family.nameUpdatedDesc'),
+        });
+      } catch (error) {
+        console.error('Error updating family name:', error);
+        toast({
+          title: t('family.errorUpdatingName'),
+          description: t('family.errorUpdatingNameDesc'),
+          variant: "destructive",
+        });
+      }
+    });
   };
 
   const handleQuitFamily = async (familyId: string) => {
     try {
       const success = await quitFamily(familyId);
-      
+
       if (!success) {
         toast({
           title: t('family.cannotQuit'),
@@ -162,7 +175,7 @@ export default function FamilyPage() {
 
   const MAX_DAILY_CODES = 10;
 
-  const generateAndShareCode = async (familyId: string) => {
+  const generateAndShareCode = (familyId: string) => {
     if (dailyCodeCount >= MAX_DAILY_CODES) {
       toast({
         title: t('family.dailyLimitReached') || 'Daily limit reached',
@@ -172,102 +185,108 @@ export default function FamilyPage() {
       return;
     }
 
-    setIsGeneratingCode(true);
-    try {
-      const { data, error } = await supabase
-        .rpc('regenerate_invite_code', { p_family_id: familyId });
-      
-      if (error) {
-        console.error('Error regenerating invite code:', error);
+    gate(async () => {
+      setIsGeneratingCode(true);
+      try {
+        const { data, error } = await supabase
+          .rpc('regenerate_invite_code', { p_family_id: familyId });
+
+        if (error) {
+          console.error('Error regenerating invite code:', error);
+          toast({
+            title: t('family.error'),
+            description: t('family.errorGeneratingCode') || 'Failed to generate invite code.',
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (data && data[0]) {
+          const newCode = data[0].new_invite_code;
+          // Try clipboard, fall back gracefully on Android
+          try {
+            await navigator.clipboard.writeText(newCode);
+          } catch {
+            // Clipboard API may fail on some Android webviews — ignore
+          }
+
+          const newCount = dailyCodeCount + 1;
+          setDailyCodeCount(newCount);
+          localStorage.setItem('invite_code_gen', JSON.stringify({
+            count: newCount,
+            date: new Date().toISOString().slice(0, 10),
+          }));
+
+          toast({
+            title: t('family.inviteCodeCopied'),
+            description: `${newCode} — ${t('family.codeActiveFor24Hours') || 'Active for 24 hours.'} (${newCount}/${MAX_DAILY_CODES})`,
+          });
+        }
+      } catch (err) {
+        console.error('Error generating invite code:', err);
         toast({
           title: t('family.error'),
           description: t('family.errorGeneratingCode') || 'Failed to generate invite code.',
           variant: "destructive",
         });
-        return;
+      } finally {
+        setIsGeneratingCode(false);
       }
-      
-      if (data && data[0]) {
-        const newCode = data[0].new_invite_code;
-        // Try clipboard, fall back gracefully on Android
-        try {
-          await navigator.clipboard.writeText(newCode);
-        } catch {
-          // Clipboard API may fail on some Android webviews — ignore
-        }
-
-        const newCount = dailyCodeCount + 1;
-        setDailyCodeCount(newCount);
-        localStorage.setItem('invite_code_gen', JSON.stringify({
-          count: newCount,
-          date: new Date().toISOString().slice(0, 10),
-        }));
-
-        toast({
-          title: t('family.inviteCodeCopied'),
-          description: `${newCode} — ${t('family.codeActiveFor24Hours') || 'Active for 24 hours.'} (${newCount}/${MAX_DAILY_CODES})`,
-        });
-      }
-    } catch (err) {
-      console.error('Error generating invite code:', err);
-      toast({
-        title: t('family.error'),
-        description: t('family.errorGeneratingCode') || 'Failed to generate invite code.',
-        variant: "destructive",
-      });
-    } finally {
-      setIsGeneratingCode(false);
-    }
+    });
   };
 
-  const handleBlockMember = async (memberId: string, familyId: string, reason: BlockReason, duration: BlockDuration) => {
-    try {
-      const success = await blockFamilyMember(familyId, memberId, reason, duration);
-      
-      if (success) {
-        toast({
-          title: t('block.memberBlocked'),
-          description: t('block.memberBlockedDesc'),
-        });
-      } else {
+  const handleBlockMember = (memberId: string, familyId: string, reason: BlockReason, duration: BlockDuration) => {
+    gate(async () => {
+      try {
+        const success = await blockFamilyMember(familyId, memberId, reason, duration);
+
+        if (success) {
+          toast({
+            title: t('block.memberBlocked'),
+            description: t('block.memberBlockedDesc'),
+          });
+        } else {
+          toast({
+            title: t('common.error'),
+            description: t('block.failedToBlock'),
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
         toast({
           title: t('common.error'),
           description: t('block.failedToBlock'),
           variant: "destructive",
         });
       }
-    } catch (error) {
-      toast({
-        title: t('common.error'),
-        description: t('block.failedToBlock'),
-        variant: "destructive",
-      });
-    }
+    });
   };
 
-  const handleUnblockMember = async (memberId: string, familyId: string) => {
-    try {
-      const success = await unblockFamilyMember(familyId, memberId);
-      
-      if (success) {
-        toast({
-          title: t('block.memberUnblocked'),
-          description: t('block.memberUnblockedDesc'),
-        });
-      } else {
+  const handleUnblockMember = (memberId: string, familyId: string) => {
+    gate(async () => {
+      try {
+        const success = await unblockFamilyMember(familyId, memberId);
+
+        if (success) {
+          toast({
+            title: t('block.memberUnblocked'),
+            description: t('block.memberUnblockedDesc'),
+          });
+        } else {
+          toast({
+            title: t('common.error'),
+            description: t('block.failedToUnblock'),
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
         toast({
           title: t('common.error'),
           description: t('block.failedToUnblock'),
           variant: "destructive",
         });
       }
-    } catch (error) {
-      toast({
-        title: t('common.error'),
-        description: t('block.failedToUnblock'),
-        variant: "destructive",
-      });
-    }
+    });
   };
 
   // Kicked-from-family handling is now global in useKickedFromFamily hook
@@ -277,53 +296,19 @@ export default function FamilyPage() {
       <NavigationHeader title={t('family.title')} />
       
       <div className="max-w-4xl mx-auto p-4 space-y-6">
-        {/* Active Family */}
-        {activeFamily && (
-          <Card accent>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                {t('family.activeFamily')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-medium">{activeFamily.name}</h3>
-                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                    <Star className="h-3 w-3" />
-                    <span>{userFamilies.find(uf => uf.familyId === activeFamilyId)?.totalStars || 0} {t('main.stars')}</span>
-                  </div>
-                </div>
-                <Button 
-                  variant="theme" 
-                  onClick={() => generateAndShareCode(activeFamily.id)}
-                  disabled={isGeneratingCode || dailyCodeCount >= MAX_DAILY_CODES}
-                >
-                  <Share className="h-4 w-4 mr-2" />
-                  {isGeneratingCode ? t('common.loading') : t('family.shareCode')}
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {t('family.inviteHint')} ({dailyCodeCount}/{MAX_DAILY_CODES})
-              </p>
-            </CardContent>
-          </Card>
-        )}
-
         {/* All Families */}
         <Card accent>
           <CardHeader>
-            <CardTitle>{t('family.yourFamilies')}</CardTitle>
+            <CardTitle className="text-2xl font-bold bg-gradient-to-r from-[hsl(var(--icon-tint))] to-[hsl(var(--family-celebration))] bg-clip-text text-transparent">{t('family.yourFamilies')}</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-4">
             {allUserFamilies.length === 0 ? (
               <p className="text-muted-foreground text-center py-4">
                 {t('family.noFamilies')}
               </p>
             ) : (
               allUserFamilies.map(family => (
-                <div key={family.id} className="p-4 border rounded-lg space-y-3">
+                <div key={family.id} className="p-4 border rounded-lg space-y-4">
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                     <div className="space-y-2">
                       <div className="font-medium text-lg">{family.name}</div>
@@ -337,6 +322,22 @@ export default function FamilyPage() {
                         )}
                       </div>
                     </div>
+                    {family.id === activeFamilyId && (
+                      <div className="sm:ml-auto sm:self-start">
+                        <Button
+                          variant="theme"
+                          size="sm"
+                          onClick={() => generateAndShareCode(family.id)}
+                          disabled={isGeneratingCode || dailyCodeCount >= MAX_DAILY_CODES}
+                        >
+                          <Share className="h-4 w-4 mr-2" />
+                          {isGeneratingCode ? t('common.loading') : t('family.shareCode')}
+                        </Button>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {t('family.inviteHint')} ({dailyCodeCount}/{MAX_DAILY_CODES})
+                        </p>
+                      </div>
+                    )}
                   </div>
                   <div className="flex flex-wrap gap-2 pt-2 border-t">
                     {/* Only show Members button if user is NOT blocked */}
@@ -422,13 +423,13 @@ export default function FamilyPage() {
                                             type="button"
                                             variant="ghost"
                                             size="icon"
-                                            onClick={() => {
+                                            onClick={() => gate(() => {
                                               setMemberToBlock({
                                                 userId: member.userId,
                                                 displayName: memberProfile?.displayName || t('memberProfile.defaultMemberName'),
                                                 familyId: family.id
                                               });
-                                            }}
+                                            })}
                                             className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                                           >
                                             <Ban className="h-4 w-4" />
@@ -526,70 +527,90 @@ export default function FamilyPage() {
         </Card>
 
         {/* Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">{t("family.joinFamily")}</CardTitle>
+              <CardTitle className="text-base">{t("family.joinFamily")}</CardTitle>
             </CardHeader>
             <CardContent>
-              {!showJoinFamily ? (
-                <Button onClick={() => setShowJoinFamily(true)} className="w-full">
-                  <Plus className="h-4 w-4 mr-2" />
-                  {t("family.join")}
-                </Button>
-              ) : (
-                <form onSubmit={handleJoinFamily} className="space-y-3">
-                  <Input
-                    value={inviteCode}
-                    onChange={(e) => setInviteCode(e.target.value)}
-                    placeholder={t("family.enterInviteCode")}
-                    required
-                  />
-                  <div className="flex gap-2">
-                    <Button type="submit" className="flex-1">{t("family.join")}</Button>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      onClick={() => setShowJoinFamily(false)}
-                    >
-                      {t("family.cancel")}
-                    </Button>
-                  </div>
-                </form>
-              )}
+              <Dialog open={showJoinFamily} onOpenChange={setShowJoinFamily}>
+                <DialogTrigger asChild>
+                  <Button className="w-full">
+                    <Plus className="h-4 w-4 mr-2" />
+                    {t("family.join")}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>{t("family.joinFamily")}</DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={handleJoinFamily} className="space-y-4">
+                    <div>
+                      <Label htmlFor="inviteCode">{t("family.inviteCode")}</Label>
+                      <Input
+                        id="inviteCode"
+                        value={inviteCode}
+                        onChange={(e) => setInviteCode(e.target.value)}
+                        placeholder={t("family.enterInviteCode")}
+                        required
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button type="submit" className="flex-1">{t("family.join")}</Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setShowJoinFamily(false)}
+                      >
+                        {t("family.cancel")}
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">{t("family.createFamily")}</CardTitle>
+              <CardTitle className="text-base">{t("family.createFamily")}</CardTitle>
             </CardHeader>
             <CardContent>
-              {!showCreateFamily ? (
-                <Button onClick={() => setShowCreateFamily(true)} className="w-full">
-                  <Plus className="h-4 w-4 mr-2" />
-                  {t("family.create")}
-                </Button>
-              ) : (
-                <form onSubmit={handleCreateFamily} className="space-y-3">
-                  <Input
-                    value={newFamilyName}
-                    onChange={(e) => setNewFamilyName(e.target.value)}
-                    placeholder={t("family.enterFamilyName")}
-                    required
-                  />
-                  <div className="flex gap-2">
-                    <Button type="submit" className="flex-1">{t("family.create")}</Button>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      onClick={() => setShowCreateFamily(false)}
-                    >
-                      {t("family.cancel")}
-                    </Button>
-                  </div>
-                </form>
-              )}
+              <Dialog open={showCreateFamily} onOpenChange={setShowCreateFamily}>
+                <DialogTrigger asChild>
+                  <Button className="w-full">
+                    <Plus className="h-4 w-4 mr-2" />
+                    {t("family.create")}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>{t("family.createFamily")}</DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={handleCreateFamily} className="space-y-4">
+                    <div>
+                      <Label htmlFor="newFamilyName">{t("family.familyName")}</Label>
+                      <Input
+                        id="newFamilyName"
+                        value={newFamilyName}
+                        onChange={(e) => setNewFamilyName(e.target.value)}
+                        placeholder={t("family.enterFamilyName")}
+                        required
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button type="submit" className="flex-1">{t("family.create")}</Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setShowCreateFamily(false)}
+                      >
+                        {t("family.cancel")}
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
             </CardContent>
           </Card>
         </div>

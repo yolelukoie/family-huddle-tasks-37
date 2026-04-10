@@ -143,7 +143,10 @@ export async function purchaseDefaultPackage(): Promise<PurchaseResult> {
   }
 }
 
-export async function purchasePromoOffering(offeringId: string): Promise<PurchaseResult> {
+// offerOptionId: the Google Play offer option id in the format "basePlanId:offerId" (e.g. "p1m:30")
+// If provided, we purchase that specific offer via purchaseSubscriptionOption.
+// If not provided, falls back to purchasePackage (default base plan price).
+export async function purchasePromoOffering(offeringId: string, offerOptionId?: string): Promise<PurchaseResult> {
   if (!isNative() || !initialized) {
     return { success: false, error: 'Subscriptions are only available on Android' };
   }
@@ -156,6 +159,21 @@ export async function purchasePromoOffering(offeringId: string): Promise<Purchas
     }
 
     const pkg = offering.availablePackages[0];
+
+    // If a specific offer option ID is provided, find it in the product's subscriptionOptions
+    if (offerOptionId) {
+      const subscriptionOption = pkg.product.subscriptionOptions?.find(
+        (opt) => opt.id === offerOptionId,
+      );
+      if (subscriptionOption) {
+        const { customerInfo } = await Purchases.purchaseSubscriptionOption({ subscriptionOption });
+        const status = parseStatus(customerInfo);
+        return { success: status.isActive, status };
+      }
+      // If the specific offer isn't found, fall through to base plan purchase
+      console.warn(`[subscription] Offer option "${offerOptionId}" not found, falling back to base plan`);
+    }
+
     const { customerInfo } = await Purchases.purchasePackage({ aPackage: pkg });
     const status = parseStatus(customerInfo);
     return { success: status.isActive, status };

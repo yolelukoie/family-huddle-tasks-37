@@ -1,4 +1,14 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(*)",
+      "Read(*)",
+      "Glob(*)",
+      "Grep(*)",
+      "Edit(*)",
+      "Write(*)"
+    ]
+  },
   "hooks": {
     "PreToolUse": [
       {
@@ -8,6 +18,25 @@
             "type": "command",
             "command": "~/.claude/hooks/block-forbidden-writes.sh",
             "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/block-destructive-bash.sh",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Agent",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "STOP — Before calling this agent, verify ALL of the following:\n\n1. INTERVIEW CHECK: Did you ask the user clarifying questions about their request? If not, you MUST interview them first (see PM Protocol Phase 1 in CLAUDE.md). Do NOT call any agent until the user has answered your questions and approved the technical plan.\n\n2. REPORT CHECK: If a previous agent already ran in this session, did you output that agent's FULL report in chat so the user can see it? If not, you MUST show the report NOW before calling the next agent. The user cannot see agent output directly — you are their only window.\n\n3. APPROVAL CHECK: Did the user explicitly approve proceeding to this next agent? If not, STOP and ask.\n\nIf any check fails, CANCEL this agent call and do the missing step first."
           }
         ]
       }

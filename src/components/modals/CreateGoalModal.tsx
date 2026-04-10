@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useTasks } from '@/hooks/useTasks';
 import { useGoals } from '@/hooks/useGoals';
 import { useToast } from '@/hooks/use-toast';
+import { useFeatureGate } from '@/hooks/useFeatureGate';
 import { translateCategoryName } from '@/lib/translations';
 
 interface CreateGoalModalProps {
@@ -28,47 +29,50 @@ export function CreateGoalModal({ open, onOpenChange, familyId, userId }: Create
   const { categories } = useTasks();
   const { createGoal } = useGoals();
   const { toast } = useToast();
+  const { gate } = useFeatureGate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!targetStars || parseInt(targetStars) <= 0) return;
 
-    setLoading(true);
-    try {
-      const success = await createGoal({
-        familyId,
-        userId,
-        targetStars: parseInt(targetStars),
-        targetCategories: selectedCategories.length > 0 ? selectedCategories : [],
-        reward: reward.trim() || undefined,
-      });
-
-      if (success) {
-        setTargetStars('');
-        setReward('');
-        setSelectedCategories([]);
-        onOpenChange(false);
-        toast({
-          title: t('goalModal.success'),
-          description: t('goalModal.goalCreated'),
+    gate(async () => {
+      setLoading(true);
+      try {
+        const success = await createGoal({
+          familyId,
+          userId,
+          targetStars: parseInt(targetStars),
+          targetCategories: selectedCategories.length > 0 ? selectedCategories : [],
+          reward: reward.trim() || undefined,
         });
-      } else {
+
+        if (success) {
+          setTargetStars('');
+          setReward('');
+          setSelectedCategories([]);
+          onOpenChange(false);
+          toast({
+            title: t('goalModal.success'),
+            description: t('goalModal.goalCreated'),
+          });
+        } else {
+          toast({
+            title: t('goalModal.error'),
+            description: t('goalModal.failedToCreate'),
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error('Failed to create goal:', error);
         toast({
           title: t('goalModal.error'),
           description: t('goalModal.failedToCreate'),
           variant: "destructive",
         });
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Failed to create goal:', error);
-      toast({
-        title: t('goalModal.error'),
-        description: t('goalModal.failedToCreate'),
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
+    });
   };
 
   const toggleCategory = (categoryId: string) => {

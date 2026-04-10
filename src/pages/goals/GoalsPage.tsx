@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useApp } from '@/hooks/useApp';
 import { useGoals } from '@/hooks/useGoals';
 import { useTasks } from '@/hooks/useTasks';
+import { useFeatureGate } from '@/hooks/useFeatureGate';
 import { NavigationHeader } from '@/components/layout/NavigationHeader';
 import { History, Plus, Trash2 } from 'lucide-react';
 import { CreateGoalModal } from '@/components/modals/CreateGoalModal';
@@ -19,6 +20,7 @@ export default function GoalsPage() {
   const { activeFamilyId } = useApp();
   const { activeGoal, completedGoals, deleteGoal } = useGoals();
   const { categories } = useTasks();
+  const { gate } = useFeatureGate();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [showCreateGoal, setShowCreateGoal] = useState(false);
@@ -49,10 +51,12 @@ export default function GoalsPage() {
     );
   }
 
-  const handleDeleteGoal = async (goalId: string) => {
-    if (confirm(t('goals.deleteConfirm'))) {
-      await deleteGoal(goalId);
-    }
+  const handleDeleteGoal = (goalId: string) => {
+    gate(() => {
+      if (confirm(t('goals.deleteConfirm'))) {
+        deleteGoal(goalId);
+      }
+    });
   };
 
   return (
@@ -63,7 +67,7 @@ export default function GoalsPage() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold">{t('goals.personalGoals')}</h1>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-[hsl(var(--icon-tint))] to-[hsl(var(--family-celebration))] bg-clip-text text-transparent">{t('goals.personalGoals')}</h1>
             <p className="text-muted-foreground">{t('goals.trackGoals')}</p>
           </div>
           <Button 
@@ -130,7 +134,7 @@ export default function GoalsPage() {
           <Card accent>
             <CardContent className="text-center py-8">
               <p className="text-muted-foreground mb-4">{t('goals.noActiveGoal')}</p>
-              <Button onClick={() => setShowCreateGoal(true)} variant="warm">
+              <Button onClick={() => gate(() => setShowCreateGoal(true))} variant="warm">
                 <Plus className="h-4 w-4 mr-2" />
                 {t('goals.createGoal')}
               </Button>

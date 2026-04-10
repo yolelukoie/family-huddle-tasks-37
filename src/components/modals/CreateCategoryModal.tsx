@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useTasks } from '@/hooks/useTasks';
 import { useAuth } from '@/hooks/useAuth';
+import { useFeatureGate } from '@/hooks/useFeatureGate';
 import { Loader2 } from 'lucide-react';
 
 interface CreateCategoryModalProps {
@@ -26,29 +27,32 @@ export function CreateCategoryModal({ open, onOpenChange, familyId }: CreateCate
   const [loading, setLoading] = useState(false);
   const { addCategory } = useTasks();
   const { user } = useAuth();
+  const { gate } = useFeatureGate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || loading || !user) return;
 
-    setLoading(true);
-    try {
-      const result = await addCategory({
-        name: name.trim(),
-        familyId,
-        userId: user.id,
-        isHouseChores: false,
-        isDefault: false,
-        order: Date.now(),
-      });
-      
-      if (result) {
-        setName('');
-        onOpenChange(false);
+    gate(async () => {
+      setLoading(true);
+      try {
+        const result = await addCategory({
+          name: name.trim(),
+          familyId,
+          userId: user.id,
+          isHouseChores: false,
+          isDefault: false,
+          order: Date.now(),
+        });
+
+        if (result) {
+          setName('');
+          onOpenChange(false);
+        }
+      } finally {
+        setLoading(false);
       }
-    } finally {
-      setLoading(false);
-    }
+    });
   };
 
   const handleClose = () => {

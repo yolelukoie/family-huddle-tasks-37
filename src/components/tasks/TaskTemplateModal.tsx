@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useTasks } from '@/hooks/useTasks';
 import { useToast } from '@/hooks/use-toast';
+import { useFeatureGate } from '@/hooks/useFeatureGate';
 import type { TaskCategory } from '@/lib/types';
 
 const taskTemplateSchema = z.object({
@@ -33,6 +34,7 @@ export function TaskTemplateModal({ open, onOpenChange, category, familyId, onTe
   const { user } = useAuth();
   const { toast } = useToast();
   const { addTemplate } = useTasks();
+  const { gate } = useFeatureGate();
 
   const form = useForm<TaskTemplateForm>({
     resolver: zodResolver(taskTemplateSchema),
@@ -46,30 +48,32 @@ export function TaskTemplateModal({ open, onOpenChange, category, familyId, onTe
   // All users can edit star values now
   const canEditStars = true;
 
-  const onSubmit = async (data: TaskTemplateForm) => {
+  const onSubmit = (data: TaskTemplateForm) => {
     if (!user) return;
 
-    const result = await addTemplate({
-      categoryId: category.id,
-      familyId: familyId,
-      name: data.name,
-      description: data.description || '',
-      starValue: data.starValue,
-      isDefault: false,
-      isDeletable: true,
-      createdBy: user.id,
-    });
-    
-    if (result) {
-      toast({
-        title: t('tasks.taskTemplateCreated'),
-        description: `"${data.name}" ${t('tasks.addedToCategory')} ${category.name}.`,
+    gate(async () => {
+      const result = await addTemplate({
+        categoryId: category.id,
+        familyId: familyId,
+        name: data.name,
+        description: data.description || '',
+        starValue: data.starValue,
+        isDefault: false,
+        isDeletable: true,
+        createdBy: user.id,
       });
 
-      form.reset();
-      onOpenChange(false);
-      onTemplateCreated?.();
-    }
+      if (result) {
+        toast({
+          title: t('tasks.taskTemplateCreated'),
+          description: `"${data.name}" ${t('tasks.addedToCategory')} ${category.name}.`,
+        });
+
+        form.reset();
+        onOpenChange(false);
+        onTemplateCreated?.();
+      }
+    });
   };
 
   return (

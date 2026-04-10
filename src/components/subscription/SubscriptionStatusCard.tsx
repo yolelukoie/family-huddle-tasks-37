@@ -51,20 +51,20 @@ export function SubscriptionStatusCard() {
   // Status badge
   const getStatusBadge = () => {
     if (status.isLifetime) {
-      return <Badge className="bg-amber-500 text-white">{t('subscription.status.lifetime')}</Badge>;
+      return <Badge className="bg-[hsl(var(--family-star))] text-foreground">{t('subscription.status.lifetime')}</Badge>;
     }
     if (status.isTrialing) {
       const daysLeft = status.expiresAt
         ? Math.max(0, Math.ceil((status.expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
         : 0;
-      return <Badge className="bg-blue-500 text-white">{t('subscription.status.trial', { days: daysLeft })}</Badge>;
+      return <Badge className="bg-primary text-primary-foreground">{t('subscription.status.trial', { days: daysLeft })}</Badge>;
     }
     if (isTrialActive && trialExpiresAt) {
       const daysLeft = Math.max(0, Math.ceil((trialExpiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
-      return <Badge className="bg-blue-500 text-white">{t('subscription.status.trial', { days: daysLeft })}</Badge>;
+      return <Badge className="bg-primary text-primary-foreground">{t('subscription.status.trial', { days: daysLeft })}</Badge>;
     }
     if (status.isActive) {
-      return <Badge className="bg-green-500 text-white">{t('subscription.status.premium')}</Badge>;
+      return <Badge className="bg-[hsl(var(--family-success))] text-primary-foreground">{t('subscription.status.premium')}</Badge>;
     }
     return <Badge variant="secondary">{t('subscription.status.free')}</Badge>;
   };
@@ -94,7 +94,7 @@ export function SubscriptionStatusCard() {
         {/* Status description */}
         {status.isLifetime && (
           <p className="text-sm text-muted-foreground flex items-center gap-1">
-            <Crown className="h-4 w-4 text-amber-500" />
+            <Crown className="h-4 w-4 text-[hsl(var(--family-star))]" />
             {t('subscription.lifetimeDesc')}
           </p>
         )}

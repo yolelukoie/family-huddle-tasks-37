@@ -1,32 +1,29 @@
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Home, CheckSquare, Target, MessageCircle, Users, LogOut, User, Settings } from 'lucide-react';
+import { Home, CheckSquare, Target, MessageCircle, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { ROUTES } from '@/lib/constants';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useApp } from '@/hooks/useApp';
+import { isBlocked, getBlockStatusText } from '@/lib/blockUtils';
 
 interface NavigationHeaderProps {
   title: string;
-  showBackButton?: boolean;
 }
 
-export function NavigationHeader({ title, showBackButton = true }: NavigationHeaderProps) {
+export function NavigationHeader({ title }: NavigationHeaderProps) {
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const { t } = useTranslation();
-
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/auth', { replace: true });
-  };
+  const { activeFamilyId, families, getUserFamily } = useApp();
+  const activeFamily = activeFamilyId ? families.find(f => f.id === activeFamilyId) : null;
+  const userMembership = activeFamilyId ? getUserFamily(activeFamilyId) : null;
+  const userIsBlocked = isBlocked(userMembership);
+  const displayTitle = activeFamily?.name
+    ? (userIsBlocked ? `${activeFamily.name} — ${getBlockStatusText(userMembership, t)}` : activeFamily.name)
+    : title;
 
   const navigationItems = [
     { icon: Home, label: t('nav.home'), route: ROUTES.main },
@@ -41,60 +38,33 @@ export function NavigationHeader({ title, showBackButton = true }: NavigationHea
       <div className="max-w-4xl mx-auto px-4 py-3">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
-            {showBackButton && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate(-1)}
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-            )}
-            <h1 className="text-lg font-semibold">{title}</h1>
+            <h1 className="text-lg font-semibold">{displayTitle}</h1>
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={(user as any)?.avatar_url} alt={user?.displayName} />
-                  <AvatarFallback className="bg-primary text-primary-foreground">
-                    {user?.displayName?.charAt(0) || 'U'}
-                  </AvatarFallback>
-                </Avatar>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
-              <DropdownMenuItem 
-                className="font-medium cursor-pointer"
-                onClick={() => navigate(ROUTES.personal, { replace: true })}
-              >
-                <div className="flex items-center justify-between w-full">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{user?.displayName}</p>
-                  </div>
-                  <Settings className="h-4 w-4 text-muted-foreground" />
-                </div>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleSignOut}>
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>{t('common.logOut', 'Log out')}</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button
+            variant="ghost"
+            className="relative h-8 w-8 rounded-full p-0"
+            onClick={() => navigate(ROUTES.personal, { replace: true })}
+          >
+            <Avatar className="h-8 w-8">
+              <AvatarImage src={user?.avatar_url} alt={user?.displayName} />
+              <AvatarFallback className="bg-primary text-primary-foreground">
+                {user?.displayName?.charAt(0) || 'U'}
+              </AvatarFallback>
+            </Avatar>
+          </Button>
         </div>
 
         {/* Navigation Pills */}
-        <div className="flex gap-2 overflow-x-auto pb-2">
+        <div className="flex gap-1.5 overflow-x-auto pb-2">
           {navigationItems.map(({ icon: Icon, label, route }) => {
             const isActive = window.location.pathname === route;
             return (
               <Button
                 key={route}
                 variant={isActive ? "default" : "outline"}
-                size="sm"
                 onClick={() => navigate(route, { replace: true })}
                 className={cn(
-                  "flex items-center gap-2 whitespace-nowrap transition-all",
+                  "flex items-center gap-1 whitespace-nowrap transition-all px-2.5 py-1.5 h-auto text-sm",
                   isActive && "shadow-md bg-gradient-to-br from-primary to-[hsl(var(--icon-tint))]"
                 )}
               >

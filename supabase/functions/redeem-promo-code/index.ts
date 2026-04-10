@@ -83,7 +83,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // RevenueCat REST API v1 — grant promotional entitlement
     const rcUrl = `https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(userId)}/entitlements/${encodeURIComponent('Family Huddle Pro')}/promotional`;
 
     const rcResponse = await fetch(rcUrl, {

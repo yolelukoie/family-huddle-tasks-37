@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,9 +11,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useApp } from '@/hooks/useApp';
 import { useBadges } from '@/hooks/useBadges';
 import { NavigationHeader } from '@/components/layout/NavigationHeader';
-import { Edit, Settings, Upload, Loader2, Languages, Palette, RotateCcw, Bell, BellOff, Trash2 } from 'lucide-react';
+import { Edit, Settings, Upload, Loader2, Languages, Palette, RotateCcw, Bell, BellOff, Trash2, LogOut } from 'lucide-react';
 import { DeleteAccountModal } from '@/components/modals/DeleteAccountModal';
-import { PushDebugCard } from '@/components/dev/PushDebugCard';
 import { requestPushPermission, getPushPermissionStatus } from '@/lib/pushNotifications';
 import { isPlatform, getCurrentPlatform } from '@/lib/platform';
 import { ThemeSelector } from '@/components/theme/ThemeSelector';
@@ -61,7 +61,8 @@ async function openBatterySettings() {
 }
 
 export default function PersonalPage() {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, signOut } = useAuth();
+  const navigate = useNavigate();
   const { activeFamilyId, resetCharacterProgress } = useApp();
   const { resetBadgeProgress } = useBadges();
   const { toast } = useToast();
@@ -189,6 +190,11 @@ export default function PersonalPage() {
     }
   };
 
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/auth', { replace: true });
+  };
+
   const handleResetCharacter = async () => {
     if (window.confirm(t('main.resetConfirm'))) {
       await resetCharacterProgress(activeFamilyId);
@@ -263,9 +269,11 @@ export default function PersonalPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <NavigationHeader title={t('personal.title')} showBackButton />
+      <NavigationHeader title={t('personal.title')} />
       
       <div className="max-w-4xl mx-auto p-4 space-y-6">
+        <h1 className="text-2xl font-bold bg-gradient-to-r from-[hsl(var(--icon-tint))] to-[hsl(var(--family-celebration))] bg-clip-text text-transparent">{t('personal.title')}</h1>
+
         {/* Avatar Upload */}
         <Card>
           <CardHeader>
@@ -374,7 +382,7 @@ export default function PersonalPage() {
             <div className="space-y-4">
               <div className="flex items-start gap-3">
                 <div className={`rounded-full p-2 ${
-                  isNotificationEnabled ? 'bg-green-500/10' : 'bg-muted'
+                  isNotificationEnabled ? 'bg-[hsl(var(--family-success))]/10' : 'bg-muted'
                 }`}>
                   {isNotificationEnabled ? (
                     <Bell className="h-4 w-4 text-green-500" />
@@ -453,11 +461,22 @@ export default function PersonalPage() {
           </CardContent>
         </Card>
 
-        {/* Push Debug (collapsible) */}
-        <PushDebugCard />
-
         {/* Subscription */}
         <SubscriptionStatusCard />
+
+        {/* Log Out */}
+        <Card>
+          <CardContent className="p-4">
+            <Button
+              variant="outline"
+              className="w-full text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
+              onClick={handleSignOut}
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              {t('common.logOut', 'Log out')}
+            </Button>
+          </CardContent>
+        </Card>
 
         {/* Reset Character */}
         <Card>

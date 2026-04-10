@@ -26,6 +26,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useApp } from '@/hooks/useApp';
 import { useTasks } from '@/hooks/useTasks';
+import { useFeatureGate } from '@/hooks/useFeatureGate';
 import { isBlocked } from '@/lib/blockUtils';
 import { cn } from '@/lib/utils';
 import { translateCategoryName, translateTaskName, translateTaskDescription } from '@/lib/translations';
@@ -49,6 +50,7 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
   const { user } = useAuth();
   const { getUserFamily } = useApp();
   const { templates, addTodayTaskFromTemplate, deleteCategory, deleteTemplate } = useTasks();
+  const { gate } = useFeatureGate();
 
   const categoryTemplates = templates.filter(t => t.categoryId === category.id);
   const translatedCategoryName = translateCategoryName(category.name, t);
@@ -61,10 +63,10 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
 
   const handleAddToToday = async (template: TaskTemplate) => {
     if (!user) return;
-    
+
     const translatedTaskName = translateTaskName(template.name, t);
     const newTask = await addTodayTaskFromTemplate(template.id);
-    
+
     if (newTask) {
       toast({
         title: t('tasks.addToToday'),
@@ -126,7 +128,7 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
                 size="sm"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setShowDeleteCategoryDialog(true);
+                  gate(() => setShowDeleteCategoryDialog(true));
                 }}
                 className="h-6 w-6 p-0 text-destructive hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
               >
@@ -175,13 +177,13 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
                             {template.isDeletable && (
                               <DropdownMenuItem
                                 className="text-destructive focus:text-destructive"
-                                onClick={() => setShowDeleteTemplateDialog(template.id)}
+                                onClick={() => gate(() => setShowDeleteTemplateDialog(template.id))}
                               >
                                 <Trash2 className="h-3 w-3 mr-2" />
                                 {t('common.delete')}
                               </DropdownMenuItem>
                             )}
-                            <DropdownMenuItem onClick={() => setReportTarget(template)}>
+                            <DropdownMenuItem onClick={() => gate(() => setReportTarget(template))}>
                               <Flag className="h-3 w-3 mr-2" />
                               {t('common.report')}
                             </DropdownMenuItem>
@@ -197,7 +199,7 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
               <Button
                 variant="theme"
                 size="sm"
-                onClick={() => setShowTemplateModal(true)}
+                onClick={() => gate(() => setShowTemplateModal(true))}
                 className="w-full"
               >
                 <Plus className="h-3 w-3 mr-2" />
