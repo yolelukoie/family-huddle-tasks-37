@@ -25,6 +25,7 @@ export default function ChatPage() {
   const [swipeOffset, setSwipeOffset] = useState(0);
   const touchStartX = useRef(0);
   const isSwiping = useRef(false);
+  const TIMESTAMP_COLUMN_WIDTH = 72;
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -92,7 +93,7 @@ export default function ChatPage() {
     const delta = touchStartX.current - e.touches[0].clientX;
     if (delta > 5) {
       isSwiping.current = true;
-      setSwipeOffset(Math.min(delta, 100));
+      setSwipeOffset(Math.min(delta, TIMESTAMP_COLUMN_WIDTH));
     }
   };
   const handleTouchEnd = () => {
@@ -133,48 +134,56 @@ export default function ChatPage() {
           </Button>
         </div>
 
-        {/* Messages */}
+        {/* Messages — outer touch-capture container */}
         <div
-          className="space-y-4 overflow-x-hidden"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
+          className="overflow-hidden"
         >
-          {messages.length === 0 ? (
-            <div className="text-center text-muted-foreground py-8">
-              {t('chat.noMessages')}
-            </div>
-          ) : (
-            messages.map(msg => {
-              const isMine = msg.userId === user.id;
-              return (
-                <div key={msg.id} className="space-y-1">
-                  <div className="text-xs font-medium text-muted-foreground pl-1">
-                    {msg.userDisplayName}
-                  </div>
-                  <div className={`flex items-end gap-2 ${isMine ? 'flex-row-reverse' : 'flex-row'}`}>
-                    <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                      isMine
-                        ? 'bg-gradient-to-br from-primary to-[hsl(var(--icon-tint))] text-primary-foreground shadow-md'
-                        : 'bg-muted'
-                    }`}>
-                      <div className="text-sm">{msg.content}</div>
+          {/* Inner wrapper slides left to reveal timestamps */}
+          <div
+            className="space-y-4"
+            style={{
+              transform: `translateX(-${swipeOffset}px)`,
+              transition: isSwiping.current ? 'none' : 'transform 0.3s ease-out',
+            }}
+          >
+            {messages.length === 0 ? (
+              <div className="text-center text-muted-foreground py-8">
+                {t('chat.noMessages')}
+              </div>
+            ) : (
+              messages.map(msg => {
+                const isMine = msg.userId === user.id;
+                return (
+                  <div key={msg.id} className="space-y-1">
+                    <div className="text-xs font-medium text-muted-foreground pl-1">
+                      {msg.userDisplayName}
                     </div>
-                    <div
-                      className="text-[10px] text-muted-foreground whitespace-nowrap pointer-events-none shrink-0"
-                      style={{
-                        transform: `translateX(${isMine ? swipeOffset : -swipeOffset}px)`,
-                        opacity: Math.min(swipeOffset / 50, 1),
-                        transition: isSwiping.current ? 'none' : 'transform 0.3s ease-out, opacity 0.3s ease-out',
-                      }}
-                    >
-                      {formatMessageTime(msg.createdAt)}
+                    <div className={`relative flex ${isMine ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                        isMine
+                          ? 'bg-gradient-to-br from-primary to-[hsl(var(--icon-tint))] text-primary-foreground shadow-md'
+                          : 'bg-muted'
+                      }`}>
+                        <div className="text-sm">{msg.content}</div>
+                      </div>
+                      <div
+                        className="absolute right-[-72px] top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground whitespace-nowrap pointer-events-none"
+                        style={{
+                          opacity: Math.min(swipeOffset / 40, 1),
+                          transition: isSwiping.current ? 'none' : 'opacity 0.3s ease-out',
+                        }}
+                      >
+                        {formatMessageTime(msg.createdAt)}
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })
-          )}
+                );
+              })
+            )}
+          </div>
         </div>
 
         {/* Message Input */}

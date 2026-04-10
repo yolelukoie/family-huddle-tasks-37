@@ -32,11 +32,13 @@ import {
   hasSeenNativePushPrompt,
 } from "@/components/notifications/NativePushPrompt";
 import { PaywallOverlay } from '@/components/subscription/PaywallOverlay';
+import { useSubscription } from '@/hooks/useSubscription';
 
 export function AppLayout() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const { activeFamilyId, setActiveFamilyId } = useApp();
   const { isLoading } = useApp();
+  const { shouldShowPaywall } = useSubscription();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -361,8 +363,8 @@ export function AppLayout() {
     // Show notification permission dialog for fully set up users
     if (user?.profileComplete && user.activeFamilyId && location.pathname === ROUTES.main) {
       if (isPlatform('capacitor')) {
-        // Native: show our custom prompt on first run
-        if (!hasSeenNativePushPrompt()) {
+        // Native: show our custom prompt on first run, but only after paywall is dismissed
+        if (!hasSeenNativePushPrompt() && !shouldShowPaywall) {
           setShowNativePushPrompt(true);
         }
       } else if (!hasSeenNotificationPrompt()) {
@@ -376,7 +378,21 @@ export function AppLayout() {
         });
       }
     }
-  }, [user, isAuthenticated, authLoading, isLoading, navigate, location.pathname]);
+  }, [user, isAuthenticated, authLoading, isLoading, navigate, location.pathname, shouldShowPaywall]);
+
+  // Deferred NativePushPrompt: fires when paywall is dismissed (shouldShowPaywall flips to false)
+  useEffect(() => {
+    if (
+      isPlatform('capacitor') &&
+      !shouldShowPaywall &&
+      !hasSeenNativePushPrompt() &&
+      user?.profileComplete &&
+      user?.activeFamilyId &&
+      location.pathname === ROUTES.main
+    ) {
+      setShowNativePushPrompt(true);
+    }
+  }, [shouldShowPaywall, user?.profileComplete, user?.activeFamilyId, location.pathname]);
 
   if (authLoading || isLoading) {
     return (

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -339,7 +340,8 @@ export default function FamilyPage() {
                       </div>
                     )}
                   </div>
-                  <div className="flex flex-wrap gap-2 pt-2 border-t">
+                  <div className="flex flex-col gap-2 pt-2 border-t">
+                    <div className="flex gap-2">
                     {/* Only show Members button if user is NOT blocked */}
                     {!isBlocked(getUserFamily(family.id)) ? (
                       <Dialog>
@@ -483,38 +485,40 @@ export default function FamilyPage() {
                             />
                           </div>
                           <div className="flex flex-col gap-2">
-                            <div className="flex gap-2">
-                              <Button type="submit" className="flex-1">{t('family.update')}</Button>
-                              <Button 
-                                type="button" 
-                                variant="outline" 
-                                onClick={() => {
-                                  setEditingFamilyId(null);
-                                  setEditingFamilyName('');
-                                }}
-                              >
-                                {t('family.cancel')}
-                              </Button>
-                            </div>
-                            <Button 
-                              type="button" 
-                              variant="destructive" 
-                               onClick={() => handleQuitFamily(family.id)}
-                               className="w-full"
-                             >
-                               {t("family.quitFamily")}
-                             </Button>
+                            <Button type="submit" className="w-full">{t('family.update')}</Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className="w-full"
+                              onClick={() => {
+                                setEditingFamilyId(null);
+                                setEditingFamilyName('');
+                              }}
+                            >
+                              {t('family.cancel')}
+                            </Button>
+                            <Separator className="my-1" />
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="sm"
+                              className="w-full"
+                              onClick={() => handleQuitFamily(family.id)}
+                            >
+                              {t("family.quitFamily")}
+                            </Button>
                           </div>
                         </form>
                       </DialogContent>
                     </Dialog>
+                    </div>
 
                     {family.id !== activeFamilyId && (
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => setActiveFamilyId(family.id)}
-                        className="flex-1 sm:flex-initial"
+                        className="w-full"
                       >
                         {t("family.switchTo")}
                       </Button>
@@ -528,11 +532,11 @@ export default function FamilyPage() {
 
         {/* Actions */}
         <div className="grid grid-cols-2 gap-3">
-          <Card>
+          <Card className="flex flex-col">
             <CardHeader>
-              <CardTitle className="text-base">{t("family.joinFamily")}</CardTitle>
+              <CardTitle className="text-base leading-snug">{t("family.joinFamily")}</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex-1 flex flex-col justify-end">
               <Dialog open={showJoinFamily} onOpenChange={setShowJoinFamily}>
                 <DialogTrigger asChild>
                   <Button className="w-full">
@@ -571,11 +575,11 @@ export default function FamilyPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="flex flex-col">
             <CardHeader>
-              <CardTitle className="text-base">{t("family.createFamily")}</CardTitle>
+              <CardTitle className="text-base leading-snug">{t("family.createFamily")}</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex-1 flex flex-col justify-end">
               <Dialog open={showCreateFamily} onOpenChange={setShowCreateFamily}>
                 <DialogTrigger asChild>
                   <Button className="w-full">

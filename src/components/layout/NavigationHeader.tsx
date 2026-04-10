@@ -51,7 +51,7 @@ export function NavigationHeader({ title }: NavigationHeaderProps) {
       <div className="max-w-4xl mx-auto px-4 py-3">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
-            <h1 className="text-lg font-semibold">{displayTitle}</h1>
+            <h1 className="text-lg font-bold bg-gradient-to-r from-primary to-[hsl(var(--icon-tint))] bg-clip-text text-transparent">{displayTitle}</h1>
           </div>
           <Button
             variant="ghost"
@@ -68,7 +68,7 @@ export function NavigationHeader({ title }: NavigationHeaderProps) {
         </div>
 
         {/* Navigation Pills */}
-        <div className="flex gap-1.5 overflow-x-auto pb-2">
+        <div className="flex w-full pb-2">
           {navigationItems.map(({ icon: Icon, label, route }) => {
             const isActive = window.location.pathname === route;
             return (
@@ -77,12 +77,12 @@ export function NavigationHeader({ title }: NavigationHeaderProps) {
                 variant={isActive ? "default" : "outline"}
                 onClick={() => navigate(route, { replace: true })}
                 className={cn(
-                  "flex items-center gap-1 whitespace-nowrap transition-all px-2.5 py-1.5 h-auto text-sm",
+                  "flex-1 min-w-0 flex items-center justify-center gap-1 py-1.5 h-auto text-xs px-1 transition-all",
                   isActive && "shadow-md bg-gradient-to-br from-primary to-[hsl(var(--icon-tint))]"
                 )}
               >
                 <Icon className="h-4 w-4" />
-                {label}
+                <span className="truncate">{label}</span>
               </Button>
             );
           })}

@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useToast } from '@/hooks/use-toast';
 import { PromoCodeInput } from './PromoCodeInput';
-import { Crown, RefreshCw, Loader2, X } from 'lucide-react';
+import { Crown, RefreshCw, Loader2 } from 'lucide-react';
 import { isPlatform } from '@/lib/platform';
 
 export function PaywallOverlay() {
@@ -16,9 +16,7 @@ export function PaywallOverlay() {
   const [restoring, setRestoring] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
-  if (!shouldShowPaywall || isLoading || dismissed) {
-    return null;
-  }
+  const open = !dismissed && shouldShowPaywall && !isLoading;
 
   const handleSubscribe = async () => {
     setPurchasing(true);
@@ -51,17 +49,13 @@ export function PaywallOverlay() {
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-background/95 backdrop-blur-sm flex items-center justify-center p-4">
-      <Card className="max-w-md w-full relative">
-        <button
-          type="button"
-          onClick={() => setDismissed(true)}
-          className="absolute top-3 right-3 p-1 rounded-full hover:bg-muted transition-colors"
-          aria-label={t('common.close', 'Close')}
-        >
-          <X className="h-5 w-5 text-muted-foreground" />
-        </button>
-        <CardContent className="pt-6 text-center space-y-4">
+    <Dialog open={open} modal={true} onOpenChange={(v) => { if (!v) setDismissed(true); }}>
+      <DialogContent
+        className="max-w-md text-center"
+        onInteractOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+      >
+        <div className="pt-2 text-center space-y-4">
           <Crown className="h-12 w-12 text-amber-500 mx-auto" />
           <h2 className="text-xl font-semibold">{t('paywall.title')}</h2>
           <p className="text-sm text-muted-foreground">{t('paywall.description')}</p>
@@ -85,8 +79,8 @@ export function PaywallOverlay() {
               {t('subscription.restore')}
             </Button>
           )}
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

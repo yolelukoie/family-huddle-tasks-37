@@ -80,7 +80,10 @@
     "reward": "Reward:",
     "noActiveGoal": "No active goal set",
     "createGoal": "Create Goal",
-    "deleteConfirm": "Are you sure you want to delete this goal?"
+    "deleteConfirm": "Are you sure you want to delete this goal?",
+    "activeCount_one": "{{count}} active goal",
+    "activeCount_other": "{{count}} active goals",
+    "goalInCategory": "Goal in {{category}}"
   },
   "family": {
     "title": "Family Settings",
