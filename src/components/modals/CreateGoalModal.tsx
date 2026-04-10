@@ -9,16 +9,19 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useTasks } from '@/hooks/useTasks';
 import { useGoals } from '@/hooks/useGoals';
 import { useToast } from '@/hooks/use-toast';
+import { useFeatureGate } from '@/hooks/useFeatureGate';
 import { translateCategoryName } from '@/lib/translations';
+import { Goal } from '@/lib/types';
 
 interface CreateGoalModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   familyId: string;
   userId: string;
+  activeGoals?: Goal[];
 }
 
-export function CreateGoalModal({ open, onOpenChange, familyId, userId }: CreateGoalModalProps) {
+export function CreateGoalModal({ open, onOpenChange, familyId, userId, activeGoals = [] }: CreateGoalModalProps) {
   const { t } = useTranslation();
   const [targetStars, setTargetStars] = useState('');
   const [reward, setReward] = useState('');
@@ -28,52 +31,61 @@ export function CreateGoalModal({ open, onOpenChange, familyId, userId }: Create
   const { categories } = useTasks();
   const { createGoal } = useGoals();
   const { toast } = useToast();
+  const { gate } = useFeatureGate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const categoriesWithActiveGoals = new Set(
+    activeGoals.flatMap(g => g.targetCategories || [])
+  );
+  const hasGeneralGoal = activeGoals.some(g => !g.targetCategories || g.targetCategories.length === 0);
+  const availableCategories = categories.filter((c: any) => !categoriesWithActiveGoals.has(c.id));
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!targetStars || parseInt(targetStars) <= 0) return;
 
-    setLoading(true);
-    try {
-      const success = await createGoal({
-        familyId,
-        userId,
-        targetStars: parseInt(targetStars),
-        targetCategories: selectedCategories.length > 0 ? selectedCategories : [],
-        reward: reward.trim() || undefined,
-      });
-
-      if (success) {
-        setTargetStars('');
-        setReward('');
-        setSelectedCategories([]);
-        onOpenChange(false);
-        toast({
-          title: t('goalModal.success'),
-          description: t('goalModal.goalCreated'),
+    gate(async () => {
+      setLoading(true);
+      try {
+        const success = await createGoal({
+          familyId,
+          userId,
+          targetStars: parseInt(targetStars),
+          targetCategories: selectedCategories.length > 0 ? selectedCategories : [],
+          reward: reward.trim() || undefined,
         });
-      } else {
+
+        if (success) {
+          setTargetStars('');
+          setReward('');
+          setSelectedCategories([]);
+          onOpenChange(false);
+          toast({
+            title: t('goalModal.success'),
+            description: t('goalModal.goalCreated'),
+          });
+        } else {
+          toast({
+            title: t('goalModal.error'),
+            description: t('goalModal.failedToCreate'),
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error('Failed to create goal:', error);
         toast({
           title: t('goalModal.error'),
           description: t('goalModal.failedToCreate'),
           variant: "destructive",
         });
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Failed to create goal:', error);
-      toast({
-        title: t('goalModal.error'),
-        description: t('goalModal.failedToCreate'),
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
+    });
   };
 
   const toggleCategory = (categoryId: string) => {
-    setSelectedCategories(prev => 
-      prev.includes(categoryId) 
+    setSelectedCategories(prev =>
+      prev.includes(categoryId)
         ? prev.filter(id => id !== categoryId)
         : [...prev, categoryId]
     );
@@ -103,7 +115,12 @@ export function CreateGoalModal({ open, onOpenChange, familyId, userId }: Create
             <Label>{t('goalModal.targetCategories')}</Label>
             <p className="text-sm text-muted-foreground mb-2">{t('goalModal.leaveEmptyHint')}</p>
             <div className="space-y-2">
-              {categories.map(category => (
+              {!hasGeneralGoal && (
+                <div className="flex items-center space-x-2 text-sm text-muted-foreground italic">
+                  <span>{t('goalModal.leaveEmptyHint')}</span>
+                </div>
+              )}
+              {availableCategories.map((category: any) => (
                 <div key={category.id} className="flex items-center space-x-2">
                   <Checkbox
                     id={`category-${category.id}`}

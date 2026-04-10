@@ -21,6 +21,7 @@ import { GoalCelebration } from '@/components/celebrations/GoalCelebration';
 import { NavigationHeader } from '@/components/layout/NavigationHeader';
 import { History, Plus, CheckCircle } from 'lucide-react';
 import { isBlocked } from '@/lib/blockUtils';
+import { useFeatureGate } from '@/hooks/useFeatureGate';
 
 export default function TasksPage() {
   const { user } = useAuth();
@@ -28,6 +29,7 @@ export default function TasksPage() {
   const { updateGoalProgress } = useGoals();
   const { tasks, categories, updateTask } = useTasks();
   const { currentCelebration, completeCelebration } = useCelebrations();
+  const { gate } = useFeatureGate();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [showHistory, setShowHistory] = useState(false);
@@ -100,7 +102,7 @@ export default function TasksPage() {
         {/* Header with History Button */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold">{t('tasks.title')}</h1>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-[hsl(var(--icon-tint))] to-[hsl(var(--family-celebration))] bg-clip-text text-transparent">{t('tasks.title')}</h1>
             <p className="text-muted-foreground">{t('tasks.manageTasks')}</p>
           </div>
           <Button 
@@ -177,7 +179,7 @@ export default function TasksPage() {
             <div className="flex justify-between items-center">
               <CardTitle>{t('tasks.categories')}</CardTitle>
               <Button
-                onClick={() => setShowCreateCategory(true)}
+                onClick={() => gate(() => setShowCreateCategory(true))}
                 variant="theme"
                 size="sm"
               >
@@ -202,7 +204,7 @@ export default function TasksPage() {
         {/* Assign Task Button */}
         <div className="text-center">
           <Button 
-            onClick={() => !userIsBlocked && setShowAssignTask(true)}
+            onClick={() => !userIsBlocked && gate(() => setShowAssignTask(true))}
             variant="theme"
             size="lg"
             disabled={userIsBlocked}

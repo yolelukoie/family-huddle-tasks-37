@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useApp } from "@/hooks/useApp";
 import { useTasks } from "@/hooks/useTasks";
 import { useToast } from "@/hooks/use-toast";
+import { useFeatureGate } from "@/hooks/useFeatureGate";
 import { isBlocked, getReasonLabel, BlockReason } from "@/lib/blockUtils";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -39,6 +40,7 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
   
   const { toast } = useToast();
   const { addTask, ensureCategoryByName } = useTasks();
+  const { gate } = useFeatureGate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Re-evaluate block status whenever modal opens
@@ -92,6 +94,8 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
 
   const onSubmit = async (data: AssignTaskForm) => {
     if (isSubmitting) return;
+
+    gate(async () => {
     setIsSubmitting(true);
 
     try {
@@ -194,6 +198,7 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
     } finally {
       setIsSubmitting(false);
     }
+    });
   };
 
   return (

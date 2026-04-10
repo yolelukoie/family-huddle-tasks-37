@@ -56,7 +56,7 @@ export function CharacterImageCustomizer() {
     }
 
     const success = await uploadCustomImage(stage, file);
-    
+
     if (success) {
       toast({
         title: t('personal.customImageUploaded'),
@@ -77,7 +77,7 @@ export function CharacterImageCustomizer() {
 
   const handleResetToDefault = async (stage: number) => {
     const success = await deleteCustomImage(stage);
-    
+
     if (success) {
       toast({
         title: t('personal.customImageReset'),

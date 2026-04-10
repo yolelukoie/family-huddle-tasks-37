@@ -17,7 +17,6 @@ interface AppContextType {
   // Family actions
   createFamily: (name: string) => Promise<string>;
   joinFamily: (inviteCode: string) => Promise<Family | null>;
-  switchFamily: (familyId: string) => Promise<void>;
   setActiveFamilyId: (familyId: string) => Promise<void>;
   updateFamilyName: (familyId: string, name: string) => Promise<void>;
   quitFamily: (familyId: string) => Promise<boolean>;
@@ -583,13 +582,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Error hydrating active family:', error);
     }
-  };
-
-  const switchFamily = async (familyId: string): Promise<void> => {
-    await updateUser({ activeFamilyId: familyId });
-    await hydrateActiveFamily(); // immediate re-hydration
-    window.dispatchEvent(new CustomEvent('tasks:changed')); // TasksProvider will reload
-    window.dispatchEvent(new CustomEvent('badges:changed')); // badges hook will reload
   };
 
   const setActiveFamilyId = async (familyId: string): Promise<void> => {
@@ -1432,7 +1424,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       isLoading,
       createFamily,
       joinFamily,
-      switchFamily,
       setActiveFamilyId,
       updateFamilyName,
       quitFamily,

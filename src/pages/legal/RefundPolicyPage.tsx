@@ -6,7 +6,7 @@ export default function RefundPolicyPage() {
   const { t } = useTranslation();
   return (
     <div className="min-h-screen bg-gradient-to-b from-[hsl(var(--section-tint))] to-background">
-      <NavigationHeader title={t('legal.refundPolicy')} showBackButton={true} />
+      <NavigationHeader title={t('legal.refundPolicy')} />
       
       <div className="max-w-3xl mx-auto p-4 space-y-6 pb-12">
         <Card>

@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useApp } from '@/hooks/useApp';
 import { useTasks } from '@/hooks/useTasks';
 import { useAssignmentModal } from "@/contexts/AssignmentModalContext";
+import { taskFromRow } from '@/lib/taskMapper';
 
 type TaskEvent = {
   id: string;
@@ -32,7 +33,7 @@ export function useRealtimeNotifications() {
   const { user } = useAuth();
   const { toast } = useToast();
   const { refreshData } = useTasks();
-  const { activeFamilyId, getUserProfile } = useApp();
+  const { activeFamilyId } = useApp();
   const { openAssignmentModal } = useAssignmentModal();
 
   const handledEventIds = useRef<Set<string>>(new Set());
@@ -82,13 +83,7 @@ export function useRealtimeNotifications() {
               if (data.assigned_to !== user.id) return;
 
               const taskFamilyId = row.family_id || data.family_id;
-              openAssignmentModal({
-                id: data.id, name: data.name, description: data.description ?? '',
-                starValue: data.star_value ?? 0, assignedBy: data.assigned_by,
-                assignedTo: data.assigned_to, dueDate: data.due_date,
-                familyId: taskFamilyId, categoryId: data.category_id,
-                completed: !!data.completed,
-              } as any);
+              openAssignmentModal(taskFromRow(data, { familyId: taskFamilyId }));
             } catch (err) {
               console.error('[REALTIME] Error in assigned handler:', err);
             }

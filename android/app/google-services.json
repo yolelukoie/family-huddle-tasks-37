@@ -12,12 +12,7 @@
           "package_name": "com.familyhuddle.app"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "508239163662-s3d7rr79hj8atv95u46ldl7b3ledfaem.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
           "current_key": "AIzaSyDxIz_YARLTVCh1Od698tcnhU7AY2h8pLo"
@@ -27,8 +22,15 @@
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "508239163662-s3d7rr79hj8atv95u46ldl7b3ledfaem.apps.googleusercontent.com",
+              "client_id": "508239163662-14kqipvcnvqmb1qpf9pq6lbbf7c0je02.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "508239163662-i6o07p2drqt5u6b7r2rnj1l3djpetcsq.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.familyhuddle.app"
+              }
             }
           ]
         }

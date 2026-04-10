@@ -21,6 +21,7 @@ import NotFound from "@/pages/NotFound";
 import { useKickedFromFamily } from "@/hooks/useKickedFromFamily";
 import { useAssignmentModal } from "@/contexts/AssignmentModalContext";
 import { supabase } from "@/integrations/supabase/client";
+import { taskFromRow } from "@/lib/taskMapper";
 import {
   NotificationPermissionDialog,
   hasSeenNotificationPrompt,
@@ -30,11 +31,14 @@ import {
   NativePushPrompt,
   hasSeenNativePushPrompt,
 } from "@/components/notifications/NativePushPrompt";
+import { PaywallOverlay } from '@/components/subscription/PaywallOverlay';
+import { useSubscription } from '@/hooks/useSubscription';
 
 export function AppLayout() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const { activeFamilyId, setActiveFamilyId } = useApp();
   const { isLoading } = useApp();
+  const { shouldShowPaywall } = useSubscription();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -55,6 +59,8 @@ export function AppLayout() {
 
     // Native: auto-register push ONLY if user already accepted the prompt before.
     // On first run, NativePushPrompt handles the permission flow to avoid double-prompting.
+    let nativeResumeCleanup: (() => void) | undefined;
+
     if (isPlatform('capacitor')) {
       const alreadyPrompted = hasSeenNativePushPrompt();
       if (alreadyPrompted) {
@@ -71,9 +77,9 @@ export function AppLayout() {
       }
 
       // Also re-register on app resume
-      let resumeListenerHandle: any = null;
+      let nativeResumeListenerHandle: { remove: () => void } | undefined;
       import('@capacitor/app').then(({ App }) => {
-        resumeListenerHandle = App.addListener('resume', () => {
+        App.addListener('resume', () => {
           console.log('[Push] App resumed — re-registering native push');
           requestPushPermission(user.id)
             .then((result) => {
@@ -82,13 +88,11 @@ export function AppLayout() {
             .catch((err) => {
               console.error('[Push] Native registration call failed (resume):', err);
             });
-        });
+        }).then(h => { nativeResumeListenerHandle = h; });
       }).catch(() => {});
 
-      var nativeResumeCleanup = () => {
-        if (resumeListenerHandle) {
-          resumeListenerHandle.then((l: any) => l.remove());
-        }
+      nativeResumeCleanup = () => {
+        nativeResumeListenerHandle?.remove();
       };
     } else {
       // Web: push disabled under mobile-only policy — no-op
@@ -142,35 +146,7 @@ export function AppLayout() {
       }
 
       if (eventType === 'assigned' || eventType === 'task_assigned') {
-        const taskId = p?.data?.taskId || p?.data?.task_id;
-        const familyId = p?.data?.familyId || p?.data?.family_id;
-        
-        if (taskId && familyId) {
-          try {
-            const { data: task, error } = await supabase
-              .from('tasks')
-              .select('*')
-              .eq('id', taskId)
-              .single();
-            
-            if (task && !error && task.assigned_to === user?.id) {
-              const resolvedFamilyId = task.family_id || familyId;
-              if (!resolvedFamilyId) {
-                console.error('[Push] No familyId for task, skipping modal');
-                return;
-              }
-              setShowNativePushPrompt(false);
-              openAssignmentModal({
-                id: task.id, name: task.name, description: task.description ?? '',
-                starValue: task.star_value ?? 0, assignedBy: task.assigned_by,
-                assignedTo: task.assigned_to, dueDate: task.due_date,
-                familyId: resolvedFamilyId, categoryId: task.category_id, completed: !!task.completed,
-              } as any);
-            }
-          } catch (err) {
-            console.error('[Push] Failed to fetch task:', err);
-          }
-        }
+        // Modal is handled by realtime subscription in useRealtimeNotifications — skip here to avoid duplicates
         return; // Don't show toast for assigned events
       }
       
@@ -198,7 +174,7 @@ export function AppLayout() {
 
     return () => {
       unsubscribe?.();
-      if (typeof nativeResumeCleanup === 'function') nativeResumeCleanup();
+      nativeResumeCleanup?.();
     };
   }, [isAuthenticated, user?.id, toast, openAssignmentModal, navigate]);
 
@@ -221,13 +197,7 @@ export function AppLayout() {
         if (pendingTasks && pendingTasks.length > 0) {
           console.log(`[TaskRecovery] Found ${pendingTasks.length} pending task(s)`);
           const task = pendingTasks[0];
-          openAssignmentModal({
-            id: task.id, name: task.name, description: task.description ?? '',
-            starValue: task.star_value ?? 0, assignedBy: task.assigned_by,
-            assignedTo: task.assigned_to, dueDate: task.due_date,
-            familyId: task.family_id, categoryId: task.category_id,
-            completed: !!task.completed,
-          } as any);
+          openAssignmentModal(taskFromRow(task));
         }
       } catch (err) {
         console.error('[TaskRecovery] Error checking pending tasks:', err);
@@ -242,9 +212,11 @@ export function AppLayout() {
     };
 
     if (isPlatform('capacitor')) {
+      let listenerHandle: { remove: () => void } | undefined;
       import('@capacitor/app').then(({ App }) => {
-        App.addListener('resume', handleResume);
+        App.addListener('resume', handleResume).then(h => { listenerHandle = h; });
       }).catch(() => {});
+      return () => { listenerHandle?.remove(); };
     } else {
       const handleVisibility = () => {
         if (document.visibilityState === 'visible') checkPendingTasks();
@@ -275,6 +247,7 @@ export function AppLayout() {
         if (intent.familyId && intent.familyId !== activeFamilyId) {
           console.log('[PushIntent] Switching family to', intent.familyId);
           await setActiveFamilyId(intent.familyId);
+          intentProcessedRef.current = false;  // allow re-entry after family switch
           // Wait for family context to propagate — the effect will re-run with updated activeFamilyId
           return;
         }
@@ -323,13 +296,7 @@ export function AppLayout() {
           }
           console.log('[PushIntent] ✓ Opening assignment modal for task:', task.id);
           setShowNativePushPrompt(false);
-          openAssignmentModal({
-            id: task.id, name: task.name, description: task.description ?? '',
-            starValue: task.star_value ?? 0, assignedBy: task.assigned_by,
-            assignedTo: task.assigned_to, dueDate: task.due_date,
-            familyId: resolvedFamilyId, categoryId: task.category_id,
-            completed: !!task.completed,
-          } as any);
+          openAssignmentModal(taskFromRow(task, { familyId: resolvedFamilyId }));
           clearPushIntent();
 
         } else if (intent.type === 'chat_message') {
@@ -396,8 +363,8 @@ export function AppLayout() {
     // Show notification permission dialog for fully set up users
     if (user?.profileComplete && user.activeFamilyId && location.pathname === ROUTES.main) {
       if (isPlatform('capacitor')) {
-        // Native: show our custom prompt on first run
-        if (!hasSeenNativePushPrompt()) {
+        // Native: show our custom prompt on first run, but only after paywall is dismissed
+        if (!hasSeenNativePushPrompt() && !shouldShowPaywall) {
           setShowNativePushPrompt(true);
         }
       } else if (!hasSeenNotificationPrompt()) {
@@ -411,7 +378,21 @@ export function AppLayout() {
         });
       }
     }
-  }, [user, isAuthenticated, authLoading, isLoading, navigate, location.pathname]);
+  }, [user, isAuthenticated, authLoading, isLoading, navigate, location.pathname, shouldShowPaywall]);
+
+  // Deferred NativePushPrompt: fires when paywall is dismissed (shouldShowPaywall flips to false)
+  useEffect(() => {
+    if (
+      isPlatform('capacitor') &&
+      !shouldShowPaywall &&
+      !hasSeenNativePushPrompt() &&
+      user?.profileComplete &&
+      user?.activeFamilyId &&
+      location.pathname === ROUTES.main
+    ) {
+      setShowNativePushPrompt(true);
+    }
+  }, [shouldShowPaywall, user?.profileComplete, user?.activeFamilyId, location.pathname]);
 
   if (authLoading || isLoading) {
     return (
@@ -426,6 +407,7 @@ export function AppLayout() {
 
   return (
     <div>
+      <PaywallOverlay />
       <Routes>
         <Route index element={<MainPage />} />
         <Route path={ROUTES.onboarding.slice(1)} element={<OnboardingPage />} />

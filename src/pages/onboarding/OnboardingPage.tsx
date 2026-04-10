@@ -15,8 +15,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { useApp } from '@/hooks/useApp';
 import { ROUTES } from '@/lib/constants';
 import { useToast } from '@/hooks/use-toast';
-import { initiateSubscription } from '@/config/subscription';
+import { useSubscription } from '@/hooks/useSubscription';
 import { supabase } from '@/integrations/supabase/client';
+import { CheckCircle } from 'lucide-react';
 
 const StarIcon = () => (
   <svg viewBox="0 0 100 100" className="inline-block w-[1.2em] h-[1.2em] ml-1 align-middle">
@@ -41,6 +42,8 @@ export default function OnboardingPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [familyAction, setFamilyAction] = useState<'create' | 'join'>('create');
+  const { isPremium } = useSubscription();
+  const [trialDismissed, setTrialDismissed] = useState(false);
 
   const onboardingSchema = z.object({
     // Profile fields
@@ -216,22 +219,28 @@ export default function OnboardingPage() {
           </p>
         </div>
 
-        {/* Trial CTA - TODO: Integrate with RevenueCat */}
-        <Card className="bg-primary/5 border-primary/20">
-          <CardContent className="pt-6 text-center space-y-4">
-            <h2 className="text-xl font-semibold">{t('onboarding.trialTitle')}</h2>
-            <p className="text-sm text-muted-foreground">
-              {t('onboarding.trialDesc')}
-            </p>
-            <Button 
-              onClick={() => user?.id && initiateSubscription(user.id)}
-              className="w-full"
-              disabled={!user?.id}
-            >
-              {t('onboarding.startTrial')}
-            </Button>
-          </CardContent>
-        </Card>
+        {/* Subscription CTA */}
+        {isPremium ? (
+          <Card className="bg-primary/5 border-primary/20">
+            <CardContent className="pt-6 text-center space-y-4">
+              <div className="flex items-center justify-center gap-2 text-green-600">
+                <CheckCircle className="h-5 w-5" />
+                <h2 className="text-xl font-semibold">{t('subscription.status.premium')}</h2>
+              </div>
+              <p className="text-sm text-muted-foreground">{t('subscription.activeDesc')}</p>
+            </CardContent>
+          </Card>
+        ) : !trialDismissed ? (
+          <Card className="bg-primary/5 border-primary/20">
+            <CardContent className="pt-6 text-center space-y-4">
+              <h2 className="text-xl font-semibold">{t('onboarding.trialTitle')}</h2>
+              <p className="text-sm text-muted-foreground">{t('onboarding.trialDesc')}</p>
+              <Button onClick={() => setTrialDismissed(true)} className="w-full">
+                {t('onboarding.startTrial')}
+              </Button>
+            </CardContent>
+          </Card>
+        ) : null}
 
         <Card>
           <CardHeader>

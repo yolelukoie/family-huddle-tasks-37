@@ -13,6 +13,8 @@ import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
+import { Capacitor } from '@capacitor/core';
+import { GoogleAuth } from '@southdevs/capacitor-google-auth';
 const StarIcon = () => (
   <svg viewBox="0 0 100 100" className="inline-block w-[1.2em] h-[1.2em] ml-1 align-middle">
     {/* Main star - centered */}
@@ -43,20 +45,36 @@ export function AuthPage() {
   const { toast } = useToast();
 
   const handleGoogleSignIn = async () => {
-    const redirectTo = 'https://familyhuddletasks.com/auth/callback';
-    console.log('[Auth] Google sign-in with redirectTo:', redirectTo);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo },
-    });
-    if (error) {
-      toast({
-        title: t('auth.signInFailed'),
-        description: error.message,
-        variant: 'destructive',
+    try {
+      const googleUser = await GoogleAuth.signIn({ scopes: ['profile', 'email'], grantOfflineAccess: false });
+      const { error } = await supabase.auth.signInWithIdToken({
+        provider: 'google',
+        token: googleUser.authentication.idToken,
       });
+      if (error) {
+        toast({
+          title: t('auth.signInFailed'),
+          description: error.message,
+          variant: 'destructive',
+        });
+      }
+    } catch (e: any) {
+      // 12501 = user cancelled the Google sign-in picker on Android
+      if (e?.code !== 'popup_closed_by_user' && e?.code !== '12501') {
+        toast({
+          title: t('auth.signInFailed'),
+          description: e?.message,
+          variant: 'destructive',
+        });
+      }
     }
   };
+
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      GoogleAuth.initialize();
+    }
+  }, []);
 
   useEffect(() => {
     if (isAuthenticated && !authLoading) {

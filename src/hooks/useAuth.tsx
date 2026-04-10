@@ -95,6 +95,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         profileComplete: profile.profile_complete,
         activeFamilyId: profile.active_family_id,
         avatar_url: profile.avatar_url,
+        trialStartedAt: profile.trial_started_at ?? undefined,
       };
       setUser(mapped);
     } catch (err) {
@@ -324,10 +325,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const uid = getUserId(session);
       if (!uid) throw new Error("Must be signed in to create user");
 
+      const trialStartedAt = new Date().toISOString();
       const newUser: User = {
         ...userData,
         id: uid,
         profileComplete: true,
+        trialStartedAt: trialStartedAt,
       };
 
       try {
@@ -339,6 +342,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             gender: newUser.gender,
             profile_complete: newUser.profileComplete,
             active_family_id: newUser.activeFamilyId ?? null,
+            trial_started_at: trialStartedAt,
           },
         ]);
 

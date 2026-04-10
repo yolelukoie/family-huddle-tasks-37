@@ -8,6 +8,7 @@ import { useCelebrations } from '@/hooks/useCelebrations';
 import { getNewlyUnlockedBadges } from '@/lib/badges';
 import { isBlocked } from '@/lib/blockUtils';
 import type { Task, TaskCategory, TaskTemplate, Badge } from '@/lib/types';
+import { taskFromRow } from '@/lib/taskMapper';
 
 const MAX_CATEGORIES_PER_FAMILY = 10;
 const MAX_TEMPLATES_PER_CATEGORY = 20;
@@ -141,21 +142,7 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
 
       if (tasksRes.error) console.error('Error loading tasks:', tasksRes.error);
       else {
-        const convertedTasks: Task[] = (tasksRes.data || []).map(t => ({
-          id: t.id,
-          name: t.name,
-          description: t.description || '',
-          categoryId: t.category_id,
-          starValue: t.star_value,
-          completed: t.completed,
-          completedAt: t.completed_at || undefined,
-          familyId: t.family_id,
-          templateId: t.template_id || undefined,
-          assignedTo: t.assigned_to,
-          assignedBy: t.assigned_by,
-          dueDate: t.due_date,
-          status: (t as any).status || 'active',
-        }));
+        const convertedTasks: Task[] = (tasksRes.data || []).map(t => taskFromRow(t));
         setTasks(convertedTasks);
       }
 
@@ -256,22 +243,8 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
         return null;
       }
   
-      const newTask: Task = {
-        id: data.id,
-        name: data.name,
-        description: data.description || '',
-        categoryId: data.category_id,
-        starValue: data.star_value,
-        completed: data.completed,
-        completedAt: data.completed_at || undefined,
-        familyId: data.family_id,
-        templateId: data.template_id || undefined,
-        assignedTo: data.assigned_to,
-        assignedBy: data.assigned_by,
-        dueDate: data.due_date,
-        status: (data as any).status || 'active',
-      };
-  
+      const newTask: Task = taskFromRow(data);
+
       setTasks(prev => [...prev, newTask]);
       window.dispatchEvent(new CustomEvent('tasks:changed'));
       return newTask;
@@ -673,21 +646,8 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
         return null;
       }
   
-      const newTask: Task = {
-        id: data.id,
-        name: data.name,
-        description: data.description || '',
-        categoryId: data.category_id,
-        starValue: data.star_value,
-        completed: data.completed,
-        completedAt: data.completed_at || undefined,
-        familyId: data.family_id,
-        templateId: data.template_id || undefined,
-        assignedTo: data.assigned_to,
-        assignedBy: data.assigned_by,
-        dueDate: data.due_date,
-      };
-  
+      const newTask: Task = taskFromRow(data);
+
       setTasks(prev => [...prev, newTask]);
       window.dispatchEvent(new CustomEvent('tasks:changed'));
       return newTask;

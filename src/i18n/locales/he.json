@@ -429,7 +429,7 @@
     "welcomeTitle": "ברוך הבא ל-Family Huddle!",
     "completeProfile": "השלם את הפרופיל שלך כדי להתחיל בהרפתקה המשפחתית",
     "trialTitle": "התחל תקופת ניסיון חינם של 4 ימים",
-    "trialDesc": "נסה את Family Huddle עם כל הפיצ'רים בחינם למשך 4 ימים. ללא התחייבות. לאחר מכן תוכל להמשיך בתוכנית בתשלום או לבטל בכל עת מדף ההגדרות האישיות.",
+    "trialDesc": "תיהנה מכל התכונות של Family Huddle בחינם למשך 4 ימים. לא נדרש כרטיס אשראי.",
     "startTrial": "התחל ניסיון חינם",
     "setupProfile": "הגדר את הפרופיל שלך",
     "setupProfileDesc": "ספר לנו על עצמך והצטרף למשפחה שלך",
@@ -477,6 +477,40 @@
     "successTitle": "דווח",
     "successDesc": "תודה על הדיווח שלך.",
     "errorSubmitting": "שליחת הדיווח נכשלה. נסה שוב."
+  },
+  "subscription": {
+    "status": {
+      "free": "חינם",
+      "trial": "ניסיון ({{days}} ימים נותרו)",
+      "premium": "פרימיום",
+      "lifetime": "לכל החיים"
+    },
+    "activated": "!המנוי הופעל",
+    "activeDesc": ".יש לך גישה מלאה לכל התכונות של Family Huddle",
+    "freeDesc": ".הירשם כמנוי כדי לפתוח את כל התכונות של Family Huddle",
+    "lifetimeDesc": ".יש לך גישה לכל החיים לכל תכונות הפרימיום",
+    "renewsOn": "מתחדש ב-{{date}}",
+    "subscribeNow": "הירשם עכשיו",
+    "manageOnGooglePlay": "נהל ב-Google Play",
+    "restore": "שחזר רכישות",
+    "restoreSuccess": "הרכישות שוחזרו בהצלחה",
+    "restoreFailed": "לא ניתן לשחזר רכישות",
+    "purchaseFailed": "הרכישה נכשלה",
+    "disclosure": "אחרי 4 ימי ניסיון חינם, $4.90 לחודש. בטל בכל עת. בהרשמה אתה מסכים לתנאי השימוש.",
+    "trialEndsOn": "תקופת הניסיון שלך מסתיימת ב-{{date}}",
+    "promo": {
+      "haveCode": "?יש לך קוד הנחה",
+      "placeholder": "הכנס קוד",
+      "apply": "החל",
+      "success": "!הקוד הוחל בהצלחה",
+      "invalid": "קוד לא תקין",
+      "failed": "שגיאה בהחלת הקוד"
+    }
+  },
+  "paywall": {
+    "title": "תקופת הניסיון החינמית שלך הסתיימה",
+    "description": "הירשם כמנוי כדי להמשיך להשתמש ב-Family Huddle עם כל התכונות.",
+    "subscribe": "הירשם כמנוי — $4.90 לחודש"
   },
   "common": {
     "loading": "טוען...",

@@ -8,6 +8,7 @@ import { AppProvider } from "@/hooks/useApp";
 import { TasksProvider } from "@/contexts/TasksContext";
 import { CelebrationsProvider } from "@/contexts/CelebrationsContext";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { ScrollToTop } from "@/components/layout/ScrollToTop";
 import { AuthPage } from "@/pages/auth/AuthPage";
 import AuthCallbackPage from "@/pages/auth/AuthCallbackPage";
 import NativeResetPasswordPage from "@/pages/auth/NativeResetPasswordPage";
@@ -22,6 +23,7 @@ import NotFound from "./pages/NotFound";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import { AssignmentModalProvider } from "@/contexts/AssignmentModalContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { SubscriptionProvider } from "@/hooks/useSubscription";
 import { isPlatform } from "@/lib/platform";
 
 function RealtimeRoot() {
@@ -102,8 +104,10 @@ const App = () => (
         <AuthProvider>
           <CelebrationsProvider>
             <AppProvider>
+              <SubscriptionProvider>
               <TasksProvider>
                 <AssignmentModalProvider>
+                  <ScrollToTop />
                   <DeepLinkHandler />
                   <RealtimeRoot />
                   <Routes>
@@ -115,6 +119,7 @@ const App = () => (
                   </Routes>
                 </AssignmentModalProvider>
               </TasksProvider>
+              </SubscriptionProvider>
             </AppProvider>
           </CelebrationsProvider>
         </AuthProvider>

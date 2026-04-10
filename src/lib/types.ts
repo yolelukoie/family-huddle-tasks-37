@@ -5,6 +5,7 @@ export interface User {
   profileComplete: boolean;
   activeFamilyId?: string;
   avatar_url?: string;
+  trialStartedAt?: string;
 }
 
 export interface Family {
