@@ -68,7 +68,7 @@ export function NavigationHeader({ title }: NavigationHeaderProps) {
         </div>
 
         {/* Navigation Pills */}
-        <div className="flex w-full pb-2">
+        <div className="flex overflow-x-auto overflow-y-hidden snap-x snap-mandatory scrollbar-hide pb-2 [-webkit-overflow-scrolling:touch]">
           {navigationItems.map(({ icon: Icon, label, route }) => {
             const isActive = window.location.pathname === route;
             return (
@@ -77,7 +77,7 @@ export function NavigationHeader({ title }: NavigationHeaderProps) {
                 variant={isActive ? "default" : "outline"}
                 onClick={() => navigate(route, { replace: true })}
                 className={cn(
-                  "flex-1 min-w-0 flex items-center justify-center gap-1 py-1.5 h-auto text-xs px-1 transition-all",
+                  "flex-none snap-start w-[calc(100%/4.25)] flex items-center justify-center gap-1 py-1.5 h-auto text-xs px-1 transition-all",
                   isActive && "shadow-md bg-gradient-to-br from-primary to-[hsl(var(--icon-tint))]"
                 )}
               >

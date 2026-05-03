@@ -164,13 +164,13 @@ export function useChat() {
       if (!user || !activeFamilyId || !content.trim()) return false;
 
       try {
-        const { error } = await supabase.from('chat_messages').insert([
+        const { data: insertedRow, error } = await supabase.from('chat_messages').insert([
           {
             family_id: activeFamilyId,
             user_id: user.id,
             content: content.trim(),
           },
-        ]);
+        ]).select('id').single();
 
         if (error) {
           console.error('[chat] Error sending message:', error);
@@ -185,13 +185,18 @@ export function useChat() {
         // Send push notifications to other family members (fire-and-forget)
         supabase.functions.invoke('notify-chat-message', {
           body: {
+            chatMessageId: insertedRow?.id || '',
             familyId: activeFamilyId,
             senderId: user.id,
             senderName: user.displayName || 'Family member',
             content: content.trim(),
           },
+        }).then(({ error: pushError }) => {
+          if (pushError) {
+            console.error('[chat] Chat push notification failed:', pushError.message);
+          }
         }).catch((err) => {
-          console.error('[chat] Failed to send chat push notifications:', err);
+          console.error('[chat] Chat push notification network error:', err);
         });
 
         return true;

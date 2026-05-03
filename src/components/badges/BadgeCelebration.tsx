@@ -27,11 +27,11 @@ export function BadgeCelebration({ badge, show, onComplete }: BadgeCelebrationPr
         {Array.from({ length: 12 }).map((_, i) => (
           <div
             key={i}
-            className="absolute text-4xl"
+            className="absolute text-2xl"
             style={{
               left: `${Math.random() * 100}%`,
-              animation: `fallingStar ${3 + Math.random() * 2}s linear infinite`,
-              animationDelay: `${Math.random() * 2}s`,
+              animation: `fallingStar ${(2 + Math.random() * 2) / 1.5}s linear infinite`,
+              animationDelay: `${Math.random() * 2 / 1.5}s`,
             }}
           >
             ⭐

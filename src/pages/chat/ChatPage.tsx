@@ -112,9 +112,9 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[hsl(var(--section-tint))] to-background">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-[hsl(var(--section-tint))] to-background">
       <NavigationHeader title={t('chat.title')} />
-      <div className="max-w-4xl mx-auto w-full px-4 pb-4">
+      <div className="max-w-4xl mx-auto w-full px-4 pb-4 flex-1 flex flex-col">
         {/* Chat header */}
         <div
           className="flex justify-between items-center py-4 sticky z-10 bg-background/95 backdrop-blur-sm border-b border-border/50"
@@ -139,7 +139,7 @@ export default function ChatPage() {
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          className="overflow-hidden"
+          className="overflow-hidden flex-1"
         >
           {/* Inner wrapper slides left to reveal timestamps */}
           <div

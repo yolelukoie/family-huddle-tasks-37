@@ -86,7 +86,7 @@ export function DeleteAccountModal({ userId }: DeleteAccountModalProps) {
   return (
     <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
       <AlertDialogTrigger asChild>
-        <Button variant="destructive" size="sm">
+        <Button variant="destructive" size="sm" className="w-full">
           <Trash2 className="h-4 w-4 mr-2" />
           {t('personal.deleteAccount')}
         </Button>

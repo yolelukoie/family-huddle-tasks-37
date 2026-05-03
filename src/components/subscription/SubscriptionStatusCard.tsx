@@ -82,15 +82,16 @@ export function SubscriptionStatusCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <span className="flex items-center gap-2">
-            <Settings className="h-5 w-5" />
-            {t('personal.subscription')}
-          </span>
-          {getStatusBadge()}
+        <CardTitle className="flex items-center gap-2">
+          <Settings className="h-5 w-5" />
+          {t('personal.subscription')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-muted-foreground">{t('subscription.statusLabel', 'Status')}</span>
+          {getStatusBadge()}
+        </div>
         {/* Status description */}
         {status.isLifetime && (
           <p className="text-sm text-muted-foreground flex items-center gap-1">

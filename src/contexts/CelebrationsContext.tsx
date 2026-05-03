@@ -36,7 +36,7 @@ export function CelebrationsProvider({ children }: { children: React.ReactNode }
       
       setCurrentCelebration({ item: nextItem, show: true });
       
-      // Auto-dismiss after exactly 2 seconds
+      // Auto-dismiss after exactly 3 seconds
       setTimeout(() => {
         console.log('CelebrationsContext: Hiding celebration');
         setCurrentCelebration(prev => prev ? { ...prev, show: false } : null);
@@ -45,7 +45,7 @@ export function CelebrationsProvider({ children }: { children: React.ReactNode }
           console.log('CelebrationsContext: Clearing celebration');
           setCurrentCelebration(null);
         }, 300);
-      }, 2000);
+      }, 3000);
     }
   }, [celebrationQueue, currentCelebration]);
 

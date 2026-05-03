@@ -4,7 +4,7 @@
 
 A cross-platform family task management app. Families organize chores, assign tasks to members, earn stars on completion, unlock badges and character progression, set goals, and chat. Runs as a web app and as a native Android app via Capacitor.
 
-Built with Lovable (AI-assisted dev platform). Actively developed — treat recent changes with care.
+Actively developed — treat recent changes with care.
 
 ---
 

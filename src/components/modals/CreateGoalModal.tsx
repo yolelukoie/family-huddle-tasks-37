@@ -7,7 +7,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useTasks } from '@/hooks/useTasks';
-import { useGoals } from '@/hooks/useGoals';
 import { useToast } from '@/hooks/use-toast';
 import { useFeatureGate } from '@/hooks/useFeatureGate';
 import { translateCategoryName } from '@/lib/translations';
@@ -19,17 +18,17 @@ interface CreateGoalModalProps {
   familyId: string;
   userId: string;
   activeGoals?: Goal[];
+  createGoal: (goalData: Omit<Goal, 'id' | 'createdAt' | 'currentStars' | 'completed' | 'completedAt'>) => Promise<Goal | null>;
 }
 
-export function CreateGoalModal({ open, onOpenChange, familyId, userId, activeGoals = [] }: CreateGoalModalProps) {
+export function CreateGoalModal({ open, onOpenChange, familyId, userId, activeGoals = [], createGoal }: CreateGoalModalProps) {
   const { t } = useTranslation();
   const [targetStars, setTargetStars] = useState('');
   const [reward, setReward] = useState('');
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const { categories } = useTasks();
-  const { createGoal } = useGoals();
   const { toast } = useToast();
   const { gate } = useFeatureGate();
 
@@ -50,14 +49,14 @@ export function CreateGoalModal({ open, onOpenChange, familyId, userId, activeGo
           familyId,
           userId,
           targetStars: parseInt(targetStars),
-          targetCategories: selectedCategories.length > 0 ? selectedCategories : [],
+          targetCategories: selectedCategory ? [selectedCategory] : [],
           reward: reward.trim() || undefined,
         });
 
         if (success) {
           setTargetStars('');
           setReward('');
-          setSelectedCategories([]);
+          setSelectedCategory(null);
           onOpenChange(false);
           toast({
             title: t('goalModal.success'),
@@ -84,11 +83,7 @@ export function CreateGoalModal({ open, onOpenChange, familyId, userId, activeGo
   };
 
   const toggleCategory = (categoryId: string) => {
-    setSelectedCategories(prev =>
-      prev.includes(categoryId)
-        ? prev.filter(id => id !== categoryId)
-        : [...prev, categoryId]
-    );
+    setSelectedCategory(prev => prev === categoryId ? null : categoryId);
   };
 
   return (
@@ -124,7 +119,7 @@ export function CreateGoalModal({ open, onOpenChange, familyId, userId, activeGo
                 <div key={category.id} className="flex items-center space-x-2">
                   <Checkbox
                     id={`category-${category.id}`}
-                    checked={selectedCategories.includes(category.id)}
+                    checked={selectedCategory === category.id}
                     onCheckedChange={() => toggleCategory(category.id)}
                   />
                   <Label htmlFor={`category-${category.id}`}>{translateCategoryName(category.name, t)}</Label>

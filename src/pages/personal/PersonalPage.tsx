@@ -11,7 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useApp } from '@/hooks/useApp';
 import { useBadges } from '@/hooks/useBadges';
 import { NavigationHeader } from '@/components/layout/NavigationHeader';
-import { Edit, Settings, Upload, Loader2, Languages, Palette, RotateCcw, Bell, BellOff, Trash2, LogOut } from 'lucide-react';
+import { Edit, Settings, Upload, Loader2, Languages, Palette, RotateCcw, Bell, BellOff, LogOut } from 'lucide-react';
 import { DeleteAccountModal } from '@/components/modals/DeleteAccountModal';
 import { requestPushPermission, getPushPermissionStatus } from '@/lib/pushNotifications';
 import { isPlatform, getCurrentPlatform } from '@/lib/platform';
@@ -295,7 +295,7 @@ export default function PersonalPage() {
               )}
             </div>
             <input ref={fileInputRef} type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
-            <Button variant="theme" onClick={handleAvatarClick} disabled={isUploadingAvatar}>
+            <Button variant="outline" onClick={handleAvatarClick} disabled={isUploadingAvatar}>
               <Upload className="h-4 w-4 mr-2" />
               {isUploadingAvatar ? t('personal.uploading') : t('personal.uploadPhoto')}
             </Button>
@@ -412,6 +412,7 @@ export default function PersonalPage() {
                     variant="outline"
                     onClick={() => openAppNotificationSettings()}
                     size="sm"
+                    className="w-full"
                   >
                     <Settings className="h-4 w-4 mr-2" />
                     {t('notifications.manageInSettings') || 'Manage in Settings'}
@@ -464,50 +465,41 @@ export default function PersonalPage() {
         {/* Subscription */}
         <SubscriptionStatusCard />
 
-        {/* Log Out */}
-        <Card>
-          <CardContent className="p-4">
-            <Button
-              variant="outline"
-              className="w-full text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
-              onClick={handleSignOut}
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              {t('common.logOut', 'Log out')}
-            </Button>
-          </CardContent>
-        </Card>
+        {/* Danger Zone */}
+        <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-4 space-y-4">
+          <h3 className="text-sm font-semibold text-destructive uppercase tracking-wide">{t('personal.dangerZone', 'Danger Zone')}</h3>
 
-        {/* Reset Character */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <RotateCcw className="h-5 w-5" />
-              {t('personal.resetCharacter')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">{t('personal.resetCharacterDesc')}</p>
-            <Button onClick={handleResetCharacter} variant="destructive" size="sm">
+          {/* Log Out */}
+          <Button
+            variant="outline"
+            className="w-full text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
+            onClick={handleSignOut}
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            {t('common.logOut', 'Log out')}
+          </Button>
+
+          {/* Reset Character */}
+          <div className="flex flex-col gap-2">
+            <div>
+              <p className="font-medium">{t('personal.resetCharacter')}</p>
+              <p className="text-sm text-muted-foreground">{t('personal.resetCharacterDesc')}</p>
+            </div>
+            <Button onClick={handleResetCharacter} variant="destructive" className="w-full">
               <RotateCcw className="h-4 w-4 mr-2" />
               {t('personal.resetCharacter')}
             </Button>
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Delete Account - Compact */}
-        <Card className="border-destructive/30">
-          <CardContent className="py-4 px-4 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 min-w-0">
-              <Trash2 className="h-4 w-4 text-destructive shrink-0" />
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-destructive">{t('personal.deleteAccount')}</p>
-                <p className="text-xs text-muted-foreground truncate">{t('personal.deleteAccountDesc')}</p>
-              </div>
+          {/* Delete Account */}
+          <div className="flex flex-col gap-2">
+            <div>
+              <p className="font-medium text-destructive">{t('personal.deleteAccount')}</p>
+              <p className="text-sm text-muted-foreground">{t('personal.deleteAccountDesc')}</p>
             </div>
             <DeleteAccountModal userId={user.id} />
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Legal Links */}
         <div className="flex justify-center gap-4 text-sm text-muted-foreground py-4 flex-wrap">

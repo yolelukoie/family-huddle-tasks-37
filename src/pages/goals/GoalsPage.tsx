@@ -19,7 +19,7 @@ import { translateCategoryName } from '@/lib/translations';
 export default function GoalsPage() {
   const { user } = useAuth();
   const { activeFamilyId } = useApp();
-  const { activeGoals, completedGoals, deleteGoal } = useGoals();
+  const { activeGoals, completedGoals, deleteGoal, createGoal } = useGoals();
   const { categories } = useTasks();
   const { gate } = useFeatureGate();
   const { t } = useTranslation();
@@ -181,6 +181,7 @@ export default function GoalsPage() {
         familyId={activeFamilyId}
         userId={user.id}
         activeGoals={activeGoals}
+        createGoal={createGoal}
       />
 
       <GoalHistoryModal
