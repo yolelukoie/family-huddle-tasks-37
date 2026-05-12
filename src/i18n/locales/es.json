@@ -423,7 +423,8 @@
     "creatingAccount": "Creando cuenta...",
     "madeWithLove": "Hecho con ❤️ para familias de todo el mundo",
     "sessionExpired": "Sesión expirada",
-    "sessionExpiredDesc": "Tu sesión era inválida. Por favor inicia sesión nuevamente."
+    "sessionExpiredDesc": "Tu sesión era inválida. Por favor inicia sesión nuevamente.",
+    "signInWithApple": "Iniciar sesión con Apple"
   },
   "onboarding": {
     "welcomeTitle": "¡Bienvenido a Family Huddle!",

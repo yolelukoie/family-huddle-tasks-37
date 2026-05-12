@@ -423,7 +423,8 @@
     "creatingAccount": "खाता बनाया जा रहा है...",
     "madeWithLove": "हर जगह परिवारों के लिए ❤️ से बनाया गया",
     "sessionExpired": "सत्र समाप्त हो गया",
-    "sessionExpiredDesc": "आपका सत्र अमान्य था। कृपया फिर से साइन इन करें।"
+    "sessionExpiredDesc": "आपका सत्र अमान्य था। कृपया फिर से साइन इन करें।",
+    "signInWithApple": "Apple से साइन इन करें"
   },
   "onboarding": {
     "welcomeTitle": "Family Huddle में आपका स्वागत है!",

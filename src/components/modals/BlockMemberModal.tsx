@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -67,6 +67,7 @@ export function BlockMemberModal({
           </DialogDescription>
         </DialogHeader>
 
+        <DialogBody>
         <div className="space-y-4 py-4">
           {/* Block restrictions info */}
           <div className="text-sm text-muted-foreground bg-muted/50 rounded-md p-3 space-y-1">
@@ -123,6 +124,7 @@ export function BlockMemberModal({
             </Alert>
           )}
         </div>
+        </DialogBody>
 
         <DialogFooter className="gap-2 sm:gap-0">
           <Button

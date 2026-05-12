@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   AlertDialog,
   AlertDialogAction,
+  AlertDialogBody,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -97,6 +98,8 @@ export function DeleteAccountModal({ userId }: DeleteAccountModalProps) {
             <AlertTriangle className="h-5 w-5" />
             {t('personal.deleteAccountTitle')}
           </AlertDialogTitle>
+        </AlertDialogHeader>
+        <AlertDialogBody>
           <AlertDialogDescription asChild>
             <div className="space-y-4 text-left">
               <p className="text-sm text-muted-foreground">
@@ -140,7 +143,7 @@ export function DeleteAccountModal({ userId }: DeleteAccountModalProps) {
               </div>
             </div>
           </AlertDialogDescription>
-        </AlertDialogHeader>
+        </AlertDialogBody>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isDeleting}>
             {t('common.cancel')}

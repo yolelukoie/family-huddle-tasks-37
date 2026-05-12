@@ -403,7 +403,8 @@
     "creatingAccount": "Creating account...",
     "madeWithLove": "Made with ❤️ for families everywhere",
     "sessionExpired": "Session expired",
-    "sessionExpiredDesc": "Your session was invalid. Please sign in again."
+    "sessionExpiredDesc": "Your session was invalid. Please sign in again.",
+    "signInWithApple": "Sign in with Apple"
   },
   "onboarding": {
     "welcomeTitle": "Welcome to Family Huddle!",

@@ -423,7 +423,8 @@
     "creatingAccount": "יוצר חשבון...",
     "madeWithLove": "נוצר עם ❤️ למשפחות בכל מקום",
     "sessionExpired": "הפגישה פגה",
-    "sessionExpiredDesc": "הפגישה שלך הייתה לא תקינה. אנא התחבר שוב."
+    "sessionExpiredDesc": "הפגישה שלך הייתה לא תקינה. אנא התחבר שוב.",
+    "signInWithApple": "התחבר עם Apple"
   },
   "onboarding": {
     "welcomeTitle": "ברוך הבא ל-Family Huddle!",

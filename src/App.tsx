@@ -25,6 +25,12 @@ import { AssignmentModalProvider } from "@/contexts/AssignmentModalContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { SubscriptionProvider } from "@/hooks/useSubscription";
 import { isPlatform } from "@/lib/platform";
+import { useKeyboardInset } from "@/hooks/useKeyboardInset";
+
+function KeyboardInset() {
+  useKeyboardInset();
+  return null;
+}
 
 function RealtimeRoot() {
   useRealtimeNotifications();
@@ -109,6 +115,7 @@ const App = () => (
                 <AssignmentModalProvider>
                   <ScrollToTop />
                   <DeepLinkHandler />
+                  <KeyboardInset />
                   <RealtimeRoot />
                   <Routes>
                     <Route path="/auth" element={<AuthPage />} />

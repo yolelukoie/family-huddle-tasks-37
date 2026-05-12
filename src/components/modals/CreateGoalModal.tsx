@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -92,6 +92,7 @@ export function CreateGoalModal({ open, onOpenChange, familyId, userId, activeGo
         <DialogHeader>
           <DialogTitle>{t('goalModal.createNewGoal')}</DialogTitle>
         </DialogHeader>
+        <DialogBody>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="targetStars">{t('goalModal.targetStars')}</Label>
@@ -148,6 +149,7 @@ export function CreateGoalModal({ open, onOpenChange, familyId, userId, activeGo
             </Button>
           </div>
         </form>
+        </DialogBody>
       </DialogContent>
     </Dialog>
   );

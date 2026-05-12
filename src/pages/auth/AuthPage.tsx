@@ -15,6 +15,15 @@ import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
 import { Capacitor } from '@capacitor/core';
 import { GoogleAuth } from '@southdevs/capacitor-google-auth';
+
+const isIOS = () => Capacitor.getPlatform() === 'ios';
+
+const AppleLogo = () => (
+  <svg className="mr-2 h-4 w-4" viewBox="0 0 814 1000" fill="currentColor">
+    <path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-38.8-155.5-127.4C46 790.7 0 663 0 541.8c0-207.5 135.4-317.1 268.5-317.1 99.8 0 162.2 67.3 215.9 67.3 51.5 0 124.4-71.2 232.9-71.2 37.2 0 107.5 7.4 158.7 71.3zm-209.8-44.7c-6.5-26.1-17.4-53.2-34.2-77.5-35.5-50.7-93.8-87.2-148.8-87.2-3.5 0-7 .2-10.5.8 4 28.6 15.8 56.1 31.9 79.1 35.1 49.3 93.7 85.8 149.8 85.8 3.9 0 7.8-.2 11.8-.8v-.2z" />
+  </svg>
+);
+
 const StarIcon = () => (
   <svg viewBox="0 0 100 100" className="inline-block w-[1.2em] h-[1.2em] ml-1 align-middle">
     {/* Main star - centered */}
@@ -43,6 +52,43 @@ export function AuthPage() {
   const { signIn, signUp, resetPassword, isAuthenticated, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const handleAppleSignIn = async () => {
+    try {
+      setIsLoading(true);
+      if (Capacitor.isNativePlatform()) {
+        const { Browser } = await import('@capacitor/browser');
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'apple',
+          options: {
+            redirectTo: 'https://familyhuddletasks.com/auth/callback',
+            skipBrowserRedirect: true,
+          },
+        });
+        if (error) {
+          toast({ title: t('auth.signInFailed'), description: error.message, variant: 'destructive' });
+          return;
+        }
+        if (data?.url) {
+          await Browser.open({ url: data.url, presentationStyle: 'popover' });
+        }
+      } else {
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: 'apple',
+          options: { redirectTo: `${window.location.origin}/auth/callback` },
+        });
+        if (error) {
+          toast({ title: t('auth.signInFailed'), description: error.message, variant: 'destructive' });
+        }
+      }
+    } catch (e: unknown) {
+      const err = e as { message?: string };
+      console.error('[Auth] Apple sign-in error:', e);
+      toast({ title: t('auth.signInFailed'), description: err?.message ?? 'Sign in with Apple failed', variant: 'destructive' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleGoogleSignIn = async () => {
     try {
@@ -82,6 +128,24 @@ export function AuthPage() {
       navigate('/', { replace: true });
     }
   }, [isAuthenticated, authLoading, navigate]);
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    let cleanup: (() => void) | null = null;
+    Promise.all([
+      import('@capacitor/browser'),
+      import('@capacitor/app'),
+    ]).then(([{ Browser }, { App }]) => {
+      App.addListener('appUrlOpen', async (event) => {
+        if (event.url.includes('/auth/callback')) {
+          await Browser.close();
+        }
+      }).then((handle) => {
+        cleanup = () => { void handle.remove(); };
+      });
+    });
+    return () => { cleanup?.(); };
+  }, []);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -243,21 +307,36 @@ export function AuthPage() {
                       </span>
                     </div>
                     
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full"
-                      disabled={isLoading}
-                      onClick={handleGoogleSignIn}
-                    >
-                      <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
-                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z" fill="#4285F4"/>
-                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-                      </svg>
-                      {t('auth.signInWithGoogle', 'Sign in with Google')}
-                    </Button>
+                    {!isIOS() && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full"
+                        disabled={isLoading}
+                        onClick={handleGoogleSignIn}
+                      >
+                        <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
+                          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z" fill="#4285F4"/>
+                          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                        </svg>
+                        {t('auth.signInWithGoogle', 'Sign in with Google')}
+                      </Button>
+                    )}
+
+                    {isIOS() && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full bg-black text-white hover:bg-gray-900 hover:text-white border-black"
+                        disabled={isLoading}
+                        onClick={handleAppleSignIn}
+                      >
+                        <AppleLogo />
+                        {t('auth.signInWithApple', 'Sign in with Apple')}
+                      </Button>
+                    )}
 
                     <div className="text-center">
                       <Button

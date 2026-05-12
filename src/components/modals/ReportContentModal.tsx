@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -183,6 +184,7 @@ export function ReportContentModal({
           <DialogDescription>{t('report.description')}</DialogDescription>
         </DialogHeader>
 
+        <DialogBody>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="reason">{t('report.reasonLabel')} *</Label>
@@ -213,6 +215,7 @@ export function ReportContentModal({
             </div>
           )}
         </div>
+        </DialogBody>
 
         <DialogFooter className="gap-2 sm:gap-0">
           <Button variant="outline" onClick={handleClose} disabled={isSubmitting}>

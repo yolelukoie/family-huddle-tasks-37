@@ -526,7 +526,8 @@
     "creatingAccount": "Создание аккаунта...",
     "madeWithLove": "Сделано с ❤️ для семей по всему миру",
     "sessionExpired": "Сессия истекла",
-    "sessionExpiredDesc": "Ваша сессия была недействительна. Пожалуйста, войдите снова."
+    "sessionExpiredDesc": "Ваша сессия была недействительна. Пожалуйста, войдите снова.",
+    "signInWithApple": "Войти через Apple"
   },
   "onboarding": {
     "welcomeTitle": "Добро пожаловать в Family Huddle!",

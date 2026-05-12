@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogBody, DialogContent } from '@/components/ui/dialog';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useToast } from '@/hooks/use-toast';
 import { PromoCodeInput } from './PromoCodeInput';
@@ -55,6 +55,7 @@ export function PaywallOverlay() {
         onInteractOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
+        <DialogBody>
         <div className="pt-2 text-center space-y-4">
           <Crown className="h-12 w-12 text-amber-500 mx-auto" />
           <h2 className="text-xl font-semibold">{t('paywall.title')}</h2>
@@ -80,6 +81,7 @@ export function PaywallOverlay() {
             </Button>
           )}
         </div>
+        </DialogBody>
       </DialogContent>
     </Dialog>
   );

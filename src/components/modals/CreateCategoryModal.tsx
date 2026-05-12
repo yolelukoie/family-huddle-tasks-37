@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -69,6 +70,7 @@ export function CreateCategoryModal({ open, onOpenChange, familyId }: CreateCate
           <DialogTitle>{t('tasks.createCategory')}</DialogTitle>
           <DialogDescription>{t('tasks.createCategoryDesc')}</DialogDescription>
         </DialogHeader>
+        <DialogBody>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="categoryName">{t('tasks.categoryNameLabel')}</Label>
@@ -97,6 +99,7 @@ export function CreateCategoryModal({ open, onOpenChange, familyId }: CreateCate
             </Button>
           </div>
         </form>
+        </DialogBody>
       </DialogContent>
     </Dialog>
   );

@@ -29,7 +29,6 @@ type StatusListener = (status: SubscriptionStatus) => void;
 // ---------------------------------------------------------------------------
 
 const ENTITLEMENT_ID = 'Family Huddle Pro';
-const API_KEY = import.meta.env.VITE_REVENUECAT_ANDROID_API_KEY as string;
 const DEFAULT_STATUS: SubscriptionStatus = {
   isActive: false,
   isTrialing: false,
@@ -48,8 +47,6 @@ const listeners: Set<StatusListener> = new Set();
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-const isNative = () => Capacitor.getPlatform() === 'android';
 
 function parseStatus(info: CustomerInfo): SubscriptionStatus {
   const ent = info.entitlements.active[ENTITLEMENT_ID];
@@ -77,7 +74,7 @@ function notifyListeners(status: SubscriptionStatus) {
 // ---------------------------------------------------------------------------
 
 export async function initRevenueCat(userId: string): Promise<void> {
-  if (!isNative()) return;
+  if (!Capacitor.isNativePlatform() || initialized) return;
 
   // Already configured for this user — nothing to do
   if (initialized && currentUserId === userId) return;
@@ -89,9 +86,18 @@ export async function initRevenueCat(userId: string): Promise<void> {
     return;
   }
 
-  // First-time init
+  // First-time init — pick the correct API key for this platform
+  const platform = Capacitor.getPlatform();
+  const apiKey = platform === 'ios'
+    ? (import.meta.env.VITE_REVENUECAT_IOS_API_KEY as string)
+    : (import.meta.env.VITE_REVENUECAT_ANDROID_API_KEY as string);
+  if (!apiKey) {
+    console.warn(`[RevenueCat] No API key for platform: ${platform}`);
+    return;
+  }
+
   await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG });
-  await Purchases.configure({ apiKey: API_KEY, appUserID: userId });
+  await Purchases.configure({ apiKey, appUserID: userId });
 
   // Listen for real-time entitlement changes
   await Purchases.addCustomerInfoUpdateListener((info: CustomerInfo) => {
@@ -109,15 +115,15 @@ export function resetRevenueCat(): void {
 }
 
 export async function getSubscriptionStatus(): Promise<SubscriptionStatus> {
-  if (!isNative() || !initialized) return { ...DEFAULT_STATUS };
+  if (!Capacitor.isNativePlatform() || !initialized) return { ...DEFAULT_STATUS };
 
   const { customerInfo } = await Purchases.getCustomerInfo();
   return parseStatus(customerInfo);
 }
 
 export async function purchaseDefaultPackage(): Promise<PurchaseResult> {
-  if (!isNative() || !initialized) {
-    return { success: false, error: 'Subscriptions are only available on Android' };
+  if (!Capacitor.isNativePlatform() || !initialized) {
+    return { success: false, error: 'Subscriptions are only available on mobile' };
   }
 
   try {
@@ -135,11 +141,12 @@ export async function purchaseDefaultPackage(): Promise<PurchaseResult> {
       status,
       ...(!status.isActive && { error: 'Purchase completed but entitlement not activated. Try restoring purchases.' }),
     };
-  } catch (e: any) {
-    if (e?.code === PURCHASES_ERROR_CODE.PURCHASE_CANCELLED_ERROR) {
+  } catch (e: unknown) {
+    const err = e as { code?: string; message?: string };
+    if (err?.code === PURCHASES_ERROR_CODE.PURCHASE_CANCELLED_ERROR) {
       return { success: false, cancelled: true };
     }
-    return { success: false, error: e?.message ?? 'Purchase failed' };
+    return { success: false, error: err?.message ?? 'Purchase failed' };
   }
 }
 
@@ -147,8 +154,8 @@ export async function purchaseDefaultPackage(): Promise<PurchaseResult> {
 // If provided, we purchase that specific offer via purchaseSubscriptionOption.
 // If not provided, falls back to purchasePackage (default base plan price).
 export async function purchasePromoOffering(offeringId: string, offerOptionId?: string): Promise<PurchaseResult> {
-  if (!isNative() || !initialized) {
-    return { success: false, error: 'Subscriptions are only available on Android' };
+  if (!Capacitor.isNativePlatform() || !initialized) {
+    return { success: false, error: 'Subscriptions are only available on mobile' };
   }
 
   try {
@@ -177,23 +184,24 @@ export async function purchasePromoOffering(offeringId: string, offerOptionId?: 
     const { customerInfo } = await Purchases.purchasePackage({ aPackage: pkg });
     const status = parseStatus(customerInfo);
     return { success: status.isActive, status };
-  } catch (e: any) {
-    if (e?.code === PURCHASES_ERROR_CODE.PURCHASE_CANCELLED_ERROR) {
+  } catch (e: unknown) {
+    const err = e as { code?: string; message?: string };
+    if (err?.code === PURCHASES_ERROR_CODE.PURCHASE_CANCELLED_ERROR) {
       return { success: false, cancelled: true };
     }
-    return { success: false, error: e?.message ?? 'Purchase failed' };
+    return { success: false, error: err?.message ?? 'Purchase failed' };
   }
 }
 
 export async function restorePurchases(): Promise<SubscriptionStatus> {
-  if (!isNative() || !initialized) return { ...DEFAULT_STATUS };
+  if (!Capacitor.isNativePlatform() || !initialized) return { ...DEFAULT_STATUS };
 
   const { customerInfo } = await Purchases.restorePurchases();
   return parseStatus(customerInfo);
 }
 
 export async function getManagementURL(): Promise<string | null> {
-  if (!isNative() || !initialized) return null;
+  if (!Capacitor.isNativePlatform() || !initialized) return null;
 
   const { customerInfo } = await Purchases.getCustomerInfo();
   return customerInfo.managementURL ?? null;
