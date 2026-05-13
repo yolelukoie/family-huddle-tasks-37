@@ -80,7 +80,10 @@
     "reward": "פרס:",
     "noActiveGoal": "אין מטרה פעילה מוגדרת",
     "createGoal": "צור מטרה",
-    "deleteConfirm": "האם אתה בטוח שברצונך למחוק מטרה זו?"
+    "deleteConfirm": "האם אתה בטוח שברצונך למחוק מטרה זו?",
+    "activeCount_one": "{{count}} יעד פעיל",
+    "activeCount_other": "{{count}} יעדים פעילים",
+    "goalInCategory": "יעד ב{{category}}"
   },
   "family": {
     "title": "הגדרות משפחה",
@@ -144,14 +147,17 @@
     "error": "שגיאה",
     "failedToRemove": "נכשלה הסרת חבר. רק בעלי משפחות יכולים להסיר חברים.",
     "edit": "ערוך",
-    "settings": "הגדרות"
+    "settings": "הגדרות",
+    "codeActiveFor24Hours": "קוד ההזמנה יהיה פעיל למשך 24 שעות.",
+    "errorGeneratingCode": "שגיאה ביצירת קוד הזמנה. רק בעלי המשפחה יכולים לשתף קודים."
   },
   "chat": {
     "title": "צ'אט משפחתי",
     "clearChat": "נקה צ'אט",
     "noMessages": "עדיין אין הודעות. התחל שיחה!",
     "typeMessage": "הקלד את ההודעה שלך...",
-    "send": "שלח"
+    "send": "שלח",
+    "newMessage": "הודעת צ'אט חדשה"
   },
   "themes": {
     "oceanCalm": {
@@ -293,14 +299,14 @@
   },
   "common": {
     "loading": "טוען...",
-    "save": "שמור",
+    "error": "שגיאה",
     "cancel": "ביטול",
     "delete": "מחק",
-    "edit": "ערוך",
-    "close": "סגור",
+    "report": "דווח",
+    "creating": "יוצר...",
     "confirm": "אישור",
-    "yes": "כן",
-    "no": "לא"
+    "deleteCategoryTitle": "מחק קטגוריה",
+    "deleteCategoryDesc": "פעולה זו תמחק לצמיתות את הקטגוריה וכל התבניות והמשימות שלה. לא ניתן לבטל פעולה זו."
   },
   "stages": {
     "baby": "תינוק",
@@ -511,17 +517,446 @@
   "paywall": {
     "title": "תקופת הניסיון החינמית שלך הסתיימה",
     "description": "הירשם כמנוי כדי להמשיך להשתמש ב-Family Huddle עם כל התכונות.",
-    "subscribe": "הירשם כמנוי — $4.90 לחודש"
+    "subscribe": "הירשם כמנוי — $4.90 לחודש",
+    "titleManage": "Subscription Plans",
+    "descriptionManage": "View and manage your Family Huddle subscription.",
+    "currentPlan": {
+      "lifetime": "You have lifetime access",
+      "trial": "Free trial ends {{date}}",
+      "premium": "Premium plan renews {{date}}"
+    }
   },
-  "common": {
-    "loading": "טוען...",
-    "error": "שגיאה",
-    "cancel": "ביטול",
-    "delete": "מחק",
-    "report": "דווח",
-    "creating": "יוצר...",
-    "confirm": "אישור",
-    "deleteCategoryTitle": "מחק קטגוריה",
-    "deleteCategoryDesc": "פעולה זו תמחק לצמיתות את הקטגוריה וכל התבניות והמשימות שלה. לא ניתן לבטל פעולה זו."
+  "taskHistory": {
+    "title": "היסטוריית משימות שהושלמו",
+    "description": "כל המשימות שהושלמו במשפחה זו",
+    "noTasks": "עדיין אין משימות שהושלמו. התחל להשלים כמה משימות!",
+    "category": "קטגוריה",
+    "completed": "הושלם",
+    "due": "תאריך יעד",
+    "unknown": "לא ידוע"
+  },
+  "badges": {
+    "baby_10": {
+      "name": "מוצץ",
+      "description": "החיוך הראשון ממיס את כולם!"
+    },
+    "baby_20": {
+      "name": "רעשן",
+      "description": "גילה את קסם הרעש!"
+    },
+    "baby_30": {
+      "name": "בקבוק תינוק",
+      "description": "הטעין אנרגיה עם חלב!"
+    },
+    "baby_40": {
+      "name": "דובי קטיפה",
+      "description": "מצא חבר חיבוק לנצח!"
+    },
+    "child_60": {
+      "name": "קוביות משחק",
+      "description": "בנה יצירת מופת (ואז הפיל אותה)!"
+    },
+    "child_70": {
+      "name": "שן",
+      "description": "אופס! השן הראשונה נשרה!"
+    },
+    "child_80": {
+      "name": "צבעי שעווה",
+      "description": "הקירות הם הקנבס הטוב ביותר!"
+    },
+    "child_90": {
+      "name": "כדור כדורגל",
+      "description": "כבש שער ראשון (לשער הלא נכון)!"
+    },
+    "child_100": {
+      "name": "תרמיל גב",
+      "description": "מוכן להרפתקה הגדולה הראשונה בבית הספר!"
+    },
+    "child_110": {
+      "name": "גלידה",
+      "description": "שיעור חיים: גלידה נמסה מהר!"
+    },
+    "child_120": {
+      "name": "חבל קפיצה",
+      "description": "סוף סוף יכול לקפוץ 10 פעמים בלי להיכשל!"
+    },
+    "child_130": {
+      "name": "כוכב זהב",
+      "description": "המורה אומר: עבודה מצוינת!"
+    },
+    "child_140": {
+      "name": "ספר",
+      "description": "קורא סיפורי פיות אחרי שעת השינה..."
+    },
+    "child_150": {
+      "name": "כובע יום הולדת",
+      "description": "העוגה הגדולה ביותר אי פעם—נגמרה תוך 5 דקות!"
+    },
+    "child_160": {
+      "name": "קורקינט",
+      "description": "מהיר יותר ממה שמבוגרים יכולים לרוץ!"
+    },
+    "child_170": {
+      "name": "כף רגל של גור",
+      "description": "חברים לנצח: אני והכלב!"
+    },
+    "child_180": {
+      "name": "משקפי שמש",
+      "description": "ילד מגניב התגלה!"
+    },
+    "child_190": {
+      "name": "חתיכת פאזל",
+      "description": "סיים פאזל בלי לאבד אף חתיכה (נס)!"
+    },
+    "teen_210": {
+      "name": "סמארטפון",
+      "description": "מהירות הודעות: רמה אולימפית."
+    },
+    "teen_220": {
+      "name": "גיטרה",
+      "description": "להקה ראשונה, שם נורא."
+    },
+    "teen_230": {
+      "name": "פרוסת פיצה",
+      "description": "ארוחת אלופים."
+    },
+    "teen_240": {
+      "name": "ספר לימוד",
+      "description": "דחס חודש לתוך לילה אחד."
+    },
+    "teen_250": {
+      "name": "לב",
+      "description": "אהבה ראשונה. אדום כל הזמן."
+    },
+    "teen_260": {
+      "name": "אוזניות",
+      "description": "מוזיקה = חיים."
+    },
+    "teen_270": {
+      "name": "כדורסל",
+      "description": "כבש פעם אחת, מתגאה לנצח."
+    },
+    "teen_280": {
+      "name": "סקייטבורד",
+      "description": "כבידה כואבת, אבל שווה."
+    },
+    "teen_290": {
+      "name": "מצלמת סלפי",
+      "description": "זווית מושלמת = 200 ניסיונות."
+    },
+    "teen_300": {
+      "name": "בחינה",
+      "description": "עבר! אל תשאל איך."
+    },
+    "teen_310": {
+      "name": "קפוצ'ון",
+      "description": "מדים: קפוצ'ון 24/7."
+    },
+    "teen_320": {
+      "name": "מסכת דרמה",
+      "description": "דרמה של מתבגרים: בכל מקום, תמיד."
+    },
+    "teen_330": {
+      "name": "מחברת",
+      "description": "יומן סודי... אל תציץ!"
+    },
+    "teen_340": {
+      "name": "אופניים",
+      "description": "מהיר יותר מהאוטובוס, גם יותר מגניב."
+    },
+    "adult_360": {
+      "name": "מגש הגשה",
+      "description": "נשא 5 כוסות, שפך 4."
+    },
+    "adult_370": {
+      "name": "ספל קפה",
+      "description": "דלק הישרדות מופעל."
+    },
+    "adult_380": {
+      "name": "שעון קיר",
+      "description": "גילה שימי שני הם נצחיים."
+    },
+    "adult_390": {
+      "name": "מדים לעבודה",
+      "description": "משכורת ראשונה = קניות מיידיות."
+    },
+    "adult_400": {
+      "name": "מקלדת",
+      "description": "הקלדה מהירה נראית כמו פריצה."
+    },
+    "adult_410": {
+      "name": "טלפון",
+      "description": "לקוח: כועס. אני: מחייך."
+    },
+    "adult_420": {
+      "name": "נעלי עבודה",
+      "description": "נעלי עבודה = מכשירי עינויים."
+    },
+    "adult_430": {
+      "name": "ארנק",
+      "description": "חסכונות? אילו חסכונות?"
+    },
+    "adult_440": {
+      "name": "עניבה",
+      "description": "קשר עניבה אחרי 50 הדרכות ביוטיוב."
+    },
+    "adult_450": {
+      "name": "מחשב נייד",
+      "description": "Ctrl+Z הוא הכוח העל שלי."
+    },
+    "adult_460": {
+      "name": "קופסת פיצה",
+      "description": "מסורת חטיף במשמרת לילה."
+    },
+    "adult_470": {
+      "name": "מטבע",
+      "description": "למדתי מה זה 'מסים' (אוץ')."
+    },
+    "adult_480": {
+      "name": "שעון מעורר",
+      "description": "אזעקה התעלמת = בוס כועס."
+    },
+    "adult_490": {
+      "name": "כרטיס אשראי",
+      "description": "יתרת כרטיס אשראי: לא, תודה."
+    },
+    "ontherise_510": {
+      "name": "מצפן",
+      "description": "מצאתי כיוון קריירה שמרגיש נכון."
+    },
+    "ontherise_520": {
+      "name": "תיק עבודות",
+      "description": "העבודה שלך סוף סוף נראית כמוך."
+    },
+    "ontherise_530": {
+      "name": "ארון בגדים",
+      "description": "סגנון אישי מופעל."
+    },
+    "ontherise_540": {
+      "name": "חך",
+      "description": "טעם שודרג—אוכל, מוזיקה, הכל."
+    },
+    "ontherise_550": {
+      "name": "ערב זוגי",
+      "description": "הושאר ללא תגובה? לא הלילה."
+    },
+    "ontherise_560": {
+      "name": "דואט",
+      "description": "מצאתי את האדם שלי לחגוג ניצחונות."
+    },
+    "ontherise_570": {
+      "name": "מנטור",
+      "description": "עוזר לאחרים להתקדם."
+    },
+    "ontherise_580": {
+      "name": "העלאה",
+      "description": "משכורת עלתה. גם ביטחון עצמי."
+    },
+    "ontherise_590": {
+      "name": "תג כנס",
+      "description": "כנס נכבש; אנשי קשר הושגו."
+    },
+    "adult_610": {
+      "name": "מפתח רכב",
+      "description": "חירות על ארבעה גלגלים!"
+    },
+    "adult_620": {
+      "name": "בית",
+      "description": "בשכירות, אבל מרגיש שלי."
+    },
+    "adult_630": {
+      "name": "עגלת תינוק",
+      "description": "חיים: שודרגו עם מיני-אני."
+    },
+    "adult_640": {
+      "name": "חשבונות",
+      "description": "חשבון חשמל = סיפור אימים."
+    },
+    "adult_650": {
+      "name": "צמח",
+      "description": "צמח הבית שרד שבוע שלם!"
+    },
+    "adult_660": {
+      "name": "טבעת",
+      "description": "אהבה, מחויבות... ושטיפת כלים."
+    },
+    "adult_670": {
+      "name": "ספר",
+      "description": "ספריית עזרה עצמית: גדלה מהר."
+    },
+    "adult_680": {
+      "name": "מזוודה",
+      "description": "נסיעת עסקים = ארוחת בוקר חינם במלון."
+    },
+    "adult_690": {
+      "name": "מחשב נייד",
+      "description": "המיילים לא מסתיימים."
+    },
+    "mature_adult_couch": {
+      "name": "ספה",
+      "description": "אלוף מרתוני נטפליקס."
+    },
+    "mature_adult_dumbbell": {
+      "name": "משקולת",
+      "description": "נרשמתי... הלכתי פעמיים."
+    },
+    "mature_adult_camera": {
+      "name": "מצלמה",
+      "description": "תמונות חופשה: 1000, טובות: 3."
+    },
+    "mature_adult_money_bag": {
+      "name": "שק כסף",
+      "description": "סוף סוף קצת חסכונות!"
+    },
+    "mature_adult_balloon": {
+      "name": "בלון",
+      "description": "ארגנתי מסיבה, השכנים התלוננו."
+    },
+    "mature_adult_wine_glass": {
+      "name": "כוס יין",
+      "description": "טעימת יין: מקצועי לחלוטין."
+    },
+    "mature_adult_toolbox": {
+      "name": "ארגז כלים",
+      "description": "תיקנתי דבר אחד, שברתי שניים."
+    },
+    "mature_adult_graduation_cap": {
+      "name": "כובע בוגרים",
+      "description": "סוף סוף סיימתי את התואר."
+    },
+    "mature_adult_globe": {
+      "name": "גלובוס",
+      "description": "טיילתי בעולם (או לפחות 2 ערים)."
+    },
+    "golden_gray_hair": {
+      "name": "חוט שיער אפור",
+      "description": "דגש חדש: כסף טבעי."
+    },
+    "golden_glasses": {
+      "name": "משקפיים",
+      "description": "קריאת טקסט קטן = בלתי אפשרי."
+    },
+    "golden_book_stack": {
+      "name": "ערמת ספרים",
+      "description": "אוסף חוכמה הושלם."
+    },
+    "golden_bbq_grill": {
+      "name": "גריל BBQ",
+      "description": "מלך הגריל של השכונה."
+    },
+    "golden_yacht_model": {
+      "name": "דגם יאכטה",
+      "description": "חלום גדול, שייט קטן."
+    },
+    "golden_family_photo": {
+      "name": "תמונת משפחה",
+      "description": "הצוות הכי טוב שיש."
+    },
+    "golden_golf_club": {
+      "name": "מחבט גולף",
+      "description": "חור ב... 23 ניסיונות."
+    },
+    "golden_desk": {
+      "name": "שולחן עבודה",
+      "description": "המשרד הוא בית שני."
+    },
+    "golden_trophy": {
+      "name": "גביע",
+      "description": "גיל העמידה = שיא!"
+    },
+    "golden_rocking_chair": {
+      "name": "כיסא נדנדה",
+      "description": "אלוף תנומת סוף השבוע."
+    },
+    "golden_cookbook": {
+      "name": "ספר בישול",
+      "description": "מתכון סודי שוכלל."
+    },
+    "golden_hiking_stick": {
+      "name": "מקל הליכה",
+      "description": "ההרים עדיין קוראים."
+    },
+    "golden_headphones": {
+      "name": "אוזניות",
+      "description": "ישן אבל עדיין מתנגן!"
+    },
+    "golden_piggy_bank": {
+      "name": "קופת חזיר",
+      "description": "תוכנית חיסכון: סוף סוף עובדת."
+    },
+    "golden_medal": {
+      "name": "מדליה",
+      "description": "הישג חיים מופעל."
+    },
+    "golden_dog_paw": {
+      "name": "כף רגל כלב",
+      "description": "הכלב עדיין חושב שאני הכי טוב."
+    },
+    "golden_camera": {
+      "name": "מצלמה",
+      "description": "כל קמט מספר סיפור."
+    },
+    "golden_calendar": {
+      "name": "לוח שנה",
+      "description": "מסיבות יום הולדת לא מפסיקות."
+    },
+    "golden_champagne": {
+      "name": "שמפניה",
+      "description": "לחיים לשנים הטובות ביותר!"
+    }
+  },
+  "block": {
+    "title": "חסום חבר",
+    "description": "חסום את {{name}} מהשתתפות בפעילויות משפחתיות.",
+    "reason": "סיבה",
+    "selectReason": "בחר סיבה",
+    "duration": "משך",
+    "selectDuration": "בחר משך",
+    "1hour": "שעה 1",
+    "12hours": "12 שעות",
+    "1day": "יום 1",
+    "1week": "שבוע 1",
+    "indefinite": "ללא הגבלת זמן",
+    "autoKickWarning": "עם חסימה ללא הגבלת זמן, החבר יוצא אוטומטית מהמשפחה.",
+    "restrictionsTitle": "הגבלות במהלך החסימה:",
+    "restrictionChat": "צ'אט",
+    "restrictionAssignTasks": "הקצאת משימות",
+    "restrictionCreateTasks": "יצירת משימות",
+    "restrictionProfile": "עריכת פרופיל",
+    "blockBtn": "חסום",
+    "unblockBtn": "בטל חסימה",
+    "blocked": "חסום",
+    "blockedFor": "חסום למשך {{duration}}",
+    "youWereBlocked": "נחסמת",
+    "youWereBlockedFor": "נחסמת למשך {{duration}}",
+    "memberBlocked": "חבר נחסם",
+    "memberBlockedDesc": "{{name}} נחסם למשך {{duration}}.",
+    "memberUnblocked": "חסימת חבר בוטלה",
+    "memberUnblockedDesc": "{{name}} שוחרר מהחסימה.",
+    "failedToBlock": "החסימה נכשלה",
+    "failedToUnblock": "ביטול החסימה נכשל",
+    "youWereUnblocked": "שוחררת מהחסימה",
+    "autoKicked": "הוצאת אוטומטית",
+    "memberAutoKicked": "{{name}} הוצא אוטומטית מהמשפחה.",
+    "accessRestricted": "גישה מוגבלת",
+    "accessRestrictedFor": "גישה מוגבלת למשך {{duration}}",
+    "cannotAccessWhileBlocked": "אינך יכול לגשת לזה בזמן שאתה חסום.",
+    "chatRestricted": "צ'אט מוגבל",
+    "restricted": "מוגבל",
+    "cannotAssignTasks": "אינך יכול להקצות משימות בזמן שאתה חסום.",
+    "blockedWithReason": "חסום בגלל: {{reason}}",
+    "cannotCreateInDefaultCategory": "אינך יכול ליצור משימות בקטגוריה ברירת המחדל בזמן שאתה חסום.",
+    "viewOnlyWhileBlocked": "צפייה בלבד בזמן חסימה.",
+    "noMembersAccess": "אין גישה לחברים",
+    "noMembersAccessFor": "אין גישה לחברים למשך {{duration}}",
+    "reasons": {
+      "harassment": "הטרדה",
+      "hate": "שפת שנאה",
+      "sexual": "תוכן מיני",
+      "violence": "אלימות",
+      "spam": "ספאם",
+      "personalInfo": "מידע אישי",
+      "other": "אחר"
+    }
   }
 }

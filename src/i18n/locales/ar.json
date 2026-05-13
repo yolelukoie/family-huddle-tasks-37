@@ -1,0 +1,968 @@
+{
+  "legal": {
+    "privacyPolicy": "سياسة الخصوصية",
+    "termsOfUse": "شروط الاستخدام",
+    "refundPolicy": "سياسة الاسترداد"
+  },
+  "nav": {
+    "home": "الرئيسية",
+    "tasks": "المهام",
+    "goals": "الأهداف",
+    "family": "العائلة",
+    "chat": "المحادثة",
+    "personal": "الإعدادات الشخصية"
+  },
+  "main": {
+    "title": "نجوم العائلة",
+    "hello": "مرحباً",
+    "loading": "جارٍ التحميل...",
+    "progressToNext": "التقدم نحو المرحلة التالية",
+    "stars": "نجوم",
+    "activeGoal": "الهدف النشط",
+    "reward": "المكافأة",
+    "todayTasks": "مهام اليوم",
+    "noTasksToday": "لا توجد مهام لليوم! عمل رائع! 🎉",
+    "goToTasks": "الذهاب إلى المهام",
+    "assignTask": "تعيين مهمة",
+    "resetCharacter": "إعادة تعيين الشخصية",
+    "resetConfirm": "هل أنت متأكد؟ سيؤدي هذا إلى إعادة تعيين تقدم شخصيتك لهذه العائلة فقط.",
+    "completeTask": "إتمام"
+  },
+  "tasks": {
+    "title": "المهام",
+    "familyTasks": "مهام العائلة",
+    "manageTasks": "إدارة مهام عائلتك وإتمامها",
+    "history": "السجل",
+    "today": "اليوم",
+    "upcoming": "القادمة",
+    "noTasksToday": "لا توجد مهام مستحقة اليوم! 🎉",
+    "noUpcomingTasks": "لا توجد مهام قادمة",
+    "due": "موعد الاستحقاق",
+    "assignedToYou": "مُعيَّنة إليك",
+    "assignedToMember": "مُعيَّنة لأحد أفراد العائلة",
+    "categories": "فئات المهام",
+    "addCategory": "إضافة فئة",
+    "enterCategoryName": "أدخل اسم الفئة:",
+    "loadingUserData": "جارٍ تحميل بيانات المستخدم...",
+    "settingUpFamily": "جارٍ إعداد عائلتك...",
+    "addTaskTemplate": "إضافة نموذج مهمة",
+    "addToToday": "تمت الإضافة إلى اليوم",
+    "addToTodayDesc": "تمت إضافتها إلى مهام اليوم.",
+    "taskName": "اسم المهمة",
+    "taskNamePlaceholder": "ما الذي يجب إنجازه؟",
+    "description": "الوصف (اختياري)",
+    "descriptionPlaceholder": "تفاصيل إضافية حول المهمة...",
+    "starValue": "قيمة النجوم (0-20)",
+    "starValueRestriction": "يمكن للمستخدمين الذين تجاوزوا 18 عامًا فقط تعديل قيم النجوم",
+    "createTemplate": "إنشاء نموذج",
+    "taskTemplateCreated": "تم إنشاء نموذج المهمة!",
+    "addedToCategory": "تمت إضافتها إلى",
+    "createTemplateFor": "أنشئ نموذج مهمة قابلاً لإعادة الاستخدام لـ",
+    "deleteCategory": "حذف الفئة؟ سيؤدي هذا أيضاً إلى حذف جميع النماذج والمهام في هذه الفئة.",
+    "categoryDeleted": "تم حذف الفئة",
+    "deleteCategorySuccess": "وجميع مهامها قد تم حذفها.",
+    "deleteTemplate": "هل تريد حذف نموذج المهمة هذا؟",
+    "templates": "نماذج",
+    "createCategory": "إنشاء فئة جديدة",
+    "createCategoryDesc": "أضف فئة مخصصة لتنظيم مهامك",
+    "categoryNameLabel": "اسم الفئة",
+    "categoryNamePlaceholder": "أدخل اسم الفئة",
+    "createCategoryBtn": "إنشاء الفئة"
+  },
+  "goals": {
+    "title": "الأهداف",
+    "personalGoals": "الأهداف الشخصية",
+    "trackGoals": "حدّد أهدافك لكسب النجوم وتتبع تقدمك",
+    "history": "السجل",
+    "activeGoal": "الهدف النشط",
+    "progress": "التقدم",
+    "targetCategories": "الفئات المستهدفة:",
+    "reward": "المكافأة:",
+    "noActiveGoal": "لا يوجد هدف نشط محدد",
+    "createGoal": "إنشاء هدف",
+    "deleteConfirm": "هل أنت متأكد من رغبتك في حذف هذا الهدف؟",
+    "activeCount_one": "{{count}} هدف نشط",
+    "activeCount_other": "{{count}} أهداف نشطة",
+    "goalInCategory": "هدف في {{category}}"
+  },
+  "family": {
+    "title": "إعدادات العائلة",
+    "activeFamily": "العائلة النشطة",
+    "inviteCode": "رمز الدعوة",
+    "shareCode": "مشاركة الرمز",
+    "inviteHint": "شارك هذا الرمز لدعوة الأعضاء إلى عائلتك",
+    "yourFamilies": "عائلاتك",
+    "noFamilies": "لا توجد عائلات بعد. أنشئ عائلة أو انضم إليها للبدء!",
+    "code": "الرمز",
+    "active": "نشطة",
+    "owner": "المالك",
+    "members": "الأعضاء",
+    "familyMembers": "أفراد العائلة",
+    "you": "أنت",
+    "editFamilyName": "تعديل اسم العائلة",
+    "familyName": "اسم العائلة",
+    "enterFamilyName": "أدخل اسم العائلة",
+    "update": "تحديث",
+    "cancel": "إلغاء",
+    "quitFamily": "مغادرة العائلة",
+    "quitConfirm": "هل أنت متأكد من رغبتك في مغادرة هذه العائلة؟",
+    "quit": "مغادرة",
+    "switchTo": "التبديل إلى هذه العائلة",
+    "createFamily": "إنشاء عائلة",
+    "joinFamily": "الانضمام إلى عائلة",
+    "create": "إنشاء",
+    "join": "انضمام",
+    "enterInviteCode": "أدخل رمز الدعوة",
+    "inviteCodeCopied": "تم نسخ رمز الدعوة!",
+    "inviteCodeCopiedDesc": "تم نسخ رمز الدعوة إلى الحافظة.",
+    "codeActiveFor24Hours": "سيكون رمز الدعوة نشطاً لمدة 24 ساعة.",
+    "errorGeneratingCode": "فشل إنشاء رمز الدعوة. يمكن لمالكي العائلة فقط مشاركة الرموز.",
+    "joinedSuccess": "تم الانضمام إلى العائلة بنجاح!",
+    "welcomeTo": "مرحباً بك في",
+    "invalidCode": "رمز دعوة غير صالح",
+    "invalidCodeDesc": "رمز الدعوة الذي أدخلته غير صالح.",
+    "errorJoining": "خطأ في الانضمام إلى العائلة",
+    "errorJoiningDesc": "حدث خطأ أثناء الانضمام إلى العائلة. يرجى المحاولة مرة أخرى.",
+    "createdSuccess": "تم إنشاء العائلة بنجاح!",
+    "errorCreating": "خطأ في إنشاء العائلة",
+    "errorCreatingDesc": "حدث خطأ أثناء إنشاء العائلة. يرجى المحاولة مرة أخرى.",
+    "nameUpdated": "تم تحديث اسم العائلة",
+    "nameUpdatedDesc": "تم تحديث اسم العائلة بنجاح.",
+    "errorUpdatingName": "خطأ في تحديث اسم العائلة",
+    "errorUpdatingNameDesc": "حدث خطأ أثناء تحديث اسم العائلة. يرجى المحاولة مرة أخرى.",
+    "cannotQuit": "تعذّرت مغادرة العائلة",
+    "cannotQuitDesc": "يجب أن تنتمي إلى عائلة واحدة على الأقل. إذا أردت مغادرة هذه العائلة، أنشئ عائلة أخرى أولاً.",
+    "leftFamily": "غادرت العائلة",
+    "leftFamilyDesc": "لقد غادرت العائلة بنجاح.",
+    "errorLeaving": "خطأ في مغادرة العائلة",
+    "errorLeavingDesc": "حدث خطأ أثناء مغادرة العائلة. يرجى المحاولة مرة أخرى.",
+    "removeMember": "إزالة العضو",
+    "memberRemoved": "تمت إزالة العضو",
+    "memberRemovedDesc": "تمت إزالته من العائلة.",
+    "errorRemovingMember": "خطأ في إزالة العضو",
+    "errorRemovingMemberDesc": "حدث خطأ أثناء إزالة عضو العائلة. يرجى المحاولة مرة أخرى.",
+    "removeConfirm": "هل أنت متأكد من رغبتك في إزالة",
+    "fromFamily": "من العائلة؟",
+    "remove": "إزالة",
+    "removedFromFamily": "تمت إزالتك من العائلة",
+    "removedFromFamilyDesc": "عذراً، لقد تم استبعادك من العائلة",
+    "error": "خطأ",
+    "failedToRemove": "فشل إزالة العضو. يمكن لمالكي العائلة فقط إزالة الأعضاء.",
+    "edit": "تعديل",
+    "settings": "الإعدادات"
+  },
+  "chat": {
+    "title": "محادثة العائلة",
+    "clearChat": "مسح المحادثة",
+    "noMessages": "لا توجد رسائل بعد. ابدأ محادثة!",
+    "typeMessage": "اكتب رسالتك...",
+    "send": "إرسال",
+    "newMessage": "رسالة محادثة جديدة"
+  },
+  "themes": {
+    "oceanCalm": {
+      "name": "هدوء المحيط",
+      "emotion": "سلام، تركيز، صفاء"
+    },
+    "sunsetEnergy": {
+      "name": "طاقة الغروب",
+      "emotion": "دفء، حيوية، تحفز"
+    },
+    "forestGrowth": {
+      "name": "نمو الغابة",
+      "emotion": "طبيعي، متوازن، متنامٍ"
+    },
+    "lavenderDreams": {
+      "name": "أحلام اللافندر",
+      "emotion": "إبداعي، رقيق، خيالي"
+    },
+    "roseGarden": {
+      "name": "حديقة الورد",
+      "emotion": "مبهج، محبّ، رحيم"
+    },
+    "midnightFocus": {
+      "name": "تركيز منتصف الليل",
+      "emotion": "هادئ، منتج، مركّز"
+    }
+  },
+  "personal": {
+    "title": "الإعدادات الشخصية",
+    "theme": "المظهر",
+    "selectTheme": "اختر نظام ألوانك",
+    "profilePicture": "صورة الملف الشخصي",
+    "uploadPhoto": "رفع صورة",
+    "uploading": "جارٍ الرفع...",
+    "uploadHint": "انقر على الصورة الرمزية أو الزر لرفع صورة ملف شخصي جديدة (الحد الأقصى 5 ميغابايت)",
+    "userProfile": "الملف الشخصي",
+    "displayName": "الاسم المعروض",
+    "displayNamePlaceholder": "أدخل اسمك المعروض",
+    "update": "تحديث",
+    "profileUpdated": "تم تحديث الملف الشخصي",
+    "profileUpdatedDesc": "تم تحديث اسمك المعروض بنجاح.",
+    "avatarUpdated": "تم تحديث الصورة الرمزية",
+    "avatarUpdatedDesc": "تم تحديث صورتك الرمزية بنجاح.",
+    "uploadFailed": "فشل الرفع",
+    "uploadFailedDesc": "حدث خطأ أثناء رفع صورتك الرمزية، يرجى المحاولة مرة أخرى.",
+    "invalidFileType": "نوع ملف غير صالح",
+    "invalidFileTypeDesc": "يرجى اختيار ملف صورة.",
+    "fileTooLarge": "الملف كبير جداً",
+    "fileTooLargeDesc": "يرجى اختيار صورة أصغر من 5 ميغابايت.",
+    "language": "اللغة",
+    "preferredLanguage": "اللغة المفضلة",
+    "selectLanguage": "اختر اللغة",
+    "languageUpdated": "تم تحديث اللغة",
+    "languageUpdatedDesc": "تم حفظ تفضيلات اللغة.",
+    "updateFailed": "فشل التحديث",
+    "updateFailedDesc": "حدث خطأ أثناء تحديث تفضيلات اللغة.",
+    "subscription": "الاشتراك",
+    "subscriptionDesc": "أنت حالياً في فترة تجريبية مجانية. أدر اشتراكك من هنا.",
+    "manageSubscription": "إدارة الاشتراك",
+    "resetCharacter": "إعادة تعيين الشخصية",
+    "resetCharacterDesc": "سيؤدي هذا إلى إعادة تعيين تقدم شخصيتك لهذه العائلة فقط. ستُمسح جميع شاراتك ونجومك.",
+    "characterReset": "تمت إعادة تعيين الشخصية",
+    "characterResetDesc": "تمت إعادة تعيين تقدم شخصيتك بنجاح.",
+    "customizeCharacter": "تخصيص الشخصية",
+    "customizeCharacterDesc": "تمثّل كل صورة مرحلة من مراحل نمو شخصيتك. كلما كسبت نجوماً تطورت شخصيتك عبر هذه المراحل. ارفع صوراً مخصصة أو استخدم الصور الافتراضية.",
+    "currentStage": "أنت هنا",
+    "customImageUploaded": "تم رفع الصورة المخصصة",
+    "customImageUploadedDesc": "تم حفظ صورة شخصيتك المخصصة.",
+    "customImageReset": "تمت إعادة الصورة إلى الافتراضية",
+    "customImageResetDesc": "سيتم الآن استخدام صورة الشخصية الافتراضية.",
+    "resetFailed": "فشل إعادة التعيين",
+    "resetFailedDesc": "حدث خطأ أثناء إعادة تعيين الصورة. يرجى المحاولة مرة أخرى.",
+    "deleteAccount": "حذف الحساب",
+    "deleteAccountDesc": "احذف حسابك وجميع البيانات المرتبطة به بشكل دائم. لا يمكن التراجع عن هذا الإجراء.",
+    "deleteAccountTitle": "حذف حسابك",
+    "deleteAccountWarning": "هذا الإجراء دائم ولا يمكن التراجع عنه. ستُحذف جميع بياناتك بشكل دائم، بما في ذلك:",
+    "deleteDataProfile": "ملفك الشخصي ومعلوماتك الشخصية",
+    "deleteDataTasks": "جميع المهام وسجل المهام",
+    "deleteDataGoals": "الأهداف والتقدم المحرز",
+    "deleteDataBadges": "الشارات والإنجازات",
+    "deleteDataCharacter": "تخصيصات الشخصية",
+    "deleteDataChat": "رسائل المحادثة",
+    "deleteDataFamily": "عضويات العائلة",
+    "deleteAccountSupport": "هل تحتاج إلى مساعدة؟ تواصل معنا على",
+    "deleteConfirmLabel": "اكتب DELETE للتأكيد:",
+    "deleteAccountConfirm": "حذف الحساب",
+    "deleting": "جارٍ الحذف...",
+    "accountDeleted": "تم حذف الحساب",
+    "accountDeletedDesc": "تم حذف حسابك وجميع بياناتك بشكل دائم.",
+    "deleteError": "خطأ",
+    "deleteErrorDesc": "فشل حذف الحساب. يرجى المحاولة مرة أخرى أو التواصل مع الدعم."
+  },
+  "notifications": {
+    "title": "الإشعارات",
+    "enableTitle": "تفعيل الإشعارات الفورية",
+    "enableDesc": "احصل على إشعارات عند تعيين أفراد العائلة مهاماً أو إرسال رسائل",
+    "nativePromptDesc": "فعّل الإشعارات لتلقّي تعيينات المهام ورسائل المحادثة وتحديثات العائلة.",
+    "benefitTasks": "تعيينات المهام وتحديثاتها",
+    "benefitChat": "رسائل المحادثة من العائلة",
+    "benefitFamily": "تحديثات وفعاليات العائلة",
+    "yesEnable": "نعم، فعّل الإشعارات",
+    "notNow": "ليس الآن",
+    "enable": "تفعيل الإشعارات",
+    "later": "ربما لاحقاً",
+    "enabled": "تم تفعيل الإشعارات",
+    "enabledDesc": "ستتلقى الآن الإشعارات الفورية",
+    "denied": "تم رفض الإذن",
+    "deniedDesc": "يرجى تفعيل الإشعارات في إعدادات المتصفح",
+    "error": "فشل تفعيل الإشعارات",
+    "errorDesc": "يرجى التحقق من إعدادات المتصفح",
+    "statusEnabled": "الإشعارات الفورية مفعّلة",
+    "statusDenied": "الإشعارات الفورية محظورة",
+    "statusDefault": "الإشعارات الفورية غير مفعّلة",
+    "statusEnabledDesc": "ستتلقى إشعارات المهام والرسائل",
+    "statusDeniedDesc": "فعّل الإشعارات في إعدادات المتصفح لتلقّي التحديثات",
+    "statusDefaultDesc": "فعّل لتلقّي تعيينات المهام والرسائل",
+    "blockedInBrowser": "محظورة في المتصفح",
+    "enabling": "جارٍ التفعيل...",
+    "manageInSettings": "إدارة في الإعدادات",
+    "openSettings": "فتح الإعدادات",
+    "openSettingsDesc": "يرجى تفعيل الإشعارات في الإعدادات > التطبيقات > Family Huddle > الإشعارات",
+    "batterySettings": "إعدادات البطارية",
+    "batterySettingsDesc": "حسّن إعدادات البطارية لضمان تسليم الإشعارات بشكل موثوق",
+    "iosInstallRequired": "لتفعيل الإشعارات على iPhone، ثبّت هذا التطبيق على الشاشة الرئيسية أولاً",
+    "iosInstallSteps": "انقر مشاركة ← إضافة إلى الشاشة الرئيسية"
+  },
+  "assignTask": {
+    "title": "تعيين مهمة",
+    "description": "إنشاء مهمة جديدة وتعيينها لأحد أفراد العائلة",
+    "assignTo": "تعيين إلى",
+    "selectPerson": "اختر شخصاً",
+    "myself": "نفسي",
+    "member": "عضو",
+    "dueDate": "تاريخ الاستحقاق",
+    "stars": "النجوم (0-20)",
+    "assignTask": "تعيين المهمة",
+    "taskAssigned": "تم تعيين المهمة!",
+    "taskAssignedDesc": "تم تعيين \"{{taskName}}\" بنجاح."
+  },
+  "common": {
+    "loading": "جارٍ التحميل...",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "close": "إغلاق",
+    "confirm": "تأكيد",
+    "yes": "نعم",
+    "no": "لا",
+    "error": "خطأ",
+    "somethingWentWrong": "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
+    "report": "إبلاغ",
+    "creating": "جارٍ الإنشاء...",
+    "deleteCategoryTitle": "حذف الفئة",
+    "deleteCategoryDesc": "سيؤدي هذا إلى حذف الفئة وجميع نماذجها ومهامها بشكل دائم. لا يمكن التراجع عن هذا الإجراء."
+  },
+  "stages": {
+    "baby": "رضيع",
+    "child": "طفل",
+    "teen": "مراهق",
+    "youngAdult": "شاب",
+    "onTheRise": "في الصعود",
+    "adult": "بالغ",
+    "matureAdult": "ناضج",
+    "goldenChapter": "الفصل الذهبي",
+    "elder": "كهل"
+  },
+  "defaultCategories": {
+    "houseChores": "الأعمال المنزلية",
+    "personalGrowth": "النمو الشخصي",
+    "happiness": "السعادة"
+  },
+  "defaultTasks": {
+    "cleanTheRoom": "ترتيب الغرفة",
+    "cleanTheRoomDesc": "تنظيم الغرفة وترتيبها",
+    "doTheDishes": "غسل الأطباق",
+    "doTheDishesDesc": "غسل الأطباق وتجفيفها وإعادتها إلى مكانها",
+    "takeOutTrash": "إخراج القمامة",
+    "takeOutTrashDesc": "جمع نفايات المنزل وإخراجها",
+    "cookMeal": "طهي وجبة",
+    "cookMealDesc": "المساعدة في تحضير وجبة أو طهيها"
+  },
+  "celebrations": {
+    "goalReached": "تم تحقيق الهدف",
+    "youAreAmazing": "أنت رائع!",
+    "thanksForEfforts": "شكراً على جهودك،\nحان وقت مكافأة نفسك.",
+    "target": "الهدف",
+    "yourReward": "مكافأتك",
+    "badgeUnlocked": "تم فتح الشارة!",
+    "amazingJob": "عمل رائع!",
+    "characterCompleted": "أكملت شخصيتك قصتها الكاملة.",
+    "newChapter": "حان الوقت للاحتفال بتقدمك — وربما البدء بفصل جديد مع شخصية أخرى."
+  },
+  "goalModal": {
+    "createNewGoal": "إنشاء هدف جديد",
+    "targetStars": "النجوم المستهدفة",
+    "enterNumberOfStars": "أدخل عدد النجوم",
+    "targetCategories": "الفئات المستهدفة (اختياري)",
+    "leaveEmptyHint": "اتركها فارغة لاحتساب جميع الفئات",
+    "reward": "المكافأة (اختياري)",
+    "rewardPlaceholder": "كيف ستكافئ نفسك؟",
+    "creating": "جارٍ الإنشاء...",
+    "createGoal": "إنشاء هدف",
+    "success": "نجاح",
+    "goalCreated": "تم إنشاء الهدف بنجاح!",
+    "error": "خطأ",
+    "failedToCreate": "فشل إنشاء الهدف. يرجى المحاولة مرة أخرى."
+  },
+  "goalHistory": {
+    "title": "سجل الأهداف",
+    "noCompletedGoals": "لا توجد أهداف مكتملة بعد",
+    "target": "الهدف",
+    "stars": "نجوم",
+    "completed": "مكتمل",
+    "reward": "المكافأة",
+    "completedOn": "اكتمل في"
+  },
+  "auth": {
+    "signInFailed": "فشل تسجيل الدخول",
+    "welcomeBack": "مرحباً بعودتك!",
+    "successfullySignedIn": "تم تسجيل الدخول بنجاح.",
+    "signUpFailed": "فشل إنشاء الحساب",
+    "checkEmail": "تحقق من بريدك الإلكتروني!",
+    "confirmationLinkSent": "لقد أرسلنا لك رابط تأكيد.",
+    "emailRequired": "البريد الإلكتروني مطلوب",
+    "enterEmailFirst": "يرجى إدخال عنوان بريدك الإلكتروني أولاً.",
+    "passwordResetFailed": "فشل إعادة تعيين كلمة المرور",
+    "passwordResetSent": "لقد أرسلنا لك رابط إعادة تعيين كلمة المرور.",
+    "appName": "Family Huddle",
+    "appDescription": "أنشئ عائلات مع أقاربك أو أصدقائك، وعيّن مهاماً لبعضكم البعض، واكسب نجوماً لترقية شخصياتكم. ابنِ عادات حقيقية وروابط أوثق من خلال اللعب.",
+    "joinTitle": "انضم إلى Family Huddle",
+    "joinDescription": "سجّل الدخول إلى حسابك أو أنشئ حساباً جديداً",
+    "signIn": "تسجيل الدخول",
+    "signUp": "إنشاء حساب",
+    "email": "البريد الإلكتروني",
+    "emailPlaceholder": "أدخل بريدك الإلكتروني",
+    "password": "كلمة المرور",
+    "passwordPlaceholder": "أدخل كلمة المرور",
+    "signingIn": "جارٍ تسجيل الدخول...",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "sendResetLink": "إرسال رابط إعادة التعيين",
+    "sendingResetLink": "جارٍ إرسال رابط إعادة التعيين...",
+    "backToSignIn": "العودة إلى تسجيل الدخول",
+    "createPasswordPlaceholder": "أنشئ كلمة مرور",
+    "ageConfirmation": "أؤكد أنني في الثالثة عشرة من عمري أو أكبر",
+    "termsAgreement": "أوافق على شروط الاستخدام",
+    "ageTermsError": "يرجى تأكيد عمرك والموافقة على شروط الاستخدام لإنشاء حساب.",
+    "ageError": "يجب أن يكون عمرك 13 عاماً أو أكثر لاستخدام Family Huddle.",
+    "termsError": "يرجى الموافقة على شروط الاستخدام لإنشاء حساب.",
+    "creatingAccount": "جارٍ إنشاء الحساب...",
+    "madeWithLove": "صُنع بـ ❤️ للعائلات في كل مكان",
+    "sessionExpired": "انتهت صلاحية الجلسة",
+    "sessionExpiredDesc": "جلستك كانت غير صالحة. يرجى تسجيل الدخول مرة أخرى.",
+    "signInWithApple": "تسجيل الدخول عبر Apple"
+  },
+  "onboarding": {
+    "welcomeTitle": "مرحباً بك في Family Huddle!",
+    "completeProfile": "أكمل ملفك الشخصي لبدء مغامرتك العائلية",
+    "trialTitle": "ابدأ تجربتك المجانية لمدة 4 أيام",
+    "trialDesc": "استمتع بجميع ميزات Family Huddle مجاناً لمدة 4 أيام. لا يلزم بطاقة ائتمانية.",
+    "startTrial": "ابدأ التجربة المجانية",
+    "setupProfile": "إعداد ملفك الشخصي",
+    "setupProfileDesc": "أخبرنا عن نفسك وانضم إلى عائلتك",
+    "aboutYou": "عنك",
+    "displayName": "الاسم المعروض",
+    "displayNamePlaceholder": "بماذا يجب أن نناديك؟",
+    "gender": "الجنس",
+    "selectGenderPlaceholder": "اختر جنسك",
+    "male": "ذكر",
+    "female": "أنثى",
+    "other": "آخر",
+    "joinYourFamily": "انضم إلى عائلتك",
+    "familyNamePlaceholder": "عائلة الشمري",
+    "createAndStart": "إنشاء العائلة والبدء",
+    "joinAndStart": "الانضمام إلى العائلة والبدء",
+    "nameMinLength": "يجب أن يتكون الاسم من حرفين على الأقل",
+    "selectGender": "يرجى اختيار جنسك",
+    "familyInfoRequired": "يرجى ملء معلومات العائلة المطلوبة",
+    "joinedFamily": "لقد انضممت إلى"
+  },
+  "memberProfile": {
+    "title": "ملف {{name}} الشخصي",
+    "defaultMemberName": "فرد من العائلة"
+  },
+  "taskHistory": {
+    "title": "سجل المهام المكتملة",
+    "description": "جميع المهام التي تم إتمامها في هذه العائلة",
+    "noTasks": "لا توجد مهام مكتملة بعد. ابدأ بإتمام بعض المهام!",
+    "category": "الفئة",
+    "completed": "مكتملة",
+    "due": "موعد الاستحقاق",
+    "unknown": "غير معروف"
+  },
+  "badges": {
+    "baby_10": {
+      "name": "اللهاية",
+      "description": "أول ابتسامة تذيب قلوب الجميع!"
+    },
+    "baby_20": {
+      "name": "الخشخيشة",
+      "description": "اكتشف سحر الضوضاء!"
+    },
+    "baby_30": {
+      "name": "زجاجة الرضاعة",
+      "description": "تزوّد بالحليب!"
+    },
+    "baby_40": {
+      "name": "الدب الأشعث",
+      "description": "وجد رفيق المغامرة الدائم!"
+    },
+    "child_60": {
+      "name": "مكعبات اللعب",
+      "description": "بنى تحفة فنية (ثم هدّها)!"
+    },
+    "child_70": {
+      "name": "سن",
+      "description": "أوه! السن الأول سقط!"
+    },
+    "child_80": {
+      "name": "قلم تلوين",
+      "description": "الجدران أفضل لوحة رسم!"
+    },
+    "child_90": {
+      "name": "كرة قدم",
+      "description": "سجّل أول هدف (في المرمى الخطأ)!"
+    },
+    "child_100": {
+      "name": "حقيبة مدرسية",
+      "description": "مستعد للمغامرة المدرسية الكبرى الأولى!"
+    },
+    "child_110": {
+      "name": "آيس كريم",
+      "description": "درس في الحياة: الآيس كريم يذوب بسرعة!"
+    },
+    "child_120": {
+      "name": "حبل القفز",
+      "description": "أخيراً يستطيع القفز 10 مرات دون أن يتعثر!"
+    },
+    "child_130": {
+      "name": "نجمة ذهبية",
+      "description": "يقول المعلم: 'أحسنت!'"
+    },
+    "child_140": {
+      "name": "كتاب",
+      "description": "قراءة الحكايات الخيالية بعد وقت النوم…"
+    },
+    "child_150": {
+      "name": "قبعة عيد الميلاد",
+      "description": "أكبر كعكة على الإطلاق — اختفت في 5 دقائق!"
+    },
+    "child_160": {
+      "name": "سكوتر",
+      "description": "يتحرك أسرع مما يستطيع الكبار الركض!"
+    },
+    "child_170": {
+      "name": "مخلب جرو",
+      "description": "أصدقاء للأبد: أنا والكلب!"
+    },
+    "child_180": {
+      "name": "نظارات شمسية",
+      "description": "تنبيه طفل رائع!"
+    },
+    "child_190": {
+      "name": "قطعة أحجية",
+      "description": "أتمّ الأحجية دون أن يفقد أي قطعة (معجزة)!"
+    },
+    "teen_210": {
+      "name": "هاتف ذكي",
+      "description": "سرعة الكتابة: مستوى أولمبي."
+    },
+    "teen_220": {
+      "name": "غيتار",
+      "description": "أول فرقة موسيقية، اسم سيء."
+    },
+    "teen_230": {
+      "name": "شريحة بيتزا",
+      "description": "عشاء الأبطال."
+    },
+    "teen_240": {
+      "name": "كتاب مدرسي",
+      "description": "حشو شهر في ليلة واحدة."
+    },
+    "teen_250": {
+      "name": "قلب",
+      "description": "أول إعجاب. خجل لا يتوقف."
+    },
+    "teen_260": {
+      "name": "سماعات",
+      "description": "الموسيقى = الحياة."
+    },
+    "teen_270": {
+      "name": "كرة السلة",
+      "description": "سجّل مرة واحدة، يتفاخر إلى الأبد."
+    },
+    "teen_280": {
+      "name": "لوح التزلج",
+      "description": "الجاذبية مؤلمة، لكنها تستحق."
+    },
+    "teen_290": {
+      "name": "كاميرا السيلفي",
+      "description": "الزاوية المثالية = 200 محاولة."
+    },
+    "teen_300": {
+      "name": "ورقة امتحان",
+      "description": "نجح! لا تسأل كيف."
+    },
+    "teen_310": {
+      "name": "هودي",
+      "description": "الزي الرسمي: هودي 24/7."
+    },
+    "teen_320": {
+      "name": "قناع الدراما",
+      "description": "دراما المراهقين: في كل مكان وكل وقت."
+    },
+    "teen_330": {
+      "name": "دفتر ملاحظات",
+      "description": "مذكرات سرية… لا تتجسس!"
+    },
+    "teen_340": {
+      "name": "دراجة",
+      "description": "أسرع من الباص وأكثر أناقة."
+    },
+    "adult_360": {
+      "name": "صينية التقديم",
+      "description": "حمل 5 أكواب وسكب 4."
+    },
+    "adult_370": {
+      "name": "كوب قهوة",
+      "description": "وقود البقاء متاح الآن."
+    },
+    "adult_380": {
+      "name": "ساعة حائط",
+      "description": "اكتشف أن أيام الاثنين أبدية."
+    },
+    "adult_390": {
+      "name": "زي العمل",
+      "description": "أول راتب = جولة تسوق فورية."
+    },
+    "adult_400": {
+      "name": "لوحة مفاتيح",
+      "description": "الكتابة السريعة تبدو كالقرصنة."
+    },
+    "adult_410": {
+      "name": "هاتف",
+      "description": "العميل: غاضب. أنا: مبتسم."
+    },
+    "adult_420": {
+      "name": "حذاء العمل",
+      "description": "حذاء العمل = أداة تعذيب."
+    },
+    "adult_430": {
+      "name": "محفظة",
+      "description": "المدخرات؟ أيّ مدخرات؟"
+    },
+    "adult_440": {
+      "name": "ربطة عنق",
+      "description": "ربط ربطة العنق بعد 50 درساً على يوتيوب."
+    },
+    "adult_450": {
+      "name": "حاسوب محمول",
+      "description": "Ctrl+Z قوتي الخارقة."
+    },
+    "adult_460": {
+      "name": "علبة بيتزا",
+      "description": "تقليد وجبة وردية الليل."
+    },
+    "adult_470": {
+      "name": "عملة معدنية",
+      "description": "تعلّم معنى 'الضرائب' (آخ)."
+    },
+    "adult_480": {
+      "name": "منبّه",
+      "description": "تجاهل المنبّه = غضب المدير."
+    },
+    "adult_490": {
+      "name": "بطاقة ائتمان",
+      "description": "رصيد البطاقة الائتمانية: لا."
+    },
+    "ontherise_510": {
+      "name": "بوصلة",
+      "description": "وجد اتجاهاً مهنياً يبدو صحيحاً."
+    },
+    "ontherise_520": {
+      "name": "ملف أعمال",
+      "description": "عملك بات يعكس شخصيتك أخيراً."
+    },
+    "ontherise_530": {
+      "name": "خزانة ملابس",
+      "description": "أسلوب مميز متاح الآن."
+    },
+    "ontherise_540": {
+      "name": "ذوق رفيع",
+      "description": "الذوق تحسّن — الطعام والموسيقى وكل شيء."
+    },
+    "ontherise_550": {
+      "name": "سهرة رومانسية",
+      "description": "لم يُجب على رسالتك؟ الليلة مختلفة."
+    },
+    "ontherise_560": {
+      "name": "ثنائي",
+      "description": "وجد شخصاً يشاركه الاحتفال بالانتصارات."
+    },
+    "ontherise_570": {
+      "name": "مرشد",
+      "description": "يساعد الآخرين على الارتقاء."
+    },
+    "ontherise_580": {
+      "name": "زيادة راتب",
+      "description": "الراتب ارتفع. الثقة أيضاً."
+    },
+    "ontherise_590": {
+      "name": "بطاقة مؤتمر",
+      "description": "غزا المؤتمر واكتسب جهات اتصال."
+    },
+    "adult_610": {
+      "name": "مفتاح سيارة",
+      "description": "الحرية على أربعة عجلات!"
+    },
+    "adult_620": {
+      "name": "منزل",
+      "description": "مستأجر، لكنه يشعر أنه ملكي."
+    },
+    "adult_630": {
+      "name": "عربة أطفال",
+      "description": "الحياة: ترقية مع نسخة مصغّرة منك."
+    },
+    "adult_640": {
+      "name": "فواتير",
+      "description": "فاتورة الكهرباء = قصة رعب."
+    },
+    "adult_650": {
+      "name": "نبتة",
+      "description": "نبتة المنزل نجت أسبوعاً كاملاً!"
+    },
+    "adult_660": {
+      "name": "خاتم",
+      "description": "حب والتزام… وغسيل الأطباق."
+    },
+    "adult_670": {
+      "name": "كتاب",
+      "description": "مكتبة التطوير الذاتي تتنامى بسرعة."
+    },
+    "adult_680": {
+      "name": "حقيبة سفر",
+      "description": "رحلة عمل = فطور فندقي مجاني."
+    },
+    "adult_690": {
+      "name": "حاسوب محمول",
+      "description": "الرسائل الإلكترونية لا تنتهي أبداً."
+    },
+    "mature_adult_couch": {
+      "name": "أريكة",
+      "description": "بطل ماراثون المسلسلات."
+    },
+    "mature_adult_dumbbell": {
+      "name": "دمبل النادي",
+      "description": "اشترك… وذهب مرتين."
+    },
+    "mature_adult_camera": {
+      "name": "كاميرا",
+      "description": "صور الإجازة: 1000، الجيدة منها: 3."
+    },
+    "mature_adult_money_bag": {
+      "name": "كيس المال",
+      "description": "أخيراً بعض المدخرات!"
+    },
+    "mature_adult_balloon": {
+      "name": "بالون",
+      "description": "أقام حفلة، الجيران اشتكوا."
+    },
+    "mature_adult_wine_glass": {
+      "name": "كأس نبيذ",
+      "description": "تذوّق النبيذ: محترف تماماً."
+    },
+    "mature_adult_toolbox": {
+      "name": "صندوق أدوات",
+      "description": "أصلح شيئاً واحداً وكسر اثنين."
+    },
+    "mature_adult_graduation_cap": {
+      "name": "قبعة التخرج",
+      "description": "أنهى أخيراً تلك الشهادة."
+    },
+    "mature_adult_globe": {
+      "name": "كرة أرضية",
+      "description": "سافر حول العالم (أو على الأقل مدينتين)."
+    },
+    "golden_gray_hair": {
+      "name": "خصلة شعر رمادية",
+      "description": "ميزة جديدة: الفضي الطبيعي."
+    },
+    "golden_glasses": {
+      "name": "نظارة",
+      "description": "قراءة النص الصغير = مستحيل."
+    },
+    "golden_book_stack": {
+      "name": "كومة كتب",
+      "description": "مجموعة الحكمة اكتملت."
+    },
+    "golden_bbq_grill": {
+      "name": "شواية الباربيكيو",
+      "description": "ملك الشواء في الحي."
+    },
+    "golden_yacht_model": {
+      "name": "نموذج يخت",
+      "description": "الأحلام كبيرة، الإبحار صغير."
+    },
+    "golden_family_photo": {
+      "name": "صورة عائلية",
+      "description": "أفضل مجموعة على الإطلاق."
+    },
+    "golden_golf_club": {
+      "name": "عصا جولف",
+      "description": "ثقب واحد في… 23 محاولة."
+    },
+    "golden_desk": {
+      "name": "مكتب",
+      "description": "المكتب هو البيت الثاني."
+    },
+    "golden_trophy": {
+      "name": "كأس",
+      "description": "منتصف العمر = أوج الحياة!"
+    },
+    "golden_rocking_chair": {
+      "name": "كرسي هزاز",
+      "description": "بطل قيلولة عطلة نهاية الأسبوع."
+    },
+    "golden_cookbook": {
+      "name": "كتاب طبخ",
+      "description": "الوصفة السرية اكتملت."
+    },
+    "golden_hiking_stick": {
+      "name": "عصا المشي",
+      "description": "الجبال لا تزال تنادي."
+    },
+    "golden_headphones": {
+      "name": "سماعات",
+      "description": "عجوز لكن لا يزال روكر!"
+    },
+    "golden_piggy_bank": {
+      "name": "خنزير التوفير",
+      "description": "خطة الادخار تعمل أخيراً."
+    },
+    "golden_medal": {
+      "name": "ميدالية",
+      "description": "إنجاز العمر فُتح."
+    },
+    "golden_dog_paw": {
+      "name": "مخلب كلب",
+      "description": "الكلب لا يزال يعتقد أنني الأفضل."
+    },
+    "golden_camera": {
+      "name": "كاميرا",
+      "description": "كل تجعّد يحكي قصة."
+    },
+    "golden_calendar": {
+      "name": "تقويم",
+      "description": "حفلات أعياد الميلاد لا تتوقف أبداً."
+    },
+    "golden_champagne": {
+      "name": "شمبانيا",
+      "description": "في صحة أجمل السنوات!"
+    }
+  },
+  "taskAssignment": {
+    "title": "تعيين مهمة جديدة",
+    "assignedBy": "{{name}} عيّن لك مهمة جديدة",
+    "from": "من",
+    "stars": "نجوم",
+    "dueToday": "مستحقة اليوم",
+    "accept": "قبول",
+    "reject": "رفض",
+    "acceptHint": "القبول سيضيف هذه المهمة إلى قائمة مهامك. الرفض سيرفض التعيين.",
+    "accepted": "تم قبول المهمة!",
+    "acceptedDesc": "تمت إضافة \"{{taskName}}\" إلى مهامك.",
+    "rejected": "تم رفض المهمة",
+    "rejectedDesc": "تم رفض \"{{taskName}}\".",
+    "error": "خطأ",
+    "acceptError": "فشل قبول المهمة. يرجى المحاولة مرة أخرى.",
+    "rejectError": "فشل رفض المهمة. يرجى المحاولة مرة أخرى.",
+    "cannotNotify": "تعذّر الإشعار",
+    "familyNotLoaded": "لم يتم تحميل العائلة بعد. حاول مرة أخرى بعد لحظة."
+  },
+  "familyNotifications": {
+    "memberLeft": "{{name}} غادر العائلة",
+    "memberLeftTitle": "غادر عضو",
+    "familyNameChangedTitle": "تم تغيير اسم العائلة",
+    "familyNameChanged": "غيّرت العائلة \"{{oldName}}\" اسمها إلى \"{{newName}}\""
+  },
+  "notification": {
+    "taskReported": "تمت إزالة المهمة",
+    "taskReportedBody": "تمت إزالة مهمتك '{{name}}' لأنه تم الإبلاغ عنها بسبب: {{reason}}"
+  },
+  "report": {
+    "title": "الإبلاغ عن محتوى",
+    "description": "ساعدنا في الحفاظ على سلامة Family Huddle من خلال الإبلاغ عن المحتوى غير الملائم.",
+    "reasonLabel": "السبب",
+    "selectReason": "اختر سبباً",
+    "reasonSpam": "بريد مزعج",
+    "reasonHarassment": "مضايقة / تنمر",
+    "reasonHate": "لغة كراهية أو إساءة",
+    "reasonSexual": "محتوى جنسي",
+    "reasonViolence": "عنف / تهديدات",
+    "reasonPersonalInfo": "مشاركة معلومات شخصية",
+    "reasonOther": "أخرى",
+    "detailsLabel": "التفاصيل (اختياري)",
+    "detailsPlaceholder": "قدّم سياقاً إضافياً...",
+    "submit": "إبلاغ",
+    "submitting": "جارٍ الإبلاغ...",
+    "successTitle": "تم الإبلاغ",
+    "successDesc": "شكراً على إبلاغك.",
+    "errorSubmitting": "فشل إرسال البلاغ. يرجى المحاولة مرة أخرى."
+  },
+  "block": {
+    "title": "حظر العضو",
+    "description": "احظر {{name}} من المشاركة في أنشطة العائلة.",
+    "reason": "السبب",
+    "selectReason": "اختر سبباً",
+    "duration": "المدة",
+    "selectDuration": "اختر المدة",
+    "1hour": "ساعة واحدة",
+    "12hours": "12 ساعة",
+    "1day": "يوم واحد",
+    "1week": "أسبوع واحد",
+    "indefinite": "حتى رفع الحظر",
+    "autoKickWarning": "بعد شهر من الحظر، سيُطرد المستخدم من هذه العائلة تلقائياً.",
+    "restrictionsTitle": "لن يتمكن المستخدمون المحظورون من:",
+    "restrictionChat": "الوصول إلى محادثة العائلة",
+    "restrictionAssignTasks": "تعيين مهام لك",
+    "restrictionCreateTasks": "إنشاء مهام مرئية لك",
+    "restrictionProfile": "رؤية ملفك الشخصي",
+    "blockBtn": "حظر",
+    "unblockBtn": "رفع الحظر",
+    "blocked": "محظور",
+    "blockedFor": "محظور لمدة {{time}}",
+    "youWereBlocked": "تم حظرك في {{family}}",
+    "youWereBlockedFor": "تم حظرك في {{family}} لمدة {{duration}}",
+    "memberBlocked": "تم حظر العضو",
+    "memberBlockedDesc": "تم حظر العضو من أنشطة العائلة.",
+    "memberUnblocked": "تم رفع حظر العضو",
+    "memberUnblockedDesc": "تم رفع حظر العضو ويمكنه الآن المشاركة في أنشطة العائلة.",
+    "failedToBlock": "فشل حظر العضو. يرجى المحاولة مرة أخرى.",
+    "failedToUnblock": "فشل رفع حظر العضو. يرجى المحاولة مرة أخرى.",
+    "youWereUnblocked": "تم رفع حظرك في {{family}}",
+    "autoKicked": "تمت إزالتك تلقائياً من {{family}}",
+    "memberAutoKicked": "تمت إزالة {{name}} تلقائياً من {{family}} بعد شهر من الحظر",
+    "accessRestricted": "أنت محظور في هذه العائلة {{until}}",
+    "accessRestrictedFor": "لا يمكنك الوصول إلى هذه الميزة أثناء الحظر. ينتهي القيد خلال {{time}}.",
+    "cannotAccessWhileBlocked": "لا يمكنك الوصول إلى هذه الميزة أثناء الحظر.",
+    "chatRestricted": "الوصول إلى المحادثة مقيّد",
+    "restricted": "الإجراء مقيّد",
+    "cannotAssignTasks": "أنت محظور ولا يمكنك تعيين مهام لأفراد العائلة الآخرين.",
+    "blockedWithReason": "أنت محظور في هذه العائلة بسبب {{reason}} ولا يمكنك تعيين مهام.",
+    "cannotCreateInDefaultCategory": "لا يمكنك إنشاء مهام في الفئات المشتركة أثناء الحظر. استخدم الفئات المخصصة بدلاً من ذلك.",
+    "viewOnlyWhileBlocked": "عرض فقط - لا يمكن إضافة مهام أثناء الحظر",
+    "noMembersAccess": "قائمة الأعضاء مقيّدة",
+    "noMembersAccessFor": "قائمة الأعضاء مقيّدة لمدة {{time}}",
+    "reasons": {
+      "harassment": "مضايقة / تنمر",
+      "hate": "لغة كراهية أو إساءة",
+      "sexual": "محتوى جنسي",
+      "violence": "عنف أو تهديدات",
+      "spam": "بريد مزعج / احتيال",
+      "personalInfo": "مشاركة معلومات شخصية",
+      "other": "أخرى"
+    }
+  },
+  "subscription": {
+    "status": {
+      "free": "مجاني",
+      "trial": "تجريبي ({{days}} أيام متبقية)",
+      "premium": "مميز",
+      "lifetime": "مدى الحياة"
+    },
+    "activated": "تم تفعيل الاشتراك!",
+    "activeDesc": "لديك وصول كامل إلى جميع ميزات Family Huddle.",
+    "freeDesc": "اشترك لفتح جميع ميزات Family Huddle.",
+    "lifetimeDesc": "لديك وصول مدى الحياة إلى جميع الميزات المميزة.",
+    "renewsOn": "يتجدد في {{date}}",
+    "subscribeNow": "اشترك الآن",
+    "manageOnGooglePlay": "إدارة عبر Google Play",
+    "restore": "استعادة المشتريات",
+    "restoreSuccess": "تم استعادة المشتريات بنجاح",
+    "restoreFailed": "تعذّرت استعادة المشتريات",
+    "purchaseFailed": "فشل الشراء",
+    "disclosure": "بعد تجربتك المجانية لمدة 4 أيام، 4.90 دولار/شهرياً. يمكنك الإلغاء في أي وقت. بالاشتراك توافق على شروط الاستخدام.",
+    "trialEndsOn": "تنتهي تجربتك المجانية في {{date}}",
+    "promo": {
+      "haveCode": "هل لديك رمز ترويجي؟",
+      "placeholder": "أدخل الرمز الترويجي",
+      "apply": "تطبيق",
+      "success": "تم تطبيق الرمز الترويجي بنجاح!",
+      "invalid": "رمز ترويجي غير صالح",
+      "failed": "فشل تطبيق الرمز الترويجي"
+    }
+  },
+  "paywall": {
+    "title": "انتهت فترتك التجريبية المجانية",
+    "description": "اشترك لمواصلة استخدام Family Huddle بجميع ميزاته.",
+    "subscribe": "اشترك — 4.90 دولار/شهرياً",
+    "titleManage": "Subscription Plans",
+    "descriptionManage": "View and manage your Family Huddle subscription.",
+    "currentPlan": {
+      "lifetime": "You have lifetime access",
+      "trial": "Free trial ends {{date}}",
+      "premium": "Premium plan renews {{date}}"
+    }
+  }
+}

@@ -8,15 +8,25 @@ import { PromoCodeInput } from './PromoCodeInput';
 import { Crown, RefreshCw, Loader2 } from 'lucide-react';
 import { isPlatform } from '@/lib/platform';
 
-export function PaywallOverlay() {
+interface PaywallOverlayProps {
+  /** Controlled mode: external open state. When provided, paywall uses this instead of auto-gating. */
+  isExplicitOpen?: boolean;
+  /** Controlled mode: callback when user dismisses the dialog. */
+  onClose?: () => void;
+}
+
+export function PaywallOverlay({ isExplicitOpen, onClose }: PaywallOverlayProps = {}) {
   const { t } = useTranslation();
-  const { shouldShowPaywall, isLoading, purchase, restore } = useSubscription();
+  const { shouldShowPaywall, isLoading, purchase, restore, status } = useSubscription();
   const { toast } = useToast();
   const [purchasing, setPurchasing] = useState(false);
   const [restoring, setRestoring] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
-  const open = !dismissed && shouldShowPaywall && !isLoading;
+  const isControlled = isExplicitOpen !== undefined;
+  const open = isControlled
+    ? isExplicitOpen
+    : (!dismissed && shouldShowPaywall && !isLoading);
 
   const handleSubscribe = async () => {
     setPurchasing(true);
@@ -49,17 +59,49 @@ export function PaywallOverlay() {
   };
 
   return (
-    <Dialog open={open} modal={true} onOpenChange={(v) => { if (!v) setDismissed(true); }}>
+    <Dialog
+      open={open}
+      modal={true}
+      onOpenChange={(v) => {
+        if (!v) {
+          if (isControlled && onClose) {
+            onClose();
+          } else {
+            setDismissed(true);
+          }
+        }
+      }}
+    >
       <DialogContent
         className="max-w-md text-center"
-        onInteractOutside={(e) => e.preventDefault()}
-        onEscapeKeyDown={(e) => e.preventDefault()}
+        onInteractOutside={(e) => { if (!isControlled) e.preventDefault(); }}
+        onEscapeKeyDown={(e) => { if (!isControlled) e.preventDefault(); }}
       >
         <DialogBody>
         <div className="pt-2 text-center space-y-4">
+          <PromoCodeInput alwaysOpen />
+
+          {isControlled && status.isActive && (
+            <div className="rounded-lg bg-muted p-3 text-sm text-center">
+              {status.isLifetime && (
+                <p className="font-medium">{t('paywall.currentPlan.lifetime')}</p>
+              )}
+              {status.isActive && !status.isLifetime && status.isTrialing && status.expiresAt && (
+                <p className="font-medium">{t('paywall.currentPlan.trial', { date: status.expiresAt.toLocaleDateString() })}</p>
+              )}
+              {status.isActive && !status.isLifetime && !status.isTrialing && status.expiresAt && (
+                <p className="font-medium">{t('paywall.currentPlan.premium', { date: status.expiresAt.toLocaleDateString() })}</p>
+              )}
+            </div>
+          )}
+
           <Crown className="h-12 w-12 text-amber-500 mx-auto" />
-          <h2 className="text-xl font-semibold">{t('paywall.title')}</h2>
-          <p className="text-sm text-muted-foreground">{t('paywall.description')}</p>
+          <h2 className="text-xl font-semibold">
+            {isControlled ? t('paywall.titleManage') : t('paywall.title')}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {isControlled ? t('paywall.descriptionManage') : t('paywall.description')}
+          </p>
 
           {isPlatform('capacitor') && (
             <Button onClick={handleSubscribe} className="w-full" disabled={purchasing}>
@@ -71,8 +113,6 @@ export function PaywallOverlay() {
           <p className="text-xs text-muted-foreground">
             {t('subscription.disclosure')}
           </p>
-
-          <PromoCodeInput alwaysOpen />
 
           {isPlatform('capacitor') && (
             <Button onClick={handleRestore} variant="ghost" size="sm" className="w-full" disabled={restoring}>

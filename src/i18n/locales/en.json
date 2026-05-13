@@ -156,7 +156,8 @@
     "clearChat": "Clear Chat",
     "noMessages": "No messages yet. Start a conversation!",
     "typeMessage": "Type your message...",
-    "send": "Send"
+    "send": "Send",
+    "newMessage": "New chat message"
   },
   "themes": {
     "oceanCalm": {
@@ -686,7 +687,14 @@
   "paywall": {
     "title": "Your free trial has ended",
     "description": "Subscribe to continue using Family Huddle with all features.",
-    "subscribe": "Subscribe — $4.90/month"
+    "subscribe": "Subscribe — $4.90/month",
+    "titleManage": "Subscription Plans",
+    "descriptionManage": "View and manage your Family Huddle subscription.",
+    "currentPlan": {
+      "lifetime": "You have lifetime access",
+      "trial": "Free trial ends {{date}}",
+      "premium": "Premium plan renews {{date}}"
+    }
   },
   "common": {
     "loading": "Loading...",

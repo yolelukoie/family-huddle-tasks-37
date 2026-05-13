@@ -64,6 +64,9 @@ function DeepLinkHandler() {
 
         if (path.startsWith('/auth/callback')) {
           navigate(`/auth/callback${search}${hash}`, { replace: true });
+          import('@capacitor/browser').then(({ Browser }) => {
+            Browser.close().catch(() => {});
+          });
         }
       } catch (err) {
         console.error('[DeepLink] Failed to parse URL:', err);

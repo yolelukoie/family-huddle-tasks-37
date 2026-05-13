@@ -1,0 +1,96 @@
+diff --git a/node_modules/@southdevs/capacitor-google-auth/SouthdevsCapacitorGoogleAuth.podspec b/node_modules/@southdevs/capacitor-google-auth/SouthdevsCapacitorGoogleAuth.podspec
+index 28d5e6d..e6b7825 100644
+--- a/node_modules/@southdevs/capacitor-google-auth/SouthdevsCapacitorGoogleAuth.podspec
++++ b/node_modules/@southdevs/capacitor-google-auth/SouthdevsCapacitorGoogleAuth.podspec
+@@ -10,6 +10,6 @@
+     s.source_files = 'ios/Plugin/**/*.{swift,h,m,c,cc,mm,cpp}'
+     s.ios.deployment_target  = '12.0'
+     s.dependency 'Capacitor'
+-    s.dependency 'GoogleSignIn', '~> 6.2.4'
++    s.dependency 'GoogleSignIn', '>= 7.1'
+     s.static_framework = true
+   end
+diff --git a/node_modules/@southdevs/capacitor-google-auth/ios/Plugin/Plugin.swift b/node_modules/@southdevs/capacitor-google-auth/ios/Plugin/Plugin.swift
+index 26d5407..5afae95 100644
+--- a/node_modules/@southdevs/capacitor-google-auth/ios/Plugin/Plugin.swift
++++ b/node_modules/@southdevs/capacitor-google-auth/ios/Plugin/Plugin.swift
+@@ -72,12 +72,12 @@ public class GoogleAuth: CAPPlugin {
+         signInCall = call;
+         DispatchQueue.main.async {
+             if self.googleSignIn.hasPreviousSignIn() && !self.forceAuthCode {
+-                self.googleSignIn.restorePreviousSignIn() { user, error in
+-                if let error = error {
+-                    self.signInCall?.reject(error.localizedDescription);
+-                    return;
+-                }
+-                self.resolveSignInCallWith(user: user!)
++                self.googleSignIn.restorePreviousSignIn { user, error in
++                    if let error = error {
++                        self.signInCall?.reject(error.localizedDescription);
++                        return;
++                    }
++                    self.resolveSignInCallWith(user: user!, serverAuthCode: nil)
+                 }
+             } else {
+                 let presentingVc = self.bridge!.viewController!;
+@@ -94,12 +94,17 @@ public class GoogleAuth: CAPPlugin {
+                     return;
+                 }
+                 let googleSignInConfiguration = GIDConfiguration.init(clientID: clientId, serverClientID: serverClientId)
+-                self.googleSignIn.signIn(with: googleSignInConfiguration, presenting: presentingVc, hint: nil, additionalScopes: additionalScopes) { user, error in
++                self.googleSignIn.configuration = googleSignInConfiguration
++                self.googleSignIn.signIn(withPresenting: presentingVc, hint: nil, additionalScopes: additionalScopes) { signInResult, error in
+                     if let error = error {
+                         self.signInCall?.reject(error.localizedDescription, "\(error._code)");
+                         return;
+                     }
+-                    self.resolveSignInCallWith(user: user!);
++                    guard let signInResult = signInResult else {
++                        self.signInCall?.reject("Sign-in returned no result");
++                        return;
++                    }
++                    self.resolveSignInCallWith(user: signInResult.user, serverAuthCode: signInResult.serverAuthCode);
+                 };
+             }
+         }
+@@ -112,15 +117,15 @@ public class GoogleAuth: CAPPlugin {
+                 call.reject("User not logged in.");
+                 return
+             }
+-            self.googleSignIn.currentUser!.authentication.do { (authentication, error) in
+-                guard let authentication = authentication else {
++            self.googleSignIn.currentUser!.refreshTokensIfNeeded { user, error in
++                guard let user = user else {
+                     call.reject(error?.localizedDescription ?? "Something went wrong.");
+                     return;
+                 }
+                 let authenticationData: [String: Any] = [
+-                    "accessToken": authentication.accessToken,
+-                    "idToken": authentication.idToken ?? NSNull(),
+-                    "refreshToken": authentication.refreshToken
++                    "accessToken": user.accessToken.tokenString,
++                    "idToken": user.idToken?.tokenString ?? NSNull(),
++                    "refreshToken": user.refreshToken.tokenString
+                 ]
+                 call.resolve(authenticationData);
+             }
+@@ -173,14 +178,14 @@ public class GoogleAuth: CAPPlugin {
+         return nil;
+     }
+ 
+-    func resolveSignInCallWith(user: GIDGoogleUser) {
++    func resolveSignInCallWith(user: GIDGoogleUser, serverAuthCode: String?) {
+         var userData: [String: Any] = [
+             "authentication": [
+-                "accessToken": user.authentication.accessToken,
+-                "idToken": user.authentication.idToken,
+-                "refreshToken": user.authentication.refreshToken
++                "accessToken": user.accessToken.tokenString,
++                "idToken": user.idToken?.tokenString ?? NSNull(),
++                "refreshToken": user.refreshToken.tokenString
+             ],
+-            "serverAuthCode": user.serverAuthCode ?? NSNull(),
++            "serverAuthCode": serverAuthCode ?? NSNull(),
+             "email": user.profile?.email ?? NSNull(),
+             "familyName": user.profile?.familyName ?? NSNull(),
+             "givenName": user.profile?.givenName ?? NSNull(),

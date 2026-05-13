@@ -185,7 +185,7 @@ export default function MainPage() {
   const userMembership = activeFamilyId ? getUserFamily(activeFamilyId) : null;
   const userIsBlocked = isBlocked(userMembership);
 
-  return <div className="min-h-screen bg-gradient-to-b from-[hsl(var(--section-tint))] to-background">
+  return <div className="min-h-[100dvh] bg-gradient-to-b from-[hsl(var(--section-tint))] to-background">
       <NavigationHeader title={t('main.title')} />
       
       <div className="max-w-4xl mx-auto p-4 space-y-6">

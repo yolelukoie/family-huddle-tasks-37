@@ -293,7 +293,7 @@ export default function FamilyPage() {
   // Kicked-from-family handling is now global in useKickedFromFamily hook
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[hsl(var(--section-tint))] to-background">
+    <div className="min-h-[100dvh] bg-gradient-to-b from-[hsl(var(--section-tint))] to-background">
       <NavigationHeader title={t('family.title')} />
       
       <div className="max-w-4xl mx-auto p-4 space-y-6">

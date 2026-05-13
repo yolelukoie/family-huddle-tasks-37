@@ -109,13 +109,7 @@ export function CreateGoalModal({ open, onOpenChange, familyId, userId, activeGo
 
           <div>
             <Label>{t('goalModal.targetCategories')}</Label>
-            <p className="text-sm text-muted-foreground mb-2">{t('goalModal.leaveEmptyHint')}</p>
             <div className="space-y-2">
-              {!hasGeneralGoal && (
-                <div className="flex items-center space-x-2 text-sm text-muted-foreground italic">
-                  <span>{t('goalModal.leaveEmptyHint')}</span>
-                </div>
-              )}
               {availableCategories.map((category: any) => (
                 <div key={category.id} className="flex items-center space-x-2">
                   <Checkbox

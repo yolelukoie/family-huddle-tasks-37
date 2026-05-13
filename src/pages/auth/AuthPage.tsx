@@ -15,6 +15,26 @@ import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
 import { Capacitor } from '@capacitor/core';
 import { GoogleAuth } from '@southdevs/capacitor-google-auth';
+import { SignInWithApple } from '@capacitor-community/apple-sign-in';
+
+/** Returns a base64url-encoded string of 32 cryptographically random bytes. */
+function generateRawNonce(): string {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return btoa(String.fromCharCode(...bytes))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+}
+
+/** Returns the SHA-256 digest of the input string as a 64-char lowercase hex string. */
+async function sha256Hex(input: string): Promise<string> {
+  const encoded = new TextEncoder().encode(input);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', encoded);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
 
 const isIOS = () => Capacitor.getPlatform() === 'ios';
 
@@ -56,30 +76,51 @@ export function AuthPage() {
   const handleAppleSignIn = async () => {
     try {
       setIsLoading(true);
+
+      // Native iOS: use Apple Sign In SDK directly + signInWithIdToken (no browser)
       if (Capacitor.isNativePlatform()) {
-        const { Browser } = await import('@capacitor/browser');
-        const { data, error } = await supabase.auth.signInWithOAuth({
-          provider: 'apple',
-          options: {
-            redirectTo: 'https://familyhuddletasks.com/auth/callback',
-            skipBrowserRedirect: true,
-          },
-        });
-        if (error) {
-          toast({ title: t('auth.signInFailed'), description: error.message, variant: 'destructive' });
+        const rawNonce = generateRawNonce();
+        const hashedNonce = await sha256Hex(rawNonce);
+        let result;
+        try {
+          result = await SignInWithApple.authorize({
+            clientId: 'com.familyhuddle.app',
+            redirectURI: 'https://familyhuddletasks.com',
+            scopes: 'email name',
+            nonce: hashedNonce,
+          });
+        } catch (err) {
+          const msg = (err as Error)?.message ?? String(err);
+          // 1001 = user cancelled
+          if (msg.includes('1001') || /cancel/i.test(msg) || /ASAuthorizationError/i.test(msg)) {
+            return;
+          }
+          toast({ title: t('auth.signInFailed'), description: msg, variant: 'destructive' });
           return;
         }
-        if (data?.url) {
-          await Browser.open({ url: data.url, presentationStyle: 'popover' });
+        const identityToken = result.response.identityToken;
+        if (!identityToken) {
+          toast({ title: t('auth.signInFailed'), description: 'No identity token from Apple', variant: 'destructive' });
+          return;
         }
-      } else {
-        const { error } = await supabase.auth.signInWithOAuth({
+        const { error } = await supabase.auth.signInWithIdToken({
           provider: 'apple',
-          options: { redirectTo: `${window.location.origin}/auth/callback` },
+          token: identityToken,
+          nonce: rawNonce,
         });
         if (error) {
           toast({ title: t('auth.signInFailed'), description: error.message, variant: 'destructive' });
         }
+        return;
+      }
+
+      // Web: keep existing OAuth browser flow (unchanged behavior)
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'apple',
+        options: { redirectTo: `${window.location.origin}/auth/callback` },
+      });
+      if (error) {
+        toast({ title: t('auth.signInFailed'), description: error.message, variant: 'destructive' });
       }
     } catch (e: unknown) {
       const err = e as { message?: string };
@@ -129,22 +170,17 @@ export function AuthPage() {
     }
   }, [isAuthenticated, authLoading, navigate]);
 
+
   useEffect(() => {
-    if (!Capacitor.isNativePlatform()) return;
-    let cleanup: (() => void) | null = null;
-    Promise.all([
-      import('@capacitor/browser'),
-      import('@capacitor/app'),
-    ]).then(([{ Browser }, { App }]) => {
-      App.addListener('appUrlOpen', async (event) => {
-        if (event.url.includes('/auth/callback')) {
-          await Browser.close();
-        }
-      }).then((handle) => {
-        cleanup = () => { void handle.remove(); };
-      });
-    });
-    return () => { cleanup?.(); };
+    if (typeof window === 'undefined') return;
+    let showHandle: { remove: () => void } | null = null;
+    import('@capacitor/keyboard').then(({ Keyboard }) => {
+      Keyboard.addListener('keyboardDidShow', () => {
+        const el = document.activeElement as HTMLElement | null;
+        el?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+      }).then(h => { showHandle = h; });
+    }).catch(() => {});
+    return () => { showHandle?.remove(); };
   }, []);
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -232,7 +268,7 @@ export function AuthPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-[100dvh] flex items-center justify-center bg-background">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">{t('common.loading')}</p>
@@ -242,7 +278,11 @@ export function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted flex items-center justify-center p-4">
+    <div
+      className="min-h-[100dvh] flex flex-col bg-gradient-to-br from-background via-background to-muted"
+      style={{ paddingBottom: 'var(--keyboard-height, 0px)', transition: 'padding-bottom 0.25s ease' }}
+    >
+      <div className="flex flex-1 items-center justify-center p-4">
       <div className="max-w-4xl w-full">
         <div className="text-center mb-8">
           <h1 className="text-5xl font-bold text-primary mb-4">
@@ -523,6 +563,7 @@ export function AuthPage() {
             {t('auth.madeWithLove')}
           </p>
         </div>
+      </div>
       </div>
     </div>
   );

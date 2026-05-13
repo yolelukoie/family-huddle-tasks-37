@@ -28,6 +28,9 @@ const LANGUAGES = [
   { code: 'hi', name: 'हिन्दी', flag: '🇮🇳' },
   { code: 'ru', name: 'Русский', flag: '🇷🇺' },
   { code: 'he', name: 'עברית', flag: '🇮🇱' },
+  { code: 'fr', name: 'Français', flag: '🇫🇷' },
+  { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
+  { code: 'ar', name: 'العربية', flag: '🇸🇦' },
 ];
 
 /** Open the OS notification settings for this app */
@@ -268,7 +271,7 @@ export default function PersonalPage() {
   const isNotificationEnabled = notificationPermission === 'granted';
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-[100dvh] bg-background">
       <NavigationHeader title={t('personal.title')} />
       
       <div className="max-w-4xl mx-auto p-4 space-y-6">
@@ -294,7 +297,7 @@ export default function PersonalPage() {
                 </div>
               )}
             </div>
-            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
+            <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/jpg,image/webp,image/heic,image/heif" onChange={handleAvatarUpload} className="hidden" />
             <Button variant="outline" onClick={handleAvatarClick} disabled={isUploadingAvatar}>
               <Upload className="h-4 w-4 mr-2" />
               {isUploadingAvatar ? t('personal.uploading') : t('personal.uploadPhoto')}

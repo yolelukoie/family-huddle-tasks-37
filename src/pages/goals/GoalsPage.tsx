@@ -30,7 +30,7 @@ export default function GoalsPage() {
   // Handle loading and missing data states
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-[100dvh] flex items-center justify-center bg-background">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">{t('common.loading')}</p>
@@ -43,7 +43,7 @@ export default function GoalsPage() {
     // User exists but has no active family - redirect to onboarding to complete family setup
     setTimeout(() => navigate('/onboarding', { replace: true }), 0);
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-[100dvh] flex items-center justify-center bg-background">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">{t('tasks.settingUpFamily')}</p>
@@ -61,7 +61,7 @@ export default function GoalsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[hsl(var(--section-tint))] to-background">
+    <div className="min-h-[100dvh] bg-gradient-to-b from-[hsl(var(--section-tint))] to-background">
       <NavigationHeader title={t('goals.title')} />
 
       <div className="max-w-4xl mx-auto p-4 space-y-6">

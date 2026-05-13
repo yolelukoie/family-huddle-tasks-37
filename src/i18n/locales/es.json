@@ -80,7 +80,10 @@
     "reward": "Recompensa:",
     "noActiveGoal": "No hay objetivo activo establecido",
     "createGoal": "Crear Objetivo",
-    "deleteConfirm": "¿Estás seguro de que quieres eliminar este objetivo?"
+    "deleteConfirm": "¿Estás seguro de que quieres eliminar este objetivo?",
+    "activeCount_one": "{{count}} objetivo activo",
+    "activeCount_other": "{{count}} objetivos activos",
+    "goalInCategory": "Objetivo en {{category}}"
   },
   "family": {
     "title": "Configuración de Familia",
@@ -144,14 +147,17 @@
     "error": "Error",
     "failedToRemove": "No se pudo eliminar al miembro. Solo los propietarios de la familia pueden eliminar miembros.",
     "edit": "Editar",
-    "settings": "Configuración"
+    "settings": "Configuración",
+    "codeActiveFor24Hours": "El código de invitación estará activo durante 24 horas.",
+    "errorGeneratingCode": "Error al generar el código de invitación. Solo los propietarios de la familia pueden compartir códigos."
   },
   "chat": {
     "title": "Chat Familiar",
     "clearChat": "Limpiar Chat",
     "noMessages": "Aún no hay mensajes. ¡Inicia una conversación!",
     "typeMessage": "Escribe tu mensaje...",
-    "send": "Enviar"
+    "send": "Enviar",
+    "newMessage": "Nuevo mensaje de chat"
   },
   "themes": {
     "oceanCalm": {
@@ -293,14 +299,14 @@
   },
   "common": {
     "loading": "Cargando...",
-    "save": "Guardar",
+    "error": "Error",
     "cancel": "Cancelar",
     "delete": "Eliminar",
-    "edit": "Editar",
-    "close": "Cerrar",
+    "report": "Reportar",
+    "creating": "Creando...",
     "confirm": "Confirmar",
-    "yes": "Sí",
-    "no": "No"
+    "deleteCategoryTitle": "Eliminar categoría",
+    "deleteCategoryDesc": "Esto eliminará permanentemente la categoría y todas sus plantillas y tareas. Esta acción no se puede deshacer."
   },
   "stages": {
     "baby": "Bebé",
@@ -511,17 +517,446 @@
   "paywall": {
     "title": "Tu prueba gratuita ha terminado",
     "description": "Suscríbete para seguir usando Family Huddle con todas las funciones.",
-    "subscribe": "Suscribirse — $4.90/mes"
+    "subscribe": "Suscribirse — $4.90/mes",
+    "titleManage": "Subscription Plans",
+    "descriptionManage": "View and manage your Family Huddle subscription.",
+    "currentPlan": {
+      "lifetime": "You have lifetime access",
+      "trial": "Free trial ends {{date}}",
+      "premium": "Premium plan renews {{date}}"
+    }
   },
-  "common": {
-    "loading": "Cargando...",
-    "error": "Error",
-    "cancel": "Cancelar",
-    "delete": "Eliminar",
-    "report": "Reportar",
-    "creating": "Creando...",
-    "confirm": "Confirmar",
-    "deleteCategoryTitle": "Eliminar categoría",
-    "deleteCategoryDesc": "Esto eliminará permanentemente la categoría y todas sus plantillas y tareas. Esta acción no se puede deshacer."
+  "taskHistory": {
+    "title": "Historial de tareas completadas",
+    "description": "Todas las tareas completadas en esta familia",
+    "noTasks": "Aún no hay tareas completadas. ¡Empieza completando algunas tareas!",
+    "category": "Categoría",
+    "completed": "Completado",
+    "due": "Vence",
+    "unknown": "Desconocido"
+  },
+  "badges": {
+    "baby_10": {
+      "name": "Chupete",
+      "description": "¡La primera sonrisa derrite todos los corazones!"
+    },
+    "baby_20": {
+      "name": "Sonajero",
+      "description": "¡Descubrió la magia del ruido!"
+    },
+    "baby_30": {
+      "name": "Biberón",
+      "description": "¡Recargado con leche!"
+    },
+    "baby_40": {
+      "name": "Osito de peluche",
+      "description": "¡Encontró un compañero de abrazos para siempre!"
+    },
+    "child_60": {
+      "name": "Bloques de juguete",
+      "description": "¡Construyó una obra maestra (y la derribó)!"
+    },
+    "child_70": {
+      "name": "Diente",
+      "description": "¡Ups! ¡Se fue el primer diente!"
+    },
+    "child_80": {
+      "name": "Crayón",
+      "description": "¡Las paredes son el mejor lienzo!"
+    },
+    "child_90": {
+      "name": "Balón de fútbol",
+      "description": "¡Marcó el primer gol (en el arco equivocado)!"
+    },
+    "child_100": {
+      "name": "Mochila",
+      "description": "¡Listo para la primera gran aventura escolar!"
+    },
+    "child_110": {
+      "name": "Helado",
+      "description": "Lección de vida: ¡el helado se derrite rápido!"
+    },
+    "child_120": {
+      "name": "Cuerda para saltar",
+      "description": "¡Ya puede saltar 10 veces sin tropezar!"
+    },
+    "child_130": {
+      "name": "Estrella dorada",
+      "description": "El maestro dice: ¡Muy bien!"
+    },
+    "child_140": {
+      "name": "Libro",
+      "description": "Leyendo cuentos pasada la hora de dormir..."
+    },
+    "child_150": {
+      "name": "Sombrero de cumpleaños",
+      "description": "¡El pastel más grande jamás visto—desaparecido en 5 minutos!"
+    },
+    "child_160": {
+      "name": "Patinete",
+      "description": "¡Más rápido de lo que pueden correr los adultos!"
+    },
+    "child_170": {
+      "name": "Huella de cachorro",
+      "description": "¡Mejores amigos para siempre: yo y el perro!"
+    },
+    "child_180": {
+      "name": "Gafas de sol",
+      "description": "¡Alerta de niño genial!"
+    },
+    "child_190": {
+      "name": "Pieza de rompecabezas",
+      "description": "¡Terminó un rompecabezas sin perder ninguna pieza (milagro)!"
+    },
+    "teen_210": {
+      "name": "Teléfono inteligente",
+      "description": "Velocidad de mensajes: nivel olímpico."
+    },
+    "teen_220": {
+      "name": "Guitarra",
+      "description": "Primera banda, nombre terrible."
+    },
+    "teen_230": {
+      "name": "Porción de pizza",
+      "description": "Cena de campeones."
+    },
+    "teen_240": {
+      "name": "Libro escolar",
+      "description": "Metió un mes entero en una sola noche."
+    },
+    "teen_250": {
+      "name": "Corazón",
+      "description": "Primer amor. Sonrojándose sin parar."
+    },
+    "teen_260": {
+      "name": "Auriculares",
+      "description": "Música = vida."
+    },
+    "teen_270": {
+      "name": "Baloncesto",
+      "description": "Anotó una vez, presume para siempre."
+    },
+    "teen_280": {
+      "name": "Monopatín",
+      "description": "La gravedad duele, pero vale la pena."
+    },
+    "teen_290": {
+      "name": "Cámara selfie",
+      "description": "Ángulo perfecto = 200 intentos."
+    },
+    "teen_300": {
+      "name": "Examen",
+      "description": "¡Aprobado! No preguntes cómo."
+    },
+    "teen_310": {
+      "name": "Sudadera",
+      "description": "Uniforme: sudadera 24/7."
+    },
+    "teen_320": {
+      "name": "Máscara de drama",
+      "description": "Drama adolescente: en todas partes, siempre."
+    },
+    "teen_330": {
+      "name": "Cuaderno",
+      "description": "Diario secreto... ¡no mires!"
+    },
+    "teen_340": {
+      "name": "Bicicleta",
+      "description": "Más rápido que el autobús, también más genial."
+    },
+    "adult_360": {
+      "name": "Bandeja de servicio",
+      "description": "Cargó 5 tazas, derramó 4."
+    },
+    "adult_370": {
+      "name": "Taza de café",
+      "description": "Combustible de supervivencia desbloqueado."
+    },
+    "adult_380": {
+      "name": "Reloj de pared",
+      "description": "Descubrió que los lunes son eternos."
+    },
+    "adult_390": {
+      "name": "Uniforme de trabajo",
+      "description": "Primer sueldo = compras instantáneas."
+    },
+    "adult_400": {
+      "name": "Teclado",
+      "description": "Escribir rápido parece hackear."
+    },
+    "adult_410": {
+      "name": "Teléfono",
+      "description": "Cliente: enojado. Yo: sonriendo."
+    },
+    "adult_420": {
+      "name": "Zapatos de trabajo",
+      "description": "Zapatos de trabajo = instrumentos de tortura."
+    },
+    "adult_430": {
+      "name": "Cartera",
+      "description": "¿Ahorros? ¿Qué ahorros?"
+    },
+    "adult_440": {
+      "name": "Corbata",
+      "description": "Hice el nudo después de 50 tutoriales de YouTube."
+    },
+    "adult_450": {
+      "name": "Portátil",
+      "description": "Ctrl+Z es mi superpoder."
+    },
+    "adult_460": {
+      "name": "Caja de pizza",
+      "description": "Tradición de merienda en turno nocturno."
+    },
+    "adult_470": {
+      "name": "Moneda",
+      "description": "Aprendí qué significan los 'impuestos' (¡ay!)."
+    },
+    "adult_480": {
+      "name": "Despertador",
+      "description": "Alarma ignorada = jefe enojado."
+    },
+    "adult_490": {
+      "name": "Tarjeta de crédito",
+      "description": "Saldo de tarjeta de crédito: ni hablar."
+    },
+    "ontherise_510": {
+      "name": "Brújula",
+      "description": "Encontré una dirección profesional que se siente correcta."
+    },
+    "ontherise_520": {
+      "name": "Portafolio",
+      "description": "Tu trabajo finalmente te parece tuyo."
+    },
+    "ontherise_530": {
+      "name": "Armario",
+      "description": "Estilo personal desbloqueado."
+    },
+    "ontherise_540": {
+      "name": "Paladar",
+      "description": "Gusto mejorado—comida, música, todo."
+    },
+    "ontherise_550": {
+      "name": "Noche de cita",
+      "description": "¿Visto y sin respuesta? Esta noche no."
+    },
+    "ontherise_560": {
+      "name": "Dúo",
+      "description": "Encontré a mi persona para celebrar victorias."
+    },
+    "ontherise_570": {
+      "name": "Mentor",
+      "description": "Ayudando a otros a superarse."
+    },
+    "ontherise_580": {
+      "name": "Aumento",
+      "description": "Sueldo arriba. Confianza también."
+    },
+    "ontherise_590": {
+      "name": "Credencial",
+      "description": "Conferencia conquistada; contactos obtenidos."
+    },
+    "adult_610": {
+      "name": "Llave de coche",
+      "description": "¡Libertad sobre cuatro ruedas!"
+    },
+    "adult_620": {
+      "name": "Casa",
+      "description": "Alquilada, pero se siente mía."
+    },
+    "adult_630": {
+      "name": "Cochecito de bebé",
+      "description": "Vida: actualizada con mini-yo."
+    },
+    "adult_640": {
+      "name": "Facturas",
+      "description": "Factura de electricidad = historia de terror."
+    },
+    "adult_650": {
+      "name": "Planta",
+      "description": "¡La planta de interior sobrevivió toda una semana!"
+    },
+    "adult_660": {
+      "name": "Anillo",
+      "description": "Amor, compromiso... y fregar platos."
+    },
+    "adult_670": {
+      "name": "Libro",
+      "description": "Biblioteca de autoayuda: creciendo rápido."
+    },
+    "adult_680": {
+      "name": "Maleta",
+      "description": "Viaje de negocios = desayuno gratis de hotel."
+    },
+    "adult_690": {
+      "name": "Portátil",
+      "description": "Los correos nunca terminan."
+    },
+    "mature_adult_couch": {
+      "name": "Sofá",
+      "description": "Campeón de maratones de Netflix."
+    },
+    "mature_adult_dumbbell": {
+      "name": "Mancuerna",
+      "description": "Me apunté... fui dos veces."
+    },
+    "mature_adult_camera": {
+      "name": "Cámara",
+      "description": "Fotos de vacaciones: 1000, buenas: 3."
+    },
+    "mature_adult_money_bag": {
+      "name": "Bolsa de dinero",
+      "description": "¡Por fin algo de ahorro!"
+    },
+    "mature_adult_balloon": {
+      "name": "Globo",
+      "description": "Organicé una fiesta, los vecinos se quejaron."
+    },
+    "mature_adult_wine_glass": {
+      "name": "Copa de vino",
+      "description": "Cata de vinos: totalmente profesional."
+    },
+    "mature_adult_toolbox": {
+      "name": "Caja de herramientas",
+      "description": "Arreglé una cosa, rompí dos."
+    },
+    "mature_adult_graduation_cap": {
+      "name": "Birrete",
+      "description": "Por fin terminé ese título."
+    },
+    "mature_adult_globe": {
+      "name": "Globo terráqueo",
+      "description": "Viajé por el mundo (o al menos 2 ciudades)."
+    },
+    "golden_gray_hair": {
+      "name": "Mechón de cabello gris",
+      "description": "Nueva mecha: plata natural."
+    },
+    "golden_glasses": {
+      "name": "Gafas",
+      "description": "Leer texto pequeño = imposible."
+    },
+    "golden_book_stack": {
+      "name": "Pila de libros",
+      "description": "Colección de sabiduría completa."
+    },
+    "golden_bbq_grill": {
+      "name": "Parrilla BBQ",
+      "description": "Rey de la parrilla del vecindario."
+    },
+    "golden_yacht_model": {
+      "name": "Modelo de yate",
+      "description": "Sueña en grande, navega en pequeño."
+    },
+    "golden_family_photo": {
+      "name": "Foto familiar",
+      "description": "El mejor equipo de todos."
+    },
+    "golden_golf_club": {
+      "name": "Palo de golf",
+      "description": "Hoyo en... 23 intentos."
+    },
+    "golden_desk": {
+      "name": "Escritorio",
+      "description": "La oficina es el segundo hogar."
+    },
+    "golden_trophy": {
+      "name": "Trofeo",
+      "description": "¡Mediana edad = mejor momento!"
+    },
+    "golden_rocking_chair": {
+      "name": "Mecedora",
+      "description": "Campeón de la siesta del fin de semana."
+    },
+    "golden_cookbook": {
+      "name": "Libro de cocina",
+      "description": "Receta secreta perfeccionada."
+    },
+    "golden_hiking_stick": {
+      "name": "Bastón de senderismo",
+      "description": "Las montañas siguen llamando."
+    },
+    "golden_headphones": {
+      "name": "Auriculares",
+      "description": "¡Viejo pero seguimos de fiesta!"
+    },
+    "golden_piggy_bank": {
+      "name": "Alcancía",
+      "description": "Plan de ahorro: por fin funcionando."
+    },
+    "golden_medal": {
+      "name": "Medalla",
+      "description": "Logro de toda una vida desbloqueado."
+    },
+    "golden_dog_paw": {
+      "name": "Huella de perro",
+      "description": "El perro sigue creyendo que soy el mejor."
+    },
+    "golden_camera": {
+      "name": "Cámara",
+      "description": "Cada arruga cuenta una historia."
+    },
+    "golden_calendar": {
+      "name": "Calendario",
+      "description": "Las fiestas de cumpleaños nunca paran."
+    },
+    "golden_champagne": {
+      "name": "Champán",
+      "description": "¡Por los mejores años!"
+    }
+  },
+  "block": {
+    "title": "Bloquear miembro",
+    "description": "Bloquear a {{name}} de participar en actividades familiares.",
+    "reason": "Motivo",
+    "selectReason": "Seleccionar motivo",
+    "duration": "Duración",
+    "selectDuration": "Seleccionar duración",
+    "1hour": "1 hora",
+    "12hours": "12 horas",
+    "1day": "1 día",
+    "1week": "1 semana",
+    "indefinite": "Indefinido",
+    "autoKickWarning": "Con un bloqueo indefinido, el miembro será expulsado automáticamente de la familia.",
+    "restrictionsTitle": "Restricciones durante el bloqueo:",
+    "restrictionChat": "Chat",
+    "restrictionAssignTasks": "Asignar tareas",
+    "restrictionCreateTasks": "Crear tareas",
+    "restrictionProfile": "Editar perfil",
+    "blockBtn": "Bloquear",
+    "unblockBtn": "Desbloquear",
+    "blocked": "Bloqueado",
+    "blockedFor": "Bloqueado por {{duration}}",
+    "youWereBlocked": "Has sido bloqueado",
+    "youWereBlockedFor": "Has sido bloqueado por {{duration}}",
+    "memberBlocked": "Miembro bloqueado",
+    "memberBlockedDesc": "{{name}} ha sido bloqueado por {{duration}}.",
+    "memberUnblocked": "Miembro desbloqueado",
+    "memberUnblockedDesc": "{{name}} ha sido desbloqueado.",
+    "failedToBlock": "Error al bloquear",
+    "failedToUnblock": "Error al desbloquear",
+    "youWereUnblocked": "Has sido desbloqueado",
+    "autoKicked": "Expulsado automáticamente",
+    "memberAutoKicked": "{{name}} fue expulsado automáticamente de la familia.",
+    "accessRestricted": "Acceso restringido",
+    "accessRestrictedFor": "Acceso restringido por {{duration}}",
+    "cannotAccessWhileBlocked": "No puedes acceder a esto mientras estás bloqueado.",
+    "chatRestricted": "Chat restringido",
+    "restricted": "Restringido",
+    "cannotAssignTasks": "No puedes asignar tareas mientras estás bloqueado.",
+    "blockedWithReason": "Bloqueado por: {{reason}}",
+    "cannotCreateInDefaultCategory": "No puedes crear tareas en la categoría predeterminada mientras estás bloqueado.",
+    "viewOnlyWhileBlocked": "Solo lectura mientras estás bloqueado.",
+    "noMembersAccess": "Sin acceso a los miembros",
+    "noMembersAccessFor": "Sin acceso a los miembros por {{duration}}",
+    "reasons": {
+      "harassment": "Acoso",
+      "hate": "Discurso de odio",
+      "sexual": "Contenido sexual",
+      "violence": "Violencia",
+      "spam": "Spam",
+      "personalInfo": "Información personal",
+      "other": "Otro"
+    }
   }
 }

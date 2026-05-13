@@ -6,6 +6,9 @@ import zh from './locales/zh.json';
 import hi from './locales/hi.json';
 import ru from './locales/ru.json';
 import he from './locales/he.json';
+import fr from './locales/fr.json';
+import de from './locales/de.json';
+import ar from './locales/ar.json';
 
 const resources = {
   en: { translation: en },
@@ -14,6 +17,9 @@ const resources = {
   hi: { translation: hi },
   ru: { translation: ru },
   he: { translation: he },
+  fr: { translation: fr },
+  de: { translation: de },
+  ar: { translation: ar },
 };
 
 // Get cached language from localStorage
@@ -38,5 +44,15 @@ i18n
       useSuspense: false,
     },
   });
+
+const RTL_LANGUAGES = ['ar', 'he'];
+
+const applyDir = (lang: string) => {
+  document.documentElement.dir = RTL_LANGUAGES.includes(lang) ? 'rtl' : 'ltr';
+  document.documentElement.lang = lang;
+};
+
+applyDir(i18n.language);
+i18n.on('languageChanged', applyDir);
 
 export default i18n;

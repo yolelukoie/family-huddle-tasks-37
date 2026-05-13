@@ -32,10 +32,23 @@ export default function ChatPage() {
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
   }, [messages]);
 
+  // Re-scroll to bottom when keyboard opens (Capacitor)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const scrollToBottom = () => {
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    };
+    let showHandle: { remove: () => void } | null = null;
+    import('@capacitor/keyboard').then(({ Keyboard }) => {
+      Keyboard.addListener('keyboardDidShow', scrollToBottom).then(h => { showHandle = h; });
+    }).catch(() => {});
+    return () => { showHandle?.remove(); };
+  }, []);
+
   // Handle loading and missing data states
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-[100dvh] flex items-center justify-center bg-background">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">{t('common.loading')}</p>
@@ -48,7 +61,7 @@ export default function ChatPage() {
     // User exists but has no active family - redirect to onboarding to complete family setup
     setTimeout(() => navigate('/onboarding', { replace: true }), 0);
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-[100dvh] flex items-center justify-center bg-background">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">{t('tasks.settingUpFamily')}</p>
@@ -64,7 +77,7 @@ export default function ChatPage() {
     const timeStr = remaining === Infinity ? '' : formatBlockTimeRemaining(remaining);
 
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[hsl(var(--section-tint))] to-background">
+      <div className="min-h-[100dvh] bg-gradient-to-b from-[hsl(var(--section-tint))] to-background">
         <NavigationHeader title={t('chat.title')} />
         <div className="max-w-4xl mx-auto p-4">
           <Card accent>
@@ -112,13 +125,16 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-[hsl(var(--section-tint))] to-background">
+    <div
+      className="min-h-[100dvh] flex flex-col bg-gradient-to-b from-[hsl(var(--section-tint))] to-background"
+      style={{ paddingBottom: 'var(--keyboard-height, 0px)', transition: 'padding-bottom 0.25s ease' }}
+    >
       <NavigationHeader title={t('chat.title')} />
       <div className="max-w-4xl mx-auto w-full px-4 pb-4 flex-1 flex flex-col">
         {/* Chat header */}
         <div
           className="flex justify-between items-center py-4 sticky z-10 bg-background/95 backdrop-blur-sm border-b border-border/50"
-          style={{ top: 'calc(env(safe-area-inset-top) + var(--nav-height, 108px))' }}
+          style={{ top: 'var(--nav-height, 108px)' }}
         >
           <h1 className="text-2xl font-bold bg-gradient-to-r from-[hsl(var(--icon-tint))] to-[hsl(var(--family-celebration))] bg-clip-text text-transparent">
             {t('chat.title')}
@@ -187,7 +203,7 @@ export default function ChatPage() {
         </div>
 
         {/* Message Input */}
-        <form onSubmit={handleSendMessage} className="sticky bottom-0 flex gap-2 py-4 border-t bg-background">
+        <form onSubmit={handleSendMessage} className="flex gap-2 py-4 border-t bg-background sticky bottom-0 z-10" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
           <Input
             value={message}
             onChange={(e) => setMessage(e.target.value)}

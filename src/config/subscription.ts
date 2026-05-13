@@ -74,15 +74,19 @@ function notifyListeners(status: SubscriptionStatus) {
 // ---------------------------------------------------------------------------
 
 export async function initRevenueCat(userId: string): Promise<void> {
-  if (!Capacitor.isNativePlatform() || initialized) return;
+  if (!Capacitor.isNativePlatform()) return;
 
   // Already configured for this user — nothing to do
   if (initialized && currentUserId === userId) return;
 
   // Already configured but for a different user — switch via logIn
   if (initialized && currentUserId !== userId) {
-    await Purchases.logIn({ appUserID: userId });
-    currentUserId = userId;
+    try {
+      await Purchases.logIn({ appUserID: userId });
+      currentUserId = userId;
+    } catch (err) {
+      console.error('[RevenueCat] logIn error:', err);
+    }
     return;
   }
 
@@ -143,6 +147,7 @@ export async function purchaseDefaultPackage(): Promise<PurchaseResult> {
     };
   } catch (e: unknown) {
     const err = e as { code?: string; message?: string };
+    console.error('[RevenueCat] purchaseDefaultPackage error:', err);
     if (err?.code === PURCHASES_ERROR_CODE.PURCHASE_CANCELLED_ERROR) {
       return { success: false, cancelled: true };
     }

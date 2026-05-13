@@ -1,14 +1,19 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from './useAuth';
 import { useApp } from './useApp';
 import { supabase } from '@/integrations/supabase/client';
 import type { ChatMessage } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import { ROUTES } from '@/lib/constants';
 
 export function useChat() {
   const { user } = useAuth();
   const { activeFamilyId, getUserProfile } = useApp();
   const { toast } = useToast();
+  const location = useLocation();
+  const { t } = useTranslation();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
@@ -138,14 +143,7 @@ export function useChat() {
           };
 
           setMessages((prev) => [...prev, converted]);
-
-          // Toast only for messages from others
-          if (!isMine) {
-            toast({
-              title: 'New chat message',
-              description: `${displayName}: ${newRow.content}`,
-            });
-          }
+          // Toast moved to useRealtimeNotifications (global hook) so it fires on all pages.
         }
       )
       .subscribe((status) => {

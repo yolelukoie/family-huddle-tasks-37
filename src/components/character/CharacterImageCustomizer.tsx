@@ -192,7 +192,7 @@ export function CharacterImageCustomizer() {
                         <input
                           ref={(el) => { fileInputRefs.current[stageData.stage] = el; }}
                           type="file"
-                          accept="image/*"
+                          accept="image/png,image/jpeg,image/jpg,image/webp,image/heic,image/heif"
                           onChange={(e) => handleFileChange(stageData.stage, e)}
                           className="hidden"
                         />
