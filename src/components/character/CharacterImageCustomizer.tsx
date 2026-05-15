@@ -10,6 +10,8 @@ import { useApp } from '@/hooks/useApp';
 import { getStageName, getCharacterImagePath, getCurrentStage } from '@/lib/character';
 import { useToast } from '@/hooks/use-toast';
 import { Upload, RotateCcw, Loader2, ImageIcon, ChevronDown, Star } from 'lucide-react';
+import { pickImageFromLibrary } from '@/lib/pickImage';
+import { Capacitor } from '@capacitor/core';
 
 export function CharacterImageCustomizer() {
   const { t } = useTranslation();
@@ -29,14 +31,27 @@ export function CharacterImageCustomizer() {
 
   const fileInputRefs = useRef<{ [key: number]: HTMLInputElement | null }>({});
 
-  const handleUploadClick = (stage: number) => {
+  const handleUploadClick = async (stage: number) => {
+    // Native (iOS/Android): open Photos picker only — no "Take Photo" option.
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const file = await pickImageFromLibrary();
+        if (file) await processStageFile(stage, file);
+      } catch (error) {
+        console.error('Stage image pick error:', error);
+        toast({
+          title: t('personal.uploadFailed'),
+          description: t('personal.uploadFailedDesc'),
+          variant: 'destructive',
+        });
+      }
+      return;
+    }
+    // Web fallback: use hidden file input.
     fileInputRefs.current[stage]?.click();
   };
 
-  const handleFileChange = async (stage: number, e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const processStageFile = async (stage: number, file: File) => {
     if (!file.type.startsWith('image/')) {
       toast({
         title: t('personal.invalidFileType'),
@@ -69,7 +84,12 @@ export function CharacterImageCustomizer() {
         variant: 'destructive',
       });
     }
+  };
 
+  const handleFileChange = async (stage: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await processStageFile(stage, file);
     if (fileInputRefs.current[stage]) {
       fileInputRefs.current[stage]!.value = '';
     }

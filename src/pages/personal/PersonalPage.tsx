@@ -20,6 +20,8 @@ import { CharacterImageCustomizer } from '@/components/character/CharacterImageC
 import { useToast } from '@/hooks/use-toast';
 import { SubscriptionStatusCard } from '@/components/subscription/SubscriptionStatusCard';
 import { supabase } from '@/integrations/supabase/client';
+import { pickImageFromLibrary } from '@/lib/pickImage';
+import { Capacitor } from '@capacitor/core';
 
 const LANGUAGES = [
   { code: 'en', name: 'English', flag: '🇬🇧' },
@@ -126,14 +128,23 @@ export default function PersonalPage() {
     }
   };
 
-  const handleAvatarClick = () => {
+  const handleAvatarClick = async () => {
+    // Native (iOS/Android): open Photos picker only — no "Take Photo" option.
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const file = await pickImageFromLibrary();
+        if (file) await processAvatarFile(file);
+      } catch (error) {
+        console.error('Avatar pick error:', error);
+        toast({ title: t('personal.uploadFailed'), description: t('personal.uploadFailedDesc'), variant: "destructive" });
+      }
+      return;
+    }
+    // Web fallback: use hidden file input.
     fileInputRef.current?.click();
   };
 
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const processAvatarFile = async (file: File) => {
     if (!file.type.startsWith('image/')) {
       toast({ title: t('personal.invalidFileType'), description: t('personal.invalidFileTypeDesc'), variant: "destructive" });
       return;
@@ -171,8 +182,14 @@ export default function PersonalPage() {
       toast({ title: t('personal.uploadFailed'), description: t('personal.uploadFailedDesc'), variant: "destructive" });
     } finally {
       setIsUploadingAvatar(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
     }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await processAvatarFile(file);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const handleLanguageChange = async (language: string) => {
