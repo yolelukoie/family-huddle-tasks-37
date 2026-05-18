@@ -155,7 +155,7 @@ export async function purchaseDefaultPackage(): Promise<PurchaseResult> {
   }
 }
 
-// offerOptionId: the Google Play offer option id in the format "basePlanId:offerId" (e.g. "p1m:30")
+// offerOptionId: store-specific offer option id in the format "basePlanId:offerId" (e.g. "p1m:30")
 // If provided, we purchase that specific offer via purchaseSubscriptionOption.
 // If not provided, falls back to purchasePackage (default base plan price).
 export async function purchasePromoOffering(offeringId: string, offerOptionId?: string): Promise<PurchaseResult> {

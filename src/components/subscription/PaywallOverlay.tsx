@@ -79,7 +79,9 @@ export function PaywallOverlay({ isExplicitOpen, onClose }: PaywallOverlayProps 
       >
         <DialogBody>
         <div className="pt-2 text-center space-y-4">
-          <PromoCodeInput alwaysOpen />
+          {/* Promo code redemption is Android-only. Apple's App Store policy (3.1.1)
+              forbids non-IAP unlock mechanisms; on iOS we hide this UI entirely. */}
+          {!isPlatform('ios') && <PromoCodeInput alwaysOpen />}
 
           {isControlled && status.isActive && (
             <div className="rounded-lg bg-muted p-3 text-sm text-center">

@@ -1,9 +1,9 @@
 import { Capacitor } from '@capacitor/core';
-import { StatusBar, Style } from '@capacitor/status-bar';
+import { EdgeToEdge } from '@capawesome/capacitor-android-edge-to-edge-support';
 
 /**
- * Configure the native status bar for Android/iOS.
- * Only runs on native platforms (not web).
+ * Configure the native status bar for Android.
+ * Only runs on Android native platform (EdgeToEdge plugin is Android-only).
  */
 export async function configureStatusBar() {
   if (!Capacitor.isNativePlatform()) {
@@ -11,17 +11,11 @@ export async function configureStatusBar() {
   }
 
   try {
-    // Set status bar to overlay the webview (edge-to-edge)
-    await StatusBar.setOverlaysWebView({ overlay: true });
-    
-    // Set status bar style (light icons for dark backgrounds, dark icons for light backgrounds)
-    await StatusBar.setStyle({ style: Style.Light });
-    
-    // Set a semi-transparent background color (Android only)
+    // Set a semi-transparent background color for the status bar area (Android only)
     if (Capacitor.getPlatform() === 'android') {
-      await StatusBar.setBackgroundColor({ color: '#00000033' }); // 20% black
+      await EdgeToEdge.setStatusBarColor({ color: '#00000033' }); // 20% black
     }
-    
+
     console.log('[StatusBar] Configured successfully');
   } catch (error) {
     console.warn('[StatusBar] Configuration failed:', error);
@@ -30,36 +24,24 @@ export async function configureStatusBar() {
 
 /**
  * Show the status bar (if hidden).
+ * No-op with EdgeToEdge plugin — status bar visibility is always-on in edge-to-edge mode.
  */
 export async function showStatusBar() {
-  if (!Capacitor.isNativePlatform()) return;
-  try {
-    await StatusBar.show();
-  } catch (error) {
-    console.warn('[StatusBar] Show failed:', error);
-  }
+  // EdgeToEdge plugin does not support show/hide; status bar is always visible
 }
 
 /**
  * Hide the status bar for immersive mode.
+ * No-op with EdgeToEdge plugin — status bar visibility is always-on in edge-to-edge mode.
  */
 export async function hideStatusBar() {
-  if (!Capacitor.isNativePlatform()) return;
-  try {
-    await StatusBar.hide();
-  } catch (error) {
-    console.warn('[StatusBar] Hide failed:', error);
-  }
+  // EdgeToEdge plugin does not support show/hide; status bar is always visible
 }
 
 /**
  * Set status bar style based on theme.
+ * No-op with EdgeToEdge plugin — icon style is controlled by Android system in edge-to-edge mode.
  */
-export async function setStatusBarStyle(isDark: boolean) {
-  if (!Capacitor.isNativePlatform()) return;
-  try {
-    await StatusBar.setStyle({ style: isDark ? Style.Dark : Style.Light });
-  } catch (error) {
-    console.warn('[StatusBar] Style change failed:', error);
-  }
+export async function setStatusBarStyle(_isDark: boolean) {
+  // EdgeToEdge plugin does not expose a setStyle API; style is managed by the Android system
 }

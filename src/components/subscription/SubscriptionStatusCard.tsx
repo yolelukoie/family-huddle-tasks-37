@@ -117,7 +117,11 @@ export function SubscriptionStatusCard() {
             {status.isActive && !status.isLifetime && status.managementURL && (
               <Button onClick={handleManage} variant="outline" className="w-full">
                 <ExternalLink className="h-4 w-4 mr-2" />
-                {t('subscription.manageOnGooglePlay')}
+                {/* Generic label — RevenueCat's managementURL returns the correct
+                    store URL per platform. Apple's review policy (2.3.10) forbids
+                    mentioning competing platforms in the iOS binary, so we use
+                    platform-agnostic copy. */}
+                {t('subscription.manageInStore')}
               </Button>
             )}
 

@@ -292,7 +292,7 @@ export async function registerNativePush(userId: string): Promise<{ success: boo
     // 10s timeout warning
     setTimeout(() => {
       if (!currentDeviceToken || currentDeviceToken === tokenBeforeRegister) {
-        console.warn('[NativePush] ⚠️ No token received 10s after register(). Check Firebase setup / Google Play Services.');
+        console.warn('[NativePush] ⚠️ No token received 10s after register(). Check Firebase + native messaging setup.');
       }
     }, 10000);
 

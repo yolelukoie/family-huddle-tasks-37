@@ -498,7 +498,7 @@
     "lifetimeDesc": "Tienes acceso vitalicio a todas las funciones premium.",
     "renewsOn": "Se renueva el {{date}}",
     "subscribeNow": "Suscribirse ahora",
-    "manageOnGooglePlay": "Gestionar en Google Play",
+    "manageInStore": "Gestionar suscripción",
     "restore": "Restaurar compras",
     "restoreSuccess": "Compras restauradas correctamente",
     "restoreFailed": "No se pudieron restaurar las compras",

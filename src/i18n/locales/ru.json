@@ -877,7 +877,7 @@
     "lifetimeDesc": "У вас пожизненный доступ ко всем премиум-функциям.",
     "renewsOn": "Продление {{date}}",
     "subscribeNow": "Подписаться",
-    "manageOnGooglePlay": "Управление в Google Play",
+    "manageInStore": "Управление подпиской",
     "restore": "Восстановить покупки",
     "restoreSuccess": "Покупки успешно восстановлены",
     "restoreFailed": "Не удалось восстановить покупки",

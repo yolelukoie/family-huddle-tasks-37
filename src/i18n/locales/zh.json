@@ -498,7 +498,7 @@
     "lifetimeDesc": "您拥有所有高级功能的终身访问权。",
     "renewsOn": "续订日期：{{date}}",
     "subscribeNow": "立即订阅",
-    "manageOnGooglePlay": "在 Google Play 管理",
+    "manageInStore": "管理订阅",
     "restore": "恢复购买",
     "restoreSuccess": "购买已成功恢复",
     "restoreFailed": "无法恢复购买",

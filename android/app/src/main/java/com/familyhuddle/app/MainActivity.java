@@ -1,7 +1,6 @@
 package com.familyhuddle.app;
 
 import android.os.Bundle;
-import androidx.activity.EdgeToEdge;
 import com.getcapacitor.BridgeActivity;
 import com.codetrixstudio.capacitor.GoogleAuth.GoogleAuth;
 
@@ -10,6 +9,5 @@ public class MainActivity extends BridgeActivity {
     protected void onCreate(Bundle savedInstanceState) {
         registerPlugin(GoogleAuth.class);
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
     }
 }

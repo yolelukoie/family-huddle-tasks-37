@@ -26,9 +26,9 @@ export function PromoCodeInput({ alwaysOpen = false }: PromoCodeInputProps) {
 
     setIsLoading(true);
     try {
-      // Codes that map to a RevenueCat offering (Google Play billing flow)
-      // Maps promo code → { offeringId, offerOptionId }
-      // offerOptionId is "basePlanId:offerId" from Google Play (used to select a specific promotional offer)
+      // Codes that map to a RevenueCat offering (store-side billing flow, Android only).
+      // Maps promo code → { offeringId, offerOptionId }.
+      // offerOptionId is "basePlanId:offerId" (store-specific identifier used to select a specific promotional offer).
       const OFFERING_CODES: Record<string, { offeringId: string; offerOptionId?: string }> = {
         '30FOR3':   { offeringId: '30',      offerOptionId: 'p1m:30' },
         'BETATESTER': { offeringId: 'testers', offerOptionId: 'p1m:testers' },

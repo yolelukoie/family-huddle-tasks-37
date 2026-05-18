@@ -6,7 +6,10 @@ const config: CapacitorConfig = {
   webDir: 'dist',
   plugins: {
     SystemBars: {
-      insetsHandling: 'css',
+      insetsHandling: 'disable',
+    },
+    EdgeToEdge: {
+      backgroundColor: '#ffffff',
     },
     Keyboard: {
       resize: 'none',

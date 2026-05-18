@@ -668,7 +668,7 @@
     "lifetimeDesc": "You have lifetime access to all premium features.",
     "renewsOn": "Renews on {{date}}",
     "subscribeNow": "Subscribe Now",
-    "manageOnGooglePlay": "Manage on Google Play",
+    "manageInStore": "Manage in Store",
     "restore": "Restore Purchases",
     "restoreSuccess": "Purchases restored successfully",
     "restoreFailed": "Could not restore purchases",
