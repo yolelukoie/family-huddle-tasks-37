@@ -1,9 +1,20 @@
 import { useEffect } from 'react';
 import { isPlatform } from '@/lib/platform';
 
+/**
+ * Sets the CSS variable `--keyboard-height` on the document root when the
+ * on-screen keyboard appears/disappears.
+ *
+ * **iOS only.** On Android we rely on the system's
+ * `windowSoftInputMode="adjustResize"` in AndroidManifest.xml, which resizes
+ * the WebView itself when the keyboard opens. Adding our own bottom padding
+ * on top of that would double-count the keyboard height and leave empty
+ * space above the keyboard.
+ */
 export function useKeyboardInset() {
   useEffect(() => {
-    if (!isPlatform('capacitor')) return;
+    // Android handles keyboard via adjustResize; only iOS needs manual padding.
+    if (!isPlatform('ios')) return;
 
     const root = document.documentElement;
 

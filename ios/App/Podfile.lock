@@ -23,8 +23,6 @@ PODS:
     - Capacitor
   - CapacitorPushNotifications (8.0.0):
     - Capacitor
-  - CapacitorStatusBar (8.0.0):
-    - Capacitor
   - CapawesomeCapacitorFilePicker (8.0.2):
     - Capacitor
   - FirebaseCore (12.7.0):
@@ -108,7 +106,6 @@ DEPENDENCIES:
   - "CapacitorKeyboard (from `../../node_modules/@capacitor/keyboard`)"
   - CapacitorNativeSettings (from `../../node_modules/capacitor-native-settings`)
   - "CapacitorPushNotifications (from `../../node_modules/@capacitor/push-notifications`)"
-  - "CapacitorStatusBar (from `../../node_modules/@capacitor/status-bar`)"
   - "CapawesomeCapacitorFilePicker (from `../../node_modules/@capawesome/capacitor-file-picker`)"
   - GoogleSignIn (~> 7.1)
   - GTMAppAuth (~> 4.1)
@@ -152,8 +149,6 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/capacitor-native-settings"
   CapacitorPushNotifications:
     :path: "../../node_modules/@capacitor/push-notifications"
-  CapacitorStatusBar:
-    :path: "../../node_modules/@capacitor/status-bar"
   CapawesomeCapacitorFilePicker:
     :path: "../../node_modules/@capawesome/capacitor-file-picker"
   RevenuecatPurchasesCapacitor:
@@ -172,7 +167,6 @@ SPEC CHECKSUMS:
   CapacitorKeyboard: 31c8285d92c9d1410071d52449f16d2c6673b6f4
   CapacitorNativeSettings: d512b84fdcc04948c32f267621079a0d7c0d452f
   CapacitorPushNotifications: 722c1528eabbefd355f47e373a4c6235d01e85e9
-  CapacitorStatusBar: 312e2e67928dfe9514c4a8916a1fd610552f5f35
   CapawesomeCapacitorFilePicker: eb29fb54c59614fede51e0e0fe25070dda9d024c
   FirebaseCore: c7b57863ce0859281a66d16ca36d665c45d332b5
   FirebaseCoreInternal: 571a2dd8c975410966199623351db3a3265c874d
@@ -190,6 +184,6 @@ SPEC CHECKSUMS:
   RevenuecatPurchasesCapacitor: 3356e6e8b9ae8d9e7386990b53adeedac59aa6e8
   SouthdevsCapacitorGoogleAuth: e20cc8eac4cdcc7a2f70688e4ab1255a2d3aced7
 
-PODFILE CHECKSUM: d2105fe5a0bca259c47eb2dca5ab9480318f54e3
+PODFILE CHECKSUM: 03d6734d959661eadd2d55d1bb5ab25ead84e120
 
 COCOAPODS: 1.16.2

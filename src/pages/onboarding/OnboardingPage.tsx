@@ -92,6 +92,19 @@ export default function OnboardingPage() {
     }
   }, [isLoading, user, navigate]);
 
+  // Scroll focused input into view when iOS keyboard opens
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    let showHandle: { remove: () => void } | null = null;
+    import('@capacitor/keyboard').then(({ Keyboard }) => {
+      Keyboard.addListener('keyboardDidShow', () => {
+        const el = document.activeElement as HTMLElement | null;
+        el?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+      }).then((h) => { showHandle = h; });
+    }).catch(() => {});
+    return () => { showHandle?.remove(); };
+  }, []);
+
   const onSubmit = async (data: OnboardingForm) => {
     try {
       console.log('Starting onboarding submission:', data);
@@ -208,8 +221,11 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-background flex items-center justify-center p-4">
-      <div className="max-w-md w-full space-y-6">
+    <div
+      className="min-h-[100dvh] bg-background flex flex-col items-center overflow-y-auto p-4"
+      style={{ paddingBottom: 'var(--keyboard-height, 0px)', transition: 'padding-bottom 0.25s ease' }}
+    >
+      <div className="max-w-md w-full space-y-6 my-auto">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-family-warm mb-2">
             {t('onboarding.welcomeTitle')} <StarIcon />

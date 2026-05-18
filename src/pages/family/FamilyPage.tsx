@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useAuth } from '@/hooks/useAuth';
 import { useApp } from '@/hooks/useApp';
@@ -470,6 +470,7 @@ export default function FamilyPage() {
                         <DialogHeader>
                           <DialogTitle>{t('family.editFamilyName')}</DialogTitle>
                         </DialogHeader>
+                        <DialogBody>
                         <form onSubmit={handleUpdateFamilyName} className="space-y-4">
                           <div>
                             <Label htmlFor="familyName">{t('family.familyName')}</Label>
@@ -509,6 +510,7 @@ export default function FamilyPage() {
                             </Button>
                           </div>
                         </form>
+                        </DialogBody>
                       </DialogContent>
                     </Dialog>
                     </div>
@@ -548,6 +550,7 @@ export default function FamilyPage() {
                   <DialogHeader>
                     <DialogTitle>{t("family.joinFamily")}</DialogTitle>
                   </DialogHeader>
+                  <DialogBody>
                   <form onSubmit={handleJoinFamily} className="space-y-4">
                     <div>
                       <Label htmlFor="inviteCode">{t("family.inviteCode")}</Label>
@@ -570,6 +573,7 @@ export default function FamilyPage() {
                       </Button>
                     </div>
                   </form>
+                  </DialogBody>
                 </DialogContent>
               </Dialog>
             </CardContent>
@@ -591,6 +595,7 @@ export default function FamilyPage() {
                   <DialogHeader>
                     <DialogTitle>{t("family.createFamily")}</DialogTitle>
                   </DialogHeader>
+                  <DialogBody>
                   <form onSubmit={handleCreateFamily} className="space-y-4">
                     <div>
                       <Label htmlFor="newFamilyName">{t("family.familyName")}</Label>
@@ -613,6 +618,7 @@ export default function FamilyPage() {
                       </Button>
                     </div>
                   </form>
+                  </DialogBody>
                 </DialogContent>
               </Dialog>
             </CardContent>
