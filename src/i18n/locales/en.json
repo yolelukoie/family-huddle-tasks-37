@@ -688,6 +688,10 @@
     "title": "Your free trial has ended",
     "description": "Subscribe to continue using Family Huddle with all features.",
     "subscribe": "Subscribe — $4.90/month",
+    "trialHeadline": "4 days free",
+    "trialSubheadline": "then $4.90/month, auto-renews monthly",
+    "startTrialButton": "Start Free Trial",
+    "disclosureFull": "After your 4-day free trial, your subscription automatically renews at $4.90/month until cancelled. You can cancel anytime in your device's Subscription Settings, at least 24 hours before the trial ends to avoid being charged. By continuing, you agree to our Terms of Use.",
     "titleManage": "Subscription Plans",
     "descriptionManage": "View and manage your Family Huddle subscription.",
     "currentPlan": {

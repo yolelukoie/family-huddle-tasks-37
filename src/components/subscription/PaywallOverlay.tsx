@@ -105,15 +105,33 @@ export function PaywallOverlay({ isExplicitOpen, onClose }: PaywallOverlayProps 
             {isControlled ? t('paywall.descriptionManage') : t('paywall.description')}
           </p>
 
+          {/* Prominent trial terms block — required by Apple's 3.1.2(c).
+              Apple's reviewer must see (in non-fine-print text) the trial
+              duration, post-trial price, and auto-renewal language BEFORE
+              tapping the Subscribe button. */}
+          {isPlatform('capacitor') && (
+            <div className="rounded-lg border bg-muted/40 p-4 space-y-1">
+              <p className="text-2xl font-bold leading-tight">
+                {t('paywall.trialHeadline')}
+              </p>
+              <p className="text-base text-foreground">
+                {t('paywall.trialSubheadline')}
+              </p>
+            </div>
+          )}
+
           {isPlatform('capacitor') && (
             <Button onClick={handleSubscribe} className="w-full" disabled={purchasing}>
               {purchasing && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-              {t('paywall.subscribe')}
+              {t('paywall.startTrialButton')}
             </Button>
           )}
 
-          <p className="text-xs text-muted-foreground">
-            {t('subscription.disclosure')}
+          {/* Full disclosure — Apple HIG: must mention auto-renewal AND how
+              to cancel. Upgraded from text-xs to text-sm so it isn't perceived
+              as hidden fine print. */}
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            {t('paywall.disclosureFull')}
           </p>
 
           {isPlatform('capacitor') && (

@@ -518,6 +518,10 @@
     "title": "您的免费试用已结束",
     "description": "订阅以继续使用 Family Huddle 的所有功能。",
     "subscribe": "订阅 — $4.90/月",
+    "trialHeadline": "免费试用 4 天",
+    "trialSubheadline": "之后 $4.90/月，每月自动续订",
+    "startTrialButton": "开始免费试用",
+    "disclosureFull": "4 天免费试用结束后，您的订阅将自动续订，每月 $4.90，直至取消。您可以随时在设备的“订阅”设置中取消订阅，请在试用结束前至少 24 小时取消以避免被收费。继续即表示您同意我们的使用条款。",
     "titleManage": "Subscription Plans",
     "descriptionManage": "View and manage your Family Huddle subscription.",
     "currentPlan": {
