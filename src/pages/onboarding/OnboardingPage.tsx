@@ -105,6 +105,27 @@ export default function OnboardingPage() {
     return () => { showHandle?.remove(); };
   }, []);
 
+  // Pre-fill the displayName field from data Apple Sign In already provided
+  // (Apple Guideline 4 / HIG: do not re-request the user's name).
+  // Sources, in priority order:
+  //   1. user.displayName (already persisted into the profile)
+  //   2. localStorage 'pending_apple_name' (captured on Apple sign-in before
+  //      the profile reload finished)
+  useEffect(() => {
+    if (form.getValues('displayName')) return; // Don't overwrite user input
+    const fromUser = user?.displayName?.trim();
+    const fromCache = (() => {
+      try { return localStorage.getItem('pending_apple_name')?.trim() ?? ''; }
+      catch { return ''; }
+    })();
+    const prefill = fromUser || fromCache;
+    if (prefill) {
+      form.setValue('displayName', prefill, { shouldValidate: false, shouldDirty: false });
+      // Clear the cache so a future Apple sign-in starts fresh
+      try { localStorage.removeItem('pending_apple_name'); } catch { /* non-fatal */ }
+    }
+  }, [user?.displayName, form]);
+
   const onSubmit = async (data: OnboardingForm) => {
     try {
       console.log('Starting onboarding submission:', data);

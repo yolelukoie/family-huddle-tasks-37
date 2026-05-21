@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogBody, DialogContent } from '@/components/ui/dialog';
@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { PromoCodeInput } from './PromoCodeInput';
 import { Crown, RefreshCw, Loader2 } from 'lucide-react';
 import { isPlatform } from '@/lib/platform';
+import { getDefaultPackagePriceString } from '@/config/subscription';
 
 interface PaywallOverlayProps {
   /** Controlled mode: external open state. When provided, paywall uses this instead of auto-gating. */
@@ -27,6 +28,20 @@ export function PaywallOverlay({ isExplicitOpen, onClose }: PaywallOverlayProps 
   const open = isControlled
     ? isExplicitOpen
     : (!dismissed && shouldShowPaywall && !isLoading);
+
+  // Apple Guideline 2.1(b): the price shown to the user must match the
+  // store-charged price (currency + amount localized to their region).
+  // Fetch the live price string from RevenueCat. Falls back to the English
+  // baseline if the call fails (offline, web, etc.).
+  const [priceString, setPriceString] = useState<string>('$4.90');
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    getDefaultPackagePriceString().then((p) => {
+      if (!cancelled && p) setPriceString(p);
+    });
+    return () => { cancelled = true; };
+  }, [open]);
 
   const handleSubscribe = async () => {
     setPurchasing(true);
@@ -108,14 +123,15 @@ export function PaywallOverlay({ isExplicitOpen, onClose }: PaywallOverlayProps 
           {/* Prominent trial terms block — required by Apple's 3.1.2(c).
               Apple's reviewer must see (in non-fine-print text) the trial
               duration, post-trial price, and auto-renewal language BEFORE
-              tapping the Subscribe button. */}
+              tapping the Subscribe button. Price is the live localized
+              StoreKit/Play Billing price (Apple Guideline 2.1(b)). */}
           {isPlatform('capacitor') && (
             <div className="rounded-lg border bg-muted/40 p-4 space-y-1">
               <p className="text-2xl font-bold leading-tight">
                 {t('paywall.trialHeadline')}
               </p>
               <p className="text-base text-foreground">
-                {t('paywall.trialSubheadline')}
+                {t('paywall.trialSubheadline', { price: priceString })}
               </p>
             </div>
           )}
@@ -129,9 +145,10 @@ export function PaywallOverlay({ isExplicitOpen, onClose }: PaywallOverlayProps 
 
           {/* Full disclosure — Apple HIG: must mention auto-renewal AND how
               to cancel. Upgraded from text-xs to text-sm so it isn't perceived
-              as hidden fine print. */}
+              as hidden fine print. Price is interpolated from live StoreKit
+              data (Apple Guideline 2.1(b)). */}
           <p className="text-sm text-muted-foreground leading-relaxed">
-            {t('paywall.disclosureFull')}
+            {t('paywall.disclosureFull', { price: priceString })}
           </p>
 
           {isPlatform('capacitor') && (

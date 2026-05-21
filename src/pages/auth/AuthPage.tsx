@@ -103,6 +103,21 @@ export function AuthPage() {
           toast({ title: t('auth.signInFailed'), description: 'No identity token from Apple', variant: 'destructive' });
           return;
         }
+
+        // Apple returns givenName/familyName ONLY on the FIRST sign-in for a
+        // given Apple ID. Capture it now so we can populate the profile and
+        // skip asking for the name again in onboarding (Apple Guideline 4 /
+        // HIG: do not re-request data already provided by Sign in with Apple).
+        const appleDisplayName = [result.response.givenName, result.response.familyName]
+          .filter(Boolean)
+          .join(' ')
+          .trim();
+        if (appleDisplayName) {
+          // Cache for Onboarding to read even if the profile UPDATE below
+          // races with the SIGNED_IN auth state change / profile reload.
+          try { localStorage.setItem('pending_apple_name', appleDisplayName); } catch { /* non-fatal */ }
+        }
+
         const { error } = await supabase.auth.signInWithIdToken({
           provider: 'apple',
           token: identityToken,
@@ -110,6 +125,26 @@ export function AuthPage() {
         });
         if (error) {
           toast({ title: t('auth.signInFailed'), description: error.message, variant: 'destructive' });
+          return;
+        }
+
+        // Persist Apple-provided name into the profile, only if the row exists
+        // and doesn't already have a display_name (never overwrite user edits).
+        if (appleDisplayName) {
+          try {
+            const { data: { session: newSession } } = await supabase.auth.getSession();
+            const userId = newSession?.user?.id;
+            if (userId) {
+              await supabase
+                .from('profiles')
+                .update({ display_name: appleDisplayName })
+                .eq('id', userId)
+                .or('display_name.is.null,display_name.eq.');
+            }
+          } catch (persistErr) {
+            // Non-fatal — onboarding will pick up the name from localStorage fallback.
+            console.warn('[apple-auth] failed to persist display name:', (persistErr as Error)?.message ?? String(persistErr));
+          }
         }
         return;
       }

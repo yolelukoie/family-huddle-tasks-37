@@ -519,9 +519,9 @@
     "description": "Suscríbete para seguir usando Family Huddle con todas las funciones.",
     "subscribe": "Suscribirse — $4.90/mes",
     "trialHeadline": "4 días gratis",
-    "trialSubheadline": "luego $4.90/mes, renovación automática mensual",
+    "trialSubheadline": "luego {{price}}/mes, renovación automática mensual",
     "startTrialButton": "Iniciar prueba gratuita",
-    "disclosureFull": "Después de tu prueba gratuita de 4 días, tu suscripción se renueva automáticamente a $4.90/mes hasta que la canceles. Puedes cancelar en cualquier momento desde los Ajustes de Suscripciones de tu dispositivo, al menos 24 horas antes de que termine la prueba para evitar cargos. Al continuar, aceptas nuestras Condiciones de uso.",
+    "disclosureFull": "Después de tu prueba gratuita de 4 días, tu suscripción se renueva automáticamente a {{price}}/mes hasta que la canceles. Puedes cancelar en cualquier momento desde los Ajustes de Suscripciones de tu dispositivo, al menos 24 horas antes de que termine la prueba para evitar cargos. Al continuar, aceptas nuestras Condiciones de uso.",
     "titleManage": "Subscription Plans",
     "descriptionManage": "View and manage your Family Huddle subscription.",
     "currentPlan": {

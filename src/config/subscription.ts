@@ -125,6 +125,34 @@ export async function getSubscriptionStatus(): Promise<SubscriptionStatus> {
   return parseStatus(customerInfo);
 }
 
+/**
+ * Returns the localized price string for the default (current) subscription
+ * offering, as provided by StoreKit / Google Play via RevenueCat.
+ *
+ * Required by Apple Guideline 2.1(b): the in-app price shown to the user
+ * must match the price the store will actually charge in their region
+ * (currency, formatting, taxes). Hardcoded "$4.90/month" is a guaranteed
+ * rejection in any non-US region.
+ *
+ * Returns null on non-native platforms or when offerings are unavailable;
+ * callers must provide a sensible fallback string in that case.
+ */
+export async function getDefaultPackagePriceString(): Promise<string | null> {
+  if (!Capacitor.isNativePlatform() || !initialized) return null;
+  try {
+    const offerings = await Purchases.getOfferings();
+    const offering = offerings.current;
+    if (!offering || offering.availablePackages.length === 0) return null;
+    const pkg = offering.availablePackages[0];
+    // RevenueCat exposes the localized price string (e.g. "$4.90", "€4,49",
+    // "¥600") on the underlying store product.
+    return pkg.product.priceString ?? null;
+  } catch (err) {
+    console.warn('[RevenueCat] getDefaultPackagePriceString error:', err);
+    return null;
+  }
+}
+
 export async function purchaseDefaultPackage(): Promise<PurchaseResult> {
   if (!Capacitor.isNativePlatform() || !initialized) {
     return { success: false, error: 'Subscriptions are only available on mobile' };
