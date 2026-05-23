@@ -11,6 +11,8 @@ PODS:
     - Capacitor
   - CapacitorBrowser (8.0.3):
     - Capacitor
+  - CapacitorClipboard (8.0.1):
+    - Capacitor
   - CapacitorCommunityAppleSignIn (7.1.0):
     - Capacitor
   - CapacitorCordova (8.3.3)
@@ -100,6 +102,7 @@ DEPENDENCIES:
   - "Capacitor (from `../../node_modules/@capacitor/ios`)"
   - "CapacitorApp (from `../../node_modules/@capacitor/app`)"
   - "CapacitorBrowser (from `../../node_modules/@capacitor/browser`)"
+  - "CapacitorClipboard (from `../../node_modules/@capacitor/clipboard`)"
   - "CapacitorCommunityAppleSignIn (from `../../node_modules/@capacitor-community/apple-sign-in`)"
   - "CapacitorCordova (from `../../node_modules/@capacitor/ios`)"
   - "CapacitorFirebaseMessaging (from `../../node_modules/@capacitor-firebase/messaging`)"
@@ -137,6 +140,8 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/@capacitor/app"
   CapacitorBrowser:
     :path: "../../node_modules/@capacitor/browser"
+  CapacitorClipboard:
+    :path: "../../node_modules/@capacitor/clipboard"
   CapacitorCommunityAppleSignIn:
     :path: "../../node_modules/@capacitor-community/apple-sign-in"
   CapacitorCordova:
@@ -161,6 +166,7 @@ SPEC CHECKSUMS:
   Capacitor: e6868a40e11989d2ba7c00f29ce6bdb3a01f29c1
   CapacitorApp: 942306cd1acf7774a00e89a3986af3a67c8cad7a
   CapacitorBrowser: c987c73d09d8bd3b5ec13f06338b1e14d5d2be69
+  CapacitorClipboard: c75fdaa6e622111119f35e7914ecfc67b05efecb
   CapacitorCommunityAppleSignIn: 271cb2860576fd2961508bbfa7a82117d93eadca
   CapacitorCordova: 71cde252d2c3c3e73a9586e85d2354fc8bbf0209
   CapacitorFirebaseMessaging: 09f9402613a755af4ef37c6ce2fd7b4c02250246
@@ -184,6 +190,6 @@ SPEC CHECKSUMS:
   RevenuecatPurchasesCapacitor: 3356e6e8b9ae8d9e7386990b53adeedac59aa6e8
   SouthdevsCapacitorGoogleAuth: e20cc8eac4cdcc7a2f70688e4ab1255a2d3aced7
 
-PODFILE CHECKSUM: 03d6734d959661eadd2d55d1bb5ab25ead84e120
+PODFILE CHECKSUM: d592e2fb03c8d802fa0b85ed1cff26275b824ea1
 
 COCOAPODS: 1.16.2

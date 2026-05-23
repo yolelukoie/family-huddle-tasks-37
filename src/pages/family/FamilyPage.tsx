@@ -20,6 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getCurrentStage, getStageName } from '@/lib/character';
 import { supabase } from '@/integrations/supabase/client';
 import { isBlocked, getBlockStatusText, getBlockTimeRemaining, formatBlockTimeRemaining, type BlockReason, type BlockDuration } from '@/lib/blockUtils';
+import { copyToClipboard } from '@/lib/clipboard';
 
 export default function FamilyPage() {
   const { t } = useTranslation();
@@ -204,12 +205,11 @@ export default function FamilyPage() {
 
         if (data && data[0]) {
           const newCode = data[0].new_invite_code;
-          // Try clipboard, fall back gracefully on Android
-          try {
-            await navigator.clipboard.writeText(newCode);
-          } catch {
-            // Clipboard API may fail on some Android webviews — ignore
-          }
+          // Use the cross-platform clipboard helper. On iOS WKWebView
+          // navigator.clipboard.writeText silently fails in non-secure
+          // contexts, leaving the "copied" toast a lie. The Capacitor
+          // Clipboard plugin uses native UIPasteboard/ClipboardManager.
+          const copied = await copyToClipboard(newCode);
 
           const newCount = dailyCodeCount + 1;
           setDailyCodeCount(newCount);
@@ -218,8 +218,12 @@ export default function FamilyPage() {
             date: new Date().toISOString().slice(0, 10),
           }));
 
+          // Show "Copied" only when the copy actually succeeded. Otherwise
+          // show the code so the user can copy it manually.
           toast({
-            title: t('family.inviteCodeCopied'),
+            title: copied
+              ? t('family.inviteCodeCopied')
+              : t('family.inviteCodeGenerated'),
             description: `${newCode} — ${t('family.codeActiveFor24Hours') || 'Active for 24 hours.'} (${newCount}/${MAX_DAILY_CODES})`,
           });
         }
