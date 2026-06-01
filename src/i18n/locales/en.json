@@ -674,7 +674,6 @@
     "restoreSuccess": "Purchases restored successfully",
     "restoreFailed": "Could not restore purchases",
     "purchaseFailed": "Purchase failed",
-    "disclosure": "After your 4-day free trial, $4.90/month. Cancel anytime. By subscribing you agree to our Terms of Use.",
     "trialEndsOn": "Your free trial ends on {{date}}",
     "promo": {
       "haveCode": "Have a promo code?",
@@ -687,12 +686,9 @@
   },
   "paywall": {
     "title": "Your free trial has ended",
-    "description": "Subscribe to continue using Family Huddle with all features.",
-    "subscribe": "Subscribe — $4.90/month",
-    "trialHeadline": "4 days free",
-    "trialSubheadline": "then {{price}}/month, auto-renews monthly",
-    "startTrialButton": "Start Free Trial",
-    "disclosureFull": "After your 4-day free trial, your subscription automatically renews at {{price}}/month until cancelled. You can cancel anytime in your device's Subscription Settings, at least 24 hours before the trial ends to avoid being charged. By continuing, you agree to our Terms of Use.",
+    "description": "Subscribe to unlock all features of Family Huddle.",
+    "subscribeButton": "Subscribe",
+    "disclosureFull": "Subscription automatically renews at {{price}}/month until cancelled. You can cancel anytime in your device's Subscription Settings. By continuing, you agree to our Terms of Use.",
     "titleManage": "Subscription Plans",
     "descriptionManage": "View and manage your Family Huddle subscription.",
     "currentPlan": {

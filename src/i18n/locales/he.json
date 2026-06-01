@@ -504,7 +504,6 @@
     "restoreSuccess": "הרכישות שוחזרו בהצלחה",
     "restoreFailed": "לא ניתן לשחזר רכישות",
     "purchaseFailed": "הרכישה נכשלה",
-    "disclosure": "אחרי 4 ימי ניסיון חינם, $4.90 לחודש. בטל בכל עת. בהרשמה אתה מסכים לתנאי השימוש.",
     "trialEndsOn": "תקופת הניסיון שלך מסתיימת ב-{{date}}",
     "promo": {
       "haveCode": "?יש לך קוד הנחה",
@@ -517,12 +516,9 @@
   },
   "paywall": {
     "title": "תקופת הניסיון החינמית שלך הסתיימה",
-    "description": "הירשם כמנוי כדי להמשיך להשתמש ב-Family Huddle עם כל התכונות.",
-    "subscribe": "הירשם כמנוי — $4.90 לחודש",
-    "trialHeadline": "4 ימים חינם",
-    "trialSubheadline": "ואז {{price}} לחודש, מתחדש אוטומטית מדי חודש",
-    "startTrialButton": "התחל תקופת ניסיון חינם",
-    "disclosureFull": "לאחר תקופת הניסיון החינמית של 4 ימים, המנוי שלך מתחדש אוטומטית במחיר {{price}} לחודש עד לביטול. ניתן לבטל בכל עת בהגדרות המנויים של המכשיר, לפחות 24 שעות לפני סיום הניסיון כדי להימנע מחיוב. בהמשך, אתה מסכים לתנאי השימוש שלנו.",
+    "description": "הירשם כמנוי כדי לפתוח את כל התכונות של Family Huddle.",
+    "subscribeButton": "הירשם כמנוי",
+    "disclosureFull": "המנוי מתחדש אוטומטית במחיר {{price}} לחודש עד לביטול. ניתן לבטל בכל עת בהגדרות המנויים של המכשיר. בהמשך, אתה מסכים לתנאי השימוש שלנו.",
     "titleManage": "Subscription Plans",
     "descriptionManage": "View and manage your Family Huddle subscription.",
     "currentPlan": {
