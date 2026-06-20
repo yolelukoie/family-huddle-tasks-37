@@ -1,35 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { themes, Theme, getThemeById } from '@/config/themes';
-import { isPlatform } from '@/lib/platform';
-
-/**
- * Sync the Android system bar (status + navigation) background color to
- * match the app's current background. Without this, the system bars keep
- * their static config color while the app body changes color via theme,
- * looking like a mismatched band on Android edge-to-edge devices.
- *
- * No-op on iOS / web. Lazily imports the Capawesome edge-to-edge plugin so
- * non-Android platforms don't pay the JS cost.
- */
-async function syncAndroidSystemBarColor() {
-  if (!isPlatform('android')) return;
-  try {
-    // Resolve the body's computed background to RGB, then convert to hex.
-    const rgb = getComputedStyle(document.body).backgroundColor;
-    // rgb() / rgba() — strip and parse the three channel ints
-    const match = rgb.match(/\d+/g);
-    if (!match || match.length < 3) return;
-    const r = parseInt(match[0], 10);
-    const g = parseInt(match[1], 10);
-    const b = parseInt(match[2], 10);
-    const hex = '#' + [r, g, b].map((c) => c.toString(16).padStart(2, '0')).join('');
-
-    const { EdgeToEdge } = await import('@capawesome/capacitor-android-edge-to-edge-support');
-    await EdgeToEdge.setBackgroundColor({ color: hex });
-  } catch {
-    // Plugin may not be available on web/iOS — silently skip
-  }
-}
 
 interface ThemeContextType {
   currentTheme: Theme;
@@ -98,9 +68,6 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       root.style.setProperty('--icon-tint', lightColors.iconTint);
     }
 
-    // Sync Android system bar (edge-to-edge) background to the new theme.
-    // No-op on iOS / web.
-    void syncAndroidSystemBarColor();
   }, [currentTheme]);
 
   return (

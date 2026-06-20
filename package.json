@@ -26,7 +26,6 @@
     "@capacitor/ios": "^8.3.3",
     "@capacitor/keyboard": "^8.0.3",
     "@capacitor/push-notifications": "^8.0.0",
-    "@capawesome/capacitor-android-edge-to-edge-support": "^8.0.8",
     "@capawesome/capacitor-file-picker": "^8.0.2",
     "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-accordion": "^1.2.11",

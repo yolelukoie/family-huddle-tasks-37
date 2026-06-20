@@ -16,7 +16,6 @@ dependencies {
     implementation project(':capacitor-clipboard')
     implementation project(':capacitor-keyboard')
     implementation project(':capacitor-push-notifications')
-    implementation project(':capawesome-capacitor-android-edge-to-edge-support')
     implementation project(':capawesome-capacitor-file-picker')
     implementation project(':revenuecat-purchases-capacitor')
     implementation project(':southdevs-capacitor-google-auth')

@@ -5,15 +5,6 @@ const config: CapacitorConfig = {
   appName: 'Family Huddle',
   webDir: 'dist',
   plugins: {
-    SystemBars: {
-      insetsHandling: 'disable',
-    },
-    EdgeToEdge: {
-      // Matches `--background: 45 100% 97%` (HSL) — the app's pale cream
-      // light-mode background. ThemeContext updates this at runtime when
-      // the user switches themes or dark mode.
-      backgroundColor: '#fffbf0',
-    },
     Keyboard: {
       resize: 'none',
     },

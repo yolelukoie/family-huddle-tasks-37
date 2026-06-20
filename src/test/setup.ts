@@ -87,17 +87,6 @@ vi.mock('@capacitor/push-notifications', () => ({
   },
 }));
 
-vi.mock('@capawesome/capacitor-android-edge-to-edge-support', () => ({
-  EdgeToEdge: {
-    setStatusBarColor: vi.fn().mockResolvedValue(undefined),
-    setNavigationBarColor: vi.fn().mockResolvedValue(undefined),
-    setBackgroundColor: vi.fn().mockResolvedValue(undefined),
-    enable: vi.fn().mockResolvedValue(undefined),
-    disable: vi.fn().mockResolvedValue(undefined),
-    getInsets: vi.fn().mockResolvedValue({ top: 0, bottom: 0, left: 0, right: 0 }),
-  },
-}));
-
 vi.mock('@revenuecat/purchases-capacitor', () => ({
   Purchases: {
     configure: vi.fn().mockResolvedValue(undefined),
