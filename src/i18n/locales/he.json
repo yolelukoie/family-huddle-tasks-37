@@ -397,6 +397,8 @@
   },
   "auth": {
     "signInFailed": "הכניסה נכשלה",
+    "signUpFirst": "יש להירשם תחילה",
+    "signUpFirstDesc": "לא מצאנו חשבון לכתובת המייל הזו. צור חשבון כדי להתחיל.",
     "welcomeBack": "ברוך שובך!",
     "successfullySignedIn": "נכנסת בהצלחה.",
     "signUpFailed": "ההרשמה נכשלה",

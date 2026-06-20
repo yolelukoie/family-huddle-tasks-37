@@ -378,6 +378,8 @@
   },
   "auth": {
     "signInFailed": "فشل تسجيل الدخول",
+    "signUpFirst": "يرجى التسجيل أولاً",
+    "signUpFirstDesc": "لم نعثر على حساب لهذا البريد الإلكتروني. أنشئ حسابًا للبدء.",
     "welcomeBack": "مرحباً بعودتك!",
     "successfullySignedIn": "تم تسجيل الدخول بنجاح.",
     "signUpFailed": "فشل إنشاء الحساب",

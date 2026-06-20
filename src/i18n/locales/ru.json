@@ -776,6 +776,8 @@
   },
   "auth": {
     "signInFailed": "Ошибка входа",
+    "signUpFirst": "Сначала зарегистрируйтесь",
+    "signUpFirstDesc": "Мы не нашли аккаунт с этим email. Создайте его, чтобы начать.",
     "welcomeBack": "С возвращением!",
     "successfullySignedIn": "Вход выполнен успешно.",
     "signUpFailed": "Ошибка регистрации",

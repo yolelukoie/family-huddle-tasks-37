@@ -372,6 +372,8 @@
   },
   "auth": {
     "signInFailed": "Sign in failed",
+    "signUpFirst": "Please sign up first",
+    "signUpFirstDesc": "We couldn't find an account for this email. Create one to get started.",
     "welcomeBack": "Welcome back!",
     "successfullySignedIn": "Successfully signed in.",
     "signUpFailed": "Sign up failed",

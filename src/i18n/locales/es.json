@@ -397,6 +397,8 @@
   },
   "auth": {
     "signInFailed": "Error al iniciar sesión",
+    "signUpFirst": "Por favor regístrate primero",
+    "signUpFirstDesc": "No encontramos una cuenta con ese correo. Crea una para comenzar.",
     "welcomeBack": "¡Bienvenido de nuevo!",
     "successfullySignedIn": "Sesión iniciada correctamente.",
     "signUpFailed": "Error al registrarse",

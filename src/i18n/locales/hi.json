@@ -397,6 +397,8 @@
   },
   "auth": {
     "signInFailed": "साइन इन विफल",
+    "signUpFirst": "कृपया पहले साइन अप करें",
+    "signUpFirstDesc": "हमें इस ईमेल के लिए कोई खाता नहीं मिला। शुरू करने के लिए एक खाता बनाएं।",
     "welcomeBack": "वापसी पर स्वागत है!",
     "successfullySignedIn": "सफलतापूर्वक साइन इन किया गया।",
     "signUpFailed": "साइन अप विफल",

@@ -32,6 +32,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: any }>;
+  isEmailRegistered: (email: string) => Promise<boolean>;
   createUser: (userData: Omit<User, "id" | "age" | "profileComplete">) => Promise<User>;
   updateUser: (updates: Partial<User>) => Promise<void>;
   logout: () => void;
@@ -281,6 +282,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error };
   }, []);
 
+  const isEmailRegistered = useCallback(async (email: string): Promise<boolean> => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase.rpc as any)('email_registered', { p_email: email });
+    if (error) {
+      console.error('[Auth] email_registered RPC failed:', error);
+      // Fail-open: treat unknown as "registered" so we keep the generic error toast
+      // rather than incorrectly nudging an existing user to sign up.
+      return true;
+    }
+    return data === true;
+  }, []);
+
   const signOut = useCallback(async () => {
     console.log('[Auth] signOut called');
     try {
@@ -448,6 +461,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signIn,
         signOut,
         resetPassword,
+        isEmailRegistered,
         createUser,
         updateUser,
         logout,

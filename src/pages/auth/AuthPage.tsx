@@ -62,6 +62,7 @@ const StarIcon = () => (
 
 export function AuthPage() {
   const { t } = useTranslation();
+  const [activeTab, setActiveTab] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -69,7 +70,7 @@ export function AuthPage() {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [confirmedAge, setConfirmedAge] = useState(false);
   const [showSignupError, setShowSignupError] = useState(false);
-  const { signIn, signUp, resetPassword, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { signIn, signUp, resetPassword, isEmailRegistered, isAuthenticated, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -223,13 +224,23 @@ export function AuthPage() {
     setIsLoading(true);
 
     const { error } = await signIn(email, password);
-    
+
     if (error) {
-      toast({
-        title: t('auth.signInFailed'),
-        description: error.message,
-        variant: "destructive",
-      });
+      const registered = await isEmailRegistered(email);
+      if (!registered) {
+        toast({
+          title: t('auth.signUpFirst'),
+          description: t('auth.signUpFirstDesc'),
+          variant: "destructive",
+        });
+        setActiveTab('signup');
+      } else {
+        toast({
+          title: t('auth.signInFailed'),
+          description: error.message,
+          variant: "destructive",
+        });
+      }
     } else {
       toast({
         title: t('auth.welcomeBack'),
@@ -237,7 +248,7 @@ export function AuthPage() {
       });
       // Let AppLayout handle routing based on user state
     }
-    
+
     setIsLoading(false);
   };
 
@@ -336,7 +347,7 @@ export function AuthPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="signin">
+            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'signin' | 'signup')}>
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="signin">{t('auth.signIn')}</TabsTrigger>
                 <TabsTrigger value="signup">{t('auth.signUp')}</TabsTrigger>

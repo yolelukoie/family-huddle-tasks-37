@@ -397,6 +397,8 @@
   },
   "auth": {
     "signInFailed": "登录失败",
+    "signUpFirst": "请先注册",
+    "signUpFirstDesc": "我们找不到该邮箱对应的账号。请先创建一个账号开始使用。",
     "welcomeBack": "欢迎回来！",
     "successfullySignedIn": "登录成功。",
     "signUpFailed": "注册失败",
