@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback, useMemo, type ReactNode } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { analytics } from '@/lib/analytics';
 import { supabase } from '@/integrations/supabase/client';
 import { isPlatform } from '@/lib/platform';
 import {
@@ -79,6 +80,15 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const isTrialActive = trialExpiresAt ? !isTrialExpired : false;
   const isPremium = status.isActive;
   const shouldShowPaywall = isTrialExpired && !isPremium;
+
+  useEffect(() => {
+    const tier: 'free' | 'trial' | 'paid' | 'lifetime' =
+      status.isLifetime ? 'lifetime'
+      : isPremium ? 'paid'
+      : isTrialActive ? 'trial'
+      : 'free';
+    analytics.setPersonProperties({ subscription_status: tier });
+  }, [isPremium, isTrialActive, status.isLifetime]);
 
   // Initialize RevenueCat and fetch initial status
   useEffect(() => {

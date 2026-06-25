@@ -10,6 +10,7 @@ import { useApp } from '@/hooks/useApp';
 import { getStageName, getCharacterImagePath, getCurrentStage } from '@/lib/character';
 import { useToast } from '@/hooks/use-toast';
 import { Upload, RotateCcw, Loader2, ImageIcon, ChevronDown, Star } from 'lucide-react';
+import { analytics } from '@/lib/analytics';
 import { pickImageFromLibrary } from '@/lib/pickImage';
 import { Capacitor } from '@capacitor/core';
 
@@ -73,6 +74,7 @@ export function CharacterImageCustomizer() {
     const success = await uploadCustomImage(stage, file);
 
     if (success) {
+      analytics.capture('character_customized', { stage });
       toast({
         title: t('personal.customImageUploaded'),
         description: t('personal.customImageUploadedDesc'),

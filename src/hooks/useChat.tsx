@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { ChatMessage } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { ROUTES } from '@/lib/constants';
+import { analytics } from '@/lib/analytics';
 
 export function useChat() {
   const { user } = useAuth();
@@ -179,6 +180,8 @@ export function useChat() {
           });
           return false;
         }
+
+        analytics.capture('chat_message_sent', { message_length: content.trim().length });
 
         // Send push notifications to other family members (fire-and-forget)
         supabase.functions.invoke('notify-chat-message', {

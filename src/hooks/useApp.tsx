@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
+import { analytics } from '@/lib/analytics';
 import type { Family, UserFamily, User } from '@/lib/types';
 import { storage } from '@/lib/storage';
 import { scopedStorage } from '@/lib/scopedStorage';
@@ -426,6 +427,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       // Set as active family AND ensure profile is marked complete
       await updateUser({ activeFamilyId: family.id, profileComplete: true });
 
+      analytics.capture('family_created', { family_size: 1 });
+
       return family.id;
     } catch (error) {
       console.error('Failed to create family:', error);
@@ -524,6 +527,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       // Set as active family AND ensure profile is marked complete
       console.log('useApp: Setting active family to:', family.id);
       await updateUser({ activeFamilyId: family.id, profileComplete: true });
+
+      analytics.capture('family_joined');
 
       console.log('useApp: Successfully completed joinFamily process');
       return convertedFamily;
@@ -1112,6 +1117,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const getFamilyMembers = (familyId: string): UserFamily[] => {
     return allFamilyMembers[familyId] || [];
   };
+
+  useEffect(() => {
+    if (!activeFamilyId || !user) return;
+    const members = allFamilyMembers[activeFamilyId];
+    const fam = families.find((f) => f.id === activeFamilyId);
+    if (!members || !fam) return;
+    analytics.setPersonProperties({
+      family_role: fam.createdBy === user.id ? 'creator' : 'member',
+      family_size: members.length,
+    });
+  }, [activeFamilyId, allFamilyMembers, families, user]);
 
   const getUserProfile = (userId: string): User | null => {
     return userProfiles[userId] || null;

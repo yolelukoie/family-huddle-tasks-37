@@ -5,9 +5,9 @@ PODS:
   - AppAuth/Core (1.7.6)
   - AppAuth/ExternalUserAgent (1.7.6):
     - AppAuth/Core
-  - Capacitor (8.3.3):
+  - Capacitor (8.4.1):
     - CapacitorCordova
-  - CapacitorApp (8.0.1):
+  - CapacitorApp (8.1.0):
     - Capacitor
   - CapacitorBrowser (8.0.3):
     - Capacitor
@@ -15,15 +15,15 @@ PODS:
     - Capacitor
   - CapacitorCommunityAppleSignIn (7.1.0):
     - Capacitor
-  - CapacitorCordova (8.3.3)
-  - CapacitorFirebaseMessaging (8.2.0):
+  - CapacitorCordova (8.4.1)
+  - CapacitorFirebaseMessaging (8.3.0):
     - Capacitor
     - FirebaseMessaging (~> 12.7.0)
-  - CapacitorKeyboard (8.0.3):
+  - CapacitorKeyboard (8.0.5):
     - Capacitor
   - CapacitorNativeSettings (8.1.0):
     - Capacitor
-  - CapacitorPushNotifications (8.0.0):
+  - CapacitorPushNotifications (8.1.1):
     - Capacitor
   - CapawesomeCapacitorFilePicker (8.0.2):
     - Capacitor
@@ -88,12 +88,12 @@ PODS:
   - nanopb/decode (3.30910.0)
   - nanopb/encode (3.30910.0)
   - PromisesObjC (2.4.0)
-  - PurchasesHybridCommon (17.54.0):
-    - RevenueCat (= 5.67.0)
-  - RevenueCat (5.67.0)
-  - RevenuecatPurchasesCapacitor (12.3.1):
+  - PurchasesHybridCommon (17.55.1):
+    - RevenueCat (= 5.67.1)
+  - RevenueCat (5.67.1)
+  - RevenuecatPurchasesCapacitor (12.3.2):
     - Capacitor
-    - PurchasesHybridCommon (= 17.54.0)
+    - PurchasesHybridCommon (= 17.55.1)
   - SouthdevsCapacitorGoogleAuth (0.0.1):
     - Capacitor
     - GoogleSignIn (>= 7.1)
@@ -163,16 +163,16 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   AppAuth: d4f13a8fe0baf391b2108511793e4b479691fb73
-  Capacitor: e6868a40e11989d2ba7c00f29ce6bdb3a01f29c1
-  CapacitorApp: 942306cd1acf7774a00e89a3986af3a67c8cad7a
+  Capacitor: 35242afe195b1e53c58ca1b827d1b444c5e6602b
+  CapacitorApp: 449ffe26375e96f8aaaee625ac6e01e5c57c8650
   CapacitorBrowser: c987c73d09d8bd3b5ec13f06338b1e14d5d2be69
   CapacitorClipboard: c75fdaa6e622111119f35e7914ecfc67b05efecb
   CapacitorCommunityAppleSignIn: 271cb2860576fd2961508bbfa7a82117d93eadca
-  CapacitorCordova: 71cde252d2c3c3e73a9586e85d2354fc8bbf0209
-  CapacitorFirebaseMessaging: 09f9402613a755af4ef37c6ce2fd7b4c02250246
-  CapacitorKeyboard: 31c8285d92c9d1410071d52449f16d2c6673b6f4
+  CapacitorCordova: eebe6bcf807b1b06f3f48237650f96bbcd0eef09
+  CapacitorFirebaseMessaging: d48c9156ee96e166416f1d910cb8de53143cea5f
+  CapacitorKeyboard: b6b0744890cdb1d9a96e2cafcc9253fdcc55de3b
   CapacitorNativeSettings: d512b84fdcc04948c32f267621079a0d7c0d452f
-  CapacitorPushNotifications: 722c1528eabbefd355f47e373a4c6235d01e85e9
+  CapacitorPushNotifications: ec08d589c226a2c0db7c032ec1bf5b044ec85f8e
   CapawesomeCapacitorFilePicker: eb29fb54c59614fede51e0e0fe25070dda9d024c
   FirebaseCore: c7b57863ce0859281a66d16ca36d665c45d332b5
   FirebaseCoreInternal: 571a2dd8c975410966199623351db3a3265c874d
@@ -185,9 +185,9 @@ SPEC CHECKSUMS:
   GTMSessionFetcher: 5aea5ba6bd522a239e236100971f10cb71b96ab6
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
-  PurchasesHybridCommon: 6a8f4e30952167d2afaccf17ebcf8f8107060e4c
-  RevenueCat: f0d05079b59c33c645293bbc1fa78469ea7fcae7
-  RevenuecatPurchasesCapacitor: 3356e6e8b9ae8d9e7386990b53adeedac59aa6e8
+  PurchasesHybridCommon: ecd9d7c586287625f1225b8de5e24c1021502270
+  RevenueCat: 9357239a9f0978285e68983637b8a602e65c94f0
+  RevenuecatPurchasesCapacitor: c299be01b1a5c1d5eb118c30eadc84160944ecf2
   SouthdevsCapacitorGoogleAuth: e20cc8eac4cdcc7a2f70688e4ab1255a2d3aced7
 
 PODFILE CHECKSUM: d592e2fb03c8d802fa0b85ed1cff26275b824ea1

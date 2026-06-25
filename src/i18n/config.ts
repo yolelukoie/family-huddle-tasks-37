@@ -1,5 +1,6 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
+import { analytics } from '@/lib/analytics';
 import en from './locales/en.json';
 import es from './locales/es.json';
 import zh from './locales/zh.json';
@@ -53,6 +54,11 @@ const applyDir = (lang: string) => {
 };
 
 applyDir(i18n.language);
-i18n.on('languageChanged', applyDir);
+analytics.setPersonProperties({ locale: i18n.language });
+
+i18n.on('languageChanged', (lang: string) => {
+  applyDir(lang);
+  analytics.setPersonProperties({ locale: lang });
+});
 
 export default i18n;

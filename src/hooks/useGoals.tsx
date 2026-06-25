@@ -5,6 +5,7 @@ import { useCelebrations } from './useCelebrations';
 import { supabase } from '@/integrations/supabase/client';
 import { Goal } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import { analytics } from '@/lib/analytics';
 
 export function useGoals() {
   const { user } = useAuth();
@@ -125,6 +126,10 @@ export function useGoals() {
       };
 
       setGoals(prev => [newGoal, ...prev]);
+      analytics.capture('goal_created', {
+        target_stars: data.target_stars,
+        has_category: (data.target_categories?.length ?? 0) > 0,
+      });
       return newGoal;
     } catch (error) {
       console.error('Error in createGoal:', error);
@@ -224,6 +229,7 @@ export function useGoals() {
             createdAt: activeGoal.created_at,
           };
           addCelebration({ type: 'goal', goal: completedGoal });
+          analytics.capture('goal_completed', { target_stars: activeGoal.target_stars });
         }
       }
     } catch (error) {

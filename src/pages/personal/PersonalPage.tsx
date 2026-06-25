@@ -22,6 +22,8 @@ import { SubscriptionStatusCard } from '@/components/subscription/SubscriptionSt
 import { supabase } from '@/integrations/supabase/client';
 import { pickImageFromLibrary } from '@/lib/pickImage';
 import { Capacitor } from '@capacitor/core';
+import { Switch } from '@/components/ui/switch';
+import { analytics } from '@/lib/analytics';
 
 const LANGUAGES = [
   { code: 'en', name: 'English', flag: '🇬🇧' },
@@ -83,6 +85,7 @@ export default function PersonalPage() {
   });
   const [notificationPermission, setNotificationPermission] = useState<'granted' | 'denied' | 'prompt' | 'unavailable'>('prompt');
   const [isEnablingNotifications, setIsEnablingNotifications] = useState(false);
+  const [analyticsConsent, setAnalyticsConsent] = useState(() => analytics.hasConsent());
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Check notification permission status (platform-aware)
@@ -478,6 +481,33 @@ export default function PersonalPage() {
                   )}
                 </div>
               )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Analytics consent */}
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('personal.analyticsTitle', 'Help improve Family Huddle')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-1">
+                <Label htmlFor="analytics-consent" className="text-sm font-medium">
+                  {t('personal.analyticsToggle', 'Share anonymous usage data')}
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  {t('personal.analyticsDesc', 'Helps us find and fix bugs faster. No personal info, no ads.')}
+                </p>
+              </div>
+              <Switch
+                id="analytics-consent"
+                checked={analyticsConsent}
+                onCheckedChange={(checked) => {
+                  setAnalyticsConsent(checked);
+                  analytics.setConsent(checked);
+                }}
+              />
             </div>
           </CardContent>
         </Card>

@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { analytics } from '@/lib/analytics';
 import type { User as SupabaseUser, Session } from "@supabase/supabase-js";
 import type { User } from "@/lib/types";
 import { generateId } from "@/lib/utils";
@@ -99,6 +100,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         trialStartedAt: profile.trial_started_at ?? undefined,
       };
       setUser(mapped);
+      analytics.identify(mapped.id);
     } catch (err) {
       console.error("Error in loadUserData:", err);
       setUser(null);
@@ -308,6 +310,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setUser(null);
       setSession(null);
+      analytics.reset();
       // Clear cached app data
       const keysToRemove: string[] = [];
       for (let i = 0; i < localStorage.length; i++) {

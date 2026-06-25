@@ -8,6 +8,7 @@ import { PromoCodeInput } from './PromoCodeInput';
 import { Crown, RefreshCw, Loader2 } from 'lucide-react';
 import { isPlatform } from '@/lib/platform';
 import { getDefaultPackagePriceString } from '@/config/subscription';
+import { analytics } from '@/lib/analytics';
 
 interface PaywallOverlayProps {
   /** Controlled mode: external open state. When provided, paywall uses this instead of auto-gating. */
@@ -43,11 +44,23 @@ export function PaywallOverlay({ isExplicitOpen, onClose }: PaywallOverlayProps 
     return () => { cancelled = true; };
   }, [open]);
 
+  useEffect(() => {
+    if (open) {
+      analytics.capture('paywall_viewed', {
+        source: isControlled ? 'manage_subscription' : 'trial_expired_gate',
+      });
+    }
+  }, [open, isControlled]);
+
   const handleSubscribe = async () => {
     setPurchasing(true);
     try {
       const result = await purchase();
       if (result.success) {
+        analytics.capture('subscription_purchased', {
+          tier: status.isLifetime ? 'lifetime' : 'premium',
+          source: 'paywall',
+        });
         toast({ title: t('subscription.activated') });
       } else if (!result.cancelled) {
         toast({

@@ -9,6 +9,7 @@ import { getNewlyUnlockedBadges } from '@/lib/badges';
 import { isBlocked } from '@/lib/blockUtils';
 import type { Task, TaskCategory, TaskTemplate, Badge } from '@/lib/types';
 import { taskFromRow } from '@/lib/taskMapper';
+import { analytics } from '@/lib/analytics';
 
 const MAX_CATEGORIES_PER_FAMILY = 10;
 const MAX_TEMPLATES_PER_CATEGORY = 20;
@@ -295,6 +296,10 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
     let delta = 0;
     if (nowCompleted && !prevCompleted) delta = + (updated.star_value ?? 0);
     if (!nowCompleted && prevCompleted) delta = - (updated.star_value ?? 0);
+
+    if (nowCompleted && !prevCompleted) {
+      analytics.capture('task_completed', { stars_earned: updated.star_value ?? 0 });
+    }
     
     console.log(`TasksContext: Task ${taskId} completion changed. Was: ${prevCompleted}, Now: ${nowCompleted}, Stars: ${updated.star_value}, Delta: ${delta}`);
     

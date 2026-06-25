@@ -2,7 +2,9 @@ import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useNavigate, useLocation } from "react-router-dom";
+import { analytics } from "@/lib/analytics";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuthProvider } from "@/hooks/useAuth";
 import { AppProvider } from "@/hooks/useApp";
 import { TasksProvider } from "@/contexts/TasksContext";
@@ -34,6 +36,14 @@ function KeyboardInset() {
 
 function RealtimeRoot() {
   useRealtimeNotifications();
+  return null;
+}
+
+function RouteChangeTracker() {
+  const location = useLocation();
+  useEffect(() => {
+    analytics.captureScreen(location.pathname);
+  }, [location.pathname]);
   return null;
 }
 
@@ -105,6 +115,7 @@ function DeepLinkHandler() {
 }
 
 const App = () => (
+  <ErrorBoundary>
   <TooltipProvider>
     <Toaster />
     <Sonner />
@@ -120,6 +131,7 @@ const App = () => (
                   <DeepLinkHandler />
                   <KeyboardInset />
                   <RealtimeRoot />
+                  <RouteChangeTracker />
                   <Routes>
                     <Route path="/auth" element={<AuthPage />} />
                     <Route path="/auth/callback" element={<AuthCallbackPage />} />
@@ -136,6 +148,7 @@ const App = () => (
       </ThemeProvider>
     </BrowserRouter>
   </TooltipProvider>
+  </ErrorBoundary>
 );
 
 export default App;

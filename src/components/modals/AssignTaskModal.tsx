@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useApp } from "@/hooks/useApp";
 import { useTasks } from "@/hooks/useTasks";
 import { useToast } from "@/hooks/use-toast";
+import { analytics } from "@/lib/analytics";
 import { useFeatureGate } from "@/hooks/useFeatureGate";
 import { isBlocked, getReasonLabel, BlockReason } from "@/lib/blockUtils";
 import { supabase } from "@/integrations/supabase/client";
@@ -189,6 +190,11 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
         toast({
           title: t("assignTask.taskAssigned"),
           description: t("assignTask.taskAssignedDesc", { taskName: data.name }),
+        });
+
+        analytics.capture('task_assigned', {
+          to_self: data.assignedTo === user.id,
+          star_value: data.starValue,
         });
 
         form.reset();

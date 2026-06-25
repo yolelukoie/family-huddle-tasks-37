@@ -13,6 +13,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useApp } from '@/hooks/useApp';
 import { useFeatureGate } from '@/hooks/useFeatureGate';
 import { NavigationHeader } from '@/components/layout/NavigationHeader';
+import { analytics } from '@/lib/analytics';
 import { MemberProfileModal } from '@/components/modals/MemberProfileModal';
 import { BlockMemberModal } from '@/components/modals/BlockMemberModal';
 import { Users, Share, Plus, Star, Settings, Ban, ShieldOff } from 'lucide-react';
@@ -226,6 +227,8 @@ export default function FamilyPage() {
               : t('family.inviteCodeGenerated'),
             description: `${newCode} — ${t('family.codeActiveFor24Hours') || 'Active for 24 hours.'} (${newCount}/${MAX_DAILY_CODES})`,
           });
+
+          analytics.capture('family_member_invited', { copied });
         }
       } catch (err) {
         console.error('Error generating invite code:', err);

@@ -16,6 +16,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Capacitor } from '@capacitor/core';
 import { GoogleAuth } from '@southdevs/capacitor-google-auth';
 import { SignInWithApple } from '@capacitor-community/apple-sign-in';
+import { analytics } from '@/lib/analytics';
 
 /** Returns a base64url-encoded string of 32 cryptographically random bytes. */
 function generateRawNonce(): string {
@@ -96,11 +97,13 @@ export function AuthPage() {
           if (msg.includes('1001') || /cancel/i.test(msg) || /ASAuthorizationError/i.test(msg)) {
             return;
           }
+          analytics.capture('sign_in_failed', { method: 'apple', reason: 'other' });
           toast({ title: t('auth.signInFailed'), description: msg, variant: 'destructive' });
           return;
         }
         const identityToken = result.response.identityToken;
         if (!identityToken) {
+          analytics.capture('sign_in_failed', { method: 'apple', reason: 'other' });
           toast({ title: t('auth.signInFailed'), description: 'No identity token from Apple', variant: 'destructive' });
           return;
         }
@@ -125,9 +128,12 @@ export function AuthPage() {
           nonce: rawNonce,
         });
         if (error) {
+          analytics.capture('sign_in_failed', { method: 'apple', reason: 'other' });
           toast({ title: t('auth.signInFailed'), description: error.message, variant: 'destructive' });
           return;
         }
+
+        analytics.capture('sign_in_succeeded', { method: 'apple' });
 
         // Persist Apple-provided name into the profile, only if the row exists
         // and doesn't already have a display_name (never overwrite user edits).
@@ -156,11 +162,13 @@ export function AuthPage() {
         options: { redirectTo: `${window.location.origin}/auth/callback` },
       });
       if (error) {
+        analytics.capture('sign_in_failed', { method: 'apple', reason: 'other' });
         toast({ title: t('auth.signInFailed'), description: error.message, variant: 'destructive' });
       }
     } catch (e: unknown) {
       const err = e as { message?: string };
       console.error('[Auth] Apple sign-in error:', e);
+      analytics.capture('sign_in_failed', { method: 'apple', reason: 'other' });
       toast({ title: t('auth.signInFailed'), description: err?.message ?? 'Sign in with Apple failed', variant: 'destructive' });
     } finally {
       setIsLoading(false);
@@ -175,15 +183,19 @@ export function AuthPage() {
         token: googleUser.authentication.idToken,
       });
       if (error) {
+        analytics.capture('sign_in_failed', { method: 'google', reason: 'other' });
         toast({
           title: t('auth.signInFailed'),
           description: error.message,
           variant: 'destructive',
         });
+      } else {
+        analytics.capture('sign_in_succeeded', { method: 'google' });
       }
     } catch (e: any) {
       // 12501 = user cancelled the Google sign-in picker on Android
       if (e?.code !== 'popup_closed_by_user' && e?.code !== '12501') {
+        analytics.capture('sign_in_failed', { method: 'google', reason: 'other' });
         toast({
           title: t('auth.signInFailed'),
           description: e?.message,
@@ -228,6 +240,7 @@ export function AuthPage() {
     if (error) {
       const registered = await isEmailRegistered(email);
       if (!registered) {
+        analytics.capture('sign_in_failed', { method: 'email', reason: 'unregistered' });
         toast({
           title: t('auth.signUpFirst'),
           description: t('auth.signUpFirstDesc'),
@@ -235,6 +248,7 @@ export function AuthPage() {
         });
         setActiveTab('signup');
       } else {
+        analytics.capture('sign_in_failed', { method: 'email', reason: 'wrong_password' });
         toast({
           title: t('auth.signInFailed'),
           description: error.message,
@@ -242,6 +256,7 @@ export function AuthPage() {
         });
       }
     } else {
+      analytics.capture('sign_in_succeeded', { method: 'email' });
       toast({
         title: t('auth.welcomeBack'),
         description: t('auth.successfullySignedIn'),
@@ -262,9 +277,10 @@ export function AuthPage() {
     
     setShowSignupError(false);
     setIsLoading(true);
+    analytics.capture('sign_up_started', { method: 'email' });
 
     const { error } = await signUp(email, password);
-    
+
     if (error) {
       toast({
         title: t('auth.signUpFailed'),
@@ -272,12 +288,13 @@ export function AuthPage() {
         variant: "destructive",
       });
     } else {
+      analytics.capture('sign_up_completed', { method: 'email' });
       toast({
         title: t('auth.checkEmail'),
         description: t('auth.confirmationLinkSent'),
       });
     }
-    
+
     setIsLoading(false);
   };
 
@@ -293,8 +310,9 @@ export function AuthPage() {
     }
     
     setIsLoading(true);
+    analytics.capture('password_reset_requested');
     const { error } = await resetPassword(email);
-    
+
     if (error) {
       toast({
         title: t('auth.passwordResetFailed'),
@@ -302,6 +320,7 @@ export function AuthPage() {
         variant: "destructive",
       });
     } else {
+      analytics.capture('password_reset_completed');
       toast({
         title: t('auth.checkEmail'),
         description: t('auth.passwordResetSent'),
