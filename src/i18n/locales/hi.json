@@ -26,7 +26,8 @@
     "assignTask": "कार्य असाइन करें",
     "resetCharacter": "चरित्र रीसेट करें",
     "resetConfirm": "क्या आप सुनिश्चित हैं? यह केवल इस परिवार के लिए आपके चरित्र की प्रगति को रीसेट करेगा।",
-    "completeTask": "पूर्ण"
+    "completeTask": "पूर्ण",
+    "yourProgress": "आपकी प्रगति"
   },
   "tasks": {
     "title": "कार्य",
@@ -37,6 +38,7 @@
     "upcoming": "आगामी",
     "noTasksToday": "आज कोई कार्य नहीं! 🎉",
     "noUpcomingTasks": "कोई आगामी कार्य नहीं",
+    "noCustomCategories": "अभी तक कोई कस्टम श्रेणी नहीं — एक बनाने के लिए श्रेणी जोड़ें पर टैप करें।",
     "due": "नियत तिथि",
     "assignedToYou": "आपको असाइन किया गया",
     "assignedToMember": "परिवार के सदस्य को असाइन किया गया",
@@ -67,7 +69,13 @@
     "createCategoryDesc": "अपने कार्यों को व्यवस्थित करने के लिए एक कस्टम श्रेणी जोड़ें",
     "categoryNameLabel": "श्रेणी का नाम",
     "categoryNamePlaceholder": "श्रेणी का नाम दर्ज करें",
-    "createCategoryBtn": "श्रेणी बनाएं"
+    "createCategoryBtn": "श्रेणी बनाएं",
+    "longPressMenuTitle": "टिप्पणी के साथ कार्य जोड़ें",
+    "commentPlaceholder": "वैकल्पिक टिप्पणी...",
+    "addToTodayWithComment": "आज के कार्यों में जोड़ें",
+    "reportTemplate": "कार्य टेम्पलेट की रिपोर्ट करें",
+    "firstRunHint": "जोड़ने के लिए टैप करें, विकल्पों के लिए दबाए रखें",
+    "taskDeleted": "कार्य हटाया गया"
   },
   "goals": {
     "title": "लक्ष्य",
@@ -80,7 +88,10 @@
     "reward": "इनाम:",
     "noActiveGoal": "कोई सक्रिय लक्ष्य सेट नहीं है",
     "createGoal": "लक्ष्य बनाएं",
-    "deleteConfirm": "क्या आप सुनिश्चित हैं कि आप इस लक्ष्य को हटाना चाहते हैं?"
+    "deleteConfirm": "क्या आप सुनिश्चित हैं कि आप इस लक्ष्य को हटाना चाहते हैं?",
+    "activeCount_one": "{{count}} सक्रिय लक्ष्य",
+    "activeCount_other": "{{count}} सक्रिय लक्ष्य",
+    "goalInCategory": "{{category}} में लक्ष्य"
   },
   "family": {
     "title": "परिवार सेटिंग्स",
@@ -111,6 +122,7 @@
     "join": "शामिल हों",
     "enterInviteCode": "आमंत्रण कोड दर्ज करें",
     "inviteCodeCopied": "आमंत्रण कोड कॉपी किया गया!",
+    "inviteCodeGenerated": "आमंत्रण कोड बनाया गया",
     "inviteCodeCopiedDesc": "आमंत्रण कोड क्लिपबोर्ड पर कॉपी कर दिया गया है।",
     "joinedSuccess": "सफलतापूर्वक परिवार में शामिल हो गए!",
     "welcomeTo": "में आपका स्वागत है",
@@ -144,14 +156,17 @@
     "error": "त्रुटि",
     "failedToRemove": "सदस्य को हटाने में विफल। केवल परिवार के मालिक सदस्यों को हटा सकते हैं।",
     "edit": "संपादित करें",
-    "settings": "सेटिंग्स"
+    "settings": "सेटिंग्स",
+    "codeActiveFor24Hours": "आमंत्रण कोड 24 घंटों के लिए सक्रिय रहेगा।",
+    "errorGeneratingCode": "आमंत्रण कोड बनाने में विफल। केवल परिवार के स्वामी कोड साझा कर सकते हैं।"
   },
   "chat": {
     "title": "पारिवारिक चैट",
     "clearChat": "चैट साफ़ करें",
     "noMessages": "अभी तक कोई संदेश नहीं। बातचीत शुरू करें!",
     "typeMessage": "अपना संदेश टाइप करें...",
-    "send": "भेजें"
+    "send": "भेजें",
+    "newMessage": "नया चैट संदेश"
   },
   "themes": {
     "oceanCalm": {
@@ -217,6 +232,15 @@
     "characterResetDesc": "आपके चरित्र की प्रगति सफलतापूर्वक रीसेट हो गई है।",
     "customizeCharacter": "चरित्र को अनुकूलित करें",
     "customizeCharacterDesc": "प्रत्येक छवि आपके चरित्र की वृद्धि के एक चरण का प्रतिनिधित्व करती है। जैसे-जैसे आप सितारे अर्जित करते हैं, आपका चरित्र इन चरणों से गुजरता है। कस्टम छवियां अपलोड करें या डिफ़ॉल्ट उपयोग करें।",
+    "analyticsTitle": "Family Huddle को बेहतर बनाने में मदद करें",
+    "analyticsToggle": "अनाम उपयोग डेटा साझा करें",
+    "analyticsDesc": "हमें बग जल्दी ढूंढने और ठीक करने में मदद करता है। कोई व्यक्तिगत जानकारी नहीं, कोई विज्ञापन नहीं।",
+    "dangerZone": "खतरे का क्षेत्र",
+    "hideCharacterToggle": "किरदार छिपाएं",
+    "hideCharacterDesc": "होम स्क्रीन पर किरदार की छवि और उपलब्धि चिह्न छुपाता है। आपके सितारे, प्रगति और लक्ष्य अपरिवर्तित रहते हैं।",
+    "hideDefaultsToggle": "डिफ़ॉल्ट कार्य छिपाएं",
+    "hideDefaultsDesc": "Tasks पेज पर बिल्ट-इन कार्य श्रेणियों को छिपाता है। आपकी कस्टम श्रेणियां अपरिवर्तित रहती हैं।",
+    "tasksDisplayTitle": "कार्य प्रदर्शन",
     "currentStage": "आप यहाँ हैं",
     "customImageUploaded": "कस्टम छवि अपलोड हो गई",
     "customImageUploadedDesc": "आपकी कस्टम चरित्र छवि सहेजी गई है।",
@@ -293,14 +317,17 @@
   },
   "common": {
     "loading": "लोड हो रहा है...",
-    "save": "सहेजें",
+    "error": "त्रुटि",
     "cancel": "रद्द करें",
     "delete": "हटाएं",
-    "edit": "संपादित करें",
-    "close": "बंद करें",
+    "report": "रिपोर्ट",
+    "creating": "बना रहा है...",
     "confirm": "पुष्टि करें",
-    "yes": "हां",
-    "no": "नहीं"
+    "logOut": "लॉग आउट",
+    "unknown": "अज्ञात",
+    "undo": "पूर्ववत करें",
+    "deleteCategoryTitle": "श्रेणी हटाएं",
+    "deleteCategoryDesc": "यह श्रेणी और इसके सभी टेम्पलेट और कार्यों को स्थायी रूप से हटा देगा। यह क्रिया पूर्ववत नहीं की जा सकती।"
   },
   "stages": {
     "baby": "शिशु",
@@ -390,6 +417,8 @@
   },
   "auth": {
     "signInFailed": "साइन इन विफल",
+    "signUpFirst": "कृपया पहले साइन अप करें",
+    "signUpFirstDesc": "हमें इस ईमेल के लिए कोई खाता नहीं मिला। शुरू करने के लिए एक खाता बनाएं।",
     "welcomeBack": "वापसी पर स्वागत है!",
     "successfullySignedIn": "सफलतापूर्वक साइन इन किया गया।",
     "signUpFailed": "साइन अप विफल",
@@ -423,21 +452,22 @@
     "creatingAccount": "खाता बनाया जा रहा है...",
     "madeWithLove": "हर जगह परिवारों के लिए ❤️ से बनाया गया",
     "sessionExpired": "सत्र समाप्त हो गया",
-    "sessionExpiredDesc": "आपका सत्र अमान्य था। कृपया फिर से साइन इन करें।"
+    "sessionExpiredDesc": "आपका सत्र अमान्य था। कृपया फिर से साइन इन करें।",
+    "signInWithApple": "Apple से साइन इन करें"
   },
   "onboarding": {
     "welcomeTitle": "Family Huddle में आपका स्वागत है!",
     "completeProfile": "अपने पारिवारिक साहसिक कार्य को शुरू करने के लिए अपना प्रोफ़ाइल पूरा करें",
     "trialTitle": "अपना 4 दिन का मुफ्त परीक्षण शुरू करें",
-    "trialDesc": "4 दिनों के लिए सभी सुविधाओं के साथ Family Huddle मुफ्त में आज़माएं। कोई प्रतिबद्धता नहीं। उसके बाद आप भुगतान योजना जारी रख सकते हैं या कभी भी व्यक्तिगत सेटिंग्स पेज से रद्द कर सकते हैं।",
+    "trialDesc": "4 दिनों के लिए Family Huddle की सभी सुविधाओं का मुफ्त आनंद लें। क्रेडिट कार्ड की आवश्यकता नहीं।",
     "startTrial": "मुफ्त परीक्षण शुरू करें",
     "setupProfile": "अपना प्रोफ़ाइल सेट करें",
     "setupProfileDesc": "हमें अपने बारे में बताएं और अपने परिवार से जुड़ें",
     "aboutYou": "आपके बारे में",
     "displayName": "प्रदर्शन नाम",
     "displayNamePlaceholder": "हम आपको क्या बुलाएं?",
-    "gender": "लिंग",
-    "selectGenderPlaceholder": "अपना लिंग चुनें",
+    "gender": "चरित्र का लिंग",
+    "selectGenderPlaceholder": "अपने चरित्र का लिंग चुनें",
     "male": "पुरुष",
     "female": "महिला",
     "other": "अन्य",
@@ -446,7 +476,7 @@
     "createAndStart": "परिवार बनाएं और शुरू करें",
     "joinAndStart": "परिवार में शामिल हों और शुरू करें",
     "nameMinLength": "नाम कम से कम 2 अक्षरों का होना चाहिए",
-    "selectGender": "कृपया अपना लिंग चुनें",
+    "selectGender": "कृपया अपने चरित्र का लिंग चुनें",
     "familyInfoRequired": "कृपया आवश्यक पारिवारिक जानकारी भरें",
     "joinedFamily": "आप शामिल हो गए हैं"
   },
@@ -478,15 +508,478 @@
     "successDesc": "आपकी रिपोर्ट के लिए धन्यवाद।",
     "errorSubmitting": "रिपोर्ट सबमिट करने में विफल। कृपया पुनः प्रयास करें।"
   },
-  "common": {
-    "loading": "लोड हो रहा है...",
-    "error": "त्रुटि",
-    "cancel": "रद्द करें",
-    "delete": "हटाएं",
-    "report": "रिपोर्ट",
-    "creating": "बना रहा है...",
-    "confirm": "पुष्टि करें",
-    "deleteCategoryTitle": "श्रेणी हटाएं",
-    "deleteCategoryDesc": "यह श्रेणी और इसके सभी टेम्पलेट और कार्यों को स्थायी रूप से हटा देगा। यह क्रिया पूर्ववत नहीं की जा सकती।"
+  "subscription": {
+    "status": {
+      "free": "मुफ़्त",
+      "trial": "ट्रायल ({{days}} दिन बाकी)",
+      "premium": "प्रीमियम",
+      "lifetime": "आजीवन"
+    },
+    "activated": "सदस्यता सक्रिय!",
+    "activeDesc": "आपके पास Family Huddle की सभी सुविधाओं तक पूरी पहुंच है।",
+    "freeDesc": "Family Huddle की सभी सुविधाएं अनलॉक करने के लिए सदस्यता लें।",
+    "lifetimeDesc": "आपके पास सभी प्रीमियम सुविधाओं तक आजीवन पहुंच है।",
+    "renewsOn": "{{date}} को नवीनीकरण",
+    "subscribeNow": "अभी सदस्यता लें",
+    "manageInStore": "सदस्यता प्रबंधित करें",
+    "restore": "खरीदारी पुनर्स्थापित करें",
+    "restoreSuccess": "खरीदारी सफलतापूर्वक पुनर्स्थापित",
+    "restoreFailed": "खरीदारी पुनर्स्थापित नहीं हो सकी",
+    "purchaseFailed": "खरीदारी विफल",
+    "trialEndsOn": "आपका मुफ्त परीक्षण {{date}} को समाप्त होता है",
+    "promo": {
+      "haveCode": "प्रोमो कोड है?",
+      "placeholder": "प्रोमो कोड दर्ज करें",
+      "apply": "लागू करें",
+      "success": "प्रोमो कोड सफलतापूर्वक लागू!",
+      "invalid": "अमान्य प्रोमो कोड",
+      "failed": "प्रोमो कोड लागू करने में विफल"
+    }
+  },
+  "paywall": {
+    "title": "आपका मुफ्त परीक्षण समाप्त हो गया है",
+    "description": "Family Huddle की सभी सुविधाओं को अनलॉक करने के लिए सदस्यता लें।",
+    "subscribeButton": "सदस्यता लें",
+    "disclosureFull": "सदस्यता रद्द होने तक {{price}}/माह पर स्वचालित रूप से नवीनीकृत होती है। आप अपने डिवाइस की सदस्यता सेटिंग्स में किसी भी समय रद्द कर सकते हैं। जारी रखकर, आप हमारी उपयोग की शर्तों से सहमत होते हैं।",
+    "titleManage": "Subscription Plans",
+    "descriptionManage": "View and manage your Family Huddle subscription.",
+    "currentPlan": {
+      "lifetime": "You have lifetime access",
+      "trial": "Free trial ends {{date}}",
+      "premium": "Premium plan renews {{date}}"
+    }
+  },
+  "taskHistory": {
+    "title": "पूर्ण किए गए कार्यों का इतिहास",
+    "description": "इस परिवार में पूर्ण किए गए सभी कार्य",
+    "noTasks": "अभी तक कोई कार्य पूर्ण नहीं हुआ। कुछ कार्य पूर्ण करके शुरुआत करें!",
+    "category": "श्रेणी",
+    "completed": "पूर्ण",
+    "due": "देय",
+    "unknown": "अज्ञात"
+  },
+  "badges": {
+    "baby_10": {
+      "name": "चुसनी",
+      "description": "पहली मुस्कान सबका दिल जीत लेती है!"
+    },
+    "baby_20": {
+      "name": "खड़खड़ी",
+      "description": "शोर का जादू खोज लिया!"
+    },
+    "baby_30": {
+      "name": "बेबी बोतल",
+      "description": "दूध से ऊर्जा मिली!"
+    },
+    "baby_40": {
+      "name": "टेडी बियर",
+      "description": "हमेशा के लिए गले लगाने का साथी मिला!"
+    },
+    "child_60": {
+      "name": "खिलौना ब्लॉक",
+      "description": "एक मास्टरपीस बनाई (और गिरा दी)!"
+    },
+    "child_70": {
+      "name": "दांत",
+      "description": "अरे! पहला दांत गिर गया!"
+    },
+    "child_80": {
+      "name": "क्रेयॉन",
+      "description": "दीवारें ही सबसे अच्छा कैनवास हैं!"
+    },
+    "child_90": {
+      "name": "फुटबॉल",
+      "description": "पहला गोल किया (गलत गोलपोस्ट में)!"
+    },
+    "child_100": {
+      "name": "बस्ता",
+      "description": "पहले बड़े स्कूल साहसिक के लिए तैयार!"
+    },
+    "child_110": {
+      "name": "आइसक्रीम",
+      "description": "जीवन का पाठ: आइसक्रीम जल्दी पिघलती है!"
+    },
+    "child_120": {
+      "name": "कूद की रस्सी",
+      "description": "अब बिना गिरे 10 बार कूद सकता है!"
+    },
+    "child_130": {
+      "name": "सोने का तारा",
+      "description": "शिक्षक ने कहा: बहुत अच्छा!"
+    },
+    "child_140": {
+      "name": "किताब",
+      "description": "सोने के समय के बाद परियों की कहानियां पढ़ना..."
+    },
+    "child_150": {
+      "name": "जन्मदिन टोपी",
+      "description": "अब तक का सबसे बड़ा केक—5 मिनट में खत्म!"
+    },
+    "child_160": {
+      "name": "स्कूटर",
+      "description": "बड़ों से भी तेज दौड़ता है!"
+    },
+    "child_170": {
+      "name": "पिल्ले का पंजा",
+      "description": "हमेशा के लिए सबसे अच्छे दोस्त: मैं और कुत्ता!"
+    },
+    "child_180": {
+      "name": "धूप का चश्मा",
+      "description": "कूल बच्चे की चेतावनी!"
+    },
+    "child_190": {
+      "name": "पहेली का टुकड़ा",
+      "description": "बिना कोई टुकड़ा खोए पहेली पूरी की (चमत्कार)!"
+    },
+    "teen_210": {
+      "name": "स्मार्टफोन",
+      "description": "मैसेज करने की गति: ओलंपिक स्तर।"
+    },
+    "teen_220": {
+      "name": "गिटार",
+      "description": "पहला बैंड, भयानक नाम।"
+    },
+    "teen_230": {
+      "name": "पिज्जा का टुकड़ा",
+      "description": "चैंपियन का खाना।"
+    },
+    "teen_240": {
+      "name": "स्कूल की किताब",
+      "description": "एक महीने का काम एक रात में किया।"
+    },
+    "teen_250": {
+      "name": "दिल",
+      "description": "पहला प्यार। लगातार शरमाना।"
+    },
+    "teen_260": {
+      "name": "हेडफोन",
+      "description": "संगीत = जिंदगी।"
+    },
+    "teen_270": {
+      "name": "बास्केटबॉल",
+      "description": "एक बार स्कोर किया, हमेशा के लिए दिखावा।"
+    },
+    "teen_280": {
+      "name": "स्केटबोर्ड",
+      "description": "गुरुत्वाकर्षण दर्द देता है, पर सार्थक है।"
+    },
+    "teen_290": {
+      "name": "सेल्फी कैमरा",
+      "description": "सही कोण = 200 कोशिशें।"
+    },
+    "teen_300": {
+      "name": "परीक्षा पेपर",
+      "description": "पास! कैसे मत पूछो।"
+    },
+    "teen_310": {
+      "name": "हुडी",
+      "description": "वर्दी: हुडी 24/7।"
+    },
+    "teen_320": {
+      "name": "नाटक मास्क",
+      "description": "किशोर नाटक: हर जगह, हमेशा।"
+    },
+    "teen_330": {
+      "name": "नोटबुक",
+      "description": "गुप्त डायरी... झांकना मत!"
+    },
+    "teen_340": {
+      "name": "साइकिल",
+      "description": "बस से तेज, ज्यादा कूल भी।"
+    },
+    "adult_360": {
+      "name": "सर्विंग ट्रे",
+      "description": "5 कप उठाए, 4 गिराए।"
+    },
+    "adult_370": {
+      "name": "कॉफी मग",
+      "description": "जीवन रक्षक ईंधन अनलॉक हुआ।"
+    },
+    "adult_380": {
+      "name": "दीवार घड़ी",
+      "description": "सोमवार अनंत काल हैं—यह खोज लिया।"
+    },
+    "adult_390": {
+      "name": "काम की वर्दी",
+      "description": "पहली तनख्वाह = तुरंत शॉपिंग।"
+    },
+    "adult_400": {
+      "name": "कीबोर्ड",
+      "description": "तेज टाइपिंग हैकिंग जैसी लगती है।"
+    },
+    "adult_410": {
+      "name": "फोन",
+      "description": "ग्राहक: गुस्से में। मैं: मुस्कुरा रहा हूं।"
+    },
+    "adult_420": {
+      "name": "काम के जूते",
+      "description": "काम के जूते = यातना उपकरण।"
+    },
+    "adult_430": {
+      "name": "बटुआ",
+      "description": "बचत? कौन सी बचत?"
+    },
+    "adult_440": {
+      "name": "टाई",
+      "description": "50 YouTube ट्यूटोरियल के बाद टाई बांधी।"
+    },
+    "adult_450": {
+      "name": "लैपटॉप",
+      "description": "Ctrl+Z मेरी महाशक्ति है।"
+    },
+    "adult_460": {
+      "name": "पिज्जा बॉक्स",
+      "description": "रात की पाली में नाश्ते की परंपरा।"
+    },
+    "adult_470": {
+      "name": "सिक्का",
+      "description": "'टैक्स' का मतलब समझ आया (आउच!)।"
+    },
+    "adult_480": {
+      "name": "अलार्म घड़ी",
+      "description": "अलार्म नज़रअंदाज = बॉस गुस्से में।"
+    },
+    "adult_490": {
+      "name": "क्रेडिट कार्ड",
+      "description": "क्रेडिट कार्ड बैलेंस: नहीं।"
+    },
+    "ontherise_510": {
+      "name": "कम्पास",
+      "description": "एक करियर दिशा मिली जो सही लगती है।"
+    },
+    "ontherise_520": {
+      "name": "पोर्टफोलियो",
+      "description": "आपका काम अब आप जैसा दिखता है।"
+    },
+    "ontherise_530": {
+      "name": "अलमारी",
+      "description": "अपना स्टाइल अनलॉक हुआ।"
+    },
+    "ontherise_540": {
+      "name": "तालू",
+      "description": "स्वाद बेहतर हुआ—खाना, संगीत, सब कुछ।"
+    },
+    "ontherise_550": {
+      "name": "डेट नाइट",
+      "description": "रीड पर छोड़ा? आज रात नहीं।"
+    },
+    "ontherise_560": {
+      "name": "जोड़ी",
+      "description": "अपनी जीत साझा करने वाला मिला।"
+    },
+    "ontherise_570": {
+      "name": "मेंटर",
+      "description": "दूसरों को आगे बढ़ने में मदद करना।"
+    },
+    "ontherise_580": {
+      "name": "वेतन वृद्धि",
+      "description": "तनख्वाह बढ़ी। आत्मविश्वास भी।"
+    },
+    "ontherise_590": {
+      "name": "लैनयार्ड",
+      "description": "सम्मेलन जीता; संपर्क बनाए।"
+    },
+    "adult_610": {
+      "name": "कार की चाबी",
+      "description": "चार पहियों पर आज़ादी!"
+    },
+    "adult_620": {
+      "name": "घर",
+      "description": "किराए पर है, पर मेरा लगता है।"
+    },
+    "adult_630": {
+      "name": "बेबी स्ट्रॉलर",
+      "description": "जिंदगी: मिनी-मी के साथ अपग्रेड।"
+    },
+    "adult_640": {
+      "name": "बिल",
+      "description": "बिजली का बिल = डरावनी कहानी।"
+    },
+    "adult_650": {
+      "name": "पौधा",
+      "description": "घर का पौधा पूरे हफ्ते जीवित रहा!"
+    },
+    "adult_660": {
+      "name": "अंगूठी",
+      "description": "प्यार, प्रतिबद्धता... और बर्तन धोना।"
+    },
+    "adult_670": {
+      "name": "किताब",
+      "description": "सेल्फ-हेल्प लाइब्रेरी: तेजी से बढ़ रही है।"
+    },
+    "adult_680": {
+      "name": "सूटकेस",
+      "description": "बिजनेस ट्रिप = मुफ्त होटल नाश्ता।"
+    },
+    "adult_690": {
+      "name": "लैपटॉप",
+      "description": "ईमेल कभी खत्म नहीं होते।"
+    },
+    "mature_adult_couch": {
+      "name": "सोफा",
+      "description": "Netflix मैराथन चैंपियन।"
+    },
+    "mature_adult_dumbbell": {
+      "name": "डम्बल",
+      "description": "साइन अप किया... दो बार गया।"
+    },
+    "mature_adult_camera": {
+      "name": "कैमरा",
+      "description": "छुट्टी की तस्वीरें: 1000, अच्छी: 3।"
+    },
+    "mature_adult_money_bag": {
+      "name": "पैसों की थैली",
+      "description": "आखिरकार कुछ बचत!"
+    },
+    "mature_adult_balloon": {
+      "name": "गुब्बारा",
+      "description": "पार्टी रखी, पड़ोसियों ने शिकायत की।"
+    },
+    "mature_adult_wine_glass": {
+      "name": "वाइन गिलास",
+      "description": "वाइन चखना: बिल्कुल पेशेवर।"
+    },
+    "mature_adult_toolbox": {
+      "name": "टूलबॉक्स",
+      "description": "एक चीज़ ठीक की, दो तोड़ दी।"
+    },
+    "mature_adult_graduation_cap": {
+      "name": "ग्रेजुएशन कैप",
+      "description": "आखिरकार वह डिग्री पूरी हुई।"
+    },
+    "mature_adult_globe": {
+      "name": "ग्लोब",
+      "description": "दुनिया घूमी (या कम से कम 2 शहर)।"
+    },
+    "golden_gray_hair": {
+      "name": "सफेद बालों की लट",
+      "description": "नई हाइलाइट: प्राकृतिक चांदी।"
+    },
+    "golden_glasses": {
+      "name": "चश्मा",
+      "description": "छोटा टेक्स्ट पढ़ना = असंभव।"
+    },
+    "golden_book_stack": {
+      "name": "किताबों का ढेर",
+      "description": "ज्ञान संग्रह पूर्ण।"
+    },
+    "golden_bbq_grill": {
+      "name": "BBQ ग्रिल",
+      "description": "पड़ोस का ग्रिल किंग।"
+    },
+    "golden_yacht_model": {
+      "name": "यॉट का मॉडल",
+      "description": "बड़े सपने देखो, छोटे से चलाओ।"
+    },
+    "golden_family_photo": {
+      "name": "पारिवारिक फोटो",
+      "description": "सबसे अच्छी टीम।"
+    },
+    "golden_golf_club": {
+      "name": "गोल्फ क्लब",
+      "description": "23 कोशिशों में होल इन।"
+    },
+    "golden_desk": {
+      "name": "डेस्क",
+      "description": "ऑफिस दूसरा घर है।"
+    },
+    "golden_trophy": {
+      "name": "ट्रॉफी",
+      "description": "मध्यम आयु = सर्वश्रेष्ठ समय!"
+    },
+    "golden_rocking_chair": {
+      "name": "रॉकिंग चेयर",
+      "description": "वीकेंड नैप चैंपियन।"
+    },
+    "golden_cookbook": {
+      "name": "रसोई की किताब",
+      "description": "गुप्त नुस्खा परफेक्ट हुआ।"
+    },
+    "golden_hiking_stick": {
+      "name": "हाइकिंग स्टिक",
+      "description": "पहाड़ अभी भी बुलाते हैं।"
+    },
+    "golden_headphones": {
+      "name": "हेडफोन",
+      "description": "बूढ़े पर अभी भी रॉकिंग!"
+    },
+    "golden_piggy_bank": {
+      "name": "गुल्लक",
+      "description": "बचत योजना: आखिरकार काम कर रही है।"
+    },
+    "golden_medal": {
+      "name": "मेडल",
+      "description": "जीवन भर की उपलब्धि अनलॉक हुई।"
+    },
+    "golden_dog_paw": {
+      "name": "कुत्ते का पंजा",
+      "description": "कुत्ता अभी भी मुझे सबसे अच्छा मानता है।"
+    },
+    "golden_camera": {
+      "name": "कैमरा",
+      "description": "हर झुर्री एक कहानी कहती है।"
+    },
+    "golden_calendar": {
+      "name": "कैलेंडर",
+      "description": "जन्मदिन पार्टियां कभी नहीं रुकतीं।"
+    },
+    "golden_champagne": {
+      "name": "शैंपेन",
+      "description": "सबसे अच्छे सालों का जश्न!"
+    }
+  },
+  "block": {
+    "title": "सदस्य को ब्लॉक करें",
+    "description": "{{name}} को पारिवारिक गतिविधियों में भाग लेने से ब्लॉक करें।",
+    "reason": "कारण",
+    "selectReason": "कारण चुनें",
+    "duration": "अवधि",
+    "selectDuration": "अवधि चुनें",
+    "1hour": "1 घंटा",
+    "12hours": "12 घंटे",
+    "1day": "1 दिन",
+    "1week": "1 सप्ताह",
+    "indefinite": "अनिश्चित काल",
+    "autoKickWarning": "अनिश्चितकालीन ब्लॉक के साथ, सदस्य को स्वचालित रूप से परिवार से हटा दिया जाएगा।",
+    "restrictionsTitle": "ब्लॉक के दौरान प्रतिबंध:",
+    "restrictionChat": "चैट",
+    "restrictionAssignTasks": "कार्य असाइन करना",
+    "restrictionCreateTasks": "कार्य बनाना",
+    "restrictionProfile": "प्रोफाइल संपादित करना",
+    "blockBtn": "ब्लॉक करें",
+    "unblockBtn": "अनब्लॉक करें",
+    "blocked": "ब्लॉक किया गया",
+    "blockedFor": "{{duration}} के लिए ब्लॉक किया गया",
+    "youWereBlocked": "आपको ब्लॉक किया गया",
+    "youWereBlockedFor": "आपको {{duration}} के लिए ब्लॉक किया गया",
+    "memberBlocked": "सदस्य ब्लॉक किया गया",
+    "memberBlockedDesc": "{{name}} को {{duration}} के लिए ब्लॉक किया गया।",
+    "memberUnblocked": "सदस्य अनब्लॉक किया गया",
+    "memberUnblockedDesc": "{{name}} को अनब्लॉक कर दिया गया।",
+    "failedToBlock": "ब्लॉक करने में विफल",
+    "failedToUnblock": "अनब्लॉक करने में विफल",
+    "youWereUnblocked": "आपको अनब्लॉक कर दिया गया",
+    "autoKicked": "स्वचालित रूप से हटाया गया",
+    "memberAutoKicked": "{{name}} को परिवार से स्वचालित रूप से हटा दिया गया।",
+    "accessRestricted": "पहुंच प्रतिबंधित",
+    "accessRestrictedFor": "{{duration}} के लिए पहुंच प्रतिबंधित",
+    "cannotAccessWhileBlocked": "ब्लॉक रहते हुए आप इस तक नहीं पहुंच सकते।",
+    "chatRestricted": "चैट प्रतिबंधित",
+    "restricted": "प्रतिबंधित",
+    "cannotAssignTasks": "ब्लॉक रहते हुए आप कार्य असाइन नहीं कर सकते।",
+    "blockedWithReason": "कारण से ब्लॉक: {{reason}}",
+    "cannotCreateInDefaultCategory": "ब्लॉक रहते हुए आप डिफ़ॉल्ट श्रेणी में कार्य नहीं बना सकते।",
+    "viewOnlyWhileBlocked": "ब्लॉक के दौरान केवल देखने की अनुमति।",
+    "noMembersAccess": "सदस्यों तक पहुंच नहीं",
+    "noMembersAccessFor": "{{duration}} के लिए सदस्यों तक पहुंच नहीं",
+    "reasons": {
+      "harassment": "उत्पीड़न",
+      "hate": "नफरत भरी भाषा",
+      "sexual": "यौन सामग्री",
+      "violence": "हिंसा",
+      "spam": "स्पैम",
+      "personalInfo": "व्यक्तिगत जानकारी",
+      "other": "अन्य"
+    }
   }
 }

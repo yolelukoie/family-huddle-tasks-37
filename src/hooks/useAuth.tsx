@@ -1,5 +1,7 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { analytics } from '@/lib/analytics';
+import i18n from 'i18next';
 import type { User as SupabaseUser, Session } from "@supabase/supabase-js";
 import type { User } from "@/lib/types";
 import { generateId } from "@/lib/utils";
@@ -32,7 +34,8 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: any }>;
-  createUser: (userData: Omit<User, "id" | "age" | "profileComplete">) => Promise<User>;
+  isEmailRegistered: (email: string) => Promise<boolean>;
+  createUser: (userData: Omit<User, "id" | "profileComplete">) => Promise<User>;
   updateUser: (updates: Partial<User>) => Promise<void>;
   logout: () => void;
   clearAuth: () => void;
@@ -95,18 +98,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         profileComplete: profile.profile_complete,
         activeFamilyId: profile.active_family_id,
         avatar_url: profile.avatar_url,
+        trialStartedAt: profile.trial_started_at ?? undefined,
+        characterHidden: profile.character_hidden ?? false,
+        hideDefaultTasks: profile.hide_default_tasks ?? false,
+        preferred_language: profile.preferred_language ?? null,
       };
       setUser(mapped);
+
+      if (profile.preferred_language && profile.preferred_language !== i18n.language) {
+        try { localStorage.setItem('app-language', profile.preferred_language); } catch { /* ignore */ }
+        void i18n.changeLanguage(profile.preferred_language);
+      }
     } catch (err) {
       console.error("Error in loadUserData:", err);
       setUser(null);
     }
-  }, []);
-
-  // Migrate user data from localStorage to Supabase
-  const migrateFromLocalStorage = useCallback(async (_userId: string) => {
-    // Disabled during testing; Supabase is the source of truth.
-    return;
   }, []);
 
   // Initialize auth state
@@ -125,6 +131,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setSession(session);
       const uid = getUserId(session);
+      if (uid) {
+        analytics.identify(uid);
+      }
       await loadUserData(uid ? (session?.user ?? null) : null);
       if (!isMounted) return;
       setIsLoading(false);
@@ -135,6 +144,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         setSession(nextSession);
         setIsLoading(false);
+
+        if (nextSession?.user?.id) {
+          analytics.identify(nextSession.user.id);
+        }
 
         window.setTimeout(() => {
           if (!isMounted) return;
@@ -280,6 +293,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error };
   }, []);
 
+  const isEmailRegistered = useCallback(async (email: string): Promise<boolean> => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase.rpc as any)('email_registered', { p_email: email });
+    if (error) {
+      console.error('[Auth] email_registered RPC failed:', error);
+      // Fail-open: treat unknown as "registered" so we keep the generic error toast
+      // rather than incorrectly nudging an existing user to sign up.
+      return true;
+    }
+    return data === true;
+  }, []);
+
   const signOut = useCallback(async () => {
     console.log('[Auth] signOut called');
     try {
@@ -294,6 +319,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setUser(null);
       setSession(null);
+      analytics.capture('sign_out');
+      analytics.reset();
       // Clear cached app data
       const keysToRemove: string[] = [];
       for (let i = 0; i < localStorage.length; i++) {
@@ -324,10 +351,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const uid = getUserId(session);
       if (!uid) throw new Error("Must be signed in to create user");
 
+      const trialStartedAt = new Date().toISOString();
       const newUser: User = {
         ...userData,
         id: uid,
         profileComplete: true,
+        trialStartedAt: trialStartedAt,
+        // Explicit default — the DB column defaults to false, but we keep the
+        // local in-memory user object aligned with that default so downstream
+        // hooks (e.g. useCustomCharacterImages) see a concrete boolean.
+        characterHidden: userData.characterHidden ?? false,
+        hideDefaultTasks: userData.hideDefaultTasks ?? false,
       };
 
       try {
@@ -339,6 +373,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             gender: newUser.gender,
             profile_complete: newUser.profileComplete,
             active_family_id: newUser.activeFamilyId ?? null,
+            trial_started_at: trialStartedAt,
           },
         ]);
 
@@ -373,6 +408,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if ('profileComplete' in updates) dbUpdates.profile_complete = updates.profileComplete;
       if ('activeFamilyId' in updates) dbUpdates.active_family_id = updates.activeFamilyId ?? null;
       if ('avatar_url' in updates) dbUpdates.avatar_url = updates.avatar_url ?? null;
+      if ('characterHidden' in updates) dbUpdates.character_hidden = updates.characterHidden ?? false;
+      if ('hideDefaultTasks' in updates) dbUpdates.hide_default_tasks = updates.hideDefaultTasks ?? false;
 
       // Merge updates with current state for local state update
       const updatedUser = { ...user, ...updates };
@@ -389,17 +426,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           throw error;
         }
 
-        // Update local state immediately after successful Supabase update
+        // Update local state ONLY after successful Supabase update
         const userKey = `${USER_KEY}_${uid}`;
         localStorage.setItem(userKey, JSON.stringify(updatedUser));
         setUser(updatedUser);
         console.log("User profile updated successfully:", updatedUser);
       } catch (error) {
         console.error("Error updating profile:", error);
-        // Still update local state as fallback
-        const userKey = `${USER_KEY}_${uid}`;
-        localStorage.setItem(userKey, JSON.stringify(updatedUser));
-        setUser(updatedUser);
         throw error;
       }
     },
@@ -444,6 +477,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signIn,
         signOut,
         resetPassword,
+        isEmailRegistered,
         createUser,
         updateUser,
         logout,

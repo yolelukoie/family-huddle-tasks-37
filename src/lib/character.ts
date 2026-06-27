@@ -69,7 +69,7 @@ export function getCharacterImagePath(
 
 export function getStageName(stage: number): string {
   const stageData = CHARACTER_STAGES.find(s => s.stage === stage);
-  if (!stageData) return 'Unknown';
+  if (!stageData) return i18n.t('common.unknown', 'Unknown');
   
   // Map stage to i18n key
   const stageKeyMap: Record<string, string> = {
@@ -88,16 +88,3 @@ export function getStageName(stage: number): string {
   return key ? i18n.t(key) : stageData.name;
 }
 
-export function getUnlockedBadges(totalStars: number): number[] {
-  const badges: number[] = [];
-  const stageThresholds = CHARACTER_STAGES.map(s => s.requiredStars);
-  
-  for (let stars = 10; stars <= totalStars; stars += 10) {
-    // Skip badge if it's at a stage threshold
-    if (!stageThresholds.includes(stars)) {
-      badges.push(stars);
-    }
-  }
-  
-  return badges;
-}

@@ -26,7 +26,8 @@
     "assignTask": "Assign Task",
     "resetCharacter": "Reset Character",
     "resetConfirm": "Are you sure? This will reset your character progress for this family only.",
-    "completeTask": "Complete"
+    "completeTask": "Complete",
+    "yourProgress": "Your Progress"
   },
   "tasks": {
     "title": "Tasks",
@@ -37,6 +38,7 @@
     "upcoming": "Upcoming",
     "noTasksToday": "No tasks due today! 🎉",
     "noUpcomingTasks": "No upcoming tasks",
+    "noCustomCategories": "No custom categories yet — tap Add Category to create one.",
     "due": "Due",
     "assignedToYou": "Assigned to you",
     "assignedToMember": "Assigned to family member",
@@ -67,7 +69,13 @@
     "createCategoryDesc": "Add a custom category to organize your tasks",
     "categoryNameLabel": "Category Name",
     "categoryNamePlaceholder": "Enter category name",
-    "createCategoryBtn": "Create Category"
+    "createCategoryBtn": "Create Category",
+    "longPressMenuTitle": "Add task with comment",
+    "commentPlaceholder": "Optional comment...",
+    "addToTodayWithComment": "Add to today's tasks",
+    "reportTemplate": "Report task template",
+    "firstRunHint": "Tap to add, hold for options",
+    "taskDeleted": "Task deleted"
   },
   "goals": {
     "title": "Goals",
@@ -80,7 +88,10 @@
     "reward": "Reward:",
     "noActiveGoal": "No active goal set",
     "createGoal": "Create Goal",
-    "deleteConfirm": "Are you sure you want to delete this goal?"
+    "deleteConfirm": "Are you sure you want to delete this goal?",
+    "activeCount_one": "{{count}} active goal",
+    "activeCount_other": "{{count}} active goals",
+    "goalInCategory": "Goal in {{category}}"
   },
   "family": {
     "title": "Family Settings",
@@ -112,6 +123,7 @@
     "enterInviteCode": "Enter invite code",
     "inviteCodeCopied": "Invite code copied!",
     "inviteCodeCopiedDesc": "The invite code has been copied to your clipboard.",
+    "inviteCodeGenerated": "Invite code generated",
     "codeActiveFor24Hours": "The invite code will be active for 24 hours.",
     "errorGeneratingCode": "Failed to generate invite code. Only family owners can share codes.",
     "joinedSuccess": "Joined family successfully!",
@@ -153,7 +165,8 @@
     "clearChat": "Clear Chat",
     "noMessages": "No messages yet. Start a conversation!",
     "typeMessage": "Type your message...",
-    "send": "Send"
+    "send": "Send",
+    "newMessage": "New chat message"
   },
   "themes": {
     "oceanCalm": {
@@ -219,6 +232,15 @@
     "characterResetDesc": "Your character progress has been reset successfully.",
     "customizeCharacter": "Customize Character",
     "customizeCharacterDesc": "Each image represents a stage of your character's growth. As you earn stars, your character evolves through these stages. Upload custom images or use the defaults.",
+    "analyticsTitle": "Help improve Family Huddle",
+    "analyticsToggle": "Share anonymous usage data",
+    "analyticsDesc": "Helps us find and fix bugs faster. No personal info, no ads.",
+    "dangerZone": "Danger Zone",
+    "hideCharacterToggle": "Hide character",
+    "hideCharacterDesc": "Hides the character image and achievement icons on your home screen. Your stars, progress, and goals are unchanged.",
+    "hideDefaultsToggle": "Hide default tasks",
+    "hideDefaultsDesc": "Hides the built-in task categories on the Tasks page. Your own custom categories are unchanged.",
+    "tasksDisplayTitle": "Tasks display",
     "currentStage": "You are here",
     "customImageUploaded": "Custom image uploaded",
     "customImageUploadedDesc": "Your custom character image has been saved.",
@@ -367,6 +389,8 @@
   },
   "auth": {
     "signInFailed": "Sign in failed",
+    "signUpFirst": "Please sign up first",
+    "signUpFirstDesc": "We couldn't find an account for this email. Create one to get started.",
     "welcomeBack": "Welcome back!",
     "successfullySignedIn": "Successfully signed in.",
     "signUpFailed": "Sign up failed",
@@ -400,21 +424,22 @@
     "creatingAccount": "Creating account...",
     "madeWithLove": "Made with ❤️ for families everywhere",
     "sessionExpired": "Session expired",
-    "sessionExpiredDesc": "Your session was invalid. Please sign in again."
+    "sessionExpiredDesc": "Your session was invalid. Please sign in again.",
+    "signInWithApple": "Sign in with Apple"
   },
   "onboarding": {
     "welcomeTitle": "Welcome to Family Huddle!",
     "completeProfile": "Complete your profile to start your family adventure",
     "trialTitle": "Start your 4-day free trial",
-    "trialDesc": "Try Family Huddle with all features free for 4 days. No commitment. After that you can continue on a paid plan or cancel anytime from the Personal Settings page.",
+    "trialDesc": "Enjoy all Family Huddle features free for 4 days. No credit card required.",
     "startTrial": "Start free trial",
     "setupProfile": "Set up your profile",
     "setupProfileDesc": "Tell us about yourself and join your family",
     "aboutYou": "About you",
     "displayName": "Display Name",
     "displayNamePlaceholder": "What should we call you?",
-    "gender": "Gender",
-    "selectGenderPlaceholder": "Select your gender",
+    "gender": "Character's Gender",
+    "selectGenderPlaceholder": "Select your character's gender",
     "male": "Male",
     "female": "Female",
     "other": "Other",
@@ -423,7 +448,7 @@
     "createAndStart": "Create Family & Get Started",
     "joinAndStart": "Join Family & Get Started",
     "nameMinLength": "Name must be at least 2 characters",
-    "selectGender": "Please select your gender",
+    "selectGender": "Please select your character's gender",
     "familyInfoRequired": "Please fill in the required family information",
     "joinedFamily": "You've joined"
   },
@@ -650,6 +675,47 @@
       "other": "Other"
     }
   },
+  "subscription": {
+    "status": {
+      "free": "Free",
+      "trial": "Trial ({{days}} days left)",
+      "premium": "Premium",
+      "lifetime": "Lifetime"
+    },
+    "activated": "Subscription activated!",
+    "activeDesc": "You have full access to all Family Huddle features.",
+    "freeDesc": "Subscribe to unlock all Family Huddle features.",
+    "lifetimeDesc": "You have lifetime access to all premium features.",
+    "renewsOn": "Renews on {{date}}",
+    "subscribeNow": "Subscribe Now",
+    "manageInStore": "Manage in Store",
+    "restore": "Restore Purchases",
+    "restoreSuccess": "Purchases restored successfully",
+    "restoreFailed": "Could not restore purchases",
+    "purchaseFailed": "Purchase failed",
+    "trialEndsOn": "Your free trial ends on {{date}}",
+    "promo": {
+      "haveCode": "Have a promo code?",
+      "placeholder": "Enter promo code",
+      "apply": "Apply",
+      "success": "Promo code applied successfully!",
+      "invalid": "Invalid promo code",
+      "failed": "Failed to apply promo code"
+    }
+  },
+  "paywall": {
+    "title": "Your free trial has ended",
+    "description": "Subscribe to unlock all features of Family Huddle.",
+    "subscribeButton": "Subscribe",
+    "disclosureFull": "Subscription automatically renews at {{price}}/month until cancelled. You can cancel anytime in your device's Subscription Settings. By continuing, you agree to our Terms of Use.",
+    "titleManage": "Subscription Plans",
+    "descriptionManage": "View and manage your Family Huddle subscription.",
+    "currentPlan": {
+      "lifetime": "You have lifetime access",
+      "trial": "Free trial ends {{date}}",
+      "premium": "Premium plan renews {{date}}"
+    }
+  },
   "common": {
     "loading": "Loading...",
     "error": "Error",
@@ -658,6 +724,9 @@
     "report": "Report",
     "creating": "Creating...",
     "confirm": "Confirm",
+    "logOut": "Log out",
+    "unknown": "Unknown",
+    "undo": "Undo",
     "deleteCategoryTitle": "Delete Category",
     "deleteCategoryDesc": "This will permanently delete the category and all its templates and tasks. This action cannot be undone."
   }

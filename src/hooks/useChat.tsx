@@ -4,6 +4,7 @@ import { useApp } from './useApp';
 import { supabase } from '@/integrations/supabase/client';
 import type { ChatMessage } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import { analytics } from '@/lib/analytics';
 
 export function useChat() {
   const { user } = useAuth();
@@ -95,7 +96,23 @@ export function useChat() {
     loadMessages();
   }, [loadMessages]);
 
-  // Realtime subscription for new messages
+  // Realtime subscription for new messages.
+  //
+  // NOTE: There is a SECOND `postgres_changes` subscription to `chat_messages`
+  // in src/hooks/useRealtimeNotifications.tsx (`chat-toast:*` channel) that is
+  // responsible for firing the global "new message" toast when the user is NOT
+  // on the chat page. We intentionally keep them separate:
+  //
+  //   - This channel (`chat-page:*`) is mounted only while ChatPage uses the
+  //     hook, and feeds the in-page message list.
+  //   - That channel (`chat-toast:*`) is mounted globally via AppLayout, so
+  //     toasts continue to surface even when this hook is unmounted.
+  //
+  // Consolidating would require lifting state up + a callback, with non-trivial
+  // lifecycle risk (lost messages on route transitions, double toasts). The
+  // duplication is cheap (one extra WS subscription per signed-in session) and
+  // is the lower-risk choice. Revisit if the chat-page hook is moved to a
+  // global context.
   useEffect(() => {
     if (!activeFamilyId || !user?.id) return;
 
@@ -138,14 +155,7 @@ export function useChat() {
           };
 
           setMessages((prev) => [...prev, converted]);
-
-          // Toast only for messages from others
-          if (!isMine) {
-            toast({
-              title: 'New chat message',
-              description: `${displayName}: ${newRow.content}`,
-            });
-          }
+          // Toast moved to useRealtimeNotifications (global hook) so it fires on all pages.
         }
       )
       .subscribe((status) => {
@@ -164,13 +174,13 @@ export function useChat() {
       if (!user || !activeFamilyId || !content.trim()) return false;
 
       try {
-        const { error } = await supabase.from('chat_messages').insert([
+        const { data: insertedRow, error } = await supabase.from('chat_messages').insert([
           {
             family_id: activeFamilyId,
             user_id: user.id,
             content: content.trim(),
           },
-        ]);
+        ]).select('id').single();
 
         if (error) {
           console.error('[chat] Error sending message:', error);
@@ -182,16 +192,23 @@ export function useChat() {
           return false;
         }
 
+        analytics.capture('chat_message_sent', { message_length: content.trim().length });
+
         // Send push notifications to other family members (fire-and-forget)
         supabase.functions.invoke('notify-chat-message', {
           body: {
+            chatMessageId: insertedRow?.id || '',
             familyId: activeFamilyId,
             senderId: user.id,
             senderName: user.displayName || 'Family member',
             content: content.trim(),
           },
+        }).then(({ error: pushError }) => {
+          if (pushError) {
+            console.error('[chat] Chat push notification failed:', pushError.message);
+          }
         }).catch((err) => {
-          console.error('[chat] Failed to send chat push notifications:', err);
+          console.error('[chat] Chat push notification network error:', err);
         });
 
         return true;

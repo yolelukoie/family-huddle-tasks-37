@@ -1,11 +1,15 @@
 // src/hooks/useRealtimeNotifications.tsx
 import { useEffect, useRef, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useApp } from '@/hooks/useApp';
 import { useTasks } from '@/hooks/useTasks';
 import { useAssignmentModal } from "@/contexts/AssignmentModalContext";
+import { taskFromRow } from '@/lib/taskMapper';
+import { ROUTES } from '@/lib/constants';
 
 type TaskEvent = {
   id: string;
@@ -31,9 +35,11 @@ type FamilySyncEvent = {
 export function useRealtimeNotifications() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const { refreshData } = useTasks();
   const { activeFamilyId, getUserProfile } = useApp();
   const { openAssignmentModal } = useAssignmentModal();
+  const location = useLocation();
 
   const handledEventIds = useRef<Set<string>>(new Set());
 
@@ -82,13 +88,7 @@ export function useRealtimeNotifications() {
               if (data.assigned_to !== user.id) return;
 
               const taskFamilyId = row.family_id || data.family_id;
-              openAssignmentModal({
-                id: data.id, name: data.name, description: data.description ?? '',
-                starValue: data.star_value ?? 0, assignedBy: data.assigned_by,
-                assignedTo: data.assigned_to, dueDate: data.due_date,
-                familyId: taskFamilyId, categoryId: data.category_id,
-                completed: !!data.completed,
-              } as any);
+              openAssignmentModal(taskFromRow(data, { familyId: taskFamilyId }));
             } catch (err) {
               console.error('[REALTIME] Error in assigned handler:', err);
             }
@@ -119,8 +119,32 @@ export function useRealtimeNotifications() {
     };
   }, [user?.id, openAssignmentModal, toast]);
 
-  // CHAT EVENTS — NO toast here. useChat already handles chat toasts.
-  // Removed to prevent duplicate toasts.
+  // CHAT EVENTS — toast when user is NOT on the chat page (global coverage).
+  //
+  // NOTE: src/hooks/useChat.tsx also subscribes to chat_messages INSERTs
+  // (`chat-page:*` channel) to keep the in-page message list in sync. The two
+  // channels are intentionally kept separate — see the comment on the
+  // corresponding effect in useChat.tsx for the lifecycle reasoning.
+  useEffect(() => {
+    if (!user?.id || !activeFamilyId) return;
+    const ch = supabase
+      .channel(`chat-toast:${user.id}:${activeFamilyId}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `family_id=eq.${activeFamilyId}` },
+        (e) => {
+          const newRow = (e as { new: { user_id: string; content: string } }).new;
+          if (!newRow) return;
+          if (newRow.user_id === user.id) return;
+          if (location.pathname === ROUTES.chat) return;
+          const senderProfile = getUserProfile(newRow.user_id);
+          const displayName = senderProfile?.displayName ?? 'Someone';
+          toast({ title: t('chat.newMessage'), description: `${displayName}: ${newRow.content}` });
+        }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [user?.id, activeFamilyId, location.pathname, getUserProfile, toast, t]);
 
   // FAMILY SYNC (categories/templates)
   useEffect(() => {

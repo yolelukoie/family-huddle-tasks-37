@@ -23,8 +23,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { isToday } from '@/lib/utils';
 import { AssignTaskModal } from '@/components/modals/AssignTaskModal';
 import { MilestoneCelebration } from '@/components/celebrations/MilestoneCelebration';
-import { Star, Calendar, Plus, RotateCcw, CheckCircle } from 'lucide-react';
-import { isBlocked, getBlockStatusText } from '@/lib/blockUtils';
+import { Star, Calendar, Plus, CheckCircle } from 'lucide-react';
+import { isBlocked } from '@/lib/blockUtils';
+import { useFeatureGate } from '@/hooks/useFeatureGate';
+import { analytics } from '@/lib/analytics';
 
 export default function MainPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -45,8 +47,6 @@ export default function MainPage() {
     activeFamilyId,
     getTotalStars,
     resetCharacterProgress,
-    addStars,
-    families,
     getUserFamily
   } = useApp();
   const {
@@ -69,6 +69,7 @@ export default function MainPage() {
   const stageProgress = getStageProgress(totalStars);
   const stageName = getStageName(currentStage);
   const characterImagePath = getImagePath(user?.gender || 'male', currentStage);
+  const characterHidden = user?.characterHidden ?? false;
 
   const [previousStars, setPreviousStars] = useState(totalStars);
   const badgeContainerRef = useRef<HTMLDivElement>(null);
@@ -105,6 +106,13 @@ export default function MainPage() {
   // NOTE: Badge checking is centralized in TasksContext.tsx - do NOT call checkForNewBadges here
   useEffect(() => {
     if (previousStars !== totalStars && previousStars !== 0) {
+      // Detect a stage advancement (e.g. Baby -> Child) and capture analytics
+      const previousStage = getCurrentStage(previousStars);
+      const newStage = getCurrentStage(totalStars);
+      if (newStage > previousStage) {
+        analytics.capture('stage_advanced', { stage: newStage });
+      }
+
       // Check for 1000 star milestone celebration only
       if (previousStars < 1000 && totalStars >= 1000) {
         // Add milestone celebration to queue
@@ -181,26 +189,12 @@ export default function MainPage() {
     // Refresh component to show updated goal progress
     setRefreshKey(prev => prev + 1);
   };
-  const handleResetCharacter = async () => {
-    if (window.confirm(t('main.resetConfirm'))) {
-      await resetCharacterProgress(activeFamilyId);
-      resetBadgeProgress();
-      setPreviousStars(0);
-    }
-  };
-  const currentFamily = activeFamilyId ? families.find(f => f.id === activeFamilyId) : null;
+  const { gate } = useFeatureGate();
   const userMembership = activeFamilyId ? getUserFamily(activeFamilyId) : null;
   const userIsBlocked = isBlocked(userMembership);
 
-  // Build header title with block status if applicable
-  const headerTitle = currentFamily?.name 
-    ? (userIsBlocked 
-        ? `${currentFamily.name} — ${getBlockStatusText(userMembership, t)}` 
-        : currentFamily.name)
-    : t('main.title');
-
-  return <div className="min-h-screen bg-gradient-to-b from-[hsl(var(--section-tint))] to-background">
-      <NavigationHeader title={headerTitle} showBackButton={false} />
+  return <div className="min-h-[100dvh] bg-gradient-to-b from-[hsl(var(--section-tint))] to-background">
+      <NavigationHeader title={t('main.title')} />
       
       <div className="max-w-4xl mx-auto p-4 space-y-6">
         {/* Greeting */}
@@ -214,14 +208,15 @@ export default function MainPage() {
         <Card accent className="bg-gradient-to-br from-[hsl(var(--gradient-start))]/20 to-[hsl(var(--gradient-end))]/20">
           <CardHeader>
             <CardTitle className="flex items-center justify-center gap-2 text-[hsl(var(--icon-tint))]">
-              <Star className="h-5 w-5 text-family-warm" />
-              {stageName}
+              {!characterHidden && <Star className="h-5 w-5 text-family-warm" />}
+              {characterHidden ? t('main.yourProgress') : stageName}
             </CardTitle>
           </CardHeader>
           <CardContent>
             {/* Draggable area wrapper - extends up to cover CardHeader visually */}
-            <div ref={badgeContainerRef} className="relative -mt-[72px] pt-[72px] pb-4">
+            <div ref={badgeContainerRef} className={characterHidden ? "relative pb-4" : "relative -mt-[72px] pt-[72px] pb-4"}>
               {/* Character Image and Badges */}
+              {!characterHidden && (
               <div className="flex justify-center mb-6 px-4">
                 <div className="relative w-full max-w-80 h-40">
                   {/* Character Image Container */}
@@ -237,6 +232,7 @@ export default function MainPage() {
                   </div>
                 </div>
               </div>
+              )}
 
               {/* Progress Bar */}
               <div className="space-y-2">
@@ -248,7 +244,7 @@ export default function MainPage() {
               </div>
 
               {/* Draggable Badges overlaying the ref container */}
-              {showBadges && !!user?.id && !!activeFamilyId && (
+              {!characterHidden && showBadges && !!user?.id && !!activeFamilyId && (
                 <DraggableBadgeDisplay
                   badges={unlockedBadges}
                   familyId={activeFamilyId}
@@ -321,7 +317,7 @@ export default function MainPage() {
             {t('main.goToTasks')}
           </Button>
           <Button 
-            onClick={() => !userIsBlocked && setShowAssignTask(true)} 
+            onClick={() => !userIsBlocked && gate(() => setShowAssignTask(true))}
             variant="theme" 
             className="h-14"
             disabled={userIsBlocked}

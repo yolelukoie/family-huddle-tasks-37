@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useTranslation } from "react-i18next";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogBody, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,6 +13,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useApp } from "@/hooks/useApp";
 import { useTasks } from "@/hooks/useTasks";
 import { useToast } from "@/hooks/use-toast";
+import { analytics } from "@/lib/analytics";
+import { useFeatureGate } from "@/hooks/useFeatureGate";
 import { isBlocked, getReasonLabel, BlockReason } from "@/lib/blockUtils";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -39,6 +41,7 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
   
   const { toast } = useToast();
   const { addTask, ensureCategoryByName } = useTasks();
+  const { gate } = useFeatureGate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Re-evaluate block status whenever modal opens
@@ -92,6 +95,8 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
 
   const onSubmit = async (data: AssignTaskForm) => {
     if (isSubmitting) return;
+
+    gate(async () => {
     setIsSubmitting(true);
 
     try {
@@ -187,6 +192,11 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
           description: t("assignTask.taskAssignedDesc", { taskName: data.name }),
         });
 
+        analytics.capture('task_assigned', {
+          to_self: data.assignedTo === user.id,
+          star_value: data.starValue,
+        });
+
         form.reset();
         onOpenChange(false);
         onTaskAssigned?.();
@@ -194,6 +204,7 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
     } finally {
       setIsSubmitting(false);
     }
+    });
   };
 
   return (
@@ -204,6 +215,7 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
           <DialogDescription>{t("assignTask.description")}</DialogDescription>
         </DialogHeader>
 
+        <DialogBody>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
@@ -309,6 +321,7 @@ export function AssignTaskModal({ open, onOpenChange, onTaskAssigned }: AssignTa
             </div>
           </form>
         </Form>
+        </DialogBody>
       </DialogContent>
     </Dialog>
   );

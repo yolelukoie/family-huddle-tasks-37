@@ -5,6 +5,10 @@ export interface User {
   profileComplete: boolean;
   activeFamilyId?: string;
   avatar_url?: string;
+  trialStartedAt?: string;
+  characterHidden?: boolean;
+  hideDefaultTasks?: boolean;
+  preferred_language?: string | null;
 }
 
 export interface Family {

@@ -26,7 +26,8 @@
     "assignTask": "分配任务",
     "resetCharacter": "重置角色",
     "resetConfirm": "你确定吗？这将仅为此家庭重置你的角色进度。",
-    "completeTask": "完成"
+    "completeTask": "完成",
+    "yourProgress": "你的进度"
   },
   "tasks": {
     "title": "任务",
@@ -37,6 +38,7 @@
     "upcoming": "即将到来",
     "noTasksToday": "今天没有任务！🎉",
     "noUpcomingTasks": "没有即将到来的任务",
+    "noCustomCategories": "还没有自定义类别 — 点击添加类别来创建一个。",
     "due": "截止日期",
     "assignedToYou": "分配给你",
     "assignedToMember": "分配给家庭成员",
@@ -67,7 +69,13 @@
     "createCategoryDesc": "添加自定义类别来组织你的任务",
     "categoryNameLabel": "类别名称",
     "categoryNamePlaceholder": "输入类别名称",
-    "createCategoryBtn": "创建类别"
+    "createCategoryBtn": "创建类别",
+    "longPressMenuTitle": "添加带评论的任务",
+    "commentPlaceholder": "可选评论...",
+    "addToTodayWithComment": "添加到今天的任务",
+    "reportTemplate": "举报任务模板",
+    "firstRunHint": "点击添加，长按显示选项",
+    "taskDeleted": "任务已删除"
   },
   "goals": {
     "title": "目标",
@@ -80,7 +88,10 @@
     "reward": "奖励：",
     "noActiveGoal": "没有设置活动目标",
     "createGoal": "创建目标",
-    "deleteConfirm": "你确定要删除这个目标吗？"
+    "deleteConfirm": "你确定要删除这个目标吗？",
+    "activeCount_one": "{{count}} 个活跃目标",
+    "activeCount_other": "{{count}} 个活跃目标",
+    "goalInCategory": "{{category}} 中的目标"
   },
   "family": {
     "title": "家庭设置",
@@ -111,6 +122,7 @@
     "join": "加入",
     "enterInviteCode": "输入邀请码",
     "inviteCodeCopied": "邀请码已复制！",
+    "inviteCodeGenerated": "邀请码已生成",
     "inviteCodeCopiedDesc": "邀请码已复制到剪贴板。",
     "joinedSuccess": "成功加入家庭！",
     "welcomeTo": "欢迎来到",
@@ -144,14 +156,17 @@
     "error": "错误",
     "failedToRemove": "无法移除成员。只有家庭所有者可以移除成员。",
     "edit": "编辑",
-    "settings": "设置"
+    "settings": "设置",
+    "codeActiveFor24Hours": "邀请码将在24小时内有效。",
+    "errorGeneratingCode": "生成邀请码失败。只有家庭所有者可以分享邀请码。"
   },
   "chat": {
     "title": "家庭聊天",
     "clearChat": "清除聊天",
     "noMessages": "还没有消息。开始对话吧！",
     "typeMessage": "输入你的消息...",
-    "send": "发送"
+    "send": "发送",
+    "newMessage": "新聊天消息"
   },
   "themes": {
     "oceanCalm": {
@@ -217,6 +232,15 @@
     "characterResetDesc": "你的角色进度已成功重置。",
     "customizeCharacter": "自定义角色",
     "customizeCharacterDesc": "每张图片代表角色成长的一个阶段。随着你赚取星星，角色会经历这些阶段的变化。你可以上传自定义图片或使用默认图片。",
+    "analyticsTitle": "帮助改进 Family Huddle",
+    "analyticsToggle": "分享匿名使用数据",
+    "analyticsDesc": "帮助我们更快地发现和修复错误。不收集个人信息，无广告。",
+    "dangerZone": "危险区域",
+    "hideCharacterToggle": "隐藏角色",
+    "hideCharacterDesc": "在主屏幕上隐藏角色图像和成就图标。星星、进度和目标保持不变。",
+    "hideDefaultsToggle": "隐藏默认任务",
+    "hideDefaultsDesc": "在任务页面隐藏内置任务类别。您的自定义类别保持不变。",
+    "tasksDisplayTitle": "任务显示",
     "currentStage": "当前阶段",
     "customImageUploaded": "自定义图片已上传",
     "customImageUploadedDesc": "你的自定义角色图片已保存。",
@@ -293,14 +317,17 @@
   },
   "common": {
     "loading": "加载中...",
-    "save": "保存",
+    "error": "错误",
     "cancel": "取消",
     "delete": "删除",
-    "edit": "编辑",
-    "close": "关闭",
+    "report": "举报",
+    "creating": "创建中...",
     "confirm": "确认",
-    "yes": "是",
-    "no": "否"
+    "logOut": "退出登录",
+    "unknown": "未知",
+    "undo": "撤销",
+    "deleteCategoryTitle": "删除类别",
+    "deleteCategoryDesc": "这将永久删除该类别及其所有模板和任务。此操作无法撤销。"
   },
   "stages": {
     "baby": "婴儿",
@@ -390,6 +417,8 @@
   },
   "auth": {
     "signInFailed": "登录失败",
+    "signUpFirst": "请先注册",
+    "signUpFirstDesc": "我们找不到该邮箱对应的账号。请先创建一个账号开始使用。",
     "welcomeBack": "欢迎回来！",
     "successfullySignedIn": "登录成功。",
     "signUpFailed": "注册失败",
@@ -423,21 +452,22 @@
     "creatingAccount": "创建账户中...",
     "madeWithLove": "用 ❤️ 为全球家庭制作",
     "sessionExpired": "会话已过期",
-    "sessionExpiredDesc": "您的会话已失效。请重新登录。"
+    "sessionExpiredDesc": "您的会话已失效。请重新登录。",
+    "signInWithApple": "使用 Apple 登录"
   },
   "onboarding": {
     "welcomeTitle": "欢迎来到 Family Huddle！",
     "completeProfile": "完成您的个人资料以开始家庭冒险",
     "trialTitle": "开始4天免费试用",
-    "trialDesc": "免费试用 Family Huddle 的所有功能4天。无需承诺。之后您可以继续付费计划或随时从个人设置页面取消。",
+    "trialDesc": "免费享用 Family Huddle 的所有功能4天。无需信用卡。",
     "startTrial": "开始免费试用",
     "setupProfile": "设置您的个人资料",
     "setupProfileDesc": "告诉我们关于您的信息并加入您的家庭",
     "aboutYou": "关于您",
     "displayName": "显示名称",
     "displayNamePlaceholder": "我们该怎么称呼您？",
-    "gender": "性别",
-    "selectGenderPlaceholder": "选择您的性别",
+    "gender": "角色性别",
+    "selectGenderPlaceholder": "选择您角色的性别",
     "male": "男性",
     "female": "女性",
     "other": "其他",
@@ -446,7 +476,7 @@
     "createAndStart": "创建家庭并开始",
     "joinAndStart": "加入家庭并开始",
     "nameMinLength": "名称至少需要2个字符",
-    "selectGender": "请选择您的性别",
+    "selectGender": "请选择您角色的性别",
     "familyInfoRequired": "请填写所需的家庭信息",
     "joinedFamily": "您已加入"
   },
@@ -478,15 +508,478 @@
     "successDesc": "感谢您的举报。",
     "errorSubmitting": "提交举报失败。请重试。"
   },
-  "common": {
-    "loading": "加载中...",
-    "error": "错误",
-    "cancel": "取消",
-    "delete": "删除",
-    "report": "举报",
-    "creating": "创建中...",
-    "confirm": "确认",
-    "deleteCategoryTitle": "删除类别",
-    "deleteCategoryDesc": "这将永久删除该类别及其所有模板和任务。此操作无法撤销。"
+  "subscription": {
+    "status": {
+      "free": "免费",
+      "trial": "试用（剩余 {{days}} 天）",
+      "premium": "高级版",
+      "lifetime": "终身"
+    },
+    "activated": "订阅已激活！",
+    "activeDesc": "您可以使用 Family Huddle 的所有功能。",
+    "freeDesc": "订阅以解锁 Family Huddle 的所有功能。",
+    "lifetimeDesc": "您拥有所有高级功能的终身访问权。",
+    "renewsOn": "续订日期：{{date}}",
+    "subscribeNow": "立即订阅",
+    "manageInStore": "管理订阅",
+    "restore": "恢复购买",
+    "restoreSuccess": "购买已成功恢复",
+    "restoreFailed": "无法恢复购买",
+    "purchaseFailed": "购买失败",
+    "trialEndsOn": "您的免费试用将于 {{date}} 结束",
+    "promo": {
+      "haveCode": "有促销码？",
+      "placeholder": "输入促销码",
+      "apply": "应用",
+      "success": "促销码已成功应用！",
+      "invalid": "促销码无效",
+      "failed": "应用促销码失败"
+    }
+  },
+  "paywall": {
+    "title": "您的免费试用已结束",
+    "description": "订阅以解锁 Family Huddle 的所有功能。",
+    "subscribeButton": "订阅",
+    "disclosureFull": "订阅将自动续订，每月 {{price}}，直至取消。您可以随时在设备的\"订阅\"设置中取消。继续即表示您同意我们的使用条款。",
+    "titleManage": "Subscription Plans",
+    "descriptionManage": "View and manage your Family Huddle subscription.",
+    "currentPlan": {
+      "lifetime": "You have lifetime access",
+      "trial": "Free trial ends {{date}}",
+      "premium": "Premium plan renews {{date}}"
+    }
+  },
+  "taskHistory": {
+    "title": "已完成任务历史",
+    "description": "该家庭中所有已完成的任务",
+    "noTasks": "还没有已完成的任务，快去完成一些任务吧！",
+    "category": "分类",
+    "completed": "已完成",
+    "due": "截止日期",
+    "unknown": "未知"
+  },
+  "badges": {
+    "baby_10": {
+      "name": "安抚奶嘴",
+      "description": "第一个微笑融化了所有人的心！"
+    },
+    "baby_20": {
+      "name": "摇铃",
+      "description": "发现了噪音的魔力！"
+    },
+    "baby_30": {
+      "name": "奶瓶",
+      "description": "用牛奶充电了！"
+    },
+    "baby_40": {
+      "name": "泰迪熊",
+      "description": "找到了永远的拥抱伙伴！"
+    },
+    "child_60": {
+      "name": "积木",
+      "description": "建造了一件杰作（然后推倒了）！"
+    },
+    "child_70": {
+      "name": "牙齿",
+      "description": "哎呀！第一颗牙齿掉了！"
+    },
+    "child_80": {
+      "name": "蜡笔",
+      "description": "墙壁是最好的画布！"
+    },
+    "child_90": {
+      "name": "足球",
+      "description": "踢进了第一个球（进了对方的球门）！"
+    },
+    "child_100": {
+      "name": "书包",
+      "description": "准备好迎接第一次大学校历险！"
+    },
+    "child_110": {
+      "name": "冰淇淋",
+      "description": "人生课程：冰淇淋融化得很快！"
+    },
+    "child_120": {
+      "name": "跳绳",
+      "description": "终于可以不绊倒地跳10次了！"
+    },
+    "child_130": {
+      "name": "金星",
+      "description": "老师说：做得好！"
+    },
+    "child_140": {
+      "name": "书",
+      "description": "睡觉时间后还在读童话故事…"
+    },
+    "child_150": {
+      "name": "生日帽",
+      "description": "有史以来最大的蛋糕——5分钟就没了！"
+    },
+    "child_160": {
+      "name": "滑板车",
+      "description": "比大人跑得还快！"
+    },
+    "child_170": {
+      "name": "小狗爪印",
+      "description": "永远的好朋友：我和狗狗！"
+    },
+    "child_180": {
+      "name": "太阳镜",
+      "description": "酷孩子出现了！"
+    },
+    "child_190": {
+      "name": "拼图",
+      "description": "一块都没丢地完成了拼图（奇迹）！"
+    },
+    "teen_210": {
+      "name": "智能手机",
+      "description": "发短信速度：奥运级别。"
+    },
+    "teen_220": {
+      "name": "吉他",
+      "description": "第一个乐队，名字很烂。"
+    },
+    "teen_230": {
+      "name": "比萨饼",
+      "description": "冠军的晚餐。"
+    },
+    "teen_240": {
+      "name": "课本",
+      "description": "把一个月的内容塞进了一个晚上。"
+    },
+    "teen_250": {
+      "name": "心形",
+      "description": "初恋。不停地脸红。"
+    },
+    "teen_260": {
+      "name": "耳机",
+      "description": "音乐 = 生命。"
+    },
+    "teen_270": {
+      "name": "篮球",
+      "description": "进球一次，吹嘘永远。"
+    },
+    "teen_280": {
+      "name": "滑板",
+      "description": "重力很痛，但值得。"
+    },
+    "teen_290": {
+      "name": "自拍相机",
+      "description": "完美角度 = 200次尝试。"
+    },
+    "teen_300": {
+      "name": "考卷",
+      "description": "通过了！别问怎么过的。"
+    },
+    "teen_310": {
+      "name": "卫衣",
+      "description": "制服：卫衣24/7。"
+    },
+    "teen_320": {
+      "name": "戏剧面具",
+      "description": "青少年戏剧：无处不在，永远如此。"
+    },
+    "teen_330": {
+      "name": "笔记本",
+      "description": "秘密日记…不许偷看！"
+    },
+    "teen_340": {
+      "name": "自行车",
+      "description": "比公共汽车快，也更酷。"
+    },
+    "adult_360": {
+      "name": "托盘",
+      "description": "端了5杯，洒了4杯。"
+    },
+    "adult_370": {
+      "name": "咖啡杯",
+      "description": "生存燃料解锁。"
+    },
+    "adult_380": {
+      "name": "挂钟",
+      "description": "发现了周一是永恒的。"
+    },
+    "adult_390": {
+      "name": "工作制服",
+      "description": "第一份薪水 = 立刻购物。"
+    },
+    "adult_400": {
+      "name": "键盘",
+      "description": "打字快看起来像黑客。"
+    },
+    "adult_410": {
+      "name": "电话",
+      "description": "顾客：愤怒。我：微笑。"
+    },
+    "adult_420": {
+      "name": "工作鞋",
+      "description": "工作鞋 = 折磨工具。"
+    },
+    "adult_430": {
+      "name": "钱包",
+      "description": "储蓄？什么储蓄？"
+    },
+    "adult_440": {
+      "name": "领带",
+      "description": "看了50个YouTube教程后才会打领带。"
+    },
+    "adult_450": {
+      "name": "笔记本电脑",
+      "description": "Ctrl+Z是我的超能力。"
+    },
+    "adult_460": {
+      "name": "披萨盒",
+      "description": "夜班零食传统。"
+    },
+    "adult_470": {
+      "name": "硬币",
+      "description": "了解了“税”的含义（哎呀！）。"
+    },
+    "adult_480": {
+      "name": "闹钟",
+      "description": "忽视闹钟 = 老板生气。"
+    },
+    "adult_490": {
+      "name": "信用卡",
+      "description": "信用卡余额：算了。"
+    },
+    "ontherise_510": {
+      "name": "指南针",
+      "description": "找到了感觉正确的职业方向。"
+    },
+    "ontherise_520": {
+      "name": "作品集",
+      "description": "你的作品终于看起来像你了。"
+    },
+    "ontherise_530": {
+      "name": "衣柜",
+      "description": "个人风格解锁。"
+    },
+    "ontherise_540": {
+      "name": "味觉",
+      "description": "品味提升——食物、音乐，一切。"
+    },
+    "ontherise_550": {
+      "name": "约会之夜",
+      "description": "被已读不回？今晚不会。"
+    },
+    "ontherise_560": {
+      "name": "二人组",
+      "description": "找到了一起庆祝胜利的人。"
+    },
+    "ontherise_570": {
+      "name": "导师",
+      "description": "帮助他人成长。"
+    },
+    "ontherise_580": {
+      "name": "加薪",
+      "description": "薪水涨了。信心也涨了。"
+    },
+    "ontherise_590": {
+      "name": "工作证",
+      "description": "征服了会议；获得了联系人。"
+    },
+    "adult_610": {
+      "name": "车钥匙",
+      "description": "四轮上的自由！"
+    },
+    "adult_620": {
+      "name": "房子",
+      "description": "租来的，但感觉是我的。"
+    },
+    "adult_630": {
+      "name": "婴儿车",
+      "description": "生活：随着小我升级了。"
+    },
+    "adult_640": {
+      "name": "账单",
+      "description": "电费账单 = 恐怖故事。"
+    },
+    "adult_650": {
+      "name": "植物",
+      "description": "室内植物存活了整整一周！"
+    },
+    "adult_660": {
+      "name": "戒指",
+      "description": "爱、承诺……还有洗碗。"
+    },
+    "adult_670": {
+      "name": "书",
+      "description": "自助书库：快速增长。"
+    },
+    "adult_680": {
+      "name": "手提箱",
+      "description": "商务旅行 = 免费酒店早餐。"
+    },
+    "adult_690": {
+      "name": "笔记本电脑",
+      "description": "邮件永无止境。"
+    },
+    "mature_adult_couch": {
+      "name": "沙发",
+      "description": "Netflix马拉松冠军。"
+    },
+    "mature_adult_dumbbell": {
+      "name": "哑铃",
+      "description": "报名了……去了两次。"
+    },
+    "mature_adult_camera": {
+      "name": "相机",
+      "description": "度假照片：1000张，好的：3张。"
+    },
+    "mature_adult_money_bag": {
+      "name": "钱袋",
+      "description": "终于有了一些储蓄！"
+    },
+    "mature_adult_balloon": {
+      "name": "气球",
+      "description": "开了个派对，邻居投诉了。"
+    },
+    "mature_adult_wine_glass": {
+      "name": "葡萄酒杯",
+      "description": "品酒：完全专业。"
+    },
+    "mature_adult_toolbox": {
+      "name": "工具箱",
+      "description": "修好了一件事，坏了两件。"
+    },
+    "mature_adult_graduation_cap": {
+      "name": "学士帽",
+      "description": "终于完成了那个学位。"
+    },
+    "mature_adult_globe": {
+      "name": "地球仪",
+      "description": "游遍了世界（或至少2个城市）。"
+    },
+    "golden_gray_hair": {
+      "name": "白发丝",
+      "description": "新亮点：天然银色。"
+    },
+    "golden_glasses": {
+      "name": "眼镜",
+      "description": "阅读小字 = 不可能。"
+    },
+    "golden_book_stack": {
+      "name": "书堆",
+      "description": "智慧收藏完成。"
+    },
+    "golden_bbq_grill": {
+      "name": "烧烤炉",
+      "description": "邻居烧烤大王。"
+    },
+    "golden_yacht_model": {
+      "name": "游艇模型",
+      "description": "大梦想，小航行。"
+    },
+    "golden_family_photo": {
+      "name": "全家福",
+      "description": "最好的团队。"
+    },
+    "golden_golf_club": {
+      "name": "高尔夫球杆",
+      "description": "一杆进洞……23次尝试。"
+    },
+    "golden_desk": {
+      "name": "书桌",
+      "description": "办公室是第二个家。"
+    },
+    "golden_trophy": {
+      "name": "奖杯",
+      "description": "中年 = 黄金时期！"
+    },
+    "golden_rocking_chair": {
+      "name": "摇椅",
+      "description": "周末午睡冠军。"
+    },
+    "golden_cookbook": {
+      "name": "食谱书",
+      "description": "秘密食谱已完善。"
+    },
+    "golden_hiking_stick": {
+      "name": "登山杖",
+      "description": "山还在呼唤。"
+    },
+    "golden_headphones": {
+      "name": "耳机",
+      "description": "老了但还在摇滚！"
+    },
+    "golden_piggy_bank": {
+      "name": "存钱罐",
+      "description": "储蓄计划：终于奏效了。"
+    },
+    "golden_medal": {
+      "name": "奖章",
+      "description": "终身成就解锁。"
+    },
+    "golden_dog_paw": {
+      "name": "狗爪",
+      "description": "狗狗仍然认为我是最棒的。"
+    },
+    "golden_camera": {
+      "name": "相机",
+      "description": "每一条皱纹都讲述一个故事。"
+    },
+    "golden_calendar": {
+      "name": "日历",
+      "description": "生日派对永不停歇。"
+    },
+    "golden_champagne": {
+      "name": "香槟",
+      "description": "为最美好的岁月干杯！"
+    }
+  },
+  "block": {
+    "title": "封禁成员",
+    "description": "阻止 {{name}} 参与家庭活动。",
+    "reason": "原因",
+    "selectReason": "选择原因",
+    "duration": "时长",
+    "selectDuration": "选择时长",
+    "1hour": "1小时",
+    "12hours": "12小时",
+    "1day": "1天",
+    "1week": "1周",
+    "indefinite": "无限期",
+    "autoKickWarning": "无限期封禁时，成员将被自动移出家庭。",
+    "restrictionsTitle": "封禁期间的限制：",
+    "restrictionChat": "聊天",
+    "restrictionAssignTasks": "分配任务",
+    "restrictionCreateTasks": "创建任务",
+    "restrictionProfile": "编辑个人资料",
+    "blockBtn": "封禁",
+    "unblockBtn": "解除封禁",
+    "blocked": "已封禁",
+    "blockedFor": "已封禁 {{duration}}",
+    "youWereBlocked": "您已被封禁",
+    "youWereBlockedFor": "您已被封禁 {{duration}}",
+    "memberBlocked": "成员已封禁",
+    "memberBlockedDesc": "{{name}} 已被封禁 {{duration}}。",
+    "memberUnblocked": "成员已解除封禁",
+    "memberUnblockedDesc": "{{name}} 已解除封禁。",
+    "failedToBlock": "封禁失败",
+    "failedToUnblock": "解除封禁失败",
+    "youWereUnblocked": "您已解除封禁",
+    "autoKicked": "自动踢出",
+    "memberAutoKicked": "{{name}} 已被自动移出家庭。",
+    "accessRestricted": "访问受限",
+    "accessRestrictedFor": "访问受限 {{duration}}",
+    "cannotAccessWhileBlocked": "封禁期间无法访问。",
+    "chatRestricted": "聊天受限",
+    "restricted": "受限",
+    "cannotAssignTasks": "封禁期间无法分配任务。",
+    "blockedWithReason": "因 {{reason}} 被封禁",
+    "cannotCreateInDefaultCategory": "封禁期间无法在默认类别中创建任务。",
+    "viewOnlyWhileBlocked": "封禁期间仅可查看。",
+    "noMembersAccess": "无法访问成员",
+    "noMembersAccessFor": "{{duration}} 内无法访问成员",
+    "reasons": {
+      "harassment": "骚扰",
+      "hate": "仇恨言论",
+      "sexual": "性内容",
+      "violence": "暴力",
+      "spam": "垃圾信息",
+      "personalInfo": "个人信息",
+      "other": "其他"
+    }
   }
 }

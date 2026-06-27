@@ -25,6 +25,14 @@ export function useCustomCharacterImages() {
       return;
     }
 
+    // Short-circuit: if the user has hidden their character, skip the network
+    // round-trip entirely — custom images are never rendered in that state.
+    if (user.characterHidden) {
+      setCustomImages([]);
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from('user_character_images')
@@ -38,7 +46,7 @@ export function useCustomCharacterImages() {
     } finally {
       setIsLoading(false);
     }
-  }, [user?.id]);
+  }, [user?.id, user?.characterHidden]);
 
   useEffect(() => {
     fetchCustomImages();

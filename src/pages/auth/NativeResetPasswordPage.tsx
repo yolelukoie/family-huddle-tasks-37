@@ -137,6 +137,19 @@ export default function NativeResetPasswordPage() {
     return () => { cancelled = true; };
   }, [searchParams]);
 
+  // Scroll focused input into view when iOS keyboard opens
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    let showHandle: { remove: () => void } | null = null;
+    import('@capacitor/keyboard').then(({ Keyboard }) => {
+      Keyboard.addListener('keyboardDidShow', () => {
+        const el = document.activeElement as HTMLElement | null;
+        el?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+      }).then((h) => { showHandle = h; });
+    }).catch(() => {});
+    return () => { showHandle?.remove(); };
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isUpdating) return;
@@ -183,7 +196,7 @@ export default function NativeResetPasswordPage() {
   // Error state
   if (sessionError) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted flex items-center justify-center p-4">
+      <div className="min-h-[100dvh] bg-gradient-to-br from-background via-background to-muted flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
           <CardHeader className="text-center">
             <CardTitle>Invalid or Expired Link</CardTitle>
@@ -202,7 +215,7 @@ export default function NativeResetPasswordPage() {
   // Loading state
   if (!sessionReady) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted flex items-center justify-center p-4">
+      <div className="min-h-[100dvh] bg-gradient-to-br from-background via-background to-muted flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
           <CardHeader className="text-center">
             <CardTitle>Validating reset link…</CardTitle>
@@ -215,8 +228,11 @@ export default function NativeResetPasswordPage() {
 
   // Ready: show form
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted flex items-center justify-center p-4">
-      <Card className="max-w-md w-full">
+    <div
+      className="min-h-[100dvh] bg-gradient-to-br from-background via-background to-muted flex flex-col items-center overflow-y-auto p-4"
+      style={{ paddingBottom: 'var(--keyboard-height, 0px)', transition: 'padding-bottom 0.25s ease' }}
+    >
+      <Card className="max-w-md w-full my-auto">
         <CardHeader className="text-center">
           <CardTitle>Set New Password</CardTitle>
           <CardDescription>Enter your new password below</CardDescription>

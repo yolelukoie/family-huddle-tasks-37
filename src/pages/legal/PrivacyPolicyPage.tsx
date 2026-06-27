@@ -5,8 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 export default function PrivacyPolicyPage() {
   const { t } = useTranslation();
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[hsl(var(--section-tint))] to-background">
-      <NavigationHeader title={t('legal.privacyPolicy')} showBackButton={true} />
+    <div className="min-h-[100dvh] bg-gradient-to-b from-[hsl(var(--section-tint))] to-background">
+      <NavigationHeader title={t('legal.privacyPolicy')} />
       
       <div className="max-w-3xl mx-auto p-4 space-y-6 pb-12">
         <Card>
@@ -27,6 +27,7 @@ export default function PrivacyPolicyPage() {
                 <li>Chat messages shared within your family groups</li>
                 <li>Custom images you upload (profile pictures, character images)</li>
                 <li>Push notification tokens (if you enable notifications)</li>
+                <li>Subscription and purchase data (subscription tier, purchase history, managed via RevenueCat)</li>
               </ul>
             </section>
 
@@ -69,6 +70,7 @@ export default function PrivacyPolicyPage() {
               <ul className="list-disc pl-6 text-muted-foreground space-y-1">
                 <li><strong>Supabase:</strong> Database and authentication services</li>
                 <li><strong>Firebase:</strong> Push notification delivery</li>
+                <li><strong>RevenueCat:</strong> Subscription and in-app purchase management</li>
               </ul>
             </section>
 

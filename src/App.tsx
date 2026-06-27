@@ -2,12 +2,16 @@ import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useNavigate, useLocation } from "react-router-dom";
+import { analytics } from "@/lib/analytics";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { LanguagePicker } from "@/components/onboarding/LanguagePicker";
 import { AuthProvider } from "@/hooks/useAuth";
 import { AppProvider } from "@/hooks/useApp";
 import { TasksProvider } from "@/contexts/TasksContext";
 import { CelebrationsProvider } from "@/contexts/CelebrationsContext";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { ScrollToTop } from "@/components/layout/ScrollToTop";
 import { AuthPage } from "@/pages/auth/AuthPage";
 import AuthCallbackPage from "@/pages/auth/AuthCallbackPage";
 import NativeResetPasswordPage from "@/pages/auth/NativeResetPasswordPage";
@@ -22,10 +26,25 @@ import NotFound from "./pages/NotFound";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import { AssignmentModalProvider } from "@/contexts/AssignmentModalContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { SubscriptionProvider } from "@/hooks/useSubscription";
 import { isPlatform } from "@/lib/platform";
+import { useKeyboardInset } from "@/hooks/useKeyboardInset";
+
+function KeyboardInset() {
+  useKeyboardInset();
+  return null;
+}
 
 function RealtimeRoot() {
   useRealtimeNotifications();
+  return null;
+}
+
+function RouteChangeTracker() {
+  const location = useLocation();
+  useEffect(() => {
+    analytics.captureScreen(location.pathname);
+  }, [location.pathname]);
   return null;
 }
 
@@ -56,6 +75,9 @@ function DeepLinkHandler() {
 
         if (path.startsWith('/auth/callback')) {
           navigate(`/auth/callback${search}${hash}`, { replace: true });
+          import('@capacitor/browser').then(({ Browser }) => {
+            Browser.close().catch(() => {});
+          });
         }
       } catch (err) {
         console.error('[DeepLink] Failed to parse URL:', err);
@@ -94,18 +116,24 @@ function DeepLinkHandler() {
 }
 
 const App = () => (
+  <ErrorBoundary>
   <TooltipProvider>
     <Toaster />
     <Sonner />
+    <LanguagePicker />
     <BrowserRouter>
       <ThemeProvider>
         <AuthProvider>
           <CelebrationsProvider>
             <AppProvider>
+              <SubscriptionProvider>
               <TasksProvider>
                 <AssignmentModalProvider>
+                  <ScrollToTop />
                   <DeepLinkHandler />
+                  <KeyboardInset />
                   <RealtimeRoot />
+                  <RouteChangeTracker />
                   <Routes>
                     <Route path="/auth" element={<AuthPage />} />
                     <Route path="/auth/callback" element={<AuthCallbackPage />} />
@@ -115,12 +143,14 @@ const App = () => (
                   </Routes>
                 </AssignmentModalProvider>
               </TasksProvider>
+              </SubscriptionProvider>
             </AppProvider>
           </CelebrationsProvider>
         </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>
   </TooltipProvider>
+  </ErrorBoundary>
 );
 
 export default App;

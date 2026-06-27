@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useCallback, useEffect, useState } from 'react';
+import React, { createContext, useContext, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
 import { useApp } from '@/hooks/useApp';
@@ -8,6 +8,8 @@ import { useCelebrations } from '@/hooks/useCelebrations';
 import { getNewlyUnlockedBadges } from '@/lib/badges';
 import { isBlocked } from '@/lib/blockUtils';
 import type { Task, TaskCategory, TaskTemplate, Badge } from '@/lib/types';
+import { taskFromRow } from '@/lib/taskMapper';
+import { analytics } from '@/lib/analytics';
 
 const MAX_CATEGORIES_PER_FAMILY = 10;
 const MAX_TEMPLATES_PER_CATEGORY = 20;
@@ -20,11 +22,12 @@ interface TasksContextValue {
   addTask: (task: Omit<Task, 'id' | 'createdAt'>) => Promise<Task | null>;
   updateTask: (taskId: string, updates: Partial<Task>) => Promise<void>;
   deleteTask: (taskId: string) => Promise<boolean>;
+  restoreTask: (task: Task) => Promise<Task | null>;
   addCategory: (category: Omit<TaskCategory, 'id' | 'createdAt'>) => Promise<TaskCategory | null>;
   deleteCategory: (categoryId: string) => Promise<boolean>;
   deleteTemplate: (templateId: string) => Promise<boolean>;
   addTemplate: (template: Omit<TaskTemplate, 'id' | 'createdAt'>) => Promise<TaskTemplate | null>;
-  addTodayTaskFromTemplate: (templateId: string) => Promise<Task | null>;
+  addTodayTaskFromTemplate: (templateId: string, descriptionOverride?: string) => Promise<Task | null>;
   ensureCategoryByName: (name: string, opts?: { isHouseChores?: boolean }) => Promise<TaskCategory | null>;
   refreshData: () => Promise<void>;
 }
@@ -41,6 +44,14 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
   const [categories, setCategories] = useState<TaskCategory[]>([]);
   const [templates, setTemplates] = useState<TaskTemplate[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // Soft guard against duplicate task_completed analytics firings caused by
+  // concurrent updateTask() calls for the same task within a short window
+  // (e.g. double-tap, optimistic-then-realtime echo). This is a best-effort
+  // in-memory dedup — it does NOT protect against multi-tab/multi-device or
+  // page-reload races; PostHog dashboards should still de-duplicate downstream.
+  const recentCompletionFires = useRef<Map<string, number>>(new Map());
+  const COMPLETION_DEDUP_MS = 5000;
 
   // Centralized badge checking and awarding - ensures badges are awarded from any page
   const checkAndAwardBadges = useCallback(async (
@@ -83,6 +94,8 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
           // Insert as unseen so celebration triggers
           toInsert.push({ user_id: userId, family_id: familyId, badge_id: b.id, seen: false });
           celebrate.push(b);
+          // First-time unlock — capture analytics (no PII)
+          analytics.capture('badge_unlocked', { badge_id: b.id });
         } else if (!ex.seen) {
           toMarkSeen.push(b.id);
           celebrate.push(b);
@@ -141,21 +154,7 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
 
       if (tasksRes.error) console.error('Error loading tasks:', tasksRes.error);
       else {
-        const convertedTasks: Task[] = (tasksRes.data || []).map(t => ({
-          id: t.id,
-          name: t.name,
-          description: t.description || '',
-          categoryId: t.category_id,
-          starValue: t.star_value,
-          completed: t.completed,
-          completedAt: t.completed_at || undefined,
-          familyId: t.family_id,
-          templateId: t.template_id || undefined,
-          assignedTo: t.assigned_to,
-          assignedBy: t.assigned_by,
-          dueDate: t.due_date,
-          status: (t as any).status || 'active',
-        }));
+        const convertedTasks: Task[] = (tasksRes.data || []).map(t => taskFromRow(t));
         setTasks(convertedTasks);
       }
 
@@ -256,22 +255,8 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
         return null;
       }
   
-      const newTask: Task = {
-        id: data.id,
-        name: data.name,
-        description: data.description || '',
-        categoryId: data.category_id,
-        starValue: data.star_value,
-        completed: data.completed,
-        completedAt: data.completed_at || undefined,
-        familyId: data.family_id,
-        templateId: data.template_id || undefined,
-        assignedTo: data.assigned_to,
-        assignedBy: data.assigned_by,
-        dueDate: data.due_date,
-        status: (data as any).status || 'active',
-      };
-  
+      const newTask: Task = taskFromRow(data);
+
       setTasks(prev => [...prev, newTask]);
       window.dispatchEvent(new CustomEvent('tasks:changed'));
       return newTask;
@@ -322,6 +307,15 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
     let delta = 0;
     if (nowCompleted && !prevCompleted) delta = + (updated.star_value ?? 0);
     if (!nowCompleted && prevCompleted) delta = - (updated.star_value ?? 0);
+
+    if (nowCompleted && !prevCompleted) {
+      const now = Date.now();
+      const lastFire = recentCompletionFires.current.get(taskId);
+      if (lastFire === undefined || now - lastFire > COMPLETION_DEDUP_MS) {
+        recentCompletionFires.current.set(taskId, now);
+        analytics.capture('task_completed', { stars_earned: updated.star_value ?? 0 });
+      }
+    }
     
     console.log(`TasksContext: Task ${taskId} completion changed. Was: ${prevCompleted}, Now: ${nowCompleted}, Stars: ${updated.star_value}, Delta: ${delta}`);
     
@@ -602,9 +596,9 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
     return newTemplate;
   }, [activeFamilyId, user, templates, categories, toast, t]);
 
-  const addTodayTaskFromTemplate = useCallback(async (templateId: string) => {
+  const addTodayTaskFromTemplate = useCallback(async (templateId: string, descriptionOverride?: string) => {
     if (!activeFamilyId || !user) return null;
-  
+
     const template = templates.find(x => x.id === templateId);
     if (!template) {
       console.error('Template not found for Today:', templateId);
@@ -652,7 +646,7 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
     try {
       const insertData = {
         name: template.name,
-        description: template.description || null,
+        description: descriptionOverride ?? template.description ?? null,
         category_id: template.categoryId,
         star_value: template.starValue,
         family_id: activeFamilyId,
@@ -673,21 +667,8 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
         return null;
       }
   
-      const newTask: Task = {
-        id: data.id,
-        name: data.name,
-        description: data.description || '',
-        categoryId: data.category_id,
-        starValue: data.star_value,
-        completed: data.completed,
-        completedAt: data.completed_at || undefined,
-        familyId: data.family_id,
-        templateId: data.template_id || undefined,
-        assignedTo: data.assigned_to,
-        assignedBy: data.assigned_by,
-        dueDate: data.due_date,
-      };
-  
+      const newTask: Task = taskFromRow(data);
+
       setTasks(prev => [...prev, newTask]);
       window.dispatchEvent(new CustomEvent('tasks:changed'));
       return newTask;
@@ -838,6 +819,53 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
     }
   }, [activeFamilyId, toast]);
 
+  const restoreTask = useCallback(async (task: Task): Promise<Task | null> => {
+    if (!activeFamilyId) return null;
+
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .insert([{
+          id: task.id,
+          name: task.name,
+          description: task.description || null,
+          category_id: task.categoryId,
+          star_value: task.starValue,
+          family_id: task.familyId,
+          template_id: task.templateId || null,
+          assigned_to: task.assignedTo,
+          assigned_by: task.assignedBy,
+          due_date: task.dueDate,
+          status: task.status || 'active',
+          completed: !!task.completed,
+          completed_at: task.completedAt || null,
+        }])
+        .select()
+        .single();
+
+      if (error) {
+        toast({
+          title: 'Error',
+          description: `Failed to restore task: ${error.message}`,
+          variant: 'destructive',
+        });
+        return null;
+      }
+
+      const restored: Task = taskFromRow(data);
+      setTasks(prev => (prev.some(t => t.id === restored.id) ? prev : [...prev, restored]));
+      window.dispatchEvent(new CustomEvent('tasks:changed'));
+      return restored;
+    } catch (e: any) {
+      toast({
+        title: 'Error',
+        description: `Failed to restore task: ${e?.message || e}`,
+        variant: 'destructive',
+      });
+      return null;
+    }
+  }, [activeFamilyId, toast]);
+
   const contextValue: TasksContextValue = {
     tasks,
     categories,
@@ -846,6 +874,7 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
     addTask,
     updateTask,
     deleteTask,
+    restoreTask,
     addCategory,
     deleteCategory,
     deleteTemplate,

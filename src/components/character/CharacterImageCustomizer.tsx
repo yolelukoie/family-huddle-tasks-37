@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useCustomCharacterImages } from '@/hooks/useCustomCharacterImages';
 import { useAuth } from '@/hooks/useAuth';
@@ -10,10 +12,13 @@ import { useApp } from '@/hooks/useApp';
 import { getStageName, getCharacterImagePath, getCurrentStage } from '@/lib/character';
 import { useToast } from '@/hooks/use-toast';
 import { Upload, RotateCcw, Loader2, ImageIcon, ChevronDown, Star } from 'lucide-react';
+import { analytics } from '@/lib/analytics';
+import { pickImageFromLibrary } from '@/lib/pickImage';
+import { Capacitor } from '@capacitor/core';
 
 export function CharacterImageCustomizer() {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const { activeFamilyId, getTotalStars } = useApp();
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
@@ -29,14 +34,42 @@ export function CharacterImageCustomizer() {
 
   const fileInputRefs = useRef<{ [key: number]: HTMLInputElement | null }>({});
 
-  const handleUploadClick = (stage: number) => {
+  const characterHidden = user?.characterHidden ?? false;
+  const handleToggleCharacterHidden = async (checked: boolean) => {
+    try {
+      await updateUser({ characterHidden: checked });
+      analytics.capture('character_visibility_changed', { hidden: checked });
+    } catch (e) {
+      console.error('Failed to update character visibility:', e);
+      toast({
+        title: t('personal.updateFailed', 'Update failed'),
+        description: t('personal.updateFailedDesc', 'Please try again.'),
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleUploadClick = async (stage: number) => {
+    // Native (iOS/Android): open Photos picker only — no "Take Photo" option.
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const file = await pickImageFromLibrary();
+        if (file) await processStageFile(stage, file);
+      } catch (error) {
+        console.error('Stage image pick error:', error);
+        toast({
+          title: t('personal.uploadFailed'),
+          description: t('personal.uploadFailedDesc'),
+          variant: 'destructive',
+        });
+      }
+      return;
+    }
+    // Web fallback: use hidden file input.
     fileInputRefs.current[stage]?.click();
   };
 
-  const handleFileChange = async (stage: number, e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const processStageFile = async (stage: number, file: File) => {
     if (!file.type.startsWith('image/')) {
       toast({
         title: t('personal.invalidFileType'),
@@ -56,8 +89,9 @@ export function CharacterImageCustomizer() {
     }
 
     const success = await uploadCustomImage(stage, file);
-    
+
     if (success) {
+      analytics.capture('character_customized', { stage });
       toast({
         title: t('personal.customImageUploaded'),
         description: t('personal.customImageUploadedDesc'),
@@ -69,7 +103,12 @@ export function CharacterImageCustomizer() {
         variant: 'destructive',
       });
     }
+  };
 
+  const handleFileChange = async (stage: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await processStageFile(stage, file);
     if (fileInputRefs.current[stage]) {
       fileInputRefs.current[stage]!.value = '';
     }
@@ -77,7 +116,7 @@ export function CharacterImageCustomizer() {
 
   const handleResetToDefault = async (stage: number) => {
     const success = await deleteCustomImage(stage);
-    
+
     if (success) {
       toast({
         title: t('personal.customImageReset'),
@@ -126,7 +165,23 @@ export function CharacterImageCustomizer() {
             <p className="text-sm text-muted-foreground mb-4">
               {t('personal.customizeCharacterDesc')}
             </p>
-            
+
+            <div className="flex items-start justify-between gap-4 mb-4 pb-4 border-b">
+              <div className="space-y-1">
+                <Label htmlFor="hide-character" className="text-sm font-medium">
+                  {t('personal.hideCharacterToggle')}
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  {t('personal.hideCharacterDesc')}
+                </p>
+              </div>
+              <Switch
+                id="hide-character"
+                checked={characterHidden}
+                onCheckedChange={handleToggleCharacterHidden}
+              />
+            </div>
+
             {isLoading ? (
               <div className="flex justify-center py-8">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -192,7 +247,7 @@ export function CharacterImageCustomizer() {
                         <input
                           ref={(el) => { fileInputRefs.current[stageData.stage] = el; }}
                           type="file"
-                          accept="image/*"
+                          accept="image/png,image/jpeg,image/jpg,image/webp,image/heic,image/heif"
                           onChange={(e) => handleFileChange(stageData.stage, e)}
                           className="hidden"
                         />

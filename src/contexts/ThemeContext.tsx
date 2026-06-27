@@ -67,6 +67,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       root.style.setProperty('--section-tint', lightColors.sectionTint);
       root.style.setProperty('--icon-tint', lightColors.iconTint);
     }
+
   }, [currentTheme]);
 
   return (

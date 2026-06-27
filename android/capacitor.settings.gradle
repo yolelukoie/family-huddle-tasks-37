@@ -2,14 +2,35 @@
 include ':capacitor-android'
 project(':capacitor-android').projectDir = new File('../node_modules/@capacitor/android/capacitor')
 
+include ':capacitor-community-apple-sign-in'
+project(':capacitor-community-apple-sign-in').projectDir = new File('../node_modules/@capacitor-community/apple-sign-in/android')
+
+include ':capacitor-firebase-messaging'
+project(':capacitor-firebase-messaging').projectDir = new File('../node_modules/@capacitor-firebase/messaging/android')
+
 include ':capacitor-app'
 project(':capacitor-app').projectDir = new File('../node_modules/@capacitor/app/android')
+
+include ':capacitor-browser'
+project(':capacitor-browser').projectDir = new File('../node_modules/@capacitor/browser/android')
+
+include ':capacitor-clipboard'
+project(':capacitor-clipboard').projectDir = new File('../node_modules/@capacitor/clipboard/android')
+
+include ':capacitor-keyboard'
+project(':capacitor-keyboard').projectDir = new File('../node_modules/@capacitor/keyboard/android')
 
 include ':capacitor-push-notifications'
 project(':capacitor-push-notifications').projectDir = new File('../node_modules/@capacitor/push-notifications/android')
 
-include ':capacitor-status-bar'
-project(':capacitor-status-bar').projectDir = new File('../node_modules/@capacitor/status-bar/android')
+include ':capawesome-capacitor-file-picker'
+project(':capawesome-capacitor-file-picker').projectDir = new File('../node_modules/@capawesome/capacitor-file-picker/android')
+
+include ':revenuecat-purchases-capacitor'
+project(':revenuecat-purchases-capacitor').projectDir = new File('../node_modules/@revenuecat/purchases-capacitor/android')
+
+include ':southdevs-capacitor-google-auth'
+project(':southdevs-capacitor-google-auth').projectDir = new File('../node_modules/@southdevs/capacitor-google-auth/android')
 
 include ':capacitor-native-settings'
 project(':capacitor-native-settings').projectDir = new File('../node_modules/capacitor-native-settings/android')

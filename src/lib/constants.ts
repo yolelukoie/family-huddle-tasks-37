@@ -159,8 +159,3 @@ export const GOLDEN_CHAPTER_STAGE_BADGES: Badge[] = [
   { id: 'golden_champagne', name: 'Champagne', description: 'Cheers to the best years!', imagePath: '/lovable-uploads/74c56a2a-31e6-452b-ae6d-5f036ced7c9b.png', unlockStars: 990 },
 ];
 
-export const PLACEHOLDER_BADGES: Badge[] = [
-  { id: 'stars_10', name: 'First Steps', description: 'Earned your first 10 stars!', imagePath: '/placeholder-badge.png', unlockStars: 10 },
-  { id: 'stars_20', name: 'Building Momentum', description: 'Reached 20 stars!', imagePath: '/placeholder-badge.png', unlockStars: 20 },
-  { id: 'stars_30', name: 'On Fire', description: 'Amazing! 30 stars earned!', imagePath: '/placeholder-badge.png', unlockStars: 30 },
-];

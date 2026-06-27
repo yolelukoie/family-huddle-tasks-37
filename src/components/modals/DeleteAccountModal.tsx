@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   AlertDialog,
   AlertDialogAction,
+  AlertDialogBody,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -17,6 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { analytics } from '@/lib/analytics';
 import { Trash2, Loader2, AlertTriangle, Mail } from 'lucide-react';
 
 interface DeleteAccountModalProps {
@@ -48,6 +50,10 @@ export function DeleteAccountModal({ userId }: DeleteAccountModalProps) {
       if (data?.error) {
         throw new Error(data.error);
       }
+
+      // Capture analytics BEFORE sign-out so the event still associates with
+      // the (now deleted) user. analytics.reset() in signOut clears identity.
+      analytics.capture('account_deleted');
 
       // Clear all Supabase and app-related localStorage items
       const keysToRemove: string[] = [];
@@ -86,7 +92,7 @@ export function DeleteAccountModal({ userId }: DeleteAccountModalProps) {
   return (
     <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
       <AlertDialogTrigger asChild>
-        <Button variant="destructive" size="sm">
+        <Button variant="destructive" size="sm" className="w-full">
           <Trash2 className="h-4 w-4 mr-2" />
           {t('personal.deleteAccount')}
         </Button>
@@ -97,6 +103,8 @@ export function DeleteAccountModal({ userId }: DeleteAccountModalProps) {
             <AlertTriangle className="h-5 w-5" />
             {t('personal.deleteAccountTitle')}
           </AlertDialogTitle>
+        </AlertDialogHeader>
+        <AlertDialogBody>
           <AlertDialogDescription asChild>
             <div className="space-y-4 text-left">
               <p className="text-sm text-muted-foreground">
@@ -140,7 +148,7 @@ export function DeleteAccountModal({ userId }: DeleteAccountModalProps) {
               </div>
             </div>
           </AlertDialogDescription>
-        </AlertDialogHeader>
+        </AlertDialogBody>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isDeleting}>
             {t('common.cancel')}

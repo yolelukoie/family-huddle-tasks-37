@@ -33,11 +33,3 @@ export function getCurrentPlatform(): Platform {
   return 'web';
 }
 
-/**
- * Check if running as PWA (installed to home screen)
- */
-export function isPWA(): boolean {
-  if (typeof window === 'undefined') return false;
-  return window.matchMedia('(display-mode: standalone)').matches ||
-    (window.navigator as any).standalone === true;
-}

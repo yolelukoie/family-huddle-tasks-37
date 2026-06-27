@@ -15,8 +15,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { useApp } from '@/hooks/useApp';
 import { ROUTES } from '@/lib/constants';
 import { useToast } from '@/hooks/use-toast';
-import { initiateSubscription } from '@/config/subscription';
+import { useSubscription } from '@/hooks/useSubscription';
 import { supabase } from '@/integrations/supabase/client';
+import { CheckCircle } from 'lucide-react';
 
 const StarIcon = () => (
   <svg viewBox="0 0 100 100" className="inline-block w-[1.2em] h-[1.2em] ml-1 align-middle">
@@ -41,6 +42,8 @@ export default function OnboardingPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [familyAction, setFamilyAction] = useState<'create' | 'join'>('create');
+  const { isPremium } = useSubscription();
+  const [trialDismissed, setTrialDismissed] = useState(false);
 
   const onboardingSchema = z.object({
     // Profile fields
@@ -88,6 +91,40 @@ export default function OnboardingPage() {
       navigate(ROUTES.main, { replace: true });
     }
   }, [isLoading, user, navigate]);
+
+  // Scroll focused input into view when iOS keyboard opens
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    let showHandle: { remove: () => void } | null = null;
+    import('@capacitor/keyboard').then(({ Keyboard }) => {
+      Keyboard.addListener('keyboardDidShow', () => {
+        const el = document.activeElement as HTMLElement | null;
+        el?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+      }).then((h) => { showHandle = h; });
+    }).catch(() => {});
+    return () => { showHandle?.remove(); };
+  }, []);
+
+  // Pre-fill the displayName field from data Apple Sign In already provided
+  // (Apple Guideline 4 / HIG: do not re-request the user's name).
+  // Sources, in priority order:
+  //   1. user.displayName (already persisted into the profile)
+  //   2. localStorage 'pending_apple_name' (captured on Apple sign-in before
+  //      the profile reload finished)
+  useEffect(() => {
+    if (form.getValues('displayName')) return; // Don't overwrite user input
+    const fromUser = user?.displayName?.trim();
+    const fromCache = (() => {
+      try { return localStorage.getItem('pending_apple_name')?.trim() ?? ''; }
+      catch { return ''; }
+    })();
+    const prefill = fromUser || fromCache;
+    if (prefill) {
+      form.setValue('displayName', prefill, { shouldValidate: false, shouldDirty: false });
+      // Clear the cache so a future Apple sign-in starts fresh
+      try { localStorage.removeItem('pending_apple_name'); } catch { /* non-fatal */ }
+    }
+  }, [user?.displayName, form]);
 
   const onSubmit = async (data: OnboardingForm) => {
     try {
@@ -195,7 +232,7 @@ export default function OnboardingPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="min-h-[100dvh] bg-background flex items-center justify-center p-4">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">{t('common.loading')}</p>
@@ -205,8 +242,11 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="max-w-md w-full space-y-6">
+    <div
+      className="min-h-[100dvh] bg-background flex flex-col items-center overflow-y-auto p-4"
+      style={{ paddingBottom: 'var(--keyboard-height, 0px)', transition: 'padding-bottom 0.25s ease' }}
+    >
+      <div className="max-w-md w-full space-y-6 pt-8">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-family-warm mb-2">
             {t('onboarding.welcomeTitle')} <StarIcon />
@@ -216,22 +256,28 @@ export default function OnboardingPage() {
           </p>
         </div>
 
-        {/* Trial CTA - TODO: Integrate with RevenueCat */}
-        <Card className="bg-primary/5 border-primary/20">
-          <CardContent className="pt-6 text-center space-y-4">
-            <h2 className="text-xl font-semibold">{t('onboarding.trialTitle')}</h2>
-            <p className="text-sm text-muted-foreground">
-              {t('onboarding.trialDesc')}
-            </p>
-            <Button 
-              onClick={() => user?.id && initiateSubscription(user.id)}
-              className="w-full"
-              disabled={!user?.id}
-            >
-              {t('onboarding.startTrial')}
-            </Button>
-          </CardContent>
-        </Card>
+        {/* Subscription CTA */}
+        {isPremium ? (
+          <Card className="bg-primary/5 border-primary/20">
+            <CardContent className="pt-6 text-center space-y-4">
+              <div className="flex items-center justify-center gap-2 text-green-600">
+                <CheckCircle className="h-5 w-5" />
+                <h2 className="text-xl font-semibold">{t('subscription.status.premium')}</h2>
+              </div>
+              <p className="text-sm text-muted-foreground">{t('subscription.activeDesc')}</p>
+            </CardContent>
+          </Card>
+        ) : !trialDismissed ? (
+          <Card className="bg-primary/5 border-primary/20">
+            <CardContent className="pt-6 text-center space-y-4">
+              <h2 className="text-xl font-semibold">{t('onboarding.trialTitle')}</h2>
+              <p className="text-sm text-muted-foreground">{t('onboarding.trialDesc')}</p>
+              <Button onClick={() => setTrialDismissed(true)} className="w-full">
+                {t('onboarding.startTrial')}
+              </Button>
+            </CardContent>
+          </Card>
+        ) : null}
 
         <Card>
           <CardHeader>

@@ -273,34 +273,43 @@ export type Database = {
         Row: {
           active_family_id: string | null
           avatar_url: string | null
+          character_hidden: boolean
+          hide_default_tasks: boolean
           created_at: string
           display_name: string
           gender: string
           id: string
           preferred_language: string | null
           profile_complete: boolean
+          trial_started_at: string | null
           updated_at: string
         }
         Insert: {
           active_family_id?: string | null
           avatar_url?: string | null
+          character_hidden?: boolean
+          hide_default_tasks?: boolean
           created_at?: string
           display_name: string
           gender: string
           id: string
           preferred_language?: string | null
           profile_complete?: boolean
+          trial_started_at?: string | null
           updated_at?: string
         }
         Update: {
           active_family_id?: string | null
           avatar_url?: string | null
+          character_hidden?: boolean
+          hide_default_tasks?: boolean
           created_at?: string
           display_name?: string
           gender?: string
           id?: string
           preferred_language?: string | null
           profile_complete?: boolean
+          trial_started_at?: string | null
           updated_at?: string
         }
         Relationships: [

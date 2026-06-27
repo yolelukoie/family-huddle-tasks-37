@@ -1,5 +1,4 @@
 import { BABY_STAGE_BADGES, CHILD_STAGE_BADGES, TEENAGER_STAGE_BADGES, YOUNG_ADULT_STAGE_BADGES, ON_THE_RISE_STAGE_BADGES, ADULT_STAGE_BADGES, MATURE_ADULT_STAGE_BADGES, GOLDEN_CHAPTER_STAGE_BADGES } from './constants';
-import { storage } from './storage';
 import type { Badge } from './types';
 
 export function getBabyBadges(totalStars: number): Badge[] {

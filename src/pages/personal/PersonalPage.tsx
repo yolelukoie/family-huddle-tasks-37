@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,16 +11,19 @@ import { useAuth } from '@/hooks/useAuth';
 import { useApp } from '@/hooks/useApp';
 import { useBadges } from '@/hooks/useBadges';
 import { NavigationHeader } from '@/components/layout/NavigationHeader';
-import { Edit, Settings, Upload, Loader2, Languages, Palette, RotateCcw, Bell, BellOff, Trash2 } from 'lucide-react';
+import { Edit, Settings, Upload, Loader2, Languages, Palette, RotateCcw, Bell, BellOff, LogOut } from 'lucide-react';
 import { DeleteAccountModal } from '@/components/modals/DeleteAccountModal';
-import { PushDebugCard } from '@/components/dev/PushDebugCard';
 import { requestPushPermission, getPushPermissionStatus } from '@/lib/pushNotifications';
-import { isPlatform } from '@/lib/platform';
+import { isPlatform, getCurrentPlatform } from '@/lib/platform';
 import { ThemeSelector } from '@/components/theme/ThemeSelector';
 import { CharacterImageCustomizer } from '@/components/character/CharacterImageCustomizer';
 import { useToast } from '@/hooks/use-toast';
-import { initiateSubscription } from '@/config/subscription';
+import { SubscriptionStatusCard } from '@/components/subscription/SubscriptionStatusCard';
 import { supabase } from '@/integrations/supabase/client';
+import { pickImageFromLibrary } from '@/lib/pickImage';
+import { Capacitor } from '@capacitor/core';
+import { Switch } from '@/components/ui/switch';
+import { analytics } from '@/lib/analytics';
 
 const LANGUAGES = [
   { code: 'en', name: 'English', flag: '🇬🇧' },
@@ -28,6 +32,9 @@ const LANGUAGES = [
   { code: 'hi', name: 'हिन्दी', flag: '🇮🇳' },
   { code: 'ru', name: 'Русский', flag: '🇷🇺' },
   { code: 'he', name: 'עברית', flag: '🇮🇱' },
+  { code: 'fr', name: 'Français', flag: '🇫🇷' },
+  { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
+  { code: 'ar', name: 'العربية', flag: '🇸🇦' },
 ];
 
 /** Open the OS notification settings for this app */
@@ -35,7 +42,7 @@ async function openAppNotificationSettings() {
   if (!isPlatform('capacitor')) return false;
   try {
     const { NativeSettings, AndroidSettings, IOSSettings } = await import('capacitor-native-settings');
-    const platform = (await import('@capacitor/core')).Capacitor.getPlatform();
+    const platform = getCurrentPlatform();
     if (platform === 'android') {
       await NativeSettings.openAndroid({ option: AndroidSettings.AppNotification });
     } else {
@@ -61,7 +68,8 @@ async function openBatterySettings() {
 }
 
 export default function PersonalPage() {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, signOut } = useAuth();
+  const navigate = useNavigate();
   const { activeFamilyId, resetCharacterProgress } = useApp();
   const { resetBadgeProgress } = useBadges();
   const { toast } = useToast();
@@ -77,7 +85,30 @@ export default function PersonalPage() {
   });
   const [notificationPermission, setNotificationPermission] = useState<'granted' | 'denied' | 'prompt' | 'unavailable'>('prompt');
   const [isEnablingNotifications, setIsEnablingNotifications] = useState(false);
+  const [analyticsConsent, setAnalyticsConsent] = useState(() => analytics.hasConsent());
+  const [hideDefaults, setHideDefaults] = useState(user?.hideDefaultTasks ?? false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Keep local hideDefaults in sync with the user record (e.g. after profile load).
+  useEffect(() => {
+    setHideDefaults(user?.hideDefaultTasks ?? false);
+  }, [user?.hideDefaultTasks]);
+
+  const handleToggleHideDefaults = async (checked: boolean) => {
+    setHideDefaults(checked); // optimistic
+    try {
+      await updateUser({ hideDefaultTasks: checked });
+      analytics.capture('default_tasks_visibility_changed', { hidden: checked });
+    } catch (e) {
+      console.error('Failed to update default tasks visibility:', e);
+      setHideDefaults(!checked); // revert
+      toast({
+        title: t('personal.updateFailed', 'Update failed'),
+        description: t('personal.updateFailedDesc', 'Please try again.'),
+        variant: 'destructive',
+      });
+    }
+  };
 
   // Check notification permission status (platform-aware)
   useEffect(() => {
@@ -88,21 +119,27 @@ export default function PersonalPage() {
   useEffect(() => {
     const loadLanguagePreference = async () => {
       if (!user?.id) return;
-      
+
       const { data, error } = await supabase
         .from('profiles')
         .select('preferred_language')
         .eq('id', user.id)
         .single();
 
-      if (data?.preferred_language && !error) {
+      if (error) return;
+
+      const localLang = (() => { try { return localStorage.getItem('app-language'); } catch { return null; } })();
+      if (data?.preferred_language && !localLang) {
         setSelectedLanguage(data.preferred_language);
-        await i18n.changeLanguage(data.preferred_language);
         try {
           localStorage.setItem('app-language', data.preferred_language);
         } catch (e) {
           console.warn('Failed to cache language preference:', e);
         }
+        void i18n.changeLanguage(data.preferred_language);
+      } else if (data?.preferred_language) {
+        // Keep the picker UI in sync with whatever DB says, but don't override local cache
+        setSelectedLanguage(data.preferred_language);
       }
     };
 
@@ -122,14 +159,23 @@ export default function PersonalPage() {
     }
   };
 
-  const handleAvatarClick = () => {
+  const handleAvatarClick = async () => {
+    // Native (iOS/Android): open Photos picker only — no "Take Photo" option.
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const file = await pickImageFromLibrary();
+        if (file) await processAvatarFile(file);
+      } catch (error) {
+        console.error('Avatar pick error:', error);
+        toast({ title: t('personal.uploadFailed'), description: t('personal.uploadFailedDesc'), variant: "destructive" });
+      }
+      return;
+    }
+    // Web fallback: use hidden file input.
     fileInputRef.current?.click();
   };
 
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const processAvatarFile = async (file: File) => {
     if (!file.type.startsWith('image/')) {
       toast({ title: t('personal.invalidFileType'), description: t('personal.invalidFileTypeDesc'), variant: "destructive" });
       return;
@@ -167,21 +213,29 @@ export default function PersonalPage() {
       toast({ title: t('personal.uploadFailed'), description: t('personal.uploadFailedDesc'), variant: "destructive" });
     } finally {
       setIsUploadingAvatar(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await processAvatarFile(file);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   const handleLanguageChange = async (language: string) => {
+    const previousLanguage = i18n.language;
     setSelectedLanguage(language);
     await i18n.changeLanguage(language);
     try { localStorage.setItem('app-language', language); } catch {}
-    
+
     try {
       const { error } = await supabase
         .from('profiles')
         .update({ preferred_language: language })
         .eq('id', user.id);
       if (error) throw error;
+      analytics.capture('language_changed', { from: previousLanguage, to: language });
       toast({ title: t('personal.languageUpdated'), description: t('personal.languageUpdatedDesc') });
     } catch (error) {
       console.error('Error updating language:', error);
@@ -189,10 +243,16 @@ export default function PersonalPage() {
     }
   };
 
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/auth', { replace: true });
+  };
+
   const handleResetCharacter = async () => {
     if (window.confirm(t('main.resetConfirm'))) {
       await resetCharacterProgress(activeFamilyId);
       resetBadgeProgress();
+      analytics.capture('character_reset');
       toast({ title: t('personal.characterReset'), description: t('personal.characterResetDesc') });
     }
   };
@@ -210,6 +270,11 @@ export default function PersonalPage() {
       if (success) {
         const newStatus = await getPushPermissionStatus();
         setNotificationPermission(newStatus);
+        analytics.capture('notification_permission_changed', {
+          status: newStatus,
+          platform: getCurrentPlatform(),
+          source: 'personal_page',
+        });
         if (newStatus === 'granted') {
           toast({
             title: t('notifications.enabled') || 'Notifications enabled',
@@ -242,10 +307,15 @@ export default function PersonalPage() {
     setIsEnablingNotifications(true);
     const { success, error } = await requestPushPermission(user.id);
     setIsEnablingNotifications(false);
-    
+
     const newStatus = await getPushPermissionStatus();
     setNotificationPermission(newStatus);
-    
+    analytics.capture('notification_permission_changed', {
+      status: newStatus,
+      platform: getCurrentPlatform(),
+      source: 'personal_page',
+    });
+
     if (success) {
       toast({ title: t('notifications.enabled'), description: t('notifications.enabledDesc') });
     } else {
@@ -262,10 +332,12 @@ export default function PersonalPage() {
   const isNotificationEnabled = notificationPermission === 'granted';
 
   return (
-    <div className="min-h-screen bg-background">
-      <NavigationHeader title={t('personal.title')} showBackButton />
+    <div className="min-h-[100dvh] bg-background">
+      <NavigationHeader title={t('personal.title')} />
       
       <div className="max-w-4xl mx-auto p-4 space-y-6">
+        <h1 className="text-2xl font-bold bg-gradient-to-r from-[hsl(var(--icon-tint))] to-[hsl(var(--family-celebration))] bg-clip-text text-transparent">{t('personal.title')}</h1>
+
         {/* Avatar Upload */}
         <Card>
           <CardHeader>
@@ -286,8 +358,8 @@ export default function PersonalPage() {
                 </div>
               )}
             </div>
-            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
-            <Button variant="theme" onClick={handleAvatarClick} disabled={isUploadingAvatar}>
+            <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/jpg,image/webp,image/heic,image/heif" onChange={handleAvatarUpload} className="hidden" />
+            <Button variant="outline" onClick={handleAvatarClick} disabled={isUploadingAvatar}>
               <Upload className="h-4 w-4 mr-2" />
               {isUploadingAvatar ? t('personal.uploading') : t('personal.uploadPhoto')}
             </Button>
@@ -362,6 +434,30 @@ export default function PersonalPage() {
         {/* Character Image Customization */}
         <CharacterImageCustomizer />
 
+        {/* Tasks display preferences */}
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('personal.tasksDisplayTitle')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-1">
+                <Label htmlFor="hide-defaults-toggle" className="text-sm font-medium">
+                  {t('personal.hideDefaultsToggle')}
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  {t('personal.hideDefaultsDesc')}
+                </p>
+              </div>
+              <Switch
+                id="hide-defaults-toggle"
+                checked={hideDefaults}
+                onCheckedChange={handleToggleHideDefaults}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Notifications */}
         <Card>
           <CardHeader>
@@ -374,7 +470,7 @@ export default function PersonalPage() {
             <div className="space-y-4">
               <div className="flex items-start gap-3">
                 <div className={`rounded-full p-2 ${
-                  isNotificationEnabled ? 'bg-green-500/10' : 'bg-muted'
+                  isNotificationEnabled ? 'bg-[hsl(var(--family-success))]/10' : 'bg-muted'
                 }`}>
                   {isNotificationEnabled ? (
                     <Bell className="h-4 w-4 text-green-500" />
@@ -404,6 +500,7 @@ export default function PersonalPage() {
                     variant="outline"
                     onClick={() => openAppNotificationSettings()}
                     size="sm"
+                    className="w-full"
                   >
                     <Settings className="h-4 w-4 mr-2" />
                     {t('notifications.manageInSettings') || 'Manage in Settings'}
@@ -453,55 +550,71 @@ export default function PersonalPage() {
           </CardContent>
         </Card>
 
-        {/* Push Debug (collapsible) */}
-        <PushDebugCard />
-
-        {/* Subscription */}
+        {/* Analytics consent */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Settings className="h-5 w-5" />
-              {t('personal.subscription')}
-            </CardTitle>
+            <CardTitle>{t('personal.analyticsTitle', 'Help improve Family Huddle')}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">{t('personal.subscriptionDesc')}</p>
-            <Button variant="theme" onClick={() => user?.id && initiateSubscription(user.id)} disabled={!user?.id}>
-              {t('personal.manageSubscription')}
-            </Button>
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-1">
+                <Label htmlFor="analytics-consent" className="text-sm font-medium">
+                  {t('personal.analyticsToggle', 'Share anonymous usage data')}
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  {t('personal.analyticsDesc', 'Helps us find and fix bugs faster. No personal info, no ads.')}
+                </p>
+              </div>
+              <Switch
+                id="analytics-consent"
+                checked={analyticsConsent}
+                onCheckedChange={(checked) => {
+                  setAnalyticsConsent(checked);
+                  analytics.setConsent(checked);
+                }}
+              />
+            </div>
           </CardContent>
         </Card>
 
-        {/* Reset Character */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <RotateCcw className="h-5 w-5" />
-              {t('personal.resetCharacter')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">{t('personal.resetCharacterDesc')}</p>
-            <Button onClick={handleResetCharacter} variant="destructive" size="sm">
+        {/* Subscription */}
+        <SubscriptionStatusCard />
+
+        {/* Danger Zone */}
+        <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-4 space-y-4">
+          <h3 className="text-sm font-semibold text-destructive uppercase tracking-wide">{t('personal.dangerZone', 'Danger Zone')}</h3>
+
+          {/* Log Out */}
+          <Button
+            variant="outline"
+            className="w-full text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
+            onClick={handleSignOut}
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            {t('common.logOut', 'Log out')}
+          </Button>
+
+          {/* Reset Character */}
+          <div className="flex flex-col gap-2">
+            <div>
+              <p className="font-medium">{t('personal.resetCharacter')}</p>
+              <p className="text-sm text-muted-foreground">{t('personal.resetCharacterDesc')}</p>
+            </div>
+            <Button onClick={handleResetCharacter} variant="destructive" className="w-full">
               <RotateCcw className="h-4 w-4 mr-2" />
               {t('personal.resetCharacter')}
             </Button>
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Delete Account - Compact */}
-        <Card className="border-destructive/30">
-          <CardContent className="py-4 px-4 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 min-w-0">
-              <Trash2 className="h-4 w-4 text-destructive shrink-0" />
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-destructive">{t('personal.deleteAccount')}</p>
-                <p className="text-xs text-muted-foreground truncate">{t('personal.deleteAccountDesc')}</p>
-              </div>
+          {/* Delete Account */}
+          <div className="flex flex-col gap-2">
+            <div>
+              <p className="font-medium text-destructive">{t('personal.deleteAccount')}</p>
+              <p className="text-sm text-muted-foreground">{t('personal.deleteAccountDesc')}</p>
             </div>
             <DeleteAccountModal userId={user.id} />
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Legal Links */}
         <div className="flex justify-center gap-4 text-sm text-muted-foreground py-4 flex-wrap">

@@ -57,19 +57,19 @@ export const ThemeSelector = () => {
               {/* Theme Preview Colors */}
               <div className="flex gap-2 mb-3">
                 <div
-                  className="w-8 h-8 rounded-full border-2 border-border"
+                  className="w-8 h-8 rounded-full ring-2 ring-offset-1 ring-primary"
                   style={{ backgroundColor: `hsl(${theme.colors.light.primary})` }}
                 />
                 <div
-                  className="w-8 h-8 rounded-full border-2 border-border"
+                  className="w-8 h-8 rounded-full ring-2 ring-offset-1 ring-primary"
                   style={{ backgroundColor: `hsl(${theme.colors.light.secondary})` }}
                 />
                 <div
-                  className="w-8 h-8 rounded-full border-2 border-border"
+                  className="w-8 h-8 rounded-full ring-2 ring-offset-1 ring-primary"
                   style={{ backgroundColor: `hsl(${theme.colors.light.familyWarm})` }}
                 />
                 <div
-                  className="w-8 h-8 rounded-full border-2 border-border"
+                  className="w-8 h-8 rounded-full ring-2 ring-offset-1 ring-primary"
                   style={{ backgroundColor: `hsl(${theme.colors.light.familyCelebration})` }}
                 />
               </div>

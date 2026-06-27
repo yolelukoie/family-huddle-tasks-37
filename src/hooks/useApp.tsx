@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
+import { analytics } from '@/lib/analytics';
 import type { Family, UserFamily, User } from '@/lib/types';
 import { storage } from '@/lib/storage';
 import { scopedStorage } from '@/lib/scopedStorage';
@@ -17,7 +18,6 @@ interface AppContextType {
   // Family actions
   createFamily: (name: string) => Promise<string>;
   joinFamily: (inviteCode: string) => Promise<Family | null>;
-  switchFamily: (familyId: string) => Promise<void>;
   setActiveFamilyId: (familyId: string) => Promise<void>;
   updateFamilyName: (familyId: string, name: string) => Promise<void>;
   quitFamily: (familyId: string) => Promise<boolean>;
@@ -427,6 +427,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       // Set as active family AND ensure profile is marked complete
       await updateUser({ activeFamilyId: family.id, profileComplete: true });
 
+      analytics.capture('family_created', { family_size: 1 });
+
       return family.id;
     } catch (error) {
       console.error('Failed to create family:', error);
@@ -526,6 +528,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       console.log('useApp: Setting active family to:', family.id);
       await updateUser({ activeFamilyId: family.id, profileComplete: true });
 
+      analytics.capture('family_joined');
+
       console.log('useApp: Successfully completed joinFamily process');
       return convertedFamily;
     } catch (error) {
@@ -583,13 +587,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Error hydrating active family:', error);
     }
-  };
-
-  const switchFamily = async (familyId: string): Promise<void> => {
-    await updateUser({ activeFamilyId: familyId });
-    await hydrateActiveFamily(); // immediate re-hydration
-    window.dispatchEvent(new CustomEvent('tasks:changed')); // TasksProvider will reload
-    window.dispatchEvent(new CustomEvent('badges:changed')); // badges hook will reload
   };
 
   const setActiveFamilyId = async (familyId: string): Promise<void> => {
@@ -768,6 +765,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       // Force reload from Supabase to ensure consistency
       await loadFamilyData();
 
+      analytics.capture('family_quit');
+
       return true;
     } catch (error) {
       console.error('Failed to quit family:', error);
@@ -883,6 +882,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       // Refresh family members to get server truth
       await fetchFamilyMembers(familyId);
+
+      analytics.capture('family_member_removed');
 
       return true;
     } catch (error) {
@@ -1012,6 +1013,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       // Refresh family members to get server truth
       await fetchFamilyMembers(familyId);
 
+      analytics.capture('family_member_blocked', { reason, duration });
+
       return true;
     } catch (error) {
       console.error('Failed to block family member:', error);
@@ -1107,6 +1110,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       // Refresh family members to get server truth
       await fetchFamilyMembers(familyId);
 
+      analytics.capture('family_member_unblocked');
+
       return true;
     } catch (error) {
       console.error('Failed to unblock family member:', error);
@@ -1120,6 +1125,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const getFamilyMembers = (familyId: string): UserFamily[] => {
     return allFamilyMembers[familyId] || [];
   };
+
+  useEffect(() => {
+    if (!activeFamilyId || !user) return;
+    const members = allFamilyMembers[activeFamilyId];
+    const fam = families.find((f) => f.id === activeFamilyId);
+    if (!members || !fam) return;
+    analytics.setPersonProperties({
+      family_role: fam.createdBy === user.id ? 'creator' : 'member',
+      family_size: members.length,
+    });
+  }, [activeFamilyId, allFamilyMembers, families, user]);
 
   const getUserProfile = (userId: string): User | null => {
     return userProfiles[userId] || null;
@@ -1432,7 +1448,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       isLoading,
       createFamily,
       joinFamily,
-      switchFamily,
       setActiveFamilyId,
       updateFamilyName,
       quitFamily,

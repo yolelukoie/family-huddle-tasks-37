@@ -1,5 +1,6 @@
 // Capacitor Native Push Notifications for iOS and Android
 import { PushNotifications, Token, PushNotificationSchema, ActionPerformed } from '@capacitor/push-notifications';
+import { FirebaseMessaging } from '@capacitor-firebase/messaging';
 import { Capacitor } from '@capacitor/core';
 import { isPlatform, getCurrentPlatform } from './platform';
 import { supabase } from '@/integrations/supabase/client';
@@ -108,19 +109,40 @@ function initListeners(): void {
   // Create notification channel before registering
   ensureNotificationChannel();
 
-  // Token received from APNs / FCM
+  // Token received from APNs / FCM via @capacitor/push-notifications
+  // On Android this is the FCM token; on iOS this is the APNs token.
+  // FirebaseMessaging listener below provides the real FCM token on iOS.
   PushNotifications.addListener('registration', async (token: Token) => {
-    currentDeviceToken = token.value;
-    console.log('[NativePush] ✓ Token received:', token.value.slice(0, 20) + '...');
+    const runtimePlatform = Capacitor.getPlatform();
+    console.log('[NativePush] ✓ PushNotifications registration token (platform=' + runtimePlatform + '):', token.value.slice(0, 20) + '...');
 
+    // On Android: this IS the FCM token — save it directly.
+    // On iOS: this is the APNs token; FirebaseMessaging will provide the FCM token.
+    if (runtimePlatform === 'android') {
+      currentDeviceToken = token.value;
+      const uid = currentUserId;
+      if (!uid) {
+        console.warn('[NativePush] ⚠️ No current user ID when token received — buffering token');
+        pendingToken = token.value;
+        return;
+      }
+      await saveTokenToDb(token.value, uid);
+    }
+  });
+
+  // FCM token via @capacitor-firebase/messaging — provides the real FCM token on iOS.
+  // On iOS, @capacitor/push-notifications 'registration' returns APNs token,
+  // but FCM needs an FCM registration token. This listener gets the right token.
+  FirebaseMessaging.addListener('tokenReceived', async ({ token }) => {
+    console.log('[NativePush] ✓ FCM Token received via FirebaseMessaging, len=', token?.length);
+    currentDeviceToken = token;
     const uid = currentUserId;
     if (!uid) {
-      console.warn('[NativePush] ⚠️ No current user ID when token received — buffering token');
-      pendingToken = token.value;
+      console.warn('[NativePush] ⚠️ No current user ID when FCM token received — buffering');
+      pendingToken = token;
       return;
     }
-
-    await saveTokenToDb(token.value, uid);
+    await saveTokenToDb(token, uid);
   });
 
   PushNotifications.addListener('registrationError', (error) => {
@@ -244,15 +266,33 @@ export async function registerNativePush(userId: string): Promise<{ success: boo
     try {
       await PushNotifications.register();
       console.log('[NativePush] ✓ PushNotifications.register() completed');
-    } catch (regError: any) {
-      console.error('[NativePush] ❌ PushNotifications.register() THREW:', regError?.message || JSON.stringify(regError));
-      return { success: false, error: regError?.message || 'register() failed' };
+    } catch (regError: unknown) {
+      const e = regError as { message?: string };
+      console.error('[NativePush] ❌ PushNotifications.register() THREW:', e?.message || JSON.stringify(regError));
+      return { success: false, error: e?.message || 'register() failed' };
+    }
+
+    // Explicitly fetch FCM token via FirebaseMessaging (covers cases where
+    // the tokenReceived listener doesn't auto-fire on first launch / cache hit)
+    try {
+      const { token } = await FirebaseMessaging.getToken();
+      if (token) {
+        console.log('[NativePush] ✓ FirebaseMessaging.getToken() returned tokenLen=', token.length);
+        currentDeviceToken = token;
+        if (currentUserId) {
+          await saveTokenToDb(token, currentUserId);
+        } else {
+          pendingToken = token;
+        }
+      }
+    } catch (fcmErr) {
+      console.warn('[NativePush] ⚠️ FirebaseMessaging.getToken() failed (non-fatal):', fcmErr);
     }
 
     // 10s timeout warning
     setTimeout(() => {
       if (!currentDeviceToken || currentDeviceToken === tokenBeforeRegister) {
-        console.warn('[NativePush] ⚠️ No token received 10s after register(). Check Firebase setup / Google Play Services.');
+        console.warn('[NativePush] ⚠️ No token received 10s after register(). Check Firebase + native messaging setup.');
       }
     }, 10000);
 
@@ -336,7 +376,3 @@ export async function deleteNativePushToken(userId: string): Promise<void> {
   currentUserId = null;
 }
 
-/** Expose current token for debug UI */
-export function getNativeDeviceToken(): string | null {
-  return currentDeviceToken;
-}

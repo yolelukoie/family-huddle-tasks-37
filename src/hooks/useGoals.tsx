@@ -5,6 +5,7 @@ import { useCelebrations } from './useCelebrations';
 import { supabase } from '@/integrations/supabase/client';
 import { Goal } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import { analytics } from '@/lib/analytics';
 
 export function useGoals() {
   const { user } = useAuth();
@@ -125,6 +126,10 @@ export function useGoals() {
       };
 
       setGoals(prev => [newGoal, ...prev]);
+      analytics.capture('goal_created', {
+        target_stars: data.target_stars,
+        has_category: (data.target_categories?.length ?? 0) > 0,
+      });
       return newGoal;
     } catch (error) {
       console.error('Error in createGoal:', error);
@@ -180,70 +185,66 @@ export function useGoals() {
         .select('*')
         .eq('user_id', user.id)
         .eq('family_id', activeFamilyId)
-        .eq('completed', false)
-        .limit(1);
+        .eq('completed', false);
 
       if (error) {
         console.error('Error loading goals:', error);
         return;
       }
 
-      const activeGoal = goals && goals.length > 0 ? goals[0] : null;
-      if (!activeGoal) return;
+      const matchingGoals = goals?.filter(g => {
+        if (!g.target_categories || g.target_categories.length === 0) return true;
+        return g.target_categories.includes(taskCategoryId);
+      }) || [];
 
-      // Check if this task's category should count towards the goal
-      let shouldCount = true;
-      if (activeGoal.target_categories && activeGoal.target_categories.length > 0) {
-        shouldCount = activeGoal.target_categories.includes(taskCategoryId);
-      }
+      for (const activeGoal of matchingGoals) {
+        const newCurrentStars = activeGoal.current_stars + starValue;
+        const isCompleted = newCurrentStars >= activeGoal.target_stars;
 
-      if (!shouldCount) return;
+        const { error: updateError } = await supabase
+          .from('goals')
+          .update({
+            current_stars: newCurrentStars,
+            completed: isCompleted,
+            completed_at: isCompleted ? new Date().toISOString() : null
+          })
+          .eq('id', activeGoal.id);
 
-      // Update goal progress
-      const newCurrentStars = activeGoal.current_stars + starValue;
-      const isCompleted = newCurrentStars >= activeGoal.target_stars;
+        if (updateError) {
+          console.error('Error updating goal:', updateError);
+          continue;
+        }
 
-      const { error: updateError } = await supabase
-        .from('goals')
-        .update({
-          current_stars: newCurrentStars,
-          completed: isCompleted,
-          completed_at: isCompleted ? new Date().toISOString() : null
-        })
-        .eq('id', activeGoal.id);
-
-      if (updateError) {
-        console.error('Error updating goal:', updateError);
-        return;
-      }
-
-      // Show celebration if goal is completed
-      if (isCompleted) {
-        const completedGoal: Goal = {
-          id: activeGoal.id,
-          familyId: activeGoal.family_id,
-          userId: activeGoal.user_id,
-          targetStars: activeGoal.target_stars,
-          targetCategories: activeGoal.target_categories,
-          reward: activeGoal.reward,
-          currentStars: newCurrentStars,
-          completed: true,
-          completedAt: new Date().toISOString(),
-          createdAt: activeGoal.created_at,
-        };
-        addCelebration({ type: 'goal', goal: completedGoal });
+        if (isCompleted) {
+          const completedGoal: Goal = {
+            id: activeGoal.id,
+            familyId: activeGoal.family_id,
+            userId: activeGoal.user_id,
+            targetStars: activeGoal.target_stars,
+            targetCategories: activeGoal.target_categories,
+            reward: activeGoal.reward,
+            currentStars: newCurrentStars,
+            completed: true,
+            completedAt: new Date().toISOString(),
+            createdAt: activeGoal.created_at,
+          };
+          addCelebration({ type: 'goal', goal: completedGoal });
+          analytics.capture('goal_completed', { target_stars: activeGoal.target_stars });
+        }
       }
     } catch (error) {
       console.error('Error in updateGoalProgress:', error);
     }
   }, [user, activeFamilyId, addCelebration]);
 
-  const activeGoal = goals.find(g => !g.completed);
+  const activeGoals = goals.filter(g => !g.completed);
+  const activeGoal = activeGoals[0];
   const completedGoals = goals.filter(g => g.completed);
 
   return {
     goals,
     activeGoal,
+    activeGoals,
     completedGoals,
     loading,
     createGoal,

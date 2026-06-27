@@ -55,7 +55,7 @@ export function FamilyStep() {
     
     try {
       await createFamily(data.familyName);
-      navigate(ROUTES.main);
+      navigate(ROUTES.main, { replace: true });
       toast({
         title: "Family created!",
         description: `Welcome to ${data.familyName}! 🎉`,
@@ -73,7 +73,7 @@ export function FamilyStep() {
     try {
       const family = await joinFamily(data.inviteCode);
       if (family) {
-        navigate(ROUTES.main);
+        navigate(ROUTES.main, { replace: true });
         toast({
           title: "Joined family!",
           description: `Welcome to ${family.name}! 🎉`,

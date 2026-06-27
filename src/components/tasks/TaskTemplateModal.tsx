@@ -2,7 +2,7 @@ import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogBody, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useTasks } from '@/hooks/useTasks';
 import { useToast } from '@/hooks/use-toast';
+import { useFeatureGate } from '@/hooks/useFeatureGate';
 import type { TaskCategory } from '@/lib/types';
 
 const taskTemplateSchema = z.object({
@@ -33,6 +34,7 @@ export function TaskTemplateModal({ open, onOpenChange, category, familyId, onTe
   const { user } = useAuth();
   const { toast } = useToast();
   const { addTemplate } = useTasks();
+  const { gate } = useFeatureGate();
 
   const form = useForm<TaskTemplateForm>({
     resolver: zodResolver(taskTemplateSchema),
@@ -46,30 +48,32 @@ export function TaskTemplateModal({ open, onOpenChange, category, familyId, onTe
   // All users can edit star values now
   const canEditStars = true;
 
-  const onSubmit = async (data: TaskTemplateForm) => {
+  const onSubmit = (data: TaskTemplateForm) => {
     if (!user) return;
 
-    const result = await addTemplate({
-      categoryId: category.id,
-      familyId: familyId,
-      name: data.name,
-      description: data.description || '',
-      starValue: data.starValue,
-      isDefault: false,
-      isDeletable: true,
-      createdBy: user.id,
-    });
-    
-    if (result) {
-      toast({
-        title: t('tasks.taskTemplateCreated'),
-        description: `"${data.name}" ${t('tasks.addedToCategory')} ${category.name}.`,
+    gate(async () => {
+      const result = await addTemplate({
+        categoryId: category.id,
+        familyId: familyId,
+        name: data.name,
+        description: data.description || '',
+        starValue: data.starValue,
+        isDefault: false,
+        isDeletable: true,
+        createdBy: user.id,
       });
 
-      form.reset();
-      onOpenChange(false);
-      onTemplateCreated?.();
-    }
+      if (result) {
+        toast({
+          title: t('tasks.taskTemplateCreated'),
+          description: `"${data.name}" ${t('tasks.addedToCategory')} ${category.name}.`,
+        });
+
+        form.reset();
+        onOpenChange(false);
+        onTemplateCreated?.();
+      }
+    });
   };
 
   return (
@@ -82,6 +86,7 @@ export function TaskTemplateModal({ open, onOpenChange, category, familyId, onTe
           </DialogDescription>
         </DialogHeader>
 
+        <DialogBody>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
@@ -151,6 +156,7 @@ export function TaskTemplateModal({ open, onOpenChange, category, familyId, onTe
             </div>
           </form>
         </Form>
+        </DialogBody>
       </DialogContent>
     </Dialog>
   );
