@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useCustomCharacterImages } from '@/hooks/useCustomCharacterImages';
 import { useAuth } from '@/hooks/useAuth';
@@ -16,7 +18,7 @@ import { Capacitor } from '@capacitor/core';
 
 export function CharacterImageCustomizer() {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const { activeFamilyId, getTotalStars } = useApp();
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
@@ -31,6 +33,21 @@ export function CharacterImageCustomizer() {
   } = useCustomCharacterImages();
 
   const fileInputRefs = useRef<{ [key: number]: HTMLInputElement | null }>({});
+
+  const characterHidden = user?.characterHidden ?? false;
+  const handleToggleCharacterHidden = async (checked: boolean) => {
+    try {
+      await updateUser({ characterHidden: checked });
+      analytics.capture('character_visibility_changed', { hidden: checked });
+    } catch (e) {
+      console.error('Failed to update character visibility:', e);
+      toast({
+        title: t('personal.updateFailed', 'Update failed'),
+        description: t('personal.updateFailedDesc', 'Please try again.'),
+        variant: 'destructive',
+      });
+    }
+  };
 
   const handleUploadClick = async (stage: number) => {
     // Native (iOS/Android): open Photos picker only — no "Take Photo" option.
@@ -148,7 +165,23 @@ export function CharacterImageCustomizer() {
             <p className="text-sm text-muted-foreground mb-4">
               {t('personal.customizeCharacterDesc')}
             </p>
-            
+
+            <div className="flex items-start justify-between gap-4 mb-4 pb-4 border-b">
+              <div className="space-y-1">
+                <Label htmlFor="hide-character" className="text-sm font-medium">
+                  {t('personal.hideCharacterToggle')}
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  {t('personal.hideCharacterDesc')}
+                </p>
+              </div>
+              <Switch
+                id="hide-character"
+                checked={characterHidden}
+                onCheckedChange={handleToggleCharacterHidden}
+              />
+            </div>
+
             {isLoading ? (
               <div className="flex justify-center py-8">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />

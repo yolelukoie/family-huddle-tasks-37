@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { analytics } from '@/lib/analytics';
+import i18n from 'i18next';
 import type { User as SupabaseUser, Session } from "@supabase/supabase-js";
 import type { User } from "@/lib/types";
 import { generateId } from "@/lib/utils";
@@ -34,7 +35,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: any }>;
   isEmailRegistered: (email: string) => Promise<boolean>;
-  createUser: (userData: Omit<User, "id" | "age" | "profileComplete">) => Promise<User>;
+  createUser: (userData: Omit<User, "id" | "profileComplete">) => Promise<User>;
   updateUser: (updates: Partial<User>) => Promise<void>;
   logout: () => void;
   clearAuth: () => void;
@@ -98,19 +99,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         activeFamilyId: profile.active_family_id,
         avatar_url: profile.avatar_url,
         trialStartedAt: profile.trial_started_at ?? undefined,
+        characterHidden: profile.character_hidden ?? false,
+        preferred_language: profile.preferred_language ?? null,
       };
       setUser(mapped);
-      analytics.identify(mapped.id);
+
+      if (profile.preferred_language && profile.preferred_language !== i18n.language) {
+        try { localStorage.setItem('app-language', profile.preferred_language); } catch { /* ignore */ }
+        void i18n.changeLanguage(profile.preferred_language);
+      }
     } catch (err) {
       console.error("Error in loadUserData:", err);
       setUser(null);
     }
-  }, []);
-
-  // Migrate user data from localStorage to Supabase
-  const migrateFromLocalStorage = useCallback(async (_userId: string) => {
-    // Disabled during testing; Supabase is the source of truth.
-    return;
   }, []);
 
   // Initialize auth state
@@ -129,6 +130,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setSession(session);
       const uid = getUserId(session);
+      if (uid) {
+        analytics.identify(uid);
+      }
       await loadUserData(uid ? (session?.user ?? null) : null);
       if (!isMounted) return;
       setIsLoading(false);
@@ -139,6 +143,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         setSession(nextSession);
         setIsLoading(false);
+
+        if (nextSession?.user?.id) {
+          analytics.identify(nextSession.user.id);
+        }
 
         window.setTimeout(() => {
           if (!isMounted) return;
@@ -310,6 +318,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setUser(null);
       setSession(null);
+      analytics.capture('sign_out');
       analytics.reset();
       // Clear cached app data
       const keysToRemove: string[] = [];
@@ -347,6 +356,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         id: uid,
         profileComplete: true,
         trialStartedAt: trialStartedAt,
+        // Explicit default — the DB column defaults to false, but we keep the
+        // local in-memory user object aligned with that default so downstream
+        // hooks (e.g. useCustomCharacterImages) see a concrete boolean.
+        characterHidden: userData.characterHidden ?? false,
       };
 
       try {
@@ -393,6 +406,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if ('profileComplete' in updates) dbUpdates.profile_complete = updates.profileComplete;
       if ('activeFamilyId' in updates) dbUpdates.active_family_id = updates.activeFamilyId ?? null;
       if ('avatar_url' in updates) dbUpdates.avatar_url = updates.avatar_url ?? null;
+      if ('characterHidden' in updates) dbUpdates.character_hidden = updates.characterHidden ?? false;
 
       // Merge updates with current state for local state update
       const updatedUser = { ...user, ...updates };
@@ -409,17 +423,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           throw error;
         }
 
-        // Update local state immediately after successful Supabase update
+        // Update local state ONLY after successful Supabase update
         const userKey = `${USER_KEY}_${uid}`;
         localStorage.setItem(userKey, JSON.stringify(updatedUser));
         setUser(updatedUser);
         console.log("User profile updated successfully:", updatedUser);
       } catch (error) {
         console.error("Error updating profile:", error);
-        // Still update local state as fallback
-        const userKey = `${USER_KEY}_${uid}`;
-        localStorage.setItem(userKey, JSON.stringify(updatedUser));
-        setUser(updatedUser);
         throw error;
       }
     },

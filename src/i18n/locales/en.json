@@ -26,7 +26,8 @@
     "assignTask": "Assign Task",
     "resetCharacter": "Reset Character",
     "resetConfirm": "Are you sure? This will reset your character progress for this family only.",
-    "completeTask": "Complete"
+    "completeTask": "Complete",
+    "yourProgress": "Your Progress"
   },
   "tasks": {
     "title": "Tasks",
@@ -224,6 +225,12 @@
     "characterResetDesc": "Your character progress has been reset successfully.",
     "customizeCharacter": "Customize Character",
     "customizeCharacterDesc": "Each image represents a stage of your character's growth. As you earn stars, your character evolves through these stages. Upload custom images or use the defaults.",
+    "analyticsTitle": "Help improve Family Huddle",
+    "analyticsToggle": "Share anonymous usage data",
+    "analyticsDesc": "Helps us find and fix bugs faster. No personal info, no ads.",
+    "dangerZone": "Danger Zone",
+    "hideCharacterToggle": "Hide character",
+    "hideCharacterDesc": "Hides the character image and achievement icons on your home screen. Your stars, progress, and goals are unchanged.",
     "currentStage": "You are here",
     "customImageUploaded": "Custom image uploaded",
     "customImageUploadedDesc": "Your custom character image has been saved.",
@@ -707,6 +714,8 @@
     "report": "Report",
     "creating": "Creating...",
     "confirm": "Confirm",
+    "logOut": "Log out",
+    "unknown": "Unknown",
     "deleteCategoryTitle": "Delete Category",
     "deleteCategoryDesc": "This will permanently delete the category and all its templates and tasks. This action cannot be undone."
   }

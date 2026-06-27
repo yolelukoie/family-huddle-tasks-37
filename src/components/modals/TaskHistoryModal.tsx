@@ -1,7 +1,6 @@
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogBody, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { useApp } from '@/hooks/useApp';
 import { useTasks } from '@/hooks/useTasks';
 import { formatDate } from '@/lib/utils';
@@ -25,7 +24,7 @@ export function TaskHistoryModal({ open, onOpenChange }: TaskHistoryModalProps) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh]">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>{t('taskHistory.title')}</DialogTitle>
           <DialogDescription>
@@ -33,7 +32,7 @@ export function TaskHistoryModal({ open, onOpenChange }: TaskHistoryModalProps) 
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="h-[400px] pr-4">
+        <DialogBody className="pr-4">
           {completedTasks.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               {t('taskHistory.noTasks')}
@@ -66,7 +65,7 @@ export function TaskHistoryModal({ open, onOpenChange }: TaskHistoryModalProps) 
               })}
             </div>
           )}
-        </ScrollArea>
+        </DialogBody>
       </DialogContent>
     </Dialog>
   );

@@ -6,6 +6,8 @@ export interface User {
   activeFamilyId?: string;
   avatar_url?: string;
   trialStartedAt?: string;
+  characterHidden?: boolean;
+  preferred_language?: string | null;
 }
 
 export interface Family {

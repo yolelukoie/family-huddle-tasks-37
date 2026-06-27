@@ -1,20 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import { useAuth } from './useAuth';
 import { useApp } from './useApp';
 import { supabase } from '@/integrations/supabase/client';
 import type { ChatMessage } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { ROUTES } from '@/lib/constants';
 import { analytics } from '@/lib/analytics';
 
 export function useChat() {
   const { user } = useAuth();
   const { activeFamilyId, getUserProfile } = useApp();
   const { toast } = useToast();
-  const location = useLocation();
-  const { t } = useTranslation();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
@@ -101,7 +96,23 @@ export function useChat() {
     loadMessages();
   }, [loadMessages]);
 
-  // Realtime subscription for new messages
+  // Realtime subscription for new messages.
+  //
+  // NOTE: There is a SECOND `postgres_changes` subscription to `chat_messages`
+  // in src/hooks/useRealtimeNotifications.tsx (`chat-toast:*` channel) that is
+  // responsible for firing the global "new message" toast when the user is NOT
+  // on the chat page. We intentionally keep them separate:
+  //
+  //   - This channel (`chat-page:*`) is mounted only while ChatPage uses the
+  //     hook, and feeds the in-page message list.
+  //   - That channel (`chat-toast:*`) is mounted globally via AppLayout, so
+  //     toasts continue to surface even when this hook is unmounted.
+  //
+  // Consolidating would require lifting state up + a callback, with non-trivial
+  // lifecycle risk (lost messages on route transitions, double toasts). The
+  // duplication is cheap (one extra WS subscription per signed-in session) and
+  // is the lower-risk choice. Revisit if the chat-page hook is moved to a
+  // global context.
   useEffect(() => {
     if (!activeFamilyId || !user?.id) return;
 

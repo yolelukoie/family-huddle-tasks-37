@@ -765,6 +765,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       // Force reload from Supabase to ensure consistency
       await loadFamilyData();
 
+      analytics.capture('family_quit');
+
       return true;
     } catch (error) {
       console.error('Failed to quit family:', error);
@@ -880,6 +882,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       // Refresh family members to get server truth
       await fetchFamilyMembers(familyId);
+
+      analytics.capture('family_member_removed');
 
       return true;
     } catch (error) {
@@ -1009,6 +1013,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       // Refresh family members to get server truth
       await fetchFamilyMembers(familyId);
 
+      analytics.capture('family_member_blocked', { reason, duration });
+
       return true;
     } catch (error) {
       console.error('Failed to block family member:', error);
@@ -1103,6 +1109,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       // Refresh family members to get server truth
       await fetchFamilyMembers(familyId);
+
+      analytics.capture('family_member_unblocked');
 
       return true;
     } catch (error) {

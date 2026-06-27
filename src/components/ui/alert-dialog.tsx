@@ -39,7 +39,7 @@ const AlertDialogContent = React.forwardRef<
       )}
       style={{
         ['--tw-translate-y' as string]: 'calc(-50% - var(--keyboard-height, 0px) / 2)',
-        maxHeight: 'calc(88vh - var(--keyboard-height, 0px))',
+        maxHeight: 'calc(88dvh - var(--keyboard-height, 0px))',
         transition: 'transform 0.25s ease, max-height 0.25s ease',
         ...style,
       }}

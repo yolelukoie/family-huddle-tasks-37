@@ -97,21 +97,27 @@ export default function PersonalPage() {
   useEffect(() => {
     const loadLanguagePreference = async () => {
       if (!user?.id) return;
-      
+
       const { data, error } = await supabase
         .from('profiles')
         .select('preferred_language')
         .eq('id', user.id)
         .single();
 
-      if (data?.preferred_language && !error) {
+      if (error) return;
+
+      const localLang = (() => { try { return localStorage.getItem('app-language'); } catch { return null; } })();
+      if (data?.preferred_language && !localLang) {
         setSelectedLanguage(data.preferred_language);
-        await i18n.changeLanguage(data.preferred_language);
         try {
           localStorage.setItem('app-language', data.preferred_language);
         } catch (e) {
           console.warn('Failed to cache language preference:', e);
         }
+        void i18n.changeLanguage(data.preferred_language);
+      } else if (data?.preferred_language) {
+        // Keep the picker UI in sync with whatever DB says, but don't override local cache
+        setSelectedLanguage(data.preferred_language);
       }
     };
 
@@ -196,16 +202,18 @@ export default function PersonalPage() {
   };
 
   const handleLanguageChange = async (language: string) => {
+    const previousLanguage = i18n.language;
     setSelectedLanguage(language);
     await i18n.changeLanguage(language);
     try { localStorage.setItem('app-language', language); } catch {}
-    
+
     try {
       const { error } = await supabase
         .from('profiles')
         .update({ preferred_language: language })
         .eq('id', user.id);
       if (error) throw error;
+      analytics.capture('language_changed', { from: previousLanguage, to: language });
       toast({ title: t('personal.languageUpdated'), description: t('personal.languageUpdatedDesc') });
     } catch (error) {
       console.error('Error updating language:', error);
@@ -222,6 +230,7 @@ export default function PersonalPage() {
     if (window.confirm(t('main.resetConfirm'))) {
       await resetCharacterProgress(activeFamilyId);
       resetBadgeProgress();
+      analytics.capture('character_reset');
       toast({ title: t('personal.characterReset'), description: t('personal.characterResetDesc') });
     }
   };
@@ -239,6 +248,11 @@ export default function PersonalPage() {
       if (success) {
         const newStatus = await getPushPermissionStatus();
         setNotificationPermission(newStatus);
+        analytics.capture('notification_permission_changed', {
+          status: newStatus,
+          platform: getCurrentPlatform(),
+          source: 'personal_page',
+        });
         if (newStatus === 'granted') {
           toast({
             title: t('notifications.enabled') || 'Notifications enabled',
@@ -271,10 +285,15 @@ export default function PersonalPage() {
     setIsEnablingNotifications(true);
     const { success, error } = await requestPushPermission(user.id);
     setIsEnablingNotifications(false);
-    
+
     const newStatus = await getPushPermissionStatus();
     setNotificationPermission(newStatus);
-    
+    analytics.capture('notification_permission_changed', {
+      status: newStatus,
+      platform: getCurrentPlatform(),
+      source: 'personal_page',
+    });
+
     if (success) {
       toast({ title: t('notifications.enabled'), description: t('notifications.enabledDesc') });
     } else {

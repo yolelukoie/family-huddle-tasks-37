@@ -3,6 +3,3 @@
 // CSS background + env(safe-area-inset-*) / var(--safe-area-inset-*).
 
 export async function configureStatusBar(): Promise<void> {}
-export async function showStatusBar(): Promise<void> {}
-export async function hideStatusBar(): Promise<void> {}
-export async function setStatusBarStyle(_isDark: boolean): Promise<void> {}

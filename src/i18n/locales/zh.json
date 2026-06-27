@@ -26,7 +26,8 @@
     "assignTask": "分配任务",
     "resetCharacter": "重置角色",
     "resetConfirm": "你确定吗？这将仅为此家庭重置你的角色进度。",
-    "completeTask": "完成"
+    "completeTask": "完成",
+    "yourProgress": "你的进度"
   },
   "tasks": {
     "title": "任务",
@@ -224,6 +225,12 @@
     "characterResetDesc": "你的角色进度已成功重置。",
     "customizeCharacter": "自定义角色",
     "customizeCharacterDesc": "每张图片代表角色成长的一个阶段。随着你赚取星星，角色会经历这些阶段的变化。你可以上传自定义图片或使用默认图片。",
+    "analyticsTitle": "帮助改进 Family Huddle",
+    "analyticsToggle": "分享匿名使用数据",
+    "analyticsDesc": "帮助我们更快地发现和修复错误。不收集个人信息，无广告。",
+    "dangerZone": "危险区域",
+    "hideCharacterToggle": "隐藏角色",
+    "hideCharacterDesc": "在主屏幕上隐藏角色图像和成就图标。星星、进度和目标保持不变。",
     "currentStage": "当前阶段",
     "customImageUploaded": "自定义图片已上传",
     "customImageUploadedDesc": "你的自定义角色图片已保存。",
@@ -306,6 +313,8 @@
     "report": "举报",
     "creating": "创建中...",
     "confirm": "确认",
+    "logOut": "退出登录",
+    "unknown": "未知",
     "deleteCategoryTitle": "删除类别",
     "deleteCategoryDesc": "这将永久删除该类别及其所有模板和任务。此操作无法撤销。"
   },

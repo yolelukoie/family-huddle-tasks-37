@@ -26,7 +26,8 @@
     "assignTask": "Asignar Tarea",
     "resetCharacter": "Reiniciar Personaje",
     "resetConfirm": "¿Estás seguro? Esto reiniciará el progreso de tu personaje solo para esta familia.",
-    "completeTask": "Completar"
+    "completeTask": "Completar",
+    "yourProgress": "Tu progreso"
   },
   "tasks": {
     "title": "Tareas",
@@ -224,6 +225,12 @@
     "characterResetDesc": "El progreso de tu personaje se ha restablecido exitosamente.",
     "customizeCharacter": "Personalizar Personaje",
     "customizeCharacterDesc": "Cada imagen representa una etapa del crecimiento de tu personaje. A medida que ganas estrellas, tu personaje evoluciona. Sube imágenes personalizadas o usa las predeterminadas.",
+    "analyticsTitle": "Ayuda a mejorar Family Huddle",
+    "analyticsToggle": "Compartir datos de uso anónimos",
+    "analyticsDesc": "Nos ayuda a encontrar y corregir errores más rápido. Sin datos personales ni anuncios.",
+    "dangerZone": "Zona peligrosa",
+    "hideCharacterToggle": "Ocultar personaje",
+    "hideCharacterDesc": "Oculta la imagen del personaje y los iconos de logros en tu pantalla principal. Tus estrellas, progreso y objetivos no cambian.",
     "currentStage": "Estás aquí",
     "customImageUploaded": "Imagen personalizada subida",
     "customImageUploadedDesc": "Tu imagen de personaje personalizada ha sido guardada.",
@@ -306,6 +313,8 @@
     "report": "Reportar",
     "creating": "Creando...",
     "confirm": "Confirmar",
+    "logOut": "Cerrar sesión",
+    "unknown": "Desconocido",
     "deleteCategoryTitle": "Eliminar categoría",
     "deleteCategoryDesc": "Esto eliminará permanentemente la categoría y todas sus plantillas y tareas. Esta acción no se puede deshacer."
   },

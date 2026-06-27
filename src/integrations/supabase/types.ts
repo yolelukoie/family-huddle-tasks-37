@@ -273,6 +273,7 @@ export type Database = {
         Row: {
           active_family_id: string | null
           avatar_url: string | null
+          character_hidden: boolean
           created_at: string
           display_name: string
           gender: string
@@ -285,6 +286,7 @@ export type Database = {
         Insert: {
           active_family_id?: string | null
           avatar_url?: string | null
+          character_hidden?: boolean
           created_at?: string
           display_name: string
           gender: string
@@ -297,6 +299,7 @@ export type Database = {
         Update: {
           active_family_id?: string | null
           avatar_url?: string | null
+          character_hidden?: boolean
           created_at?: string
           display_name?: string
           gender?: string

@@ -57,8 +57,11 @@ export function PaywallOverlay({ isExplicitOpen, onClose }: PaywallOverlayProps 
     try {
       const result = await purchase();
       if (result.success) {
+        // Prefer the freshly-returned tier from the purchase result over the
+        // context status, which may be one render behind.
+        const resolvedStatus = result.status ?? status;
         analytics.capture('subscription_purchased', {
-          tier: status.isLifetime ? 'lifetime' : 'premium',
+          tier: resolvedStatus.isLifetime ? 'lifetime' : 'premium',
           source: 'paywall',
         });
         toast({ title: t('subscription.activated') });

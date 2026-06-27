@@ -18,6 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { analytics } from '@/lib/analytics';
 import { Trash2, Loader2, AlertTriangle, Mail } from 'lucide-react';
 
 interface DeleteAccountModalProps {
@@ -49,6 +50,10 @@ export function DeleteAccountModal({ userId }: DeleteAccountModalProps) {
       if (data?.error) {
         throw new Error(data.error);
       }
+
+      // Capture analytics BEFORE sign-out so the event still associates with
+      // the (now deleted) user. analytics.reset() in signOut clears identity.
+      analytics.capture('account_deleted');
 
       // Clear all Supabase and app-related localStorage items
       const keysToRemove: string[] = [];

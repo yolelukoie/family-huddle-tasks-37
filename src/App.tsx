@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { analytics } from "@/lib/analytics";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { LanguagePicker } from "@/components/onboarding/LanguagePicker";
 import { AuthProvider } from "@/hooks/useAuth";
 import { AppProvider } from "@/hooks/useApp";
 import { TasksProvider } from "@/contexts/TasksContext";
@@ -119,6 +120,7 @@ const App = () => (
   <TooltipProvider>
     <Toaster />
     <Sonner />
+    <LanguagePicker />
     <BrowserRouter>
       <ThemeProvider>
         <AuthProvider>

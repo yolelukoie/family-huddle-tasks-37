@@ -26,7 +26,8 @@
     "assignTask": "הקצה משימה",
     "resetCharacter": "אפס דמות",
     "resetConfirm": "האם אתה בטוח? פעולה זו תאפס את התקדמות הדמות שלך עבור משפחה זו בלבד.",
-    "completeTask": "השלם"
+    "completeTask": "השלם",
+    "yourProgress": "ההתקדמות שלך"
   },
   "tasks": {
     "title": "משימות",
@@ -224,6 +225,12 @@
     "characterResetDesc": "ההתקדמות של הדמות שלך אופסה בהצלחה.",
     "customizeCharacter": "התאמה אישית של דמות",
     "customizeCharacterDesc": "כל תמונה מייצגת שלב בהתפתחות הדמות שלך. ככל שאתה צובר כוכבים, הדמות שלך מתפתחת דרך שלבים אלה. העלה תמונות מותאמות או השתמש בברירת המחדל.",
+    "analyticsTitle": "עזרו לשפר את Family Huddle",
+    "analyticsToggle": "שתפו נתוני שימוש אנונימיים",
+    "analyticsDesc": "עוזר לנו לאתר ולתקן באגים מהר יותר. ללא מידע אישי, ללא פרסומות.",
+    "dangerZone": "אזור סכנה",
+    "hideCharacterToggle": "הסתר דמות",
+    "hideCharacterDesc": "מסתיר את תמונת הדמות וסמלי ההישגים במסך הבית. הכוכבים, ההתקדמות והיעדים נשארים ללא שינוי.",
     "currentStage": "אתה כאן",
     "customImageUploaded": "התמונה המותאמת הועלתה",
     "customImageUploadedDesc": "תמונת הדמות המותאמת שלך נשמרה.",
@@ -306,6 +313,8 @@
     "report": "דווח",
     "creating": "יוצר...",
     "confirm": "אישור",
+    "logOut": "התנתק",
+    "unknown": "לא ידוע",
     "deleteCategoryTitle": "מחק קטגוריה",
     "deleteCategoryDesc": "פעולה זו תמחק לצמיתות את הקטגוריה וכל התבניות והמשימות שלה. לא ניתן לבטל פעולה זו."
   },
@@ -397,7 +406,7 @@
   },
   "auth": {
     "signInFailed": "הכניסה נכשלה",
-    "signUpFirst": "יש להירשם תחילה",
+    "signUpFirst": "עליך להירשם תחילה",
     "signUpFirstDesc": "לא מצאנו חשבון לכתובת המייל הזו. צור חשבון כדי להתחיל.",
     "welcomeBack": "ברוך שובך!",
     "successfullySignedIn": "נכנסת בהצלחה.",

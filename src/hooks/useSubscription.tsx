@@ -141,7 +141,12 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
   const purchaseWithPromo = useCallback(async (offeringId: string, offerOptionId?: string): Promise<PurchaseResult> => {
     const result = await purchasePromoOffering(offeringId, offerOptionId);
-    if (result.status) setStatus(result.status);
+    if (result.status) {
+      setStatus(result.status);
+      if (result.status.isActive) {
+        analytics.capture('subscription_purchased', { tier: 'premium', source: 'promo_offering' });
+      }
+    }
     return result;
   }, []);
 
@@ -175,6 +180,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
           isLifetime: true,
           plan: 'premium',
         });
+
+        analytics.capture('subscription_purchased', { tier: 'lifetime', source: 'promo_code' });
 
         // Also sync RevenueCat in the background (it may have a short delay)
         if (isPlatform('capacitor')) {

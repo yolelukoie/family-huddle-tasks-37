@@ -5,6 +5,8 @@ const POSTHOG_HOST = 'https://eu.i.posthog.com';
 const CONSENT_KEY = 'analytics_consent';
 
 let initialized = false;
+let identified = false;
+let pendingProperties: Record<string, unknown> = {};
 
 function consentGranted(): boolean {
   try {
@@ -32,6 +34,7 @@ export const analytics = {
         autocapture: false, // avoid noisy DOM clicks; we capture explicit events
         opt_out_capturing_by_default: !consentGranted(),
         disable_session_recording: true,
+        persistence: 'localStorage',
         loaded: () => { initialized = true; },
       });
       initialized = true;
@@ -44,8 +47,16 @@ export const analytics = {
     persistConsent(granted);
     if (!initialized) return;
     try {
-      if (granted) posthog.opt_in_capturing();
-      else posthog.opt_out_capturing();
+      if (granted) {
+        posthog.opt_in_capturing();
+      } else {
+        posthog.opt_out_capturing();
+        // Wipe any locally cached identity / queued properties so that no
+        // residual data is associated with the user after they revoke consent.
+        try { posthog.reset(); } catch { /* ignore */ }
+        identified = false;
+        pendingProperties = {};
+      }
     } catch { /* ignore */ }
   },
 
@@ -55,10 +66,20 @@ export const analytics = {
 
   identify(userId: string, properties?: Record<string, unknown>): void {
     if (!initialized) return;
-    try { posthog.identify(userId, properties); } catch { /* ignore */ }
+    try {
+      posthog.identify(userId, properties);
+      identified = true;
+      const buffered = pendingProperties;
+      pendingProperties = {};
+      if (Object.keys(buffered).length > 0) {
+        try { posthog.setPersonProperties(buffered); } catch { /* ignore */ }
+      }
+    } catch { /* ignore */ }
   },
 
   reset(): void {
+    identified = false;
+    pendingProperties = {};
     if (!initialized) return;
     try { posthog.reset(); } catch { /* ignore */ }
   },
@@ -74,6 +95,10 @@ export const analytics = {
   },
 
   setPersonProperties(properties: Record<string, unknown>): void {
+    if (!identified) {
+      pendingProperties = { ...pendingProperties, ...properties };
+      return;
+    }
     if (!initialized) return;
     try { posthog.setPersonProperties(properties); } catch { /* ignore */ }
   },

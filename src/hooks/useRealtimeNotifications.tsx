@@ -119,7 +119,12 @@ export function useRealtimeNotifications() {
     };
   }, [user?.id, openAssignmentModal, toast]);
 
-  // CHAT EVENTS — toast when user is NOT on the chat page (global coverage)
+  // CHAT EVENTS — toast when user is NOT on the chat page (global coverage).
+  //
+  // NOTE: src/hooks/useChat.tsx also subscribes to chat_messages INSERTs
+  // (`chat-page:*` channel) to keep the in-page message list in sync. The two
+  // channels are intentionally kept separate — see the comment on the
+  // corresponding effect in useChat.tsx for the lifecycle reasoning.
   useEffect(() => {
     if (!user?.id || !activeFamilyId) return;
     const ch = supabase

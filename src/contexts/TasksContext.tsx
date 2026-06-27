@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useCallback, useEffect, useState } from 'react';
+import React, { createContext, useContext, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
 import { useApp } from '@/hooks/useApp';
@@ -44,6 +44,14 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
   const [templates, setTemplates] = useState<TaskTemplate[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // Soft guard against duplicate task_completed analytics firings caused by
+  // concurrent updateTask() calls for the same task within a short window
+  // (e.g. double-tap, optimistic-then-realtime echo). This is a best-effort
+  // in-memory dedup — it does NOT protect against multi-tab/multi-device or
+  // page-reload races; PostHog dashboards should still de-duplicate downstream.
+  const recentCompletionFires = useRef<Map<string, number>>(new Map());
+  const COMPLETION_DEDUP_MS = 5000;
+
   // Centralized badge checking and awarding - ensures badges are awarded from any page
   const checkAndAwardBadges = useCallback(async (
     userId: string, 
@@ -85,6 +93,8 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
           // Insert as unseen so celebration triggers
           toInsert.push({ user_id: userId, family_id: familyId, badge_id: b.id, seen: false });
           celebrate.push(b);
+          // First-time unlock — capture analytics (no PII)
+          analytics.capture('badge_unlocked', { badge_id: b.id });
         } else if (!ex.seen) {
           toMarkSeen.push(b.id);
           celebrate.push(b);
@@ -298,7 +308,12 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
     if (!nowCompleted && prevCompleted) delta = - (updated.star_value ?? 0);
 
     if (nowCompleted && !prevCompleted) {
-      analytics.capture('task_completed', { stars_earned: updated.star_value ?? 0 });
+      const now = Date.now();
+      const lastFire = recentCompletionFires.current.get(taskId);
+      if (lastFire === undefined || now - lastFire > COMPLETION_DEDUP_MS) {
+        recentCompletionFires.current.set(taskId, now);
+        analytics.capture('task_completed', { stars_earned: updated.star_value ?? 0 });
+      }
     }
     
     console.log(`TasksContext: Task ${taskId} completion changed. Was: ${prevCompleted}, Now: ${nowCompleted}, Stars: ${updated.star_value}, Delta: ${delta}`);

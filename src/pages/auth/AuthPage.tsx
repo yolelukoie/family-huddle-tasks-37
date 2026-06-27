@@ -10,7 +10,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
 import { Capacitor } from '@capacitor/core';
@@ -344,10 +343,10 @@ export function AuthPage() {
 
   return (
     <div
-      className="min-h-[100dvh] flex flex-col bg-gradient-to-br from-background via-background to-muted"
+      className="min-h-[100dvh] flex flex-col items-center overflow-y-auto bg-gradient-to-br from-background via-background to-muted"
       style={{ paddingBottom: 'var(--keyboard-height, 0px)', transition: 'padding-bottom 0.25s ease' }}
     >
-      <div className="flex flex-1 items-center justify-center p-4">
+      <div className="w-full flex justify-center p-4 pt-8">
       <div className="max-w-4xl w-full">
         <div className="text-center mb-8">
           <h1 className="text-5xl font-bold text-primary mb-4">
@@ -552,8 +551,8 @@ export function AuthPage() {
                         </Label>
                       </div>
                       
-                      <ScrollArea className="h-32 w-full rounded-md border border-border bg-muted/30 p-3">
-                        <div className="text-xs text-muted-foreground space-y-3 pr-3">
+                      <div className="w-full max-h-40 overflow-y-auto rounded-md border border-border bg-muted/30 p-3">
+                        <div className="text-xs text-muted-foreground space-y-3">
                           <p className="font-semibold text-foreground">Terms of Service – Family Huddle</p>
                           <p className="text-[10px]">Last updated: 31 January 2026</p>
                           
@@ -594,7 +593,7 @@ export function AuthPage() {
                           <p className="font-medium text-foreground">Contact</p>
                           <p>Email: support@familyhuddletasks.com</p>
                         </div>
-                      </ScrollArea>
+                      </div>
                     </div>
                   </div>
                   
