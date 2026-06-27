@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useTasks } from '@/hooks/useTasks';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 import { useFeatureGate } from '@/hooks/useFeatureGate';
 import { translateCategoryName } from '@/lib/translations';
 import { Goal } from '@/lib/types';
@@ -30,13 +31,16 @@ export function CreateGoalModal({ open, onOpenChange, familyId, userId, activeGo
 
   const { categories } = useTasks();
   const { toast } = useToast();
+  const { user } = useAuth();
   const { gate } = useFeatureGate();
 
   const categoriesWithActiveGoals = new Set(
     activeGoals.flatMap(g => g.targetCategories || [])
   );
   const hasGeneralGoal = activeGoals.some(g => !g.targetCategories || g.targetCategories.length === 0);
-  const availableCategories = categories.filter((c: any) => !categoriesWithActiveGoals.has(c.id));
+  const availableCategories = categories
+    .filter((c: any) => !categoriesWithActiveGoals.has(c.id))
+    .filter((c: any) => !(user?.hideDefaultTasks && c.isDefault));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

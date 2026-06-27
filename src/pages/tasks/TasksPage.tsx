@@ -1,17 +1,21 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { ToastAction } from '@/components/ui/toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useApp } from '@/hooks/useApp';
 import { useGoals } from '@/hooks/useGoals';
 import { useTasks } from '@/contexts/TasksContext';
 import { useCelebrations } from '@/hooks/useCelebrations';
-import { isToday, isFuture, formatDate } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
+import { useLongPress } from '@/hooks/useLongPress';
+import { isToday, isFuture, formatDate, cn } from '@/lib/utils';
 import { translateTaskName, translateCategoryName, translateTaskDescription } from '@/lib/translations';
+import { analytics } from '@/lib/analytics';
 import { TaskHistoryModal } from '@/components/modals/TaskHistoryModal';
 import { AssignTaskModal } from '@/components/modals/AssignTaskModal';
 import { CreateCategoryModal } from '@/components/modals/CreateCategoryModal';
@@ -22,19 +26,58 @@ import { NavigationHeader } from '@/components/layout/NavigationHeader';
 import { History, Plus, CheckCircle } from 'lucide-react';
 import { isBlocked } from '@/lib/blockUtils';
 import { useFeatureGate } from '@/hooks/useFeatureGate';
+import type { Task } from '@/lib/types';
+
+const TEMPLATE_LONGPRESS_HINT_KEY = 'template_longpress_hint_seen';
 
 export default function TasksPage() {
   const { user } = useAuth();
   const { activeFamilyId, getUserFamily } = useApp();
   const { updateGoalProgress } = useGoals();
-  const { tasks, categories, updateTask } = useTasks();
+  const { tasks, categories, updateTask, deleteTask, restoreTask } = useTasks();
   const { currentCelebration, completeCelebration } = useCelebrations();
   const { gate } = useFeatureGate();
+  const { toast } = useToast();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [showHistory, setShowHistory] = useState(false);
   const [showAssignTask, setShowAssignTask] = useState(false);
   const [showCreateCategory, setShowCreateCategory] = useState(false);
+
+  // First-run toast hint about long-press on templates
+  useEffect(() => {
+    try {
+      const seen = localStorage.getItem(TEMPLATE_LONGPRESS_HINT_KEY);
+      if (seen) return;
+      localStorage.setItem(TEMPLATE_LONGPRESS_HINT_KEY, '1');
+      toast({ title: t('tasks.firstRunHint') });
+    } catch {
+      // ignore localStorage errors
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleDeleteTodayTask = async (task: Task) => {
+    // Snapshot for undo
+    const snapshot: Task = { ...task };
+    analytics.capture('task_deleted_from_today', { task_id: task.id });
+    const ok = await deleteTask(task.id);
+    if (!ok) return;
+    toast({
+      title: t('tasks.taskDeleted'),
+      action: (
+        <ToastAction
+          altText={t('common.undo')}
+          onClick={async () => {
+            analytics.capture('task_delete_undone', { task_id: snapshot.id });
+            await restoreTask(snapshot);
+          }}
+        >
+          {t('common.undo')}
+        </ToastAction>
+      ),
+    });
+  };
 
   // Handle loading and missing data states
   if (!user) {
@@ -138,10 +181,11 @@ export default function TasksPage() {
             ) : (
               <div className="space-y-2">
                 {todaysTasks.map(task => (
-                  <TaskItem 
-                    key={task.id} 
-                    task={task} 
+                  <TaskItem
+                    key={task.id}
+                    task={task}
                     onComplete={handleCompleteTask}
+                    onLongPressDelete={handleDeleteTodayTask}
                     currentUserId={user.id}
                   />
                 ))}
@@ -189,15 +233,25 @@ export default function TasksPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            {categories
-              .filter(category => category.name !== 'Assigned') // Hide system category
-              .map(category => (
-                <TaskCategorySection 
-                  key={category.id} 
+            {(() => {
+              const visibleCategories = categories
+                .filter(category => category.name !== 'Assigned') // Hide system category
+                .filter(category => !(user?.hideDefaultTasks && category.isDefault));
+              if (visibleCategories.length === 0 && user?.hideDefaultTasks) {
+                return (
+                  <p className="text-muted-foreground text-sm py-2">
+                    {t('tasks.noCustomCategories')}
+                  </p>
+                );
+              }
+              return visibleCategories.map(category => (
+                <TaskCategorySection
+                  key={category.id}
                   category={category}
                   familyId={activeFamilyId}
                 />
-              ))}
+              ));
+            })()}
           </CardContent>
         </Card>
 
@@ -254,22 +308,41 @@ export default function TasksPage() {
 }
 
 interface TaskItemProps {
-  task: any;
+  task: Task;
   onComplete: (taskId: string) => void;
+  onLongPressDelete?: (task: Task) => void;
   currentUserId: string;
 }
 
-function TaskItem({ task, onComplete, currentUserId }: TaskItemProps) {
+function TaskItem({ task, onComplete, onLongPressDelete, currentUserId }: TaskItemProps) {
   const { categories } = useTasks();
   const { t } = useTranslation();
   const category = categories.find(c => c.id === task.categoryId);
-  
+
   const translatedTaskName = translateTaskName(task.name, t);
   const translatedCategoryName = category ? translateCategoryName(category.name, t) : '';
   const translatedDescription = translateTaskDescription(task.description, t);
-  
+
+  const { bind, isPressing } = useLongPress({
+    onLongPress: () => onLongPressDelete?.(task),
+    disabled: !onLongPressDelete,
+  });
+
   return (
-    <Card className="hover:shadow-lg hover:border-[hsl(var(--card-accent))]/30 transition-all group">
+    <Card
+      {...bind}
+      className={cn(
+        'hover:shadow-lg hover:border-[hsl(var(--card-accent))]/30 transition-all group select-none',
+        isPressing && 'bg-accent',
+      )}
+      style={{
+        WebkitTouchCallout: 'none',
+        WebkitUserSelect: 'none',
+        userSelect: 'none',
+        WebkitTapHighlightColor: 'transparent',
+        touchAction: 'manipulation',
+      }}
+    >
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
           <div className="flex-1">
@@ -279,11 +352,11 @@ function TaskItem({ task, onComplete, currentUserId }: TaskItemProps) {
                 {translatedCategoryName}
               </Badge>
             </div>
-            
+
             {translatedDescription && (
               <p className="text-sm text-muted-foreground mb-2">{translatedDescription}</p>
             )}
-            
+
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <span>{t('tasks.due')}: {formatDate(task.dueDate)}</span>
               <span className="text-family-warm font-semibold">⭐ {task.starValue} {t('main.stars')}</span>
@@ -295,7 +368,15 @@ function TaskItem({ task, onComplete, currentUserId }: TaskItemProps) {
 
           {task.assignedTo === currentUserId && (
             <Button
-              onClick={() => onComplete(task.id)}
+              onPointerDown={(e) => e.stopPropagation()}
+              onPointerUp={(e) => e.stopPropagation()}
+              onPointerMove={(e) => e.stopPropagation()}
+              onPointerCancel={(e) => e.stopPropagation()}
+              onPointerLeave={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                onComplete(task.id);
+              }}
               size="sm"
               variant="ghost"
               className="p-2 h-8 w-8 text-family-success hover:text-family-success hover:bg-family-success/10"

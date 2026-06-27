@@ -38,6 +38,7 @@
     "upcoming": "קרובות",
     "noTasksToday": "אין משימות להיום! 🎉",
     "noUpcomingTasks": "אין משימות קרובות",
+    "noCustomCategories": "אין עדיין קטגוריות מותאמות — הקש על הוסף קטגוריה ליצור אחת.",
     "due": "מועד",
     "assignedToYou": "הוקצה לך",
     "assignedToMember": "הוקצה לבן משפחה",
@@ -68,7 +69,13 @@
     "createCategoryDesc": "הוסף קטגוריה מותאמת אישית לארגון המשימות שלך",
     "categoryNameLabel": "שם הקטגוריה",
     "categoryNamePlaceholder": "הזן שם קטגוריה",
-    "createCategoryBtn": "צור קטגוריה"
+    "createCategoryBtn": "צור קטגוריה",
+    "longPressMenuTitle": "הוסף משימה עם תגובה",
+    "commentPlaceholder": "תגובה אופציונלית...",
+    "addToTodayWithComment": "הוסף למשימות היום",
+    "reportTemplate": "דווח על תבנית",
+    "firstRunHint": "הקש להוספה, החזק לאפשרויות",
+    "taskDeleted": "המשימה נמחקה"
   },
   "goals": {
     "title": "מטרות",
@@ -231,6 +238,9 @@
     "dangerZone": "אזור סכנה",
     "hideCharacterToggle": "הסתר דמות",
     "hideCharacterDesc": "מסתיר את תמונת הדמות וסמלי ההישגים במסך הבית. הכוכבים, ההתקדמות והיעדים נשארים ללא שינוי.",
+    "hideDefaultsToggle": "הסתר משימות ברירת מחדל",
+    "hideDefaultsDesc": "מסתיר את קטגוריות המשימות המובנות בעמוד המשימות. הקטגוריות המותאמות שלך נשארות ללא שינוי.",
+    "tasksDisplayTitle": "תצוגת משימות",
     "currentStage": "אתה כאן",
     "customImageUploaded": "התמונה המותאמת הועלתה",
     "customImageUploadedDesc": "תמונת הדמות המותאמת שלך נשמרה.",
@@ -315,6 +325,7 @@
     "confirm": "אישור",
     "logOut": "התנתק",
     "unknown": "לא ידוע",
+    "undo": "בטל",
     "deleteCategoryTitle": "מחק קטגוריה",
     "deleteCategoryDesc": "פעולה זו תמחק לצמיתות את הקטגוריה וכל התבניות והמשימות שלה. לא ניתן לבטל פעולה זו."
   },

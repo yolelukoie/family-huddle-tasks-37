@@ -13,23 +13,20 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { ChevronDown, ChevronRight, Plus, Trash2, MoreVertical, Flag, Loader2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, Plus, Trash2, Loader2 } from 'lucide-react';
 import { TaskTemplateModal } from './TaskTemplateModal';
+import { TaskTemplatePopup } from './TaskTemplatePopup';
 import { ReportContentModal } from '@/components/modals/ReportContentModal';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useApp } from '@/hooks/useApp';
 import { useTasks } from '@/hooks/useTasks';
 import { useFeatureGate } from '@/hooks/useFeatureGate';
+import { useLongPress } from '@/hooks/useLongPress';
 import { isBlocked } from '@/lib/blockUtils';
 import { cn } from '@/lib/utils';
 import { translateCategoryName, translateTaskName, translateTaskDescription } from '@/lib/translations';
+import { analytics } from '@/lib/analytics';
 import type { TaskCategory, TaskTemplate } from '@/lib/types';
 
 interface TaskCategorySectionProps {
@@ -45,6 +42,7 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
   const [reportTarget, setReportTarget] = useState<TaskTemplate | null>(null);
   const [showDeleteCategoryDialog, setShowDeleteCategoryDialog] = useState(false);
   const [showDeleteTemplateDialog, setShowDeleteTemplateDialog] = useState<string | null>(null);
+  const [popupTemplate, setPopupTemplate] = useState<TaskTemplate | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -52,7 +50,9 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
   const { templates, addTodayTaskFromTemplate, deleteCategory, deleteTemplate } = useTasks();
   const { gate } = useFeatureGate();
 
-  const categoryTemplates = templates.filter(t => t.categoryId === category.id);
+  const categoryTemplates = templates
+    .filter(t => t.categoryId === category.id)
+    .filter(t => !(user?.hideDefaultTasks && !category.isDefault && t.isDefault));
   const translatedCategoryName = translateCategoryName(category.name, t);
 
   // Block check for UI restrictions
@@ -142,58 +142,23 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
           <div className="ml-7 space-y-2">
             {categoryTemplates
               .filter(template => template.name !== 'test')
-              .map(template => {
-                const translatedTaskName = translateTaskName(template.name, t);
-                const translatedDescription = translateTaskDescription(template.description, t);
-                return (
-                  <div 
-                    key={template.id} 
-                    className={cn(
-                      "flex items-center justify-between p-2 border rounded transition-colors",
-                      canCreateInCategory 
-                        ? "cursor-pointer hover:bg-accent" 
-                        : "opacity-60 cursor-not-allowed"
-                    )}
-                    onClick={() => canCreateInCategory ? handleAddToToday(template) : null}
-                  >
-                    <div className="flex-1">
-                      <div className="font-medium text-sm">{translatedTaskName}</div>
-                      {translatedDescription && (
-                        <div className="text-xs text-muted-foreground">{translatedDescription}</div>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="warm" className="text-xs">
-                        {template.starValue} ⭐
-                      </Badge>
-                      {!template.isDefault && (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                            <div className="h-6 w-6 p-1 hover:bg-muted rounded cursor-pointer flex items-center justify-center">
-                              <MoreVertical className="h-3 w-3" />
-                            </div>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                            {template.isDeletable && (
-                              <DropdownMenuItem
-                                className="text-destructive focus:text-destructive"
-                                onClick={() => gate(() => setShowDeleteTemplateDialog(template.id))}
-                              >
-                                <Trash2 className="h-3 w-3 mr-2" />
-                                {t('common.delete')}
-                              </DropdownMenuItem>
-                            )}
-                            <DropdownMenuItem onClick={() => gate(() => setReportTarget(template))}>
-                              <Flag className="h-3 w-3 mr-2" />
-                              {t('common.report')}
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+              .map(template => (
+                <TemplateRow
+                  key={template.id}
+                  template={template}
+                  canCreateInCategory={canCreateInCategory}
+                  categoryId={category.id}
+                  onTap={() => handleAddToToday(template)}
+                  onLongPress={() => {
+                    setPopupTemplate(template);
+                    analytics.capture('template_popup_opened', {
+                      template_id: template.id,
+                      category_id: category.id,
+                      is_default: !!template.isDefault,
+                    });
+                  }}
+                />
+              ))}
             
             {canCreateInCategory ? (
               <Button
@@ -290,6 +255,92 @@ export function TaskCategorySection({ category, familyId, onTaskAdded }: TaskCat
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Long-press template options popup */}
+      {popupTemplate && (
+        <TaskTemplatePopup
+          open={!!popupTemplate}
+          onOpenChange={(open) => !open && setPopupTemplate(null)}
+          template={popupTemplate}
+          prefilledComment={translateTaskDescription(popupTemplate.description, t) || ''}
+          onAddToToday={async (comment) => {
+            if (!user) return;
+            const trimmed = comment.trim();
+            const newTask = await addTodayTaskFromTemplate(
+              popupTemplate.id,
+              trimmed.length > 0 ? trimmed : undefined,
+            );
+            const translatedTaskName = translateTaskName(popupTemplate.name, t);
+            if (newTask) {
+              toast({
+                title: t('tasks.addToToday'),
+                description: `"${translatedTaskName}" ${t('tasks.addToTodayDesc')}`,
+              });
+              onTaskAdded?.();
+            } else {
+              toast({
+                title: t('family.error'),
+                description: 'Failed to add task to today. Please try again.',
+                variant: 'destructive',
+              });
+            }
+          }}
+          onDelete={popupTemplate.isDeletable ? () => gate(() => setShowDeleteTemplateDialog(popupTemplate.id)) : undefined}
+          onReport={!popupTemplate.isDefault ? () => gate(() => setReportTarget(popupTemplate)) : undefined}
+        />
+      )}
+    </div>
+  );
+}
+
+interface TemplateRowProps {
+  template: TaskTemplate;
+  canCreateInCategory: boolean;
+  categoryId: string;
+  onTap: () => void;
+  onLongPress: () => void;
+}
+
+function TemplateRow({ template, canCreateInCategory, onTap, onLongPress }: TemplateRowProps) {
+  const { t } = useTranslation();
+  const translatedTaskName = translateTaskName(template.name, t);
+  const translatedDescription = translateTaskDescription(template.description, t);
+
+  const { bind, isPressing } = useLongPress({
+    onLongPress,
+    onClick: canCreateInCategory ? onTap : undefined,
+    disabled: !canCreateInCategory,
+  });
+
+  return (
+    <div
+      {...bind}
+      className={cn(
+        'flex items-center justify-between p-2 border rounded transition-colors select-none',
+        canCreateInCategory
+          ? 'cursor-pointer hover:bg-accent'
+          : 'opacity-60 cursor-not-allowed',
+        isPressing && 'bg-accent',
+      )}
+      style={{
+        WebkitTouchCallout: 'none',
+        WebkitUserSelect: 'none',
+        userSelect: 'none',
+        WebkitTapHighlightColor: 'transparent',
+        touchAction: 'manipulation',
+      }}
+    >
+      <div className="flex-1">
+        <div className="font-medium text-sm">{translatedTaskName}</div>
+        {translatedDescription && (
+          <div className="text-xs text-muted-foreground">{translatedDescription}</div>
+        )}
+      </div>
+      <div className="flex items-center gap-2">
+        <Badge variant="warm" className="text-xs">
+          {template.starValue} ⭐
+        </Badge>
+      </div>
     </div>
   );
 }

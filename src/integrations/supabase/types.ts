@@ -274,6 +274,7 @@ export type Database = {
           active_family_id: string | null
           avatar_url: string | null
           character_hidden: boolean
+          hide_default_tasks: boolean
           created_at: string
           display_name: string
           gender: string
@@ -287,6 +288,7 @@ export type Database = {
           active_family_id?: string | null
           avatar_url?: string | null
           character_hidden?: boolean
+          hide_default_tasks?: boolean
           created_at?: string
           display_name: string
           gender: string
@@ -300,6 +302,7 @@ export type Database = {
           active_family_id?: string | null
           avatar_url?: string | null
           character_hidden?: boolean
+          hide_default_tasks?: boolean
           created_at?: string
           display_name?: string
           gender?: string

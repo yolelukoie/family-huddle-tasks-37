@@ -38,6 +38,7 @@
     "upcoming": "आगामी",
     "noTasksToday": "आज कोई कार्य नहीं! 🎉",
     "noUpcomingTasks": "कोई आगामी कार्य नहीं",
+    "noCustomCategories": "अभी तक कोई कस्टम श्रेणी नहीं — एक बनाने के लिए श्रेणी जोड़ें पर टैप करें।",
     "due": "नियत तिथि",
     "assignedToYou": "आपको असाइन किया गया",
     "assignedToMember": "परिवार के सदस्य को असाइन किया गया",
@@ -68,7 +69,13 @@
     "createCategoryDesc": "अपने कार्यों को व्यवस्थित करने के लिए एक कस्टम श्रेणी जोड़ें",
     "categoryNameLabel": "श्रेणी का नाम",
     "categoryNamePlaceholder": "श्रेणी का नाम दर्ज करें",
-    "createCategoryBtn": "श्रेणी बनाएं"
+    "createCategoryBtn": "श्रेणी बनाएं",
+    "longPressMenuTitle": "टिप्पणी के साथ कार्य जोड़ें",
+    "commentPlaceholder": "वैकल्पिक टिप्पणी...",
+    "addToTodayWithComment": "आज के कार्यों में जोड़ें",
+    "reportTemplate": "कार्य टेम्पलेट की रिपोर्ट करें",
+    "firstRunHint": "जोड़ने के लिए टैप करें, विकल्पों के लिए दबाए रखें",
+    "taskDeleted": "कार्य हटाया गया"
   },
   "goals": {
     "title": "लक्ष्य",
@@ -231,6 +238,9 @@
     "dangerZone": "खतरे का क्षेत्र",
     "hideCharacterToggle": "किरदार छिपाएं",
     "hideCharacterDesc": "होम स्क्रीन पर किरदार की छवि और उपलब्धि चिह्न छुपाता है। आपके सितारे, प्रगति और लक्ष्य अपरिवर्तित रहते हैं।",
+    "hideDefaultsToggle": "डिफ़ॉल्ट कार्य छिपाएं",
+    "hideDefaultsDesc": "Tasks पेज पर बिल्ट-इन कार्य श्रेणियों को छिपाता है। आपकी कस्टम श्रेणियां अपरिवर्तित रहती हैं।",
+    "tasksDisplayTitle": "कार्य प्रदर्शन",
     "currentStage": "आप यहाँ हैं",
     "customImageUploaded": "कस्टम छवि अपलोड हो गई",
     "customImageUploadedDesc": "आपकी कस्टम चरित्र छवि सहेजी गई है।",
@@ -315,6 +325,7 @@
     "confirm": "पुष्टि करें",
     "logOut": "लॉग आउट",
     "unknown": "अज्ञात",
+    "undo": "पूर्ववत करें",
     "deleteCategoryTitle": "श्रेणी हटाएं",
     "deleteCategoryDesc": "यह श्रेणी और इसके सभी टेम्पलेट और कार्यों को स्थायी रूप से हटा देगा। यह क्रिया पूर्ववत नहीं की जा सकती।"
   },

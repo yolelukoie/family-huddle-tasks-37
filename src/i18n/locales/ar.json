@@ -38,6 +38,7 @@
     "upcoming": "القادمة",
     "noTasksToday": "لا توجد مهام مستحقة اليوم! 🎉",
     "noUpcomingTasks": "لا توجد مهام قادمة",
+    "noCustomCategories": "لا توجد فئات مخصصة بعد — انقر على إضافة فئة لإنشاء واحدة.",
     "due": "موعد الاستحقاق",
     "assignedToYou": "مُعيَّنة إليك",
     "assignedToMember": "مُعيَّنة لأحد أفراد العائلة",
@@ -68,7 +69,13 @@
     "createCategoryDesc": "أضف فئة مخصصة لتنظيم مهامك",
     "categoryNameLabel": "اسم الفئة",
     "categoryNamePlaceholder": "أدخل اسم الفئة",
-    "createCategoryBtn": "إنشاء الفئة"
+    "createCategoryBtn": "إنشاء الفئة",
+    "longPressMenuTitle": "إضافة مهمة مع تعليق",
+    "commentPlaceholder": "تعليق اختياري...",
+    "addToTodayWithComment": "إضافة إلى مهام اليوم",
+    "reportTemplate": "الإبلاغ عن قالب",
+    "firstRunHint": "انقر للإضافة، اضغط مطولاً للخيارات",
+    "taskDeleted": "تم حذف المهمة"
   },
   "goals": {
     "title": "الأهداف",
@@ -231,6 +238,9 @@
     "dangerZone": "منطقة الخطر",
     "hideCharacterToggle": "إخفاء الشخصية",
     "hideCharacterDesc": "يخفي صورة الشخصية وأيقونات الإنجازات في شاشتك الرئيسية. النجوم والتقدم والأهداف تبقى دون تغيير.",
+    "hideDefaultsToggle": "إخفاء المهام الافتراضية",
+    "hideDefaultsDesc": "يخفي فئات المهام المدمجة في صفحة المهام. تبقى فئاتك المخصصة دون تغيير.",
+    "tasksDisplayTitle": "عرض المهام",
     "currentStage": "أنت هنا",
     "customImageUploaded": "تم رفع الصورة المخصصة",
     "customImageUploadedDesc": "تم حفظ صورة شخصيتك المخصصة.",
@@ -321,6 +331,7 @@
     "creating": "جارٍ الإنشاء...",
     "logOut": "تسجيل الخروج",
     "unknown": "غير معروف",
+    "undo": "تراجع",
     "deleteCategoryTitle": "حذف الفئة",
     "deleteCategoryDesc": "سيؤدي هذا إلى حذف الفئة وجميع نماذجها ومهامها بشكل دائم. لا يمكن التراجع عن هذا الإجراء."
   },

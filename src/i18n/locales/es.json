@@ -38,6 +38,7 @@
     "upcoming": "Próximas",
     "noTasksToday": "¡No hay tareas para hoy! 🎉",
     "noUpcomingTasks": "No hay tareas próximas",
+    "noCustomCategories": "Aún no hay categorías personalizadas — toca Agregar categoría para crear una.",
     "due": "Vencimiento",
     "assignedToYou": "Asignada a ti",
     "assignedToMember": "Asignada a miembro de la familia",
@@ -68,7 +69,13 @@
     "createCategoryDesc": "Añade una categoría personalizada para organizar tus tareas",
     "categoryNameLabel": "Nombre de la categoría",
     "categoryNamePlaceholder": "Ingresa el nombre de la categoría",
-    "createCategoryBtn": "Crear categoría"
+    "createCategoryBtn": "Crear categoría",
+    "longPressMenuTitle": "Agregar tarea con comentario",
+    "commentPlaceholder": "Comentario opcional...",
+    "addToTodayWithComment": "Agregar a las tareas de hoy",
+    "reportTemplate": "Reportar plantilla",
+    "firstRunHint": "Toca para agregar, mantén para opciones",
+    "taskDeleted": "Tarea eliminada"
   },
   "goals": {
     "title": "Objetivos",
@@ -231,6 +238,9 @@
     "dangerZone": "Zona peligrosa",
     "hideCharacterToggle": "Ocultar personaje",
     "hideCharacterDesc": "Oculta la imagen del personaje y los iconos de logros en tu pantalla principal. Tus estrellas, progreso y objetivos no cambian.",
+    "hideDefaultsToggle": "Ocultar tareas predeterminadas",
+    "hideDefaultsDesc": "Oculta las categorías de tareas integradas en la página Tareas. Tus categorías personalizadas no cambian.",
+    "tasksDisplayTitle": "Visualización de tareas",
     "currentStage": "Estás aquí",
     "customImageUploaded": "Imagen personalizada subida",
     "customImageUploadedDesc": "Tu imagen de personaje personalizada ha sido guardada.",
@@ -315,6 +325,7 @@
     "confirm": "Confirmar",
     "logOut": "Cerrar sesión",
     "unknown": "Desconocido",
+    "undo": "Deshacer",
     "deleteCategoryTitle": "Eliminar categoría",
     "deleteCategoryDesc": "Esto eliminará permanentemente la categoría y todas sus plantillas y tareas. Esta acción no se puede deshacer."
   },

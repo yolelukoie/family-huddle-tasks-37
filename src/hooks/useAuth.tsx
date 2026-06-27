@@ -100,6 +100,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         avatar_url: profile.avatar_url,
         trialStartedAt: profile.trial_started_at ?? undefined,
         characterHidden: profile.character_hidden ?? false,
+        hideDefaultTasks: profile.hide_default_tasks ?? false,
         preferred_language: profile.preferred_language ?? null,
       };
       setUser(mapped);
@@ -360,6 +361,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // local in-memory user object aligned with that default so downstream
         // hooks (e.g. useCustomCharacterImages) see a concrete boolean.
         characterHidden: userData.characterHidden ?? false,
+        hideDefaultTasks: userData.hideDefaultTasks ?? false,
       };
 
       try {
@@ -407,6 +409,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if ('activeFamilyId' in updates) dbUpdates.active_family_id = updates.activeFamilyId ?? null;
       if ('avatar_url' in updates) dbUpdates.avatar_url = updates.avatar_url ?? null;
       if ('characterHidden' in updates) dbUpdates.character_hidden = updates.characterHidden ?? false;
+      if ('hideDefaultTasks' in updates) dbUpdates.hide_default_tasks = updates.hideDefaultTasks ?? false;
 
       // Merge updates with current state for local state update
       const updatedUser = { ...user, ...updates };

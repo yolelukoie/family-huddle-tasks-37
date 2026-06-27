@@ -86,7 +86,29 @@ export default function PersonalPage() {
   const [notificationPermission, setNotificationPermission] = useState<'granted' | 'denied' | 'prompt' | 'unavailable'>('prompt');
   const [isEnablingNotifications, setIsEnablingNotifications] = useState(false);
   const [analyticsConsent, setAnalyticsConsent] = useState(() => analytics.hasConsent());
+  const [hideDefaults, setHideDefaults] = useState(user?.hideDefaultTasks ?? false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Keep local hideDefaults in sync with the user record (e.g. after profile load).
+  useEffect(() => {
+    setHideDefaults(user?.hideDefaultTasks ?? false);
+  }, [user?.hideDefaultTasks]);
+
+  const handleToggleHideDefaults = async (checked: boolean) => {
+    setHideDefaults(checked); // optimistic
+    try {
+      await updateUser({ hideDefaultTasks: checked });
+      analytics.capture('default_tasks_visibility_changed', { hidden: checked });
+    } catch (e) {
+      console.error('Failed to update default tasks visibility:', e);
+      setHideDefaults(!checked); // revert
+      toast({
+        title: t('personal.updateFailed', 'Update failed'),
+        description: t('personal.updateFailedDesc', 'Please try again.'),
+        variant: 'destructive',
+      });
+    }
+  };
 
   // Check notification permission status (platform-aware)
   useEffect(() => {
@@ -411,6 +433,30 @@ export default function PersonalPage() {
 
         {/* Character Image Customization */}
         <CharacterImageCustomizer />
+
+        {/* Tasks display preferences */}
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('personal.tasksDisplayTitle')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-1">
+                <Label htmlFor="hide-defaults-toggle" className="text-sm font-medium">
+                  {t('personal.hideDefaultsToggle')}
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  {t('personal.hideDefaultsDesc')}
+                </p>
+              </div>
+              <Switch
+                id="hide-defaults-toggle"
+                checked={hideDefaults}
+                onCheckedChange={handleToggleHideDefaults}
+              />
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Notifications */}
         <Card>

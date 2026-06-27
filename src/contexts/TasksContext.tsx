@@ -22,11 +22,12 @@ interface TasksContextValue {
   addTask: (task: Omit<Task, 'id' | 'createdAt'>) => Promise<Task | null>;
   updateTask: (taskId: string, updates: Partial<Task>) => Promise<void>;
   deleteTask: (taskId: string) => Promise<boolean>;
+  restoreTask: (task: Task) => Promise<Task | null>;
   addCategory: (category: Omit<TaskCategory, 'id' | 'createdAt'>) => Promise<TaskCategory | null>;
   deleteCategory: (categoryId: string) => Promise<boolean>;
   deleteTemplate: (templateId: string) => Promise<boolean>;
   addTemplate: (template: Omit<TaskTemplate, 'id' | 'createdAt'>) => Promise<TaskTemplate | null>;
-  addTodayTaskFromTemplate: (templateId: string) => Promise<Task | null>;
+  addTodayTaskFromTemplate: (templateId: string, descriptionOverride?: string) => Promise<Task | null>;
   ensureCategoryByName: (name: string, opts?: { isHouseChores?: boolean }) => Promise<TaskCategory | null>;
   refreshData: () => Promise<void>;
 }
@@ -595,9 +596,9 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
     return newTemplate;
   }, [activeFamilyId, user, templates, categories, toast, t]);
 
-  const addTodayTaskFromTemplate = useCallback(async (templateId: string) => {
+  const addTodayTaskFromTemplate = useCallback(async (templateId: string, descriptionOverride?: string) => {
     if (!activeFamilyId || !user) return null;
-  
+
     const template = templates.find(x => x.id === templateId);
     if (!template) {
       console.error('Template not found for Today:', templateId);
@@ -645,7 +646,7 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
     try {
       const insertData = {
         name: template.name,
-        description: template.description || null,
+        description: descriptionOverride ?? template.description ?? null,
         category_id: template.categoryId,
         star_value: template.starValue,
         family_id: activeFamilyId,
@@ -818,6 +819,53 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
     }
   }, [activeFamilyId, toast]);
 
+  const restoreTask = useCallback(async (task: Task): Promise<Task | null> => {
+    if (!activeFamilyId) return null;
+
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .insert([{
+          id: task.id,
+          name: task.name,
+          description: task.description || null,
+          category_id: task.categoryId,
+          star_value: task.starValue,
+          family_id: task.familyId,
+          template_id: task.templateId || null,
+          assigned_to: task.assignedTo,
+          assigned_by: task.assignedBy,
+          due_date: task.dueDate,
+          status: task.status || 'active',
+          completed: !!task.completed,
+          completed_at: task.completedAt || null,
+        }])
+        .select()
+        .single();
+
+      if (error) {
+        toast({
+          title: 'Error',
+          description: `Failed to restore task: ${error.message}`,
+          variant: 'destructive',
+        });
+        return null;
+      }
+
+      const restored: Task = taskFromRow(data);
+      setTasks(prev => (prev.some(t => t.id === restored.id) ? prev : [...prev, restored]));
+      window.dispatchEvent(new CustomEvent('tasks:changed'));
+      return restored;
+    } catch (e: any) {
+      toast({
+        title: 'Error',
+        description: `Failed to restore task: ${e?.message || e}`,
+        variant: 'destructive',
+      });
+      return null;
+    }
+  }, [activeFamilyId, toast]);
+
   const contextValue: TasksContextValue = {
     tasks,
     categories,
@@ -826,6 +874,7 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
     addTask,
     updateTask,
     deleteTask,
+    restoreTask,
     addCategory,
     deleteCategory,
     deleteTemplate,

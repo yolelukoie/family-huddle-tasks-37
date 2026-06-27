@@ -38,6 +38,7 @@
     "upcoming": "即将到来",
     "noTasksToday": "今天没有任务！🎉",
     "noUpcomingTasks": "没有即将到来的任务",
+    "noCustomCategories": "还没有自定义类别 — 点击添加类别来创建一个。",
     "due": "截止日期",
     "assignedToYou": "分配给你",
     "assignedToMember": "分配给家庭成员",
@@ -68,7 +69,13 @@
     "createCategoryDesc": "添加自定义类别来组织你的任务",
     "categoryNameLabel": "类别名称",
     "categoryNamePlaceholder": "输入类别名称",
-    "createCategoryBtn": "创建类别"
+    "createCategoryBtn": "创建类别",
+    "longPressMenuTitle": "添加带评论的任务",
+    "commentPlaceholder": "可选评论...",
+    "addToTodayWithComment": "添加到今天的任务",
+    "reportTemplate": "举报任务模板",
+    "firstRunHint": "点击添加，长按显示选项",
+    "taskDeleted": "任务已删除"
   },
   "goals": {
     "title": "目标",
@@ -231,6 +238,9 @@
     "dangerZone": "危险区域",
     "hideCharacterToggle": "隐藏角色",
     "hideCharacterDesc": "在主屏幕上隐藏角色图像和成就图标。星星、进度和目标保持不变。",
+    "hideDefaultsToggle": "隐藏默认任务",
+    "hideDefaultsDesc": "在任务页面隐藏内置任务类别。您的自定义类别保持不变。",
+    "tasksDisplayTitle": "任务显示",
     "currentStage": "当前阶段",
     "customImageUploaded": "自定义图片已上传",
     "customImageUploadedDesc": "你的自定义角色图片已保存。",
@@ -315,6 +325,7 @@
     "confirm": "确认",
     "logOut": "退出登录",
     "unknown": "未知",
+    "undo": "撤销",
     "deleteCategoryTitle": "删除类别",
     "deleteCategoryDesc": "这将永久删除该类别及其所有模板和任务。此操作无法撤销。"
   },

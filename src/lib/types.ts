@@ -7,6 +7,7 @@ export interface User {
   avatar_url?: string;
   trialStartedAt?: string;
   characterHidden?: boolean;
+  hideDefaultTasks?: boolean;
   preferred_language?: string | null;
 }
 
